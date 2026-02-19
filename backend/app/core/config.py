@@ -10,10 +10,10 @@ class Settings(BaseModel):
     VERSION: str = "1.0.0"
     DEBUG: bool = os.getenv("DEBUG", "true").lower() == "true"
 
-    # Database
+    # Database (SQLite for dev, PostgreSQL for production)
     DATABASE_URL: str = os.getenv(
         "DATABASE_URL",
-        "postgresql+asyncpg://postgres:postgres@localhost:5432/quickgift"
+        "sqlite+aiosqlite:///./quickgift.db"
     )
 
     # JWT

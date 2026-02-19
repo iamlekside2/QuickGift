@@ -1,26 +1,36 @@
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, KeyboardAvoidingView,
-  Platform, ScrollView, StyleSheet,
+  Platform, ScrollView, StyleSheet, Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
 import Button from '../../components/common/Button';
+import { useAuth } from '../../context/AuthContext';
 
 export default function LoginScreen({ navigation }) {
   const [phone, setPhone] = useState('');
   const [countryCode, setCountryCode] = useState('+234');
   const [loading, setLoading] = useState(false);
+  const { sendOTP, guestLogin } = useAuth();
 
   const isValid = phone.length >= 10;
 
-  const handleSendOTP = () => {
+  const handleSendOTP = async () => {
     if (!isValid) return;
     setLoading(true);
-    setTimeout(() => {
+    try {
+      const fullPhone = countryCode + phone;
+      const res = await sendOTP(fullPhone);
+      navigation.navigate('OTPVerification', {
+        phone: fullPhone,
+        otpDev: res.otp_dev, // Dev mode: show OTP
+      });
+    } catch (err) {
+      Alert.alert('Error', err.response?.data?.detail || 'Failed to send OTP');
+    } finally {
       setLoading(false);
-      navigation.navigate('OTPVerification', { phone: countryCode + phone });
-    }, 1500);
+    }
   };
 
   return (
@@ -87,7 +97,7 @@ export default function LoginScreen({ navigation }) {
 
           <TouchableOpacity
             style={styles.guestButton}
-            onPress={() => navigation.replace('MainApp')}
+            onPress={() => { guestLogin(); navigation.replace('MainApp'); }}
           >
             <Text style={styles.guestText}>Continue as Guest</Text>
           </TouchableOpacity>

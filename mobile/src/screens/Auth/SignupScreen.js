@@ -1,26 +1,39 @@
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, KeyboardAvoidingView,
-  Platform, ScrollView, TouchableOpacity, StyleSheet,
+  Platform, ScrollView, TouchableOpacity, StyleSheet, Alert,
 } from 'react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../constants/theme';
 import Button from '../../components/common/Button';
+import { useAuth } from '../../context/AuthContext';
 
 export default function SignupScreen({ navigation }) {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
+  const { sendOTP } = useAuth();
 
   const isValid = fullName.length >= 2 && phone.length >= 10;
 
-  const handleSignup = () => {
+  const handleSignup = async () => {
     if (!isValid) return;
     setLoading(true);
-    setTimeout(() => {
+    try {
+      const fullPhone = '+234' + phone;
+      const res = await sendOTP(fullPhone);
+      navigation.navigate('OTPVerification', {
+        phone: fullPhone,
+        fullName,
+        email: email || undefined,
+        isRegistration: true,
+        otpDev: res.otp_dev,
+      });
+    } catch (err) {
+      Alert.alert('Error', err.response?.data?.detail || 'Failed to send OTP');
+    } finally {
       setLoading(false);
-      navigation.navigate('OTPVerification', { phone: '+234' + phone });
-    }, 1500);
+    }
   };
 
   return (

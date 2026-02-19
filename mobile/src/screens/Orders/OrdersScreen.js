@@ -1,50 +1,96 @@
-import React, { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import { COLORS, FONTS, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
-
-const MOCK_ORDERS = [
-  { id: '1', type: 'gift', item: 'Red Velvet Cake', status: 'delivered', date: '15 Feb', price: 15000, vendor: 'Sweet Treats Lagos' },
-  { id: '2', type: 'beauty', item: 'Gel Nails (Full Set)', status: 'confirmed', date: '20 Feb', price: 8000, provider: 'Amara Nails' },
-  { id: '3', type: 'gift', item: 'Rose Bouquet', status: 'in_transit', date: '19 Feb', price: 25000, vendor: 'Bloom Nigeria' },
-  { id: '4', type: 'beauty', item: 'Makeup Session', status: 'pending', date: '22 Feb', price: 15000, provider: 'Tolu MUA' },
-];
+import { ordersAPI, bookingsAPI } from '../../services/api';
 
 const STATUS_CONFIG = {
   pending: { label: 'Pending', color: '#F59E0B', icon: 'time-outline' },
   confirmed: { label: 'Confirmed', color: '#6366F1', icon: 'checkmark-circle-outline' },
   in_transit: { label: 'In Transit', color: '#3B82F6', icon: 'bicycle-outline' },
   delivered: { label: 'Delivered', color: '#10B981', icon: 'checkmark-done-outline' },
+  cancelled: { label: 'Cancelled', color: '#EF4444', icon: 'close-circle-outline' },
+  completed: { label: 'Completed', color: '#10B981', icon: 'checkmark-done-outline' },
 };
 
 export default function OrdersScreen({ navigation }) {
   const [tab, setTab] = useState('all');
+  const [orders, setOrders] = useState([]);
+  const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const filtered = tab === 'all' ? MOCK_ORDERS :
-    tab === 'gifts' ? MOCK_ORDERS.filter(o => o.type === 'gift') :
-    MOCK_ORDERS.filter(o => o.type === 'beauty');
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [])
+  );
 
-  const formatPrice = (price) => '₦' + price.toLocaleString();
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const [ordersRes, bookingsRes] = await Promise.allSettled([
+        ordersAPI.list(),
+        bookingsAPI.list(),
+      ]);
+
+      if (ordersRes.status === 'fulfilled') {
+        const ordersList = ordersRes.value.data?.items || ordersRes.value.data || [];
+        setOrders(ordersList.map((o) => ({ ...o, _type: 'gift' })));
+      }
+      if (bookingsRes.status === 'fulfilled') {
+        const bookingsList = bookingsRes.value.data?.items || bookingsRes.value.data || [];
+        setBookings(bookingsList.map((b) => ({ ...b, _type: 'beauty' })));
+      }
+    } catch (err) {
+      console.log('Error loading orders:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const allItems = [...orders, ...bookings].sort(
+    (a, b) => new Date(b.created_at) - new Date(a.created_at)
+  );
+
+  const filtered = tab === 'all' ? allItems :
+    tab === 'gifts' ? orders :
+    bookings;
+
+  const formatPrice = (price) => '₦' + (price || 0).toLocaleString();
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('en', { day: 'numeric', month: 'short' });
+  };
 
   const renderOrder = ({ item }) => {
-    const status = STATUS_CONFIG[item.status];
+    const status = STATUS_CONFIG[item.status] || STATUS_CONFIG.pending;
+    const isGift = item._type === 'gift';
+    const title = isGift
+      ? (item.order_number || `Order #${item.id?.slice(0, 8)}`)
+      : (item.service_name || 'Beauty Booking');
+    const subtitle = isGift
+      ? `${item.items?.length || 0} item(s)`
+      : (item.provider_name || 'Provider');
+
     return (
       <TouchableOpacity style={styles.card} activeOpacity={0.8}>
         <View style={styles.cardIcon}>
-          <Text style={styles.cardEmoji}>{item.type === 'gift' ? '🎁' : '💅'}</Text>
+          <Text style={styles.cardEmoji}>{isGift ? '🎁' : '💅'}</Text>
         </View>
         <View style={styles.cardInfo}>
-          <Text style={styles.cardTitle} numberOfLines={1}>{item.item}</Text>
-          <Text style={styles.cardSub}>{item.vendor || item.provider}</Text>
+          <Text style={styles.cardTitle} numberOfLines={1}>{title}</Text>
+          <Text style={styles.cardSub}>{subtitle}</Text>
           <View style={styles.cardMeta}>
-            <Text style={styles.cardDate}>{item.date}</Text>
+            <Text style={styles.cardDate}>{formatDate(item.created_at)}</Text>
             <View style={[styles.statusBadge, { backgroundColor: status.color + '15' }]}>
               <Ionicons name={status.icon} size={12} color={status.color} />
               <Text style={[styles.statusText, { color: status.color }]}>{status.label}</Text>
             </View>
           </View>
         </View>
-        <Text style={styles.cardPrice}>{formatPrice(item.price)}</Text>
+        <Text style={styles.cardPrice}>{formatPrice(item.total || item.price)}</Text>
       </TouchableOpacity>
     );
   };
@@ -71,19 +117,24 @@ export default function OrdersScreen({ navigation }) {
         ))}
       </View>
 
-      <FlatList
-        data={filtered}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.list}
-        showsVerticalScrollIndicator={false}
-        renderItem={renderOrder}
-        ListEmptyComponent={
-          <View style={styles.empty}>
-            <Text style={styles.emptyEmoji}>📦</Text>
-            <Text style={styles.emptyText}>No orders yet</Text>
-          </View>
-        }
-      />
+      {loading ? (
+        <ActivityIndicator size="large" color={COLORS.primary} style={{ marginTop: 40 }} />
+      ) : (
+        <FlatList
+          data={filtered}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.list}
+          showsVerticalScrollIndicator={false}
+          renderItem={renderOrder}
+          ListEmptyComponent={
+            <View style={styles.empty}>
+              <Text style={styles.emptyEmoji}>📦</Text>
+              <Text style={styles.emptyText}>No orders yet</Text>
+              <Text style={styles.emptySubtext}>Your gift orders and beauty bookings will appear here</Text>
+            </View>
+          }
+        />
+      )}
     </View>
   );
 }
@@ -126,5 +177,6 @@ const styles = StyleSheet.create({
   cardPrice: { fontSize: FONTS.sizes.md, fontWeight: '700', color: COLORS.text },
   empty: { alignItems: 'center', paddingTop: 80 },
   emptyEmoji: { fontSize: 48, marginBottom: SPACING.md },
-  emptyText: { fontSize: FONTS.sizes.lg, color: COLORS.textSecondary },
+  emptyText: { fontSize: FONTS.sizes.lg, color: COLORS.textSecondary, fontWeight: '600' },
+  emptySubtext: { fontSize: FONTS.sizes.md, color: COLORS.textLight, marginTop: 4, textAlign: 'center' },
 });

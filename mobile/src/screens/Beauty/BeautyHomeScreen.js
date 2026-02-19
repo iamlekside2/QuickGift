@@ -1,13 +1,32 @@
-import React from 'react';
-import { View, Text, ScrollView, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, ScrollView, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../constants/theme';
-import { BEAUTY_CATEGORIES, FEATURED_PROVIDERS } from '../../constants/data';
+import { BEAUTY_CATEGORIES } from '../../constants/data';
+import { providersAPI } from '../../services/api';
 import SectionHeader from '../../components/common/SectionHeader';
 import CategoryCard from '../../components/common/CategoryCard';
 import ProviderCard from '../../components/common/ProviderCard';
 
 export default function BeautyHomeScreen({ navigation }) {
+  const [providers, setProviders] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadProviders();
+  }, []);
+
+  const loadProviders = async () => {
+    try {
+      const res = await providersAPI.list({ sort: 'rating' });
+      setProviders(res.data || []);
+    } catch (err) {
+      console.log('Error loading providers:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.header}>
@@ -61,15 +80,19 @@ export default function BeautyHomeScreen({ navigation }) {
         title="Top Rated Providers"
         onAction={() => navigation.navigate('ProvidersList', { title: 'All Providers' })}
       />
-      <View style={styles.providersList}>
-        {FEATURED_PROVIDERS.map((item) => (
-          <ProviderCard
-            key={item.id}
-            item={item}
-            onPress={() => navigation.navigate('ProviderProfile', { provider: item })}
-          />
-        ))}
-      </View>
+      {loading ? (
+        <ActivityIndicator size="large" color={COLORS.primary} style={{ marginVertical: SPACING.xl }} />
+      ) : (
+        <View style={styles.providersList}>
+          {providers.map((item) => (
+            <ProviderCard
+              key={item.id}
+              item={item}
+              onPress={() => navigation.navigate('ProviderProfile', { provider: item })}
+            />
+          ))}
+        </View>
+      )}
 
       <View style={{ height: 100 }} />
     </ScrollView>

@@ -1,13 +1,42 @@
-import React, { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../constants/theme';
-import { FEATURED_PROVIDERS } from '../../constants/data';
+import { providersAPI } from '../../services/api';
 import ProviderCard from '../../components/common/ProviderCard';
 
 export default function ProvidersListScreen({ navigation, route }) {
   const { category, title } = route.params || {};
+  const [providers, setProviders] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState('list');
+  const [activeFilter, setActiveFilter] = useState('All');
+
+  useEffect(() => {
+    loadProviders();
+  }, []);
+
+  const loadProviders = async () => {
+    try {
+      const params = {};
+      if (category) params.service_type = category;
+      const res = await providersAPI.list(params);
+      setProviders(res.data?.items || res.data || []);
+    } catch (err) {
+      console.log('Error loading providers:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filters = ['All', 'Available Now', 'Home Service', 'Top Rated'];
+
+  const filteredProviders = providers.filter((p) => {
+    if (activeFilter === 'Available Now') return p.is_available;
+    if (activeFilter === 'Home Service') return p.offers_home_service;
+    if (activeFilter === 'Top Rated') return p.rating >= 4.5;
+    return true;
+  });
 
   return (
     <View style={styles.container}>
@@ -25,28 +54,39 @@ export default function ProvidersListScreen({ navigation, route }) {
       </View>
 
       <View style={styles.filterRow}>
-        {['All', 'Available Now', 'Home Service', 'Top Rated'].map((filter, i) => (
+        {filters.map((filter) => (
           <TouchableOpacity
             key={filter}
-            style={[styles.filterChip, i === 0 && styles.filterActive]}
+            style={[styles.filterChip, activeFilter === filter && styles.filterActive]}
+            onPress={() => setActiveFilter(filter)}
           >
-            <Text style={[styles.filterText, i === 0 && styles.filterTextActive]}>{filter}</Text>
+            <Text style={[styles.filterText, activeFilter === filter && styles.filterTextActive]}>{filter}</Text>
           </TouchableOpacity>
         ))}
       </View>
 
-      <FlatList
-        data={FEATURED_PROVIDERS}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.list}
-        showsVerticalScrollIndicator={false}
-        renderItem={({ item }) => (
-          <ProviderCard
-            item={item}
-            onPress={() => navigation.navigate('ProviderProfile', { provider: item })}
-          />
-        )}
-      />
+      {loading ? (
+        <ActivityIndicator size="large" color={COLORS.primary} style={{ marginTop: 40 }} />
+      ) : (
+        <FlatList
+          data={filteredProviders}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.list}
+          showsVerticalScrollIndicator={false}
+          renderItem={({ item }) => (
+            <ProviderCard
+              item={item}
+              onPress={() => navigation.navigate('ProviderProfile', { provider: item })}
+            />
+          )}
+          ListEmptyComponent={
+            <View style={styles.empty}>
+              <Text style={styles.emptyEmoji}>💈</Text>
+              <Text style={styles.emptyText}>No providers found</Text>
+            </View>
+          }
+        />
+      )}
     </View>
   );
 }
@@ -77,4 +117,7 @@ const styles = StyleSheet.create({
   filterText: { fontSize: FONTS.sizes.sm, color: COLORS.textSecondary, fontWeight: '500' },
   filterTextActive: { color: COLORS.textWhite },
   list: { paddingHorizontal: SPACING.xl, gap: SPACING.md, paddingBottom: 100 },
+  empty: { alignItems: 'center', paddingTop: 80 },
+  emptyEmoji: { fontSize: 48, marginBottom: SPACING.md },
+  emptyText: { fontSize: FONTS.sizes.lg, color: COLORS.textSecondary },
 });

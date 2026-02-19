@@ -1,13 +1,47 @@
-import React from 'react';
-import { View, Text, ScrollView, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, ScrollView, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../constants/theme';
-import { GIFT_CATEGORIES, OCCASIONS, FEATURED_GIFTS } from '../../constants/data';
+import { productsAPI } from '../../services/api';
 import SectionHeader from '../../components/common/SectionHeader';
 import CategoryCard from '../../components/common/CategoryCard';
 import GiftCard from '../../components/common/GiftCard';
 
 export default function GiftsHomeScreen({ navigation }) {
+  const [categories, setCategories] = useState([]);
+  const [occasions, setOccasions] = useState([]);
+  const [popularGifts, setPopularGifts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      const [catRes, occRes, giftsRes] = await Promise.allSettled([
+        productsAPI.categories(),
+        productsAPI.occasions(),
+        productsAPI.list({ sort: 'popular', per_page: 8 }),
+      ]);
+      if (catRes.status === 'fulfilled') setCategories(catRes.value.data);
+      if (occRes.status === 'fulfilled') setOccasions(occRes.value.data);
+      if (giftsRes.status === 'fulfilled') setPopularGifts(giftsRes.value.data.items || []);
+    } catch (err) {
+      console.log('Error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+      </View>
+    );
+  }
+
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.header}>
@@ -15,59 +49,67 @@ export default function GiftsHomeScreen({ navigation }) {
         <Text style={styles.subtitle}>Make someone's day special</Text>
       </View>
 
-      {/* Search */}
       <TouchableOpacity style={styles.searchBar}>
         <Ionicons name="search" size={20} color={COLORS.textLight} />
         <Text style={styles.searchPlaceholder}>Search gifts...</Text>
       </TouchableOpacity>
 
-      {/* Categories */}
-      <SectionHeader title="Categories" />
-      <View style={styles.categoriesGrid}>
-        {GIFT_CATEGORIES.map((cat) => (
-          <CategoryCard
-            key={cat.id}
-            label={cat.label}
-            icon={cat.icon}
-            onPress={() => navigation.navigate('GiftsList', { category: cat.id, title: cat.label })}
-          />
-        ))}
-      </View>
+      {categories.length > 0 && (
+        <>
+          <SectionHeader title="Categories" />
+          <View style={styles.categoriesGrid}>
+            {categories.map((cat) => (
+              <CategoryCard
+                key={cat.id}
+                label={cat.name}
+                icon={cat.icon}
+                onPress={() => navigation.navigate('GiftsList', { category: cat.id, title: cat.name })}
+              />
+            ))}
+          </View>
+        </>
+      )}
 
-      {/* Occasions */}
-      <SectionHeader title="By Occasion" />
-      <FlatList
-        horizontal
-        data={OCCASIONS}
-        keyExtractor={(item) => item.id}
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.horizontalList}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={[styles.occasionChip, { backgroundColor: item.color + '15' }]}
-            onPress={() => navigation.navigate('GiftsList', { occasion: item.id, title: item.label })}
-          >
-            <Text style={styles.occasionIcon}>{item.icon}</Text>
-            <Text style={[styles.occasionLabel, { color: item.color }]}>{item.label}</Text>
-          </TouchableOpacity>
-        )}
-      />
-
-      {/* Featured */}
-      <SectionHeader title="Popular Gifts" onAction={() => navigation.navigate('GiftsList', { title: 'All Gifts' })} />
-      <FlatList
-        horizontal
-        data={FEATURED_GIFTS}
-        keyExtractor={(item) => item.id}
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.horizontalList}
-        renderItem={({ item }) => (
-          <GiftCard
-            item={item}
-            onPress={() => navigation.navigate('GiftDetail', { gift: item })}
+      {occasions.length > 0 && (
+        <>
+          <SectionHeader title="By Occasion" />
+          <FlatList
+            horizontal
+            data={occasions}
+            keyExtractor={(item) => item.id}
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.horizontalList}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={[styles.occasionChip, { backgroundColor: (item.color || '#FF6B6B') + '15' }]}
+                onPress={() => navigation.navigate('GiftsList', { title: item.name })}
+              >
+                <Text style={styles.occasionIcon}>{item.icon}</Text>
+                <Text style={[styles.occasionLabel, { color: item.color || '#FF6B6B' }]}>{item.name}</Text>
+              </TouchableOpacity>
+            )}
           />
-        )}
-      />
+        </>
+      )}
+
+      {popularGifts.length > 0 && (
+        <>
+          <SectionHeader title="Popular Gifts" onAction={() => navigation.navigate('GiftsList', { title: 'All Gifts' })} />
+          <FlatList
+            horizontal
+            data={popularGifts}
+            keyExtractor={(item) => item.id}
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.horizontalList}
+            renderItem={({ item }) => (
+              <GiftCard
+                item={item}
+                onPress={() => navigation.navigate('GiftDetail', { gift: item })}
+              />
+            )}
+          />
+        </>
+      )}
 
       <View style={{ height: 100 }} />
     </ScrollView>
@@ -75,66 +117,25 @@ export default function GiftsHomeScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  header: {
-    paddingHorizontal: SPACING.xl,
-    paddingTop: 60,
-    paddingBottom: SPACING.lg,
-  },
-  title: {
-    fontSize: FONTS.sizes.title,
-    fontWeight: '800',
-    color: COLORS.text,
-  },
-  subtitle: {
-    fontSize: FONTS.sizes.lg,
-    color: COLORS.textSecondary,
-    marginTop: 4,
-  },
+  container: { flex: 1, backgroundColor: COLORS.background },
+  header: { paddingHorizontal: SPACING.xl, paddingTop: 60, paddingBottom: SPACING.lg },
+  title: { fontSize: FONTS.sizes.title, fontWeight: '800', color: COLORS.text },
+  subtitle: { fontSize: FONTS.sizes.lg, color: COLORS.textSecondary, marginTop: 4 },
   searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.backgroundGray,
-    borderRadius: RADIUS.lg,
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md + 2,
-    marginHorizontal: SPACING.xl,
-    marginBottom: SPACING.xxl,
-    gap: SPACING.sm,
+    flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.backgroundGray,
+    borderRadius: RADIUS.lg, paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md + 2,
+    marginHorizontal: SPACING.xl, marginBottom: SPACING.xxl, gap: SPACING.sm,
   },
-  searchPlaceholder: {
-    fontSize: FONTS.sizes.md,
-    color: COLORS.textLight,
-  },
+  searchPlaceholder: { fontSize: FONTS.sizes.md, color: COLORS.textLight },
   categoriesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    paddingHorizontal: SPACING.xl,
-    gap: SPACING.lg,
-    marginBottom: SPACING.xxl,
-    justifyContent: 'space-between',
+    flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: SPACING.xl,
+    gap: SPACING.lg, marginBottom: SPACING.xxl, justifyContent: 'space-between',
   },
-  horizontalList: {
-    paddingHorizontal: SPACING.xl,
-    gap: SPACING.md,
-    marginBottom: SPACING.xxl,
-  },
+  horizontalList: { paddingHorizontal: SPACING.xl, gap: SPACING.md, marginBottom: SPACING.xxl },
   occasionChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.sm + 2,
-    borderRadius: RADIUS.full,
-    gap: SPACING.xs,
+    flexDirection: 'row', alignItems: 'center', paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.sm + 2, borderRadius: RADIUS.full, gap: SPACING.xs,
   },
-  occasionIcon: {
-    fontSize: 16,
-  },
-  occasionLabel: {
-    fontSize: FONTS.sizes.md,
-    fontWeight: '600',
-  },
+  occasionIcon: { fontSize: 16 },
+  occasionLabel: { fontSize: FONTS.sizes.md, fontWeight: '600' },
 });

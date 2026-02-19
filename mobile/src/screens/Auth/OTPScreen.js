@@ -1,15 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../constants/theme';
 import Button from '../../components/common/Button';
+import { useAuth } from '../../context/AuthContext';
 
 export default function OTPScreen({ navigation, route }) {
-  const { phone } = route.params || {};
+  const { phone, otpDev, fullName, email, isRegistration } = route.params || {};
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [timer, setTimer] = useState(60);
   const [loading, setLoading] = useState(false);
   const inputs = useRef([]);
+  const { verifyOTP, register, sendOTP } = useAuth();
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -36,17 +38,29 @@ export default function OTPScreen({ navigation, route }) {
 
   const isComplete = otp.every((digit) => digit !== '');
 
-  const handleVerify = () => {
+  const handleVerify = async () => {
     if (!isComplete) return;
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      const code = otp.join('');
+      await verifyOTP(phone, code);
       navigation.replace('MainApp');
-    }, 1500);
+    } catch (err) {
+      Alert.alert('Error', err.response?.data?.detail || 'Invalid OTP');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleResend = () => {
-    setTimer(60);
+  const handleResend = async () => {
+    try {
+      await sendOTP(phone);
+      setTimer(60);
+      setOtp(['', '', '', '', '', '']);
+      Alert.alert('OTP Sent', 'A new code has been sent to your phone');
+    } catch (err) {
+      Alert.alert('Error', 'Failed to resend OTP');
+    }
   };
 
   return (
@@ -63,6 +77,12 @@ export default function OTPScreen({ navigation, route }) {
           <Text style={styles.phone}>{phone || '+234 ****'}</Text>
         </Text>
       </View>
+
+      {__DEV__ && otpDev && (
+        <View style={{ backgroundColor: '#FFF3E0', padding: 10, borderRadius: 8, marginBottom: 12, alignItems: 'center' }}>
+          <Text style={{ fontSize: 12, color: '#E65100' }}>DEV OTP: {otpDev}</Text>
+        </View>
+      )}
 
       <View style={styles.otpRow}>
         {otp.map((digit, index) => (

@@ -1,19 +1,36 @@
-import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
+import { providersAPI, reviewsAPI } from '../../services/api';
 import Button from '../../components/common/Button';
 
 export default function ProviderProfileScreen({ navigation, route }) {
   const { provider } = route.params || {};
-  const formatPrice = (price) => '₦' + price.toLocaleString();
+  const [services, setServices] = useState([]);
+  const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const services = [
-    { name: 'Gel Nails (Full Set)', price: 8000, duration: '1hr 30min' },
-    { name: 'Manicure & Pedicure', price: 5000, duration: '1hr' },
-    { name: 'Nail Art (per nail)', price: 500, duration: '15min' },
-    { name: 'Nail Removal', price: 2000, duration: '30min' },
-  ];
+  const formatPrice = (price) => '₦' + (price || 0).toLocaleString();
+
+  useEffect(() => {
+    loadProviderData();
+  }, []);
+
+  const loadProviderData = async () => {
+    try {
+      const [svcRes, revRes] = await Promise.allSettled([
+        providersAPI.services(provider?.id),
+        reviewsAPI.list('provider', provider?.id),
+      ]);
+      if (svcRes.status === 'fulfilled') setServices(svcRes.value.data || []);
+      if (revRes.status === 'fulfilled') setReviews(revRes.value.data || []);
+    } catch (err) {
+      console.log('Error loading provider data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -24,38 +41,40 @@ export default function ProviderProfileScreen({ navigation, route }) {
             <Ionicons name="arrow-back" size={24} color={COLORS.text} />
           </TouchableOpacity>
           <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{provider?.name?.charAt(0)}</Text>
+            <Text style={styles.avatarText}>{provider?.business_name?.charAt(0) || provider?.name?.charAt(0)}</Text>
           </View>
-          <Text style={styles.name}>{provider?.name}</Text>
-          <Text style={styles.service}>{provider?.service}</Text>
+          <Text style={styles.name}>{provider?.business_name || provider?.name}</Text>
+          <Text style={styles.service}>{provider?.service_type || provider?.service}</Text>
 
           <View style={styles.statsRow}>
             <View style={styles.stat}>
-              <Text style={styles.statValue}>{provider?.rating}</Text>
+              <Text style={styles.statValue}>{provider?.rating || '4.8'}</Text>
               <Text style={styles.statLabel}>Rating</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.stat}>
-              <Text style={styles.statValue}>{provider?.reviews}</Text>
+              <Text style={styles.statValue}>{provider?.review_count || provider?.reviews || 0}</Text>
               <Text style={styles.statLabel}>Reviews</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.stat}>
-              <Text style={styles.statValue}>2yr</Text>
+              <Text style={styles.statValue}>{provider?.experience || '2yr'}</Text>
               <Text style={styles.statLabel}>Experience</Text>
             </View>
           </View>
 
           <View style={styles.badges}>
-            <View style={styles.badge}>
-              <Ionicons name="shield-checkmark" size={14} color={COLORS.success} />
-              <Text style={styles.badgeText}>Verified</Text>
-            </View>
+            {provider?.is_verified && (
+              <View style={styles.badge}>
+                <Ionicons name="shield-checkmark" size={14} color={COLORS.success} />
+                <Text style={styles.badgeText}>Verified</Text>
+              </View>
+            )}
             <View style={styles.badge}>
               <Ionicons name="location" size={14} color={COLORS.primary} />
-              <Text style={styles.badgeText}>{provider?.location}</Text>
+              <Text style={styles.badgeText}>{provider?.city || provider?.location || 'Lagos'}</Text>
             </View>
-            {provider?.available && (
+            {(provider?.is_available || provider?.available) && (
               <View style={[styles.badge, { backgroundColor: COLORS.success + '15' }]}>
                 <View style={styles.availDot} />
                 <Text style={[styles.badgeText, { color: COLORS.success }]}>Available</Text>
@@ -67,15 +86,21 @@ export default function ProviderProfileScreen({ navigation, route }) {
         {/* Services */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Services & Pricing</Text>
-          {services.map((svc, i) => (
-            <View key={i} style={styles.serviceRow}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.serviceName}>{svc.name}</Text>
-                <Text style={styles.serviceDuration}>{svc.duration}</Text>
+          {loading ? (
+            <ActivityIndicator color={COLORS.primary} />
+          ) : services.length > 0 ? (
+            services.map((svc, i) => (
+              <View key={svc.id || i} style={styles.serviceRow}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.serviceName}>{svc.name}</Text>
+                  <Text style={styles.serviceDuration}>{svc.duration_minutes ? `${svc.duration_minutes}min` : svc.duration}</Text>
+                </View>
+                <Text style={styles.servicePrice}>{formatPrice(svc.price)}</Text>
               </View>
-              <Text style={styles.servicePrice}>{formatPrice(svc.price)}</Text>
-            </View>
-          ))}
+            ))
+          ) : (
+            <Text style={styles.emptyText}>No services listed yet</Text>
+          )}
         </View>
 
         {/* Portfolio */}
@@ -93,22 +118,23 @@ export default function ProviderProfileScreen({ navigation, route }) {
         {/* Reviews */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Reviews</Text>
-          {[
-            { name: 'Chioma A.', rating: 5, text: 'Amazing work! My nails looked perfect for the wedding.' },
-            { name: 'Fatima B.', rating: 5, text: 'Very professional and punctual. Will book again!' },
-          ].map((review, i) => (
-            <View key={i} style={styles.review}>
-              <View style={styles.reviewHeader}>
-                <Text style={styles.reviewName}>{review.name}</Text>
-                <View style={styles.reviewStars}>
-                  {Array(review.rating).fill(0).map((_, j) => (
-                    <Ionicons key={j} name="star" size={12} color="#F59E0B" />
-                  ))}
+          {reviews.length > 0 ? (
+            reviews.map((review, i) => (
+              <View key={review.id || i} style={styles.review}>
+                <View style={styles.reviewHeader}>
+                  <Text style={styles.reviewName}>{review.user_name}</Text>
+                  <View style={styles.reviewStars}>
+                    {Array(Math.round(review.rating)).fill(0).map((_, j) => (
+                      <Ionicons key={j} name="star" size={12} color="#F59E0B" />
+                    ))}
+                  </View>
                 </View>
+                {review.comment && <Text style={styles.reviewText}>{review.comment}</Text>}
               </View>
-              <Text style={styles.reviewText}>{review.text}</Text>
-            </View>
-          ))}
+            ))
+          ) : (
+            <Text style={styles.emptyText}>No reviews yet</Text>
+          )}
         </View>
 
         <View style={{ height: 120 }} />
@@ -120,7 +146,7 @@ export default function ProviderProfileScreen({ navigation, route }) {
         </TouchableOpacity>
         <Button
           title="Book Now"
-          onPress={() => navigation.navigate('Booking', { provider })}
+          onPress={() => navigation.navigate('Booking', { provider, services })}
           size="lg"
           style={{ flex: 1 }}
         />
@@ -167,6 +193,7 @@ const styles = StyleSheet.create({
   serviceName: { fontSize: FONTS.sizes.md, fontWeight: '600', color: COLORS.text },
   serviceDuration: { fontSize: FONTS.sizes.sm, color: COLORS.textLight },
   servicePrice: { fontSize: FONTS.sizes.lg, fontWeight: '700', color: COLORS.primary },
+  emptyText: { fontSize: FONTS.sizes.md, color: COLORS.textLight, textAlign: 'center', paddingVertical: SPACING.lg },
   portfolioGrid: {
     flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm,
   },

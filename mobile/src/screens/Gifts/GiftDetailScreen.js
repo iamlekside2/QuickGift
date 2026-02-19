@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
 import Button from '../../components/common/Button';
+import { useCart } from '../../context/CartContext';
 
 export default function GiftDetailScreen({ navigation, route }) {
   const { gift } = route.params || {};
   const [quantity, setQuantity] = useState(1);
   const [message, setMessage] = useState('');
+  const { addItem } = useCart();
 
   const formatPrice = (price) => '₦' + price.toLocaleString();
 
@@ -32,12 +34,12 @@ export default function GiftDetailScreen({ navigation, route }) {
         <View style={styles.content}>
           {/* Info */}
           <Text style={styles.name}>{gift?.name}</Text>
-          <Text style={styles.vendor}>by {gift?.vendor}</Text>
+          <Text style={styles.vendor}>by {gift?.vendor_name || gift?.vendor}</Text>
 
           <View style={styles.metaRow}>
             <View style={styles.rating}>
               <Ionicons name="star" size={16} color="#F59E0B" />
-              <Text style={styles.ratingText}>{gift?.rating} ({gift?.reviews} reviews)</Text>
+              <Text style={styles.ratingText}>{gift?.rating} ({gift?.review_count || 0} reviews)</Text>
             </View>
             <View style={styles.deliveryBadge}>
               <Ionicons name="bicycle-outline" size={14} color={COLORS.success} />
@@ -121,7 +123,13 @@ export default function GiftDetailScreen({ navigation, route }) {
         </View>
         <Button
           title="Add to Cart"
-          onPress={() => navigation.navigate('Cart')}
+          onPress={() => {
+            addItem(gift, quantity);
+            Alert.alert('Added!', `${gift.name} added to cart`, [
+              { text: 'Continue Shopping', style: 'cancel' },
+              { text: 'View Cart', onPress: () => navigation.navigate('Cart') },
+            ]);
+          }}
           size="lg"
           style={{ flex: 1 }}
         />

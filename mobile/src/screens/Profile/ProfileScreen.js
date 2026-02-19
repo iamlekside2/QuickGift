@@ -1,7 +1,9 @@
-import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
+import { useAuth } from '../../context/AuthContext';
+import { ordersAPI, bookingsAPI } from '../../services/api';
 
 const MENU_ITEMS = [
   { icon: 'wallet-outline', label: 'Wallet', sub: '₦0.00 balance', screen: 'Wallet' },
@@ -14,6 +16,49 @@ const MENU_ITEMS = [
 ];
 
 export default function ProfileScreen({ navigation }) {
+  const { user, isGuest, isAuthenticated, logout } = useAuth();
+  const [stats, setStats] = useState({ orders: 0, gifts: 0, bookings: 0 });
+
+  useEffect(() => {
+    if (isAuthenticated && !isGuest) {
+      loadStats();
+    }
+  }, [isAuthenticated]);
+
+  const loadStats = async () => {
+    try {
+      const [ordersRes, bookingsRes] = await Promise.allSettled([
+        ordersAPI.list(),
+        bookingsAPI.list(),
+      ]);
+      const orderCount = ordersRes.status === 'fulfilled'
+        ? (ordersRes.value.data?.items?.length || ordersRes.value.data?.length || 0)
+        : 0;
+      const bookingCount = bookingsRes.status === 'fulfilled'
+        ? (bookingsRes.value.data?.items?.length || bookingsRes.value.data?.length || 0)
+        : 0;
+      setStats({ orders: orderCount + bookingCount, gifts: orderCount, bookings: bookingCount });
+    } catch (err) {
+      console.log('Error loading stats:', err);
+    }
+  };
+
+  const handleLogout = () => {
+    Alert.alert('Log Out', 'Are you sure you want to log out?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Log Out', style: 'destructive',
+        onPress: async () => {
+          await logout();
+        },
+      },
+    ]);
+  };
+
+  const displayName = isGuest ? 'Guest User' : (user?.full_name || 'User');
+  const displayPhone = isGuest ? 'Sign in for full experience' : (user?.phone || '');
+  const initials = displayName.charAt(0).toUpperCase();
+
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.header}>
@@ -23,29 +68,43 @@ export default function ProfileScreen({ navigation }) {
       {/* User Card */}
       <View style={styles.userCard}>
         <View style={styles.avatar}>
-          <Text style={styles.avatarText}>G</Text>
+          <Text style={styles.avatarText}>{initials}</Text>
         </View>
         <View style={styles.userInfo}>
-          <Text style={styles.userName}>Guest User</Text>
-          <Text style={styles.userPhone}>Sign in for full experience</Text>
+          <Text style={styles.userName}>{displayName}</Text>
+          <Text style={styles.userPhone}>{displayPhone}</Text>
         </View>
-        <TouchableOpacity style={styles.editBtn}>
-          <Ionicons name="create-outline" size={20} color={COLORS.primary} />
-        </TouchableOpacity>
+        {!isGuest && (
+          <TouchableOpacity style={styles.editBtn}>
+            <Ionicons name="create-outline" size={20} color={COLORS.primary} />
+          </TouchableOpacity>
+        )}
       </View>
+
+      {/* Sign In Prompt for Guest */}
+      {isGuest && (
+        <TouchableOpacity
+          style={styles.signInPrompt}
+          onPress={() => navigation.navigate('Auth')}
+        >
+          <Ionicons name="person-outline" size={20} color={COLORS.primary} />
+          <Text style={styles.signInText}>Sign in to access all features</Text>
+          <Ionicons name="chevron-forward" size={18} color={COLORS.primary} />
+        </TouchableOpacity>
+      )}
 
       {/* Stats */}
       <View style={styles.statsRow}>
         <View style={styles.stat}>
-          <Text style={styles.statValue}>0</Text>
+          <Text style={styles.statValue}>{stats.orders}</Text>
           <Text style={styles.statLabel}>Orders</Text>
         </View>
         <View style={styles.stat}>
-          <Text style={styles.statValue}>0</Text>
+          <Text style={styles.statValue}>{stats.gifts}</Text>
           <Text style={styles.statLabel}>Gifts Sent</Text>
         </View>
         <View style={styles.stat}>
-          <Text style={styles.statValue}>0</Text>
+          <Text style={styles.statValue}>{stats.bookings}</Text>
           <Text style={styles.statLabel}>Bookings</Text>
         </View>
       </View>
@@ -67,9 +126,9 @@ export default function ProfileScreen({ navigation }) {
       </View>
 
       {/* Logout */}
-      <TouchableOpacity style={styles.logoutButton}>
+      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
         <Ionicons name="log-out-outline" size={20} color={COLORS.error} />
-        <Text style={styles.logoutText}>Log Out</Text>
+        <Text style={styles.logoutText}>{isGuest ? 'Exit Guest Mode' : 'Log Out'}</Text>
       </TouchableOpacity>
 
       <Text style={styles.version}>QuickGift v1.0.0</Text>
@@ -99,6 +158,13 @@ const styles = StyleSheet.create({
     width: 40, height: 40, borderRadius: RADIUS.full,
     backgroundColor: COLORS.primary + '10', alignItems: 'center', justifyContent: 'center',
   },
+  signInPrompt: {
+    flexDirection: 'row', alignItems: 'center', gap: SPACING.sm,
+    marginHorizontal: SPACING.xl, marginBottom: SPACING.xl,
+    padding: SPACING.lg, backgroundColor: COLORS.primary + '10',
+    borderRadius: RADIUS.lg, borderWidth: 1, borderColor: COLORS.primary + '30',
+  },
+  signInText: { flex: 1, fontSize: FONTS.sizes.md, fontWeight: '600', color: COLORS.primary },
   statsRow: {
     flexDirection: 'row', marginHorizontal: SPACING.xl,
     backgroundColor: COLORS.backgroundGray, borderRadius: RADIUS.xl,
