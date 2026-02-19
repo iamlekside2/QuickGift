@@ -39,12 +39,28 @@ class Settings(BaseModel):
     DELIVERY_PER_KM: int = 200
     EXPRESS_MULTIPLIER: float = 2.5
 
-    # CORS
+    # CORS — include production URLs + local dev
     ALLOWED_ORIGINS: list = [
+        o.strip() for o in os.getenv("ALLOWED_ORIGINS", "").split(",") if o.strip()
+    ] or [
         "http://localhost:5173",
+        "http://localhost:5174",
+        "http://localhost:5175",
+        "http://localhost:5176",
         "http://localhost:3000",
         "http://localhost:8081",
     ]
+
+    @property
+    def async_database_url(self) -> str:
+        """Convert DATABASE_URL to async-compatible format for SQLAlchemy."""
+        url = self.DATABASE_URL
+        # Render/Railway provide postgres:// but SQLAlchemy needs postgresql+asyncpg://
+        if url.startswith("postgres://"):
+            url = url.replace("postgres://", "postgresql+asyncpg://", 1)
+        elif url.startswith("postgresql://") and "+asyncpg" not in url:
+            url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        return url
 
 
 settings = Settings()

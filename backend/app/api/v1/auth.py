@@ -110,7 +110,10 @@ async def register(req: RegisterRequest, db: AsyncSession = Depends(get_db)):
 
 @router.post("/login", response_model=TokenResponse)
 async def login(req: LoginRequest, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(User).where(User.phone == req.phone))
+    # Support login by phone OR email
+    result = await db.execute(
+        select(User).where((User.phone == req.phone) | (User.email == req.phone))
+    )
     user = result.scalars().first()
 
     if not user or not user.password_hash:

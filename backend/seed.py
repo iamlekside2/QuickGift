@@ -1,5 +1,6 @@
 """Seed the database with initial data."""
 import asyncio
+from sqlalchemy import select
 from app.core.database import async_session, init_db
 from app.core.security import hash_password
 from app.models.user import User
@@ -34,6 +35,12 @@ async def seed():
     await init_db()
 
     async with async_session() as db:
+        # Check if already seeded
+        existing = await db.execute(select(User).where(User.email == "admin@quickgift.ng"))
+        if existing.scalars().first():
+            print("Database already seeded, skipping.")
+            return
+
         # Admin user
         admin = User(
             full_name="QuickGift Admin",
