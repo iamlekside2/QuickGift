@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { Save, Globe, DollarSign, Truck, Bell, Shield, Percent } from 'lucide-react'
+import { Save, Globe, Truck, Bell, Percent, CheckCircle2 } from 'lucide-react'
 
 export default function SettingsPage() {
+  const [saved, setSaved] = useState(false)
   const [settings, setSettings] = useState({
     platformName: 'QuickGift',
     supportEmail: 'support@quickgift.ng',
@@ -188,10 +189,21 @@ export default function SettingsPage() {
       </section>
 
       {/* Save */}
-      <button className="flex items-center gap-2 px-6 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-xl text-sm font-semibold transition-colors">
-        <Save className="w-4 h-4" />
-        Save Settings
-      </button>
+      <div className="flex items-center gap-4">
+        <button
+          onClick={() => { setSaved(true); setTimeout(() => setSaved(false), 3000) }}
+          className="flex items-center gap-2 px-6 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-xl text-sm font-semibold transition-colors"
+        >
+          <Save className="w-4 h-4" />
+          Save Settings
+        </button>
+        {saved && (
+          <div className="flex items-center gap-1.5 text-sm text-green-600 font-medium">
+            <CheckCircle2 className="w-4 h-4" />
+            Settings saved
+          </div>
+        )}
+      </div>
     </div>
   )
 }

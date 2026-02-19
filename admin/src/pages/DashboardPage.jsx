@@ -1,16 +1,12 @@
+import { Link } from 'react-router-dom'
 import {
-  TrendingUp, ShoppingCart, Users, DollarSign,
-  Package, Sparkles, ArrowUpRight, ArrowDownRight
+  ShoppingCart, Users, DollarSign,
+  Sparkles, ArrowUpRight, ArrowDownRight, Loader2, Package
 } from 'lucide-react'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts'
+import { useGetDashboardStatsQuery, useGetAdminOrdersQuery } from '../services/api'
 
-const STATS = [
-  { label: 'Total Revenue', value: '₦2.4M', change: '+12.5%', up: true, icon: DollarSign, color: 'bg-green-100 text-green-600' },
-  { label: 'Orders Today', value: '48', change: '+8.2%', up: true, icon: ShoppingCart, color: 'bg-blue-100 text-blue-600' },
-  { label: 'Active Users', value: '1,234', change: '+15.3%', up: true, icon: Users, color: 'bg-purple-100 text-purple-600' },
-  { label: 'Active Providers', value: '89', change: '-2.1%', up: false, icon: Sparkles, color: 'bg-orange-100 text-orange-600' },
-]
-
+// Placeholder chart data (will come from analytics API later)
 const REVENUE_DATA = [
   { name: 'Mon', gifts: 180000, beauty: 95000 },
   { name: 'Tue', gifts: 220000, beauty: 120000 },
@@ -30,22 +26,75 @@ const CATEGORY_DATA = [
   { name: 'Makeup', orders: 65 },
 ]
 
-const RECENT_ORDERS = [
-  { id: 'QG-1234', customer: 'Chioma Adebayo', item: 'Red Velvet Cake', amount: '₦15,000', status: 'Delivered', type: 'gift' },
-  { id: 'QG-1235', customer: 'Fatima Ibrahim', item: 'Gel Nails (Full Set)', amount: '₦8,000', status: 'Confirmed', type: 'beauty' },
-  { id: 'QG-1236', customer: 'Emeka Okonkwo', item: 'Rose Bouquet (24)', amount: '₦25,000', status: 'In Transit', type: 'gift' },
-  { id: 'QG-1237', customer: 'Amina Yusuf', item: 'Bridal Makeup', amount: '₦35,000', status: 'Pending', type: 'beauty' },
-  { id: 'QG-1238', customer: 'Tunde Bakare', item: 'Birthday Hamper', amount: '₦35,000', status: 'Delivered', type: 'gift' },
-]
-
 const STATUS_STYLES = {
-  Delivered: 'bg-green-100 text-green-700',
-  Confirmed: 'bg-blue-100 text-blue-700',
-  'In Transit': 'bg-yellow-100 text-yellow-700',
-  Pending: 'bg-gray-100 text-gray-700',
+  delivered: 'bg-green-100 text-green-700',
+  confirmed: 'bg-blue-100 text-blue-700',
+  in_transit: 'bg-yellow-100 text-yellow-700',
+  pending: 'bg-gray-100 text-gray-700',
+  cancelled: 'bg-red-100 text-red-700',
+}
+
+const STATUS_LABELS = {
+  delivered: 'Delivered', confirmed: 'Confirmed', in_transit: 'In Transit',
+  pending: 'Pending', cancelled: 'Cancelled',
+}
+
+const formatAmount = (amount) => {
+  if (!amount && amount !== 0) return '₦0'
+  if (amount >= 1_000_000) return `₦${(amount / 1_000_000).toFixed(1)}M`
+  if (amount >= 1000) return `₦${(amount / 1000).toFixed(0)}k`
+  return `₦${amount.toLocaleString()}`
 }
 
 export default function DashboardPage() {
+  const { data: stats, isLoading: statsLoading } = useGetDashboardStatsQuery()
+  const { data: ordersData, isLoading: ordersLoading } = useGetAdminOrdersQuery({ per_page: 5 })
+
+  const recentOrders = ordersData?.items || []
+
+  const STATS = [
+    {
+      label: 'Total Revenue',
+      value: formatAmount(stats?.revenue?.total || 0),
+      change: formatAmount(stats?.commission?.total || 0) + ' earned',
+      up: true,
+      icon: DollarSign,
+      color: 'bg-green-100 text-green-600',
+    },
+    {
+      label: 'Total Orders',
+      value: String(stats?.counts?.orders || 0),
+      change: `${stats?.pending?.orders || 0} pending`,
+      up: true,
+      icon: ShoppingCart,
+      color: 'bg-blue-100 text-blue-600',
+    },
+    {
+      label: 'Total Users',
+      value: String(stats?.counts?.users || 0),
+      change: `${stats?.counts?.products || 0} products`,
+      up: true,
+      icon: Users,
+      color: 'bg-purple-100 text-purple-600',
+    },
+    {
+      label: 'Providers',
+      value: String(stats?.counts?.providers || 0),
+      change: `${stats?.pending?.providers || 0} pending`,
+      up: (stats?.pending?.providers || 0) === 0,
+      icon: Sparkles,
+      color: 'bg-orange-100 text-orange-600',
+    },
+  ]
+
+  if (statsLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 text-red-500 animate-spin" />
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
@@ -56,7 +105,7 @@ export default function DashboardPage() {
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${stat.color}`}>
                 <stat.icon className="w-5 h-5" />
               </div>
-              <div className={`flex items-center gap-0.5 text-sm font-medium ${stat.up ? 'text-green-600' : 'text-red-500'}`}>
+              <div className={`flex items-center gap-0.5 text-sm font-medium ${stat.up ? 'text-green-600' : 'text-orange-500'}`}>
                 {stat.up ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
                 {stat.change}
               </div>
@@ -74,7 +123,7 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between mb-6">
             <div>
               <h3 className="text-lg font-bold text-gray-900">Revenue Overview</h3>
-              <p className="text-sm text-gray-500">This week's performance</p>
+              <p className="text-sm text-gray-500">This week&apos;s performance</p>
             </div>
             <div className="flex items-center gap-4 text-sm">
               <div className="flex items-center gap-1.5">
@@ -128,39 +177,43 @@ export default function DashboardPage() {
       <div className="bg-white rounded-2xl border border-gray-200">
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
           <h3 className="text-lg font-bold text-gray-900">Recent Orders</h3>
-          <button className="text-sm text-red-500 font-semibold hover:text-red-600">View All</button>
+          <Link to="/orders" className="text-sm text-red-500 font-semibold hover:text-red-600">View All</Link>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-100">
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Order ID</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Customer</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Item</th>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Type</th>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Amount</th>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
               </tr>
             </thead>
             <tbody>
-              {RECENT_ORDERS.map((order) => (
-                <tr key={order.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
-                  <td className="px-6 py-3.5 text-sm font-mono font-medium text-gray-900">{order.id}</td>
-                  <td className="px-6 py-3.5 text-sm text-gray-700">{order.customer}</td>
-                  <td className="px-6 py-3.5 text-sm text-gray-700">{order.item}</td>
-                  <td className="px-6 py-3.5">
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${order.type === 'gift' ? 'bg-red-50 text-red-600' : 'bg-purple-50 text-purple-600'}`}>
-                      {order.type === 'gift' ? '🎁 Gift' : '💅 Beauty'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-3.5 text-sm font-semibold text-gray-900">{order.amount}</td>
-                  <td className="px-6 py-3.5">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${STATUS_STYLES[order.status]}`}>
-                      {order.status}
-                    </span>
-                  </td>
-                </tr>
-              ))}
+              {ordersLoading ? (
+                <tr><td colSpan={5} className="px-6 py-8 text-center text-gray-400"><Loader2 className="w-5 h-5 animate-spin mx-auto" /></td></tr>
+              ) : recentOrders.length === 0 ? (
+                <tr><td colSpan={5} className="px-6 py-8 text-center text-gray-400">No orders yet</td></tr>
+              ) : (
+                recentOrders.map((order) => (
+                  <tr key={order.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                    <td className="px-6 py-3.5 text-sm font-mono font-medium text-gray-900">{order.order_number}</td>
+                    <td className="px-6 py-3.5">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${order.order_type === 'gift' ? 'bg-red-50 text-red-600' : 'bg-purple-50 text-purple-600'}`}>
+                        {order.order_type === 'gift' ? '🎁 Gift' : '💅 Beauty'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-3.5 text-sm font-semibold text-gray-900">₦{(order.total || 0).toLocaleString()}</td>
+                    <td className="px-6 py-3.5">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${STATUS_STYLES[order.status] || 'bg-gray-100 text-gray-700'}`}>
+                        {STATUS_LABELS[order.status] || order.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-3.5 text-sm text-gray-500">{new Date(order.created_at).toLocaleDateString()}</td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

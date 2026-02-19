@@ -1,46 +1,63 @@
 import { useState } from 'react'
-import { Search, Download, MoreHorizontal, MapPin, ShoppingCart } from 'lucide-react'
-
-const USERS = [
-  { id: 1, name: 'Chioma Adebayo', email: 'chioma@gmail.com', phone: '+234 801 234 5678', city: 'Lagos', orders: 12, spent: 185000, joined: '2026-01-15', lastActive: '2 hours ago' },
-  { id: 2, name: 'Fatima Ibrahim', email: 'fatima.i@yahoo.com', phone: '+234 802 345 6789', city: 'Lagos', orders: 8, spent: 95000, joined: '2026-01-20', lastActive: '1 day ago' },
-  { id: 3, name: 'Emeka Okonkwo', email: 'emeka.ok@gmail.com', phone: '+234 803 456 7890', city: 'Abuja', orders: 15, spent: 320000, joined: '2025-12-10', lastActive: '3 hours ago' },
-  { id: 4, name: 'Amina Yusuf', email: 'amina.y@hotmail.com', phone: '+234 804 567 8901', city: 'Lagos', orders: 3, spent: 45000, joined: '2026-02-01', lastActive: '5 days ago' },
-  { id: 5, name: 'Tunde Bakare', email: 'tunde.b@gmail.com', phone: '+234 805 678 9012', city: 'Lagos', orders: 22, spent: 480000, joined: '2025-11-20', lastActive: '1 hour ago' },
-  { id: 6, name: 'Grace Eze', email: 'grace.e@gmail.com', phone: '+234 806 789 0123', city: 'Abuja', orders: 6, spent: 72000, joined: '2026-01-28', lastActive: '12 hours ago' },
-  { id: 7, name: 'Daniel Adegoke', email: 'daniel.a@outlook.com', phone: '+234 807 890 1234', city: 'Lagos', orders: 9, spent: 135000, joined: '2025-12-25', lastActive: '30 min ago' },
-  { id: 8, name: 'Hauwa Bello', email: 'hauwa.b@gmail.com', phone: '+234 808 901 2345', city: 'Abuja', orders: 1, spent: 15000, joined: '2026-02-10', lastActive: '3 days ago' },
-]
+import { Search, Download, MoreHorizontal, MapPin, Loader2 } from 'lucide-react'
+import { useGetAdminUsersQuery } from '../services/api'
 
 export default function UsersPage() {
   const [search, setSearch] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [page, setPage] = useState(1)
 
-  const filtered = USERS.filter(u => {
-    if (search && !u.name.toLowerCase().includes(search.toLowerCase()) && !u.email.toLowerCase().includes(search.toLowerCase())) return false
-    return true
+  const { data, isLoading, isFetching } = useGetAdminUsersQuery({
+    search: searchQuery || undefined,
+    page,
+    per_page: 20,
   })
 
-  const formatPrice = (price) => '₦' + price.toLocaleString()
+  const users = data?.items || []
+  const total = data?.total || 0
+
+  const handleSearch = (e) => {
+    setSearch(e.target.value)
+    // Debounce: update query after user stops typing
+    clearTimeout(window._userSearchTimer)
+    window._userSearchTimer = setTimeout(() => {
+      setSearchQuery(e.target.value)
+      setPage(1)
+    }, 400)
+  }
+
+  const formatPrice = (price) => '₦' + (price || 0).toLocaleString()
+
+  const activeToday = users.filter(u => {
+    if (!u.updated_at) return false
+    const diff = Date.now() - new Date(u.updated_at).getTime()
+    return diff < 24 * 60 * 60 * 1000
+  }).length
 
   return (
     <div className="space-y-6">
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="bg-white rounded-2xl border border-gray-200 p-4 text-center">
-          <p className="text-2xl font-bold text-gray-900">{USERS.length}</p>
+          <p className="text-2xl font-bold text-gray-900">{total}</p>
           <p className="text-xs text-gray-500">Total Users</p>
         </div>
         <div className="bg-white rounded-2xl border border-gray-200 p-4 text-center">
-          <p className="text-2xl font-bold text-green-600">{USERS.filter(u => u.lastActive.includes('hour') || u.lastActive.includes('min')).length}</p>
+          <p className="text-2xl font-bold text-green-600">{activeToday}</p>
           <p className="text-xs text-gray-500">Active Today</p>
         </div>
         <div className="bg-white rounded-2xl border border-gray-200 p-4 text-center">
-          <p className="text-2xl font-bold text-blue-600">{USERS.filter(u => u.joined.startsWith('2026-02')).length}</p>
+          <p className="text-2xl font-bold text-blue-600">{users.filter(u => {
+            if (!u.created_at) return false
+            const d = new Date(u.created_at)
+            const now = new Date()
+            return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
+          }).length}</p>
           <p className="text-xs text-gray-500">New This Month</p>
         </div>
         <div className="bg-white rounded-2xl border border-gray-200 p-4 text-center">
-          <p className="text-2xl font-bold text-purple-600">₦{(USERS.reduce((s, u) => s + u.spent, 0) / 1000000).toFixed(1)}M</p>
-          <p className="text-xs text-gray-500">Total Spent</p>
+          <p className="text-2xl font-bold text-purple-600">{total}</p>
+          <p className="text-xs text-gray-500">Registered</p>
         </div>
       </div>
 
@@ -50,9 +67,9 @@ export default function UsersPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
             type="text"
-            placeholder="Search by name or email..."
+            placeholder="Search by name, email, or phone..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={handleSearch}
             className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-300 focus:border-red-500 focus:ring-2 focus:ring-red-100 outline-none text-sm"
           />
         </div>
@@ -71,48 +88,65 @@ export default function UsersPage() {
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">User</th>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Contact</th>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Location</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Orders</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Spent</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Last Active</th>
+                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Role</th>
+                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Joined</th>
                 <th className="px-6 py-3"></th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map((user) => (
-                <tr key={user.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
-                  <td className="px-6 py-3.5">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 bg-red-100 rounded-full flex items-center justify-center">
-                        <span className="text-sm font-bold text-red-600">{user.name.charAt(0)}</span>
+              {isLoading ? (
+                <tr><td colSpan={6} className="px-6 py-12 text-center"><Loader2 className="w-6 h-6 text-red-500 animate-spin mx-auto" /></td></tr>
+              ) : users.length === 0 ? (
+                <tr><td colSpan={6} className="px-6 py-12 text-center text-gray-400">No users found</td></tr>
+              ) : (
+                users.map((user) => (
+                  <tr key={user.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                    <td className="px-6 py-3.5">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 bg-red-100 rounded-full flex items-center justify-center">
+                          <span className="text-sm font-bold text-red-600">{(user.full_name || 'U').charAt(0)}</span>
+                        </div>
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">{user.full_name || '—'}</div>
+                          <div className="text-xs text-gray-400">{user.email || ''}</div>
+                        </div>
                       </div>
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                        <div className="text-xs text-gray-400">Joined {user.joined}</div>
+                    </td>
+                    <td className="px-6 py-3.5">
+                      <div className="text-sm text-gray-700">{user.phone || '—'}</div>
+                    </td>
+                    <td className="px-6 py-3.5">
+                      <div className="flex items-center gap-1 text-sm text-gray-500">
+                        <MapPin className="w-3 h-3" />
+                        {user.city || '—'}
                       </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-3.5">
-                    <div className="text-sm text-gray-700">{user.email}</div>
-                    <div className="text-xs text-gray-400">{user.phone}</div>
-                  </td>
-                  <td className="px-6 py-3.5">
-                    <div className="flex items-center gap-1 text-sm text-gray-500">
-                      <MapPin className="w-3 h-3" />
-                      {user.city}
-                    </div>
-                  </td>
-                  <td className="px-6 py-3.5 text-sm font-medium text-gray-900">{user.orders}</td>
-                  <td className="px-6 py-3.5 text-sm font-semibold text-gray-900">{formatPrice(user.spent)}</td>
-                  <td className="px-6 py-3.5 text-sm text-gray-500">{user.lastActive}</td>
-                  <td className="px-6 py-3.5">
-                    <button className="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100">
-                      <MoreHorizontal className="w-4 h-4" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                    <td className="px-6 py-3.5">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                        user.role === 'admin' ? 'bg-red-50 text-red-600' :
+                        user.role === 'provider' ? 'bg-purple-50 text-purple-600' :
+                        'bg-gray-100 text-gray-600'
+                      }`}>
+                        {user.role || 'user'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-3.5 text-sm text-gray-500">{user.created_at ? new Date(user.created_at).toLocaleDateString() : '—'}</td>
+                    <td className="px-6 py-3.5">
+                      <button className="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100">
+                        <MoreHorizontal className="w-4 h-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
+        </div>
+        <div className="px-6 py-3 border-t border-gray-100 flex items-center justify-between text-sm text-gray-500">
+          <span>
+            {isFetching && <Loader2 className="w-3 h-3 animate-spin inline mr-1" />}
+            Showing {users.length} of {total} users
+          </span>
         </div>
       </div>
     </div>

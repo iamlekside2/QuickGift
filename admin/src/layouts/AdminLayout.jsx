@@ -1,9 +1,11 @@
 import { useState } from 'react'
-import { Outlet, NavLink, useLocation } from 'react-router-dom'
+import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom'
+import { useDispatch, useSelector } from 'react-redux'
 import {
   LayoutDashboard, ShoppingCart, Package, Sparkles,
   Users, Settings, Menu, X, LogOut, Gift, Bell
 } from 'lucide-react'
+import { logout, selectCurrentUser } from '../features/authSlice'
 
 const NAV_ITEMS = [
   { path: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -17,6 +19,14 @@ const NAV_ITEMS = [
 export default function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const location = useLocation()
+  const navigate = useNavigate()
+  const dispatch = useDispatch()
+  const user = useSelector(selectCurrentUser)
+
+  const handleLogout = () => {
+    dispatch(logout())
+    navigate('/login')
+  }
 
   const getPageTitle = () => {
     const item = NAV_ITEMS.find(n => n.path === location.pathname)
@@ -78,7 +88,10 @@ export default function AdminLayout() {
         </nav>
 
         <div className="absolute bottom-0 left-0 right-0 p-3 border-t border-gray-100">
-          <button className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors">
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+          >
             <LogOut className="w-5 h-5" />
             Log Out
           </button>
@@ -102,7 +115,7 @@ export default function AdminLayout() {
               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
             </button>
             <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-              <span className="text-sm font-bold text-red-600">A</span>
+              <span className="text-sm font-bold text-red-600">{user?.full_name?.charAt(0) || 'A'}</span>
             </div>
           </div>
         </header>

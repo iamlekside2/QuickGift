@@ -1,21 +1,34 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useSelector } from 'react-redux'
 import { Gift, Eye, EyeOff } from 'lucide-react'
+import { useLoginMutation } from '../services/api'
+import { selectIsAuthenticated } from '../features/authSlice'
 
 export default function LoginPage() {
   const navigate = useNavigate()
+  const isAuthenticated = useSelector(selectIsAuthenticated)
+  const [login, { isLoading: loading }] = useLoginMutation()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
-  const handleLogin = (e) => {
+  // Redirect if already authenticated
+  if (isAuthenticated) {
+    navigate('/', { replace: true })
+    return null
+  }
+
+  const handleLogin = async (e) => {
     e.preventDefault()
-    setLoading(true)
-    setTimeout(() => {
-      setLoading(false)
+    setError('')
+    try {
+      await login({ phone: email, password }).unwrap()
       navigate('/')
-    }, 1000)
+    } catch (err) {
+      setError(err.data?.detail || 'Invalid credentials. Please try again.')
+    }
   }
 
   return (
@@ -30,8 +43,13 @@ export default function LoginPage() {
         </div>
 
         <form onSubmit={handleLogin} className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 space-y-5">
+          {error && (
+            <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600">
+              {error}
+            </div>
+          )}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Email / Phone</label>
             <input
               type="email"
               value={email}
