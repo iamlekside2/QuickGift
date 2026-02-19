@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const API_BASE_URL = __DEV__
   ? 'http://localhost:8000/api/v1'
-  : 'https://api.quickgift.ng/api/v1';
+  : 'https://quickgift-api.onrender.com/api/v1';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
