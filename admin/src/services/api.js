@@ -46,6 +46,14 @@ export const api = createApi({
       },
       providesTags: ['Orders'],
     }),
+    updateOrderStatus: builder.mutation({
+      query: ({ id, status }) => ({
+        url: `/orders/${id}/status`,
+        method: 'PATCH',
+        body: { status },
+      }),
+      invalidatesTags: ['Orders', 'Dashboard'],
+    }),
 
     // ── Bookings (Admin) ─────────────────────────────
     getAdminBookings: builder.query({
@@ -75,6 +83,29 @@ export const api = createApi({
       query: () => '/products/categories',
       providesTags: ['Products'],
     }),
+    createProduct: builder.mutation({
+      query: (body) => ({
+        url: '/products',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['Products', 'Dashboard'],
+    }),
+    updateProduct: builder.mutation({
+      query: ({ id, ...body }) => ({
+        url: `/products/${id}`,
+        method: 'PATCH',
+        body,
+      }),
+      invalidatesTags: ['Products'],
+    }),
+    deleteProduct: builder.mutation({
+      query: (id) => ({
+        url: `/products/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Products', 'Dashboard'],
+    }),
 
     // ── Providers (Admin) ────────────────────────────
     getAdminProviders: builder.query({
@@ -84,11 +115,17 @@ export const api = createApi({
       },
       providesTags: ['Providers'],
     }),
-    updateProviderStatus: builder.mutation({
-      query: ({ id, status }) => ({
-        url: `/providers/${id}`,
+    approveProvider: builder.mutation({
+      query: (id) => ({
+        url: `/providers/${id}/approve`,
         method: 'PATCH',
-        body: { status },
+      }),
+      invalidatesTags: ['Providers', 'Dashboard'],
+    }),
+    rejectProvider: builder.mutation({
+      query: (id) => ({
+        url: `/providers/${id}/reject`,
+        method: 'PATCH',
       }),
       invalidatesTags: ['Providers', 'Dashboard'],
     }),
@@ -117,11 +154,16 @@ export const {
   useGetMeQuery,
   useGetDashboardStatsQuery,
   useGetAdminOrdersQuery,
+  useUpdateOrderStatusMutation,
   useGetAdminBookingsQuery,
   useGetProductsQuery,
   useGetCategoriesQuery,
+  useCreateProductMutation,
+  useUpdateProductMutation,
+  useDeleteProductMutation,
   useGetAdminProvidersQuery,
-  useUpdateProviderStatusMutation,
+  useApproveProviderMutation,
+  useRejectProviderMutation,
   useGetAdminUsersQuery,
   useGetReviewsQuery,
 } = api

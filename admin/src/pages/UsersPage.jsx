@@ -15,6 +15,7 @@ export default function UsersPage() {
 
   const users = data?.items || []
   const total = data?.total || 0
+  const totalPages = Math.ceil(total / 20)
 
   const handleSearch = (e) => {
     setSearch(e.target.value)
@@ -147,6 +148,33 @@ export default function UsersPage() {
             {isFetching && <Loader2 className="w-3 h-3 animate-spin inline mr-1" />}
             Showing {users.length} of {total} users
           </span>
+          {totalPages > 1 && (
+            <div className="flex gap-1">
+              <button
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page <= 1}
+                className="px-3 py-1 rounded-lg hover:bg-gray-100 disabled:opacity-50"
+              >
+                Previous
+              </button>
+              {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => i + 1).map(p => (
+                <button
+                  key={p}
+                  onClick={() => setPage(p)}
+                  className={`px-3 py-1 rounded-lg ${page === p ? 'bg-red-50 text-red-600 font-medium' : 'hover:bg-gray-100'}`}
+                >
+                  {p}
+                </button>
+              ))}
+              <button
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                disabled={page >= totalPages}
+                className="px-3 py-1 rounded-lg hover:bg-gray-100 disabled:opacity-50"
+              >
+                Next
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

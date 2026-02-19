@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { Search, Download, MoreHorizontal, Loader2 } from 'lucide-react'
-import { useGetAdminOrdersQuery } from '../services/api'
+import { Search, Download, ChevronDown, Loader2 } from 'lucide-react'
+import { useGetAdminOrdersQuery, useUpdateOrderStatusMutation } from '../services/api'
 
 const STATUS_STYLES = {
   delivered: 'bg-green-100 text-green-700',
@@ -27,6 +27,7 @@ export default function OrdersPage() {
     page,
     per_page: 20,
   })
+  const [updateOrderStatus] = useUpdateOrderStatusMutation()
 
   const orders = data?.items || []
   const total = data?.total || 0
@@ -39,6 +40,20 @@ export default function OrdersPage() {
   })
 
   const formatPrice = (price) => '₦' + (price || 0).toLocaleString()
+
+  const NEXT_STATUS = {
+    pending: ['confirmed', 'cancelled'],
+    confirmed: ['in_transit', 'cancelled'],
+    in_transit: ['delivered'],
+  }
+
+  const handleStatusChange = async (orderId, newStatus) => {
+    try {
+      await updateOrderStatus({ id: orderId, status: newStatus }).unwrap()
+    } catch (err) {
+      alert(err?.data?.detail || 'Failed to update status')
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -129,9 +144,23 @@ export default function OrdersPage() {
                     </td>
                     <td className="px-6 py-3.5 text-sm text-gray-500">{new Date(order.created_at).toLocaleDateString()}</td>
                     <td className="px-6 py-3.5">
-                      <button className="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100">
-                        <MoreHorizontal className="w-4 h-4" />
-                      </button>
+                      {NEXT_STATUS[order.status] ? (
+                        <div className="relative inline-block">
+                          <select
+                            onChange={(e) => { if (e.target.value) handleStatusChange(order.id, e.target.value); e.target.value = '' }}
+                            defaultValue=""
+                            className="appearance-none pl-3 pr-7 py-1.5 text-xs font-medium bg-white border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer focus:border-red-500 outline-none"
+                          >
+                            <option value="" disabled>Update</option>
+                            {NEXT_STATUS[order.status].map(s => (
+                              <option key={s} value={s}>{STATUS_LABELS[s]}</option>
+                            ))}
+                          </select>
+                          <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" />
+                        </div>
+                      ) : (
+                        <span className="text-xs text-gray-400">—</span>
+                      )}
                     </td>
                   </tr>
                 ))

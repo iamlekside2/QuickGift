@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Search, Plus, Star, MapPin, Check, X, Shield, Loader2 } from 'lucide-react'
-import { useGetAdminProvidersQuery, useUpdateProviderStatusMutation } from '../services/api'
+import { useGetAdminProvidersQuery, useApproveProviderMutation, useRejectProviderMutation } from '../services/api'
 
 const PLAN_STYLES = {
   Free: 'bg-gray-100 text-gray-600',
@@ -13,7 +13,9 @@ export default function ProvidersPage() {
   const [statusFilter, setStatusFilter] = useState('')
 
   const { data: providers = [], isLoading } = useGetAdminProvidersQuery(statusFilter || undefined)
-  const [updateStatus, { isLoading: updating }] = useUpdateProviderStatusMutation()
+  const [approveProvider, { isLoading: approving }] = useApproveProviderMutation()
+  const [rejectProvider, { isLoading: rejecting }] = useRejectProviderMutation()
+  const updating = approving || rejecting
 
   const filtered = (Array.isArray(providers) ? providers : []).filter(p => {
     if (search && !p.business_name?.toLowerCase().includes(search.toLowerCase())) return false
@@ -23,24 +25,20 @@ export default function ProvidersPage() {
   const verifiedCount = filtered.filter(p => p.status === 'verified' || p.is_verified).length
   const pendingCount = filtered.filter(p => p.status === 'pending').length
 
-  const formatRevenue = (amount) => {
-    if (!amount) return '₦0'
-    return '₦' + (amount / 1000000).toFixed(1) + 'M'
-  }
-
   const handleApprove = async (id) => {
     try {
-      await updateStatus({ id, status: 'verified' }).unwrap()
+      await approveProvider(id).unwrap()
     } catch (err) {
-      console.error('Failed to approve:', err)
+      alert(err?.data?.detail || 'Failed to approve provider')
     }
   }
 
   const handleReject = async (id) => {
+    if (!confirm('Reject this provider?')) return
     try {
-      await updateStatus({ id, status: 'rejected' }).unwrap()
+      await rejectProvider(id).unwrap()
     } catch (err) {
-      console.error('Failed to reject:', err)
+      alert(err?.data?.detail || 'Failed to reject provider')
     }
   }
 
