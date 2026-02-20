@@ -10,6 +10,7 @@ from app.core.security import (
     generate_otp, get_current_user,
 )
 from app.core.config import settings
+from app.core.sms import send_otp_sms
 from app.models.user import User, OTP
 from app.schemas.auth import (
     SendOTPRequest, VerifyOTPRequest, RegisterRequest,
@@ -30,9 +31,16 @@ async def send_otp(req: SendOTPRequest, db: AsyncSession = Depends(get_db)):
     db.add(otp)
     await db.commit()
 
-    # TODO: Integrate with SMS provider (Termii, Africa's Talking, etc.)
-    # For dev, return the OTP in the response
-    return {"message": "OTP sent successfully", "otp_dev": code}
+    # Send OTP via Twilio SMS
+    sms_sent = send_otp_sms(req.phone, code)
+
+    response = {"message": "OTP sent successfully"}
+
+    # In debug mode or if SMS fails, return OTP in response for testing
+    if settings.DEBUG or not sms_sent:
+        response["otp_dev"] = code
+
+    return response
 
 
 @router.post("/verify-otp", response_model=TokenResponse)

@@ -85,7 +85,7 @@ export default function ProfileScreen({ navigation }) {
       {isGuest && (
         <TouchableOpacity
           style={styles.signInPrompt}
-          onPress={() => navigation.navigate('Auth')}
+          onPress={() => navigation.navigate('Login')}
         >
           <Ionicons name="person-outline" size={20} color={COLORS.primary} />
           <Text style={styles.signInText}>Sign in to access all features</Text>

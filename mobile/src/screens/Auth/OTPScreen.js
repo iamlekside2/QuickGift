@@ -78,9 +78,9 @@ export default function OTPScreen({ navigation, route }) {
         </Text>
       </View>
 
-      {__DEV__ && otpDev && (
+      {otpDev && (
         <View style={{ backgroundColor: '#FFF3E0', padding: 10, borderRadius: 8, marginBottom: 12, alignItems: 'center' }}>
-          <Text style={{ fontSize: 12, color: '#E65100' }}>DEV OTP: {otpDev}</Text>
+          <Text style={{ fontSize: 12, color: '#E65100' }}>Your OTP code: {otpDev}</Text>
         </View>
       )}
 

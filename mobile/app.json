@@ -14,7 +14,10 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.quickgift.app"
+      "bundleIdentifier": "com.quickgift.app",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -26,6 +29,18 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "3dbff884-e5eb-40ac-898d-38ed322ea0ac"
+      }
+    },
+    "owner": "leksitech",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/3dbff884-e5eb-40ac-898d-38ed322ea0ac"
     }
   }
 }
