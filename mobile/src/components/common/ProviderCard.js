@@ -4,34 +4,44 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS, RADIUS, SPACING, SHADOWS } from '../../constants/theme';
 
 export default function ProviderCard({ item, onPress }) {
-  const formatPrice = (price) => '₦' + price.toLocaleString();
+  const name = item.business_name || item.name || 'Provider';
+  const service = item.service_type || item.service || '';
+  const reviews = item.review_count ?? item.reviews ?? 0;
+  const location = item.location || '';
+  const isAvailable = item.is_available ?? item.available ?? false;
 
   return (
     <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.8}>
       <View style={styles.avatar}>
-        <Text style={styles.avatarText}>{item.name.charAt(0)}</Text>
+        <Text style={styles.avatarText}>{name.charAt(0)}</Text>
       </View>
       <View style={styles.info}>
         <View style={styles.header}>
-          <Text style={styles.name} numberOfLines={1}>{item.name}</Text>
-          {item.available && <View style={styles.availableDot} />}
+          <Text style={styles.name} numberOfLines={1}>{name}</Text>
+          {isAvailable && <View style={styles.availableDot} />}
         </View>
-        <Text style={styles.service}>{item.service}</Text>
+        <Text style={styles.service}>{service}</Text>
         <View style={styles.meta}>
           <View style={styles.rating}>
             <Ionicons name="star" size={12} color="#F59E0B" />
-            <Text style={styles.ratingText}>{item.rating} ({item.reviews})</Text>
+            <Text style={styles.ratingText}>{item.rating || 0} ({reviews})</Text>
           </View>
           <View style={styles.location}>
             <Ionicons name="location-outline" size={12} color={COLORS.textLight} />
-            <Text style={styles.locationText}>{item.location}</Text>
+            <Text style={styles.locationText}>{location}</Text>
           </View>
         </View>
       </View>
-      <View style={styles.priceContainer}>
-        <Text style={styles.priceLabel}>From</Text>
-        <Text style={styles.price}>{formatPrice(item.price)}</Text>
-      </View>
+      {item.price ? (
+        <View style={styles.priceContainer}>
+          <Text style={styles.priceLabel}>From</Text>
+          <Text style={styles.price}>{'₦' + item.price.toLocaleString()}</Text>
+        </View>
+      ) : (
+        <View style={styles.priceContainer}>
+          <Ionicons name="chevron-forward" size={20} color={COLORS.textLight} />
+        </View>
+      )}
     </TouchableOpacity>
   );
 }

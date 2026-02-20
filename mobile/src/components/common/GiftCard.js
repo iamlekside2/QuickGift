@@ -5,28 +5,30 @@ import { COLORS, FONTS, RADIUS, SPACING, SHADOWS } from '../../constants/theme';
 
 export default function GiftCard({ item, onPress }) {
   const formatPrice = (price) => {
-    return '₦' + price.toLocaleString();
+    return '₦' + (price || 0).toLocaleString();
   };
+
+  const categoryName = (item.category || item.category_name || '').toLowerCase();
 
   return (
     <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.8}>
       <View style={styles.imagePlaceholder}>
         <Text style={styles.placeholderEmoji}>
-          {item.category === 'cakes' ? '🎂' :
-           item.category === 'flowers' ? '💐' :
-           item.category === 'chocolates' ? '🍫' :
-           item.category === 'hampers' ? '🧺' :
-           item.category === 'balloons' ? '🎈' : '🎁'}
+          {categoryName.includes('cake') ? '🎂' :
+           categoryName.includes('flower') ? '💐' :
+           categoryName.includes('chocolate') ? '🍫' :
+           categoryName.includes('hamper') ? '🧺' :
+           categoryName.includes('balloon') ? '🎈' : '🎁'}
         </Text>
       </View>
       <View style={styles.info}>
-        <Text style={styles.name} numberOfLines={1}>{item.name}</Text>
-        <Text style={styles.vendor} numberOfLines={1}>{item.vendor}</Text>
+        <Text style={styles.name} numberOfLines={1}>{item.name || 'Gift'}</Text>
+        <Text style={styles.vendor} numberOfLines={1}>{item.vendor_name || item.vendor || ''}</Text>
         <View style={styles.footer}>
           <Text style={styles.price}>{formatPrice(item.price)}</Text>
           <View style={styles.rating}>
             <Ionicons name="star" size={12} color="#F59E0B" />
-            <Text style={styles.ratingText}>{item.rating}</Text>
+            <Text style={styles.ratingText}>{item.rating || 0}</Text>
           </View>
         </View>
       </View>

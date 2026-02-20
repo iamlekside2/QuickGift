@@ -44,10 +44,9 @@ export default function OTPScreen({ navigation, route }) {
     try {
       const code = otp.join('');
       await verifyOTP(phone, code);
-      navigation.replace('MainApp');
+      // Navigation is handled automatically by RootNavigator when user state updates
     } catch (err) {
       Alert.alert('Error', err.response?.data?.detail || 'Invalid OTP');
-    } finally {
       setLoading(false);
     }
   };

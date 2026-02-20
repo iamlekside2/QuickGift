@@ -97,7 +97,7 @@ export default function LoginScreen({ navigation }) {
 
           <TouchableOpacity
             style={styles.guestButton}
-            onPress={() => { guestLogin(); navigation.replace('MainApp'); }}
+            onPress={() => guestLogin()}
           >
             <Text style={styles.guestText}>Continue as Guest</Text>
           </TouchableOpacity>

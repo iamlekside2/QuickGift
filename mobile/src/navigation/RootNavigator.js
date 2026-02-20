@@ -1,6 +1,8 @@
 import React from 'react';
+import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
+import { COLORS } from '../constants/theme';
 
 import SplashScreen from '../screens/Auth/SplashScreen';
 import OnboardingScreen from '../screens/Auth/OnboardingScreen';
@@ -15,6 +17,15 @@ const Stack = createNativeStackNavigator();
 export default function RootNavigator() {
   const { user, loading } = useAuth();
 
+  // Wait for auth state to load before rendering navigation
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+      </View>
+    );
+  }
+
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {!user ? (
@@ -24,7 +35,6 @@ export default function RootNavigator() {
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="Signup" component={SignupScreen} />
           <Stack.Screen name="OTPVerification" component={OTPScreen} />
-          <Stack.Screen name="MainApp" component={MainTabs} />
         </>
       ) : (
         <>
@@ -36,3 +46,12 @@ export default function RootNavigator() {
     </Stack.Navigator>
   );
 }
+
+const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: COLORS.background,
+  },
+});

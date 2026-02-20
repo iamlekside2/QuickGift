@@ -17,12 +17,15 @@ export default function HomeScreen({ navigation }) {
   const [featuredGifts, setFeaturedGifts] = useState([]);
   const [providers, setProviders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     loadData();
   }, []);
 
   const loadData = async () => {
+    setLoading(true);
+    setError(false);
     try {
       const [occasionsRes, categoriesRes, giftsRes, providersRes] = await Promise.allSettled([
         productsAPI.occasions(),
@@ -35,8 +38,13 @@ export default function HomeScreen({ navigation }) {
       if (categoriesRes.status === 'fulfilled') setCategories(categoriesRes.value.data);
       if (giftsRes.status === 'fulfilled') setFeaturedGifts(giftsRes.value.data.items || []);
       if (providersRes.status === 'fulfilled') setProviders(providersRes.value.data || []);
+
+      const allFailed = [occasionsRes, categoriesRes, giftsRes, providersRes]
+        .every(r => r.status === 'rejected');
+      if (allFailed) setError(true);
     } catch (err) {
       console.log('Error loading home data:', err);
+      setError(true);
     } finally {
       setLoading(false);
     }
@@ -87,7 +95,20 @@ export default function HomeScreen({ navigation }) {
       </View>
 
       {loading ? (
-        <ActivityIndicator size="large" color={COLORS.primary} style={{ marginTop: 40 }} />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={COLORS.primary} />
+          <Text style={styles.loadingText}>Loading amazing things...</Text>
+        </View>
+      ) : error ? (
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorEmoji}>😕</Text>
+          <Text style={styles.errorTitle}>Couldn't load content</Text>
+          <Text style={styles.errorText}>Server might be waking up. Give it a moment.</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={loadData}>
+            <Ionicons name="refresh" size={18} color="#fff" />
+            <Text style={styles.retryText}>Try Again</Text>
+          </TouchableOpacity>
+        </View>
       ) : (
         <>
           {/* Occasions */}
@@ -261,6 +282,50 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.xl,
     gap: SPACING.md,
     marginBottom: SPACING.md,
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    marginTop: 40,
+    gap: SPACING.md,
+  },
+  loadingText: {
+    fontSize: FONTS.sizes.md,
+    color: COLORS.textSecondary,
+  },
+  errorContainer: {
+    alignItems: 'center',
+    marginTop: 40,
+    paddingHorizontal: SPACING.xl,
+    gap: SPACING.sm,
+  },
+  errorEmoji: {
+    fontSize: 48,
+    marginBottom: SPACING.sm,
+  },
+  errorTitle: {
+    fontSize: FONTS.sizes.xl,
+    fontWeight: '700',
+    color: COLORS.text,
+  },
+  errorText: {
+    fontSize: FONTS.sizes.md,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+  },
+  retryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: SPACING.xl,
+    paddingVertical: SPACING.md,
+    borderRadius: RADIUS.lg,
+    gap: SPACING.sm,
+    marginTop: SPACING.md,
+  },
+  retryText: {
+    color: '#fff',
+    fontSize: FONTS.sizes.md,
+    fontWeight: '600',
   },
   bottomSpacer: {
     height: 100,
