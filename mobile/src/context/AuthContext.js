@@ -29,8 +29,12 @@ export const AuthProvider = ({ children }) => {
   };
 
   const saveAuth = async (tokenValue, userData) => {
-    await AsyncStorage.setItem('token', tokenValue);
-    await AsyncStorage.setItem('user', JSON.stringify(userData));
+    try {
+      await AsyncStorage.setItem('token', tokenValue);
+      await AsyncStorage.setItem('user', JSON.stringify(userData));
+    } catch (e) {
+      console.log('Error saving auth:', e);
+    }
     setToken(tokenValue);
     setUser(userData);
   };
@@ -42,8 +46,13 @@ export const AuthProvider = ({ children }) => {
 
   const verifyOTP = async (phone, code) => {
     const res = await authAPI.verifyOTP(phone, code);
-    await saveAuth(res.data.access_token, res.data.user);
-    return res.data;
+    const data = res.data;
+    if (data?.access_token && data?.user) {
+      await saveAuth(data.access_token, data.user);
+    } else if (data?.user) {
+      setUser(data.user);
+    }
+    return data;
   };
 
   const register = async (data) => {

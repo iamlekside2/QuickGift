@@ -13,6 +13,14 @@ export default function OTPScreen({ navigation, route }) {
   const inputs = useRef([]);
   const { verifyOTP, register, sendOTP } = useAuth();
 
+  // Auto-fill OTP if dev code is available
+  useEffect(() => {
+    if (otpDev) {
+      const digits = otpDev.toString().split('').slice(0, 6);
+      setOtp(digits);
+    }
+  }, [otpDev]);
+
   useEffect(() => {
     const interval = setInterval(() => {
       setTimer((prev) => (prev > 0 ? prev - 1 : 0));
