@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, KeyboardAvoidingView,
-  Platform, ScrollView, StyleSheet, Alert,
+  View, Text, TouchableOpacity, KeyboardAvoidingView,
+  Platform, ScrollView, StyleSheet,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
@@ -9,29 +9,7 @@ import Button from '../../components/common/Button';
 import { useAuth } from '../../context/AuthContext';
 
 export default function LoginScreen({ navigation }) {
-  const [phone, setPhone] = useState('');
-  const [countryCode, setCountryCode] = useState('+234');
-  const [loading, setLoading] = useState(false);
-  const { sendOTP, guestLogin } = useAuth();
-
-  const isValid = phone.length >= 10;
-
-  const handleSendOTP = async () => {
-    if (!isValid) return;
-    setLoading(true);
-    try {
-      const fullPhone = countryCode + phone;
-      const res = await sendOTP(fullPhone);
-      navigation.navigate('OTPVerification', {
-        phone: fullPhone,
-        otpDev: res.otp_dev, // Dev mode: show OTP
-      });
-    } catch (err) {
-      Alert.alert('Error', err.response?.data?.detail || 'Failed to send OTP');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { dummyLogin, guestLogin } = useAuth();
 
   return (
     <KeyboardAvoidingView
@@ -42,50 +20,44 @@ export default function LoginScreen({ navigation }) {
         <View style={styles.header}>
           <Text style={styles.emoji}>👋</Text>
           <Text style={styles.title}>Welcome to QuickGift</Text>
-          <Text style={styles.subtitle}>Enter your phone number to get started</Text>
+          <Text style={styles.subtitle}>Choose an account to get started</Text>
         </View>
 
         <View style={styles.form}>
-          <Text style={styles.label}>Phone Number</Text>
-          <View style={styles.phoneRow}>
-            <TouchableOpacity style={styles.countryCode}>
-              <Text style={styles.flag}>🇳🇬</Text>
-              <Text style={styles.codeText}>{countryCode}</Text>
-              <Ionicons name="chevron-down" size={14} color={COLORS.textSecondary} />
-            </TouchableOpacity>
-            <TextInput
-              style={[styles.phoneInput, isValid && phone.length > 0 && styles.inputValid]}
-              placeholder="8012345678"
-              placeholderTextColor={COLORS.textLight}
-              keyboardType="phone-pad"
-              value={phone}
-              onChangeText={setPhone}
-              maxLength={11}
-            />
-          </View>
+          <TouchableOpacity
+            style={styles.loginCard}
+            onPress={() => dummyLogin('user')}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.loginIcon, { backgroundColor: COLORS.primary + '15' }]}>
+              <Ionicons name="gift-outline" size={26} color={COLORS.primary} />
+            </View>
+            <View style={styles.loginInfo}>
+              <Text style={styles.loginName}>Login as Customer</Text>
+              <Text style={styles.loginDesc}>Browse gifts & book beauty services</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={COLORS.textLight} />
+          </TouchableOpacity>
 
-          <Button
-            title="Send OTP"
-            onPress={handleSendOTP}
-            loading={loading}
-            disabled={!isValid}
-            size="lg"
-            style={styles.otpButton}
-          />
+          <TouchableOpacity
+            style={styles.loginCard}
+            onPress={() => dummyLogin('provider')}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.loginIcon, { backgroundColor: '#7C3AED15' }]}>
+              <Ionicons name="cut-outline" size={26} color="#7C3AED" />
+            </View>
+            <View style={styles.loginInfo}>
+              <Text style={styles.loginName}>Login as Provider</Text>
+              <Text style={styles.loginDesc}>Manage bookings & offer services</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={COLORS.textLight} />
+          </TouchableOpacity>
 
           <View style={styles.divider}>
             <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>or continue with</Text>
+            <Text style={styles.dividerText}>or</Text>
             <View style={styles.dividerLine} />
-          </View>
-
-          <View style={styles.socialRow}>
-            <TouchableOpacity style={styles.socialButton}>
-              <Ionicons name="logo-google" size={22} color="#DB4437" />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.socialButton}>
-              <Ionicons name="logo-apple" size={22} color="#000" />
-            </TouchableOpacity>
           </View>
 
           <View style={styles.bottomRow}>
@@ -139,49 +111,34 @@ const styles = StyleSheet.create({
   form: {
     gap: SPACING.lg,
   },
-  label: {
-    fontSize: FONTS.sizes.md,
-    fontWeight: '600',
-    color: COLORS.text,
-    marginBottom: -SPACING.sm,
-  },
-  phoneRow: {
-    flexDirection: 'row',
-    gap: SPACING.sm,
-  },
-  countryCode: {
+  loginCard: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: COLORS.backgroundGray,
     borderRadius: RADIUS.lg,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.md + 2,
-    gap: SPACING.xs,
+    padding: SPACING.lg,
+    gap: SPACING.md,
+    ...SHADOWS.sm,
   },
-  flag: {
-    fontSize: 18,
-  },
-  codeText: {
-    fontSize: FONTS.sizes.lg,
-    fontWeight: '600',
-    color: COLORS.text,
-  },
-  phoneInput: {
-    flex: 1,
-    backgroundColor: COLORS.backgroundGray,
+  loginIcon: {
+    width: 50,
+    height: 50,
     borderRadius: RADIUS.lg,
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md + 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loginInfo: {
+    flex: 1,
+  },
+  loginName: {
     fontSize: FONTS.sizes.lg,
+    fontWeight: '700',
     color: COLORS.text,
-    borderWidth: 2,
-    borderColor: 'transparent',
+    marginBottom: 2,
   },
-  inputValid: {
-    borderColor: COLORS.success,
-  },
-  otpButton: {
-    marginTop: SPACING.sm,
+  loginDesc: {
+    fontSize: FONTS.sizes.sm,
+    color: COLORS.textSecondary,
   },
   divider: {
     flexDirection: 'row',
@@ -197,20 +154,6 @@ const styles = StyleSheet.create({
   dividerText: {
     fontSize: FONTS.sizes.sm,
     color: COLORS.textLight,
-  },
-  socialRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: SPACING.lg,
-  },
-  socialButton: {
-    width: 54,
-    height: 54,
-    borderRadius: RADIUS.full,
-    backgroundColor: COLORS.backgroundGray,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...SHADOWS.sm,
   },
   bottomRow: {
     flexDirection: 'row',

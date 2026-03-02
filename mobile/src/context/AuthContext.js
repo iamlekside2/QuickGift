@@ -86,6 +86,35 @@ export const AuthProvider = ({ children }) => {
     setUser({ id: 'guest', full_name: 'Guest', role: 'guest' });
   };
 
+  const dummyLogin = (role = 'user') => {
+    const users = {
+      user: {
+        id: 1,
+        full_name: 'Test User',
+        email: 'test@quickgift.ng',
+        phone: '+2348012345678',
+        role: 'user',
+        city: 'Lagos',
+        wallet_balance: 5000,
+      },
+      provider: {
+        id: 2,
+        full_name: 'Test Provider',
+        email: 'provider@quickgift.ng',
+        phone: '+2348098765432',
+        role: 'provider',
+        city: 'Lagos',
+        wallet_balance: 12000,
+      },
+    };
+    const dummyUser = users[role] || users.user;
+    const dummyToken = `dummy-token-${role}-12345`;
+    setToken(dummyToken);
+    setUser(dummyUser);
+    AsyncStorage.setItem('token', dummyToken).catch(() => {});
+    AsyncStorage.setItem('user', JSON.stringify(dummyUser)).catch(() => {});
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -101,6 +130,7 @@ export const AuthProvider = ({ children }) => {
         updateProfile,
         logout,
         guestLogin,
+        dummyLogin,
       }}
     >
       {children}

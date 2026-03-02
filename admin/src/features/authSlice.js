@@ -16,6 +16,20 @@ const authSlice = createSlice({
       localStorage.removeItem('admin_token')
       localStorage.removeItem('admin_user')
     },
+    dummyLogin: (state) => {
+      const dummyUser = {
+        id: 1,
+        full_name: 'Admin User',
+        email: 'admin@quickgift.ng',
+        phone: '+2348012345678',
+        role: 'admin',
+      }
+      const dummyToken = 'dummy-admin-token-12345'
+      state.user = dummyUser
+      state.token = dummyToken
+      localStorage.setItem('admin_token', dummyToken)
+      localStorage.setItem('admin_user', JSON.stringify(dummyUser))
+    },
   },
   extraReducers: (builder) => {
     builder.addMatcher(
@@ -37,7 +51,7 @@ const authSlice = createSlice({
   },
 })
 
-export const { logout } = authSlice.actions
+export const { logout, dummyLogin } = authSlice.actions
 export default authSlice.reducer
 
 // Selectors

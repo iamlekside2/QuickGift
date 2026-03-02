@@ -1,39 +1,19 @@
 import React, { useState } from 'react';
 import {
-  View, Text, TextInput, KeyboardAvoidingView,
-  Platform, ScrollView, TouchableOpacity, StyleSheet, Alert,
+  View, Text, KeyboardAvoidingView,
+  Platform, ScrollView, TouchableOpacity, StyleSheet,
 } from 'react-native';
-import { COLORS, FONTS, SPACING, RADIUS } from '../../constants/theme';
+import { Ionicons } from '@expo/vector-icons';
+import { COLORS, FONTS, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
 import Button from '../../components/common/Button';
 import { useAuth } from '../../context/AuthContext';
 
 export default function SignupScreen({ navigation }) {
-  const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [loading, setLoading] = useState(false);
-  const { sendOTP } = useAuth();
+  const [selectedRole, setSelectedRole] = useState('user');
+  const { dummyLogin } = useAuth();
 
-  const isValid = fullName.length >= 2 && phone.length >= 10;
-
-  const handleSignup = async () => {
-    if (!isValid) return;
-    setLoading(true);
-    try {
-      const fullPhone = '+234' + phone;
-      const res = await sendOTP(fullPhone);
-      navigation.navigate('OTPVerification', {
-        phone: fullPhone,
-        fullName,
-        email: email || undefined,
-        isRegistration: true,
-        otpDev: res.otp_dev,
-      });
-    } catch (err) {
-      Alert.alert('Error', err.response?.data?.detail || 'Failed to send OTP');
-    } finally {
-      setLoading(false);
-    }
+  const handleSignup = () => {
+    dummyLogin(selectedRole);
   };
 
   return (
@@ -45,58 +25,47 @@ export default function SignupScreen({ navigation }) {
         <View style={styles.header}>
           <Text style={styles.emoji}>🎉</Text>
           <Text style={styles.title}>Create Account</Text>
-          <Text style={styles.subtitle}>Join QuickGift and start gifting</Text>
+          <Text style={styles.subtitle}>Choose how you want to use QuickGift</Text>
         </View>
 
         <View style={styles.form}>
-          <View style={styles.field}>
-            <Text style={styles.label}>Full Name</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter your full name"
-              placeholderTextColor={COLORS.textLight}
-              value={fullName}
-              onChangeText={setFullName}
-            />
-          </View>
+          <Text style={styles.label}>I want to join as</Text>
 
-          <View style={styles.field}>
-            <Text style={styles.label}>Email (Optional)</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="email@example.com"
-              placeholderTextColor={COLORS.textLight}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              value={email}
-              onChangeText={setEmail}
-            />
-          </View>
-
-          <View style={styles.field}>
-            <Text style={styles.label}>Phone Number</Text>
-            <View style={styles.phoneRow}>
-              <View style={styles.countryCode}>
-                <Text style={styles.flag}>🇳🇬</Text>
-                <Text style={styles.codeText}>+234</Text>
-              </View>
-              <TextInput
-                style={[styles.input, { flex: 1 }]}
-                placeholder="8012345678"
-                placeholderTextColor={COLORS.textLight}
-                keyboardType="phone-pad"
-                value={phone}
-                onChangeText={setPhone}
-                maxLength={11}
-              />
+          <TouchableOpacity
+            style={[styles.roleCard, selectedRole === 'user' && styles.roleCardActive]}
+            onPress={() => setSelectedRole('user')}
+          >
+            <View style={[styles.roleIcon, selectedRole === 'user' && styles.roleIconActive]}>
+              <Ionicons name="gift-outline" size={28} color={selectedRole === 'user' ? '#fff' : COLORS.primary} />
             </View>
-          </View>
+            <View style={styles.roleInfo}>
+              <Text style={[styles.roleName, selectedRole === 'user' && styles.roleNameActive]}>Customer</Text>
+              <Text style={styles.roleDesc}>Browse and purchase gifts, book beauty services</Text>
+            </View>
+            <View style={[styles.radioOuter, selectedRole === 'user' && styles.radioOuterActive]}>
+              {selectedRole === 'user' && <View style={styles.radioInner} />}
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.roleCard, selectedRole === 'provider' && styles.roleCardActive]}
+            onPress={() => setSelectedRole('provider')}
+          >
+            <View style={[styles.roleIcon, selectedRole === 'provider' && styles.roleIconActive]}>
+              <Ionicons name="cut-outline" size={28} color={selectedRole === 'provider' ? '#fff' : COLORS.primary} />
+            </View>
+            <View style={styles.roleInfo}>
+              <Text style={[styles.roleName, selectedRole === 'provider' && styles.roleNameActive]}>Service Provider</Text>
+              <Text style={styles.roleDesc}>Offer beauty services, manage bookings and clients</Text>
+            </View>
+            <View style={[styles.radioOuter, selectedRole === 'provider' && styles.radioOuterActive]}>
+              {selectedRole === 'provider' && <View style={styles.radioInner} />}
+            </View>
+          </TouchableOpacity>
 
           <Button
-            title="Create Account"
+            title={selectedRole === 'provider' ? 'Join as Provider' : 'Join as Customer'}
             onPress={handleSignup}
-            loading={loading}
-            disabled={!isValid}
             size="lg"
           />
 
@@ -144,41 +113,70 @@ const styles = StyleSheet.create({
   form: {
     gap: SPACING.lg,
   },
-  field: {
-    gap: SPACING.sm,
-  },
   label: {
     fontSize: FONTS.sizes.md,
     fontWeight: '600',
     color: COLORS.text,
   },
-  input: {
-    backgroundColor: COLORS.backgroundGray,
-    borderRadius: RADIUS.lg,
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md + 2,
-    fontSize: FONTS.sizes.lg,
-    color: COLORS.text,
-  },
-  phoneRow: {
-    flexDirection: 'row',
-    gap: SPACING.sm,
-  },
-  countryCode: {
+  roleCard: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: COLORS.backgroundGray,
     borderRadius: RADIUS.lg,
-    paddingHorizontal: SPACING.md,
-    gap: SPACING.xs,
+    padding: SPACING.lg,
+    gap: SPACING.md,
+    borderWidth: 2,
+    borderColor: 'transparent',
   },
-  flag: {
-    fontSize: 18,
+  roleCardActive: {
+    borderColor: COLORS.primary,
+    backgroundColor: COLORS.primary + '08',
   },
-  codeText: {
+  roleIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: RADIUS.lg,
+    backgroundColor: COLORS.primary + '15',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  roleIconActive: {
+    backgroundColor: COLORS.primary,
+  },
+  roleInfo: {
+    flex: 1,
+  },
+  roleName: {
     fontSize: FONTS.sizes.lg,
-    fontWeight: '600',
+    fontWeight: '700',
     color: COLORS.text,
+    marginBottom: 2,
+  },
+  roleNameActive: {
+    color: COLORS.primary,
+  },
+  roleDesc: {
+    fontSize: FONTS.sizes.sm,
+    color: COLORS.textSecondary,
+    lineHeight: 18,
+  },
+  radioOuter: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    borderColor: COLORS.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  radioOuterActive: {
+    borderColor: COLORS.primary,
+  },
+  radioInner: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: COLORS.primary,
   },
   bottomRow: {
     flexDirection: 'row',
