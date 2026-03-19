@@ -158,19 +158,38 @@ export const authAPI = {
   },
   verifyOTP: async (phone, code) => {
     await delay(500);
+    // Simulate: check if this phone belongs to an existing user
+    // For mock, return a user role based on phone number pattern
+    const role = phone.includes('9876') ? 'provider' : 'user';
+    const name = role === 'provider' ? 'Test Provider' : 'Test User';
     return {
       data: {
-        access_token: 'mock-token-12345',
-        user: { id: 'user-1', full_name: 'Test User', phone, role: 'customer', city: 'Lagos' },
+        access_token: 'mock-token-' + Date.now(),
+        user: {
+          id: role === 'provider' ? 'user-2' : 'user-1',
+          full_name: name,
+          phone,
+          role,
+          city: 'Lagos',
+          wallet_balance: role === 'provider' ? 12000 : 5000,
+        },
       },
     };
   },
   register: async (data) => {
     await delay(500);
+    const role = data.role === 'provider' ? 'provider' : 'user';
     return {
       data: {
-        access_token: 'mock-token-12345',
-        user: { id: 'user-1', full_name: data.full_name, phone: data.phone, role: 'customer', city: 'Lagos' },
+        access_token: 'mock-token-' + Date.now(),
+        user: {
+          id: 'user-' + Date.now(),
+          full_name: data.full_name,
+          phone: data.phone,
+          role,
+          city: 'Lagos',
+          wallet_balance: 0,
+        },
       },
     };
   },
@@ -318,6 +337,150 @@ export const reviewsAPI = {
   list: async (targetType, targetId) => {
     await delay(200);
     return { data: dummyReviews };
+  },
+};
+
+// ─── Conversations & Messages ────────────────────────
+const dummyConversations = [
+  {
+    id: 'conv-1',
+    buyer_id: 'user-1',
+    buyer_name: 'Test User',
+    provider_id: '1',
+    provider_name: 'Amara Nails',
+    last_message: 'Perfect! See you at 2pm tomorrow \uD83D\uDC85',
+    last_message_at: new Date(Date.now() - 1800000).toISOString(),
+    unread_count: 2,
+  },
+  {
+    id: 'conv-2',
+    buyer_id: 'user-1',
+    buyer_name: 'Test User',
+    provider_id: '2',
+    provider_name: 'Tolu Hair Studio',
+    last_message: 'I can do silk press for the weekend. Shall I book you in?',
+    last_message_at: new Date(Date.now() - 7200000).toISOString(),
+    unread_count: 1,
+  },
+  {
+    id: 'conv-3',
+    buyer_id: 'user-1',
+    buyer_name: 'Test User',
+    provider_id: '3',
+    provider_name: 'Tolu MUA',
+    last_message: 'Thanks for the amazing service! \uD83D\uDE4F',
+    last_message_at: new Date(Date.now() - 86400000).toISOString(),
+    unread_count: 0,
+  },
+  {
+    id: 'conv-4',
+    buyer_id: 'user-2',
+    buyer_name: 'Adaeze O.',
+    provider_id: '1',
+    provider_name: 'Amara Nails',
+    last_message: 'Can I reschedule to next week?',
+    last_message_at: new Date(Date.now() - 3600000).toISOString(),
+    unread_count: 1,
+  },
+];
+
+const dummyMessages = {
+  'conv-1': [
+    { id: 'm1', sender_role: 'buyer', text: "Hi! I'd like to book a gel manicure for tomorrow", created_at: new Date(Date.now() - 7200000).toISOString(), status: 'read' },
+    { id: 'm2', sender_role: 'provider', text: 'Hello! Yes, I have availability tomorrow. What time works for you?', created_at: new Date(Date.now() - 6800000).toISOString(), status: 'read' },
+    { id: 'm3', sender_role: 'buyer', text: 'Would 2pm work? Also, do you do home service?', created_at: new Date(Date.now() - 6400000).toISOString(), status: 'read' },
+    { id: 'm4', sender_role: 'provider', text: "Yes! 2pm is great. I offer home service within Lagos mainland and island. There's a \u20A62,000 home service fee.", created_at: new Date(Date.now() - 5400000).toISOString(), status: 'read' },
+    { id: 'm5', sender_role: 'buyer', text: "That works for me. I'm in Lekki.", created_at: new Date(Date.now() - 3600000).toISOString(), status: 'read' },
+    { id: 'm6', sender_role: 'provider', text: 'Perfect! See you at 2pm tomorrow \uD83D\uDC85', created_at: new Date(Date.now() - 1800000).toISOString(), status: 'sent' },
+  ],
+  'conv-2': [
+    { id: 'm7', sender_role: 'buyer', text: 'Hi Tolu! Do you have availability this weekend for a silk press?', created_at: new Date(Date.now() - 14400000).toISOString(), status: 'read' },
+    { id: 'm8', sender_role: 'provider', text: 'Hey! Let me check my schedule...', created_at: new Date(Date.now() - 10800000).toISOString(), status: 'read' },
+    { id: 'm9', sender_role: 'provider', text: 'I can do silk press for the weekend. Shall I book you in?', created_at: new Date(Date.now() - 7200000).toISOString(), status: 'sent' },
+  ],
+  'conv-3': [
+    { id: 'm10', sender_role: 'provider', text: 'Your bridal trial is confirmed for Saturday at 10am!', created_at: new Date(Date.now() - 172800000).toISOString(), status: 'read' },
+    { id: 'm11', sender_role: 'buyer', text: "Thank you so much! Can't wait \uD83D\uDE0A", created_at: new Date(Date.now() - 172000000).toISOString(), status: 'read' },
+    { id: 'm12', sender_role: 'provider', text: 'It was lovely working with you! Hope you loved the look', created_at: new Date(Date.now() - 90000000).toISOString(), status: 'read' },
+    { id: 'm13', sender_role: 'buyer', text: 'Thanks for the amazing service! \uD83D\uDE4F', created_at: new Date(Date.now() - 86400000).toISOString(), status: 'read' },
+  ],
+  'conv-4': [
+    { id: 'm14', sender_role: 'buyer', text: 'Hello, I booked a pedicure for Thursday but something came up.', created_at: new Date(Date.now() - 7200000).toISOString(), status: 'read' },
+    { id: 'm15', sender_role: 'buyer', text: 'Can I reschedule to next week?', created_at: new Date(Date.now() - 3600000).toISOString(), status: 'sent' },
+  ],
+};
+
+export const chatsAPI = {
+  listConversations: async () => {
+    await delay(300);
+    return { data: dummyConversations.sort((a, b) => new Date(b.last_message_at) - new Date(a.last_message_at)) };
+  },
+  getMessages: async (conversationId) => {
+    await delay(300);
+    return { data: dummyMessages[conversationId] || [] };
+  },
+  sendMessage: async (conversationId, text, senderRole = 'buyer') => {
+    await delay(400);
+    const newMsg = {
+      id: 'msg-' + Date.now(),
+      sender_role: senderRole,
+      text,
+      created_at: new Date().toISOString(),
+      status: 'sent',
+    };
+    if (!dummyMessages[conversationId]) dummyMessages[conversationId] = [];
+    dummyMessages[conversationId].push(newMsg);
+    const conv = dummyConversations.find((c) => c.id === conversationId);
+    if (conv) {
+      conv.last_message = text;
+      conv.last_message_at = newMsg.created_at;
+    }
+    return { data: newMsg };
+  },
+  createConversation: async (providerId, providerName, initialMessage) => {
+    await delay(400);
+    const existing = dummyConversations.find(
+      (c) => c.provider_id === providerId && c.buyer_id === 'user-1'
+    );
+    if (existing) {
+      if (initialMessage) {
+        const newMsg = {
+          id: 'msg-' + Date.now(),
+          sender_role: 'buyer',
+          text: initialMessage,
+          created_at: new Date().toISOString(),
+          status: 'sent',
+        };
+        if (!dummyMessages[existing.id]) dummyMessages[existing.id] = [];
+        dummyMessages[existing.id].push(newMsg);
+        existing.last_message = initialMessage;
+        existing.last_message_at = newMsg.created_at;
+      }
+      return { data: existing };
+    }
+    const newConv = {
+      id: 'conv-' + Date.now(),
+      buyer_id: 'user-1',
+      buyer_name: 'Test User',
+      provider_id: providerId,
+      provider_name: providerName,
+      last_message: initialMessage || '',
+      last_message_at: new Date().toISOString(),
+      unread_count: 0,
+    };
+    dummyConversations.unshift(newConv);
+    if (initialMessage) {
+      dummyMessages[newConv.id] = [{
+        id: 'msg-' + Date.now(),
+        sender_role: 'buyer',
+        text: initialMessage,
+        created_at: new Date().toISOString(),
+        status: 'sent',
+      }];
+    } else {
+      dummyMessages[newConv.id] = [];
+    }
+    return { data: newConv };
   },
 };
 

@@ -57,13 +57,16 @@ async def verify_otp(req: VerifyOTPRequest, db: AsyncSession = Depends(get_db)):
 
     otp.is_used = True
 
-    # Find or create user
+    # Find existing user
     user_result = await db.execute(select(User).where(User.phone == req.phone))
     user = user_result.scalars().first()
+    is_new = False
 
     if not user:
+        # Auto-create a basic user account for OTP login
         user = User(phone=req.phone, full_name="QuickGift User")
         db.add(user)
+        is_new = True
 
     await db.commit()
     await db.refresh(user)
@@ -77,31 +80,69 @@ async def verify_otp(req: VerifyOTPRequest, db: AsyncSession = Depends(get_db)):
             "phone": user.phone,
             "email": user.email,
             "role": user.role,
+            "city": user.city,
+            "wallet_balance": user.wallet_balance,
+            "is_new_user": is_new,
         },
     )
 
 
 @router.post("/register", response_model=TokenResponse)
 async def register(req: RegisterRequest, db: AsyncSession = Depends(get_db)):
-    existing = await db.execute(select(User).where(User.phone == req.phone))
-    if existing.scalars().first():
-        raise HTTPException(status_code=400, detail="Phone number already registered")
-
-    if req.email:
-        email_exists = await db.execute(select(User).where(User.email == req.email))
-        if email_exists.scalars().first():
-            raise HTTPException(status_code=400, detail="Email already registered")
-
-    user = User(
-        full_name=req.full_name,
-        phone=req.phone,
-        email=req.email,
-        password_hash=hash_password(req.password) if req.password else None,
-        city=req.city,
+    # Verify OTP first
+    otp_result = await db.execute(
+        select(OTP)
+        .where(OTP.phone == req.phone, OTP.code == req.otp, OTP.is_used == False)
+        .order_by(OTP.created_at.desc())
     )
-    db.add(user)
-    await db.commit()
-    await db.refresh(user)
+    otp = otp_result.scalars().first()
+
+    if not otp or otp.expires_at < datetime.utcnow():
+        raise HTTPException(status_code=400, detail="Invalid or expired OTP")
+
+    otp.is_used = True
+
+    # Check if phone already exists
+    existing = await db.execute(select(User).where(User.phone == req.phone))
+    existing_user = existing.scalars().first()
+
+    if existing_user:
+        # User was auto-created by verify-otp earlier — update their profile
+        existing_user.full_name = req.full_name
+        if req.email:
+            existing_user.email = req.email
+        if req.password:
+            existing_user.password_hash = hash_password(req.password)
+        if req.city:
+            existing_user.city = req.city
+
+        allowed_roles = ("user", "provider")
+        existing_user.role = req.role if req.role in allowed_roles else "user"
+
+        await db.commit()
+        await db.refresh(existing_user)
+        user = existing_user
+    else:
+        if req.email:
+            email_exists = await db.execute(select(User).where(User.email == req.email))
+            if email_exists.scalars().first():
+                raise HTTPException(status_code=400, detail="Email already registered")
+
+        # Validate role
+        allowed_roles = ("user", "provider")
+        role = req.role if req.role in allowed_roles else "user"
+
+        user = User(
+            full_name=req.full_name,
+            phone=req.phone,
+            email=req.email,
+            password_hash=hash_password(req.password) if req.password else None,
+            city=req.city,
+            role=role,
+        )
+        db.add(user)
+        await db.commit()
+        await db.refresh(user)
 
     token = create_access_token({"sub": user.id, "role": user.role})
     return TokenResponse(
@@ -112,6 +153,8 @@ async def register(req: RegisterRequest, db: AsyncSession = Depends(get_db)):
             "phone": user.phone,
             "email": user.email,
             "role": user.role,
+            "city": user.city,
+            "wallet_balance": user.wallet_balance,
         },
     )
 
@@ -142,6 +185,8 @@ async def login(req: LoginRequest, db: AsyncSession = Depends(get_db)):
             "phone": user.phone,
             "email": user.email,
             "role": user.role,
+            "city": user.city,
+            "wallet_balance": user.wallet_balance,
         },
     )
 

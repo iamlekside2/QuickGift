@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Alert, Platform } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, FONTS, SPACING, RADIUS } from '../../constants/theme';
 import { bookingsAPI } from '../../services/api';
 import Button from '../../components/common/Button';
 
@@ -65,47 +65,74 @@ export default function BookingScreen({ navigation, route }) {
   const servicePrice = selectedService?.price || provider?.price || 5000;
 
   return (
-    <View style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-            <Ionicons name="arrow-back" size={24} color={COLORS.text} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Book Appointment</Text>
-          <View style={{ width: 40 }} />
-        </View>
+    <View className="flex-1 bg-white">
+      <StatusBar style="dark" />
+      {/* Fixed Header - stays above scroll */}
+      <View
+        className="flex-row items-center justify-between px-6 pb-4 bg-white"
+        style={{ paddingTop: Platform.OS === 'ios' ? 60 : 40 }}
+      >
+        <TouchableOpacity
+          className="w-11 h-11 rounded-2xl bg-gray-100 items-center justify-center"
+          onPress={() => navigation.goBack()}
+        >
+          <Ionicons name="arrow-back" size={22} color="#1F2937" />
+        </TouchableOpacity>
+        <Text className="text-xl font-bold text-gray-800">Book Appointment</Text>
+        <View style={{ width: 44 }} />
+      </View>
 
-        {/* Provider Info */}
-        <View style={styles.providerCard}>
-          <View style={styles.providerAvatar}>
-            <Text style={styles.avatarText}>{(provider?.business_name || provider?.name || 'P').charAt(0)}</Text>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {/* Provider Info Card */}
+        <View
+          className="flex-row items-center gap-3.5 mx-6 p-4 bg-teal-light rounded-2xl mb-7"
+        >
+          <View
+            className="w-12 h-12 rounded-2xl items-center justify-center"
+            style={{ backgroundColor: '#35615D20' }}
+          >
+            <Text className="text-xl font-bold text-teal">
+              {(provider?.business_name || provider?.name || 'P').charAt(0)}
+            </Text>
           </View>
           <View>
-            <Text style={styles.providerName}>{provider?.business_name || provider?.name}</Text>
-            <Text style={styles.providerService}>{provider?.service_type || provider?.service}</Text>
+            <Text className="text-base font-bold text-gray-800">
+              {provider?.business_name || provider?.name}
+            </Text>
+            <Text className="text-xs text-gray-400 mt-0.5">
+              {provider?.service_type || provider?.service}
+            </Text>
           </View>
         </View>
 
         {/* Service Selection */}
         {services.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Select Service</Text>
+          <View className="px-6 mb-7">
+            <Text className="text-lg font-bold text-gray-800 mb-3">Select Service</Text>
             {services.map((svc) => (
               <TouchableOpacity
                 key={svc.id}
-                style={[styles.serviceChip, selectedService?.id === svc.id && styles.serviceChipActive]}
+                className={`flex-row items-center p-4 rounded-2xl mb-2.5 border-2 ${
+                  selectedService?.id === svc.id
+                    ? 'border-teal bg-teal-light'
+                    : 'border-transparent bg-gray-50'
+                }`}
                 onPress={() => setSelectedService(svc)}
               >
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.serviceChipName, selectedService?.id === svc.id && { color: COLORS.primary }]}>
+                <View className="flex-1">
+                  <Text
+                    className={`text-sm font-bold ${
+                      selectedService?.id === svc.id ? 'text-teal' : 'text-gray-800'
+                    }`}
+                  >
                     {svc.name}
                   </Text>
-                  <Text style={styles.serviceChipDuration}>
+                  <Text className="text-xs text-gray-400 mt-0.5">
                     {svc.duration_minutes ? `${svc.duration_minutes}min` : ''} · {formatPrice(svc.price)}
                   </Text>
                 </View>
                 {selectedService?.id === svc.id && (
-                  <Ionicons name="checkmark-circle" size={22} color={COLORS.primary} />
+                  <Ionicons name="checkmark-circle" size={24} color="#35615D" />
                 )}
               </TouchableOpacity>
             ))}
@@ -113,55 +140,125 @@ export default function BookingScreen({ navigation, route }) {
         )}
 
         {/* Service Type */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Service Location</Text>
-          <View style={styles.typeRow}>
+        <View className="px-6 mb-7">
+          <Text className="text-lg font-bold text-gray-800 mb-3">Service Location</Text>
+          <View className="flex-row gap-3">
             <TouchableOpacity
-              style={[styles.typeOption, serviceType === 'home' && styles.typeActive]}
+              className={`flex-1 flex-row items-center justify-center gap-2 p-4 rounded-2xl border-2 ${
+                serviceType === 'home'
+                  ? 'border-teal bg-teal-light'
+                  : 'border-transparent bg-gray-50'
+              }`}
               onPress={() => setServiceType('home')}
             >
-              <Ionicons name="home-outline" size={20} color={serviceType === 'home' ? COLORS.primary : COLORS.textSecondary} />
-              <Text style={[styles.typeText, serviceType === 'home' && styles.typeTextActive]}>Home Service</Text>
+              <Ionicons
+                name="home-outline"
+                size={20}
+                color={serviceType === 'home' ? '#35615D' : '#9CA3AF'}
+              />
+              <Text
+                className={`text-sm font-bold ${
+                  serviceType === 'home' ? 'text-teal' : 'text-gray-400'
+                }`}
+              >
+                Home Service
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.typeOption, serviceType === 'salon' && styles.typeActive]}
+              className={`flex-1 flex-row items-center justify-center gap-2 p-4 rounded-2xl border-2 ${
+                serviceType === 'salon'
+                  ? 'border-teal bg-teal-light'
+                  : 'border-transparent bg-gray-50'
+              }`}
               onPress={() => setServiceType('salon')}
             >
-              <Ionicons name="business-outline" size={20} color={serviceType === 'salon' ? COLORS.primary : COLORS.textSecondary} />
-              <Text style={[styles.typeText, serviceType === 'salon' && styles.typeTextActive]}>Visit Salon</Text>
+              <Ionicons
+                name="business-outline"
+                size={20}
+                color={serviceType === 'salon' ? '#35615D' : '#9CA3AF'}
+              />
+              <Text
+                className={`text-sm font-bold ${
+                  serviceType === 'salon' ? 'text-teal' : 'text-gray-400'
+                }`}
+              >
+                Visit Salon
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
 
         {/* Date Selection */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Select Date</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.dateRow}>
+        <View className="px-6 mb-7">
+          <Text className="text-lg font-bold text-gray-800 mb-3">Select Date</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
             {dates.map((d, i) => (
               <TouchableOpacity
                 key={i}
-                style={[styles.dateCard, selectedDate === i && styles.dateCardActive]}
+                className={`w-[70px] items-center py-3 rounded-2xl ${
+                  selectedDate === i ? 'bg-teal' : 'bg-gray-50'
+                }`}
                 onPress={() => setSelectedDate(i)}
+                style={selectedDate === i ? {
+                  shadowColor: '#35615D',
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.3,
+                  shadowRadius: 8,
+                  elevation: 6,
+                } : undefined}
               >
-                <Text style={[styles.dateDay, selectedDate === i && styles.dateDayActive]}>{d.day}</Text>
-                <Text style={[styles.dateNum, selectedDate === i && styles.dateNumActive]}>{d.date}</Text>
-                <Text style={[styles.dateMonth, selectedDate === i && styles.dateMonthActive]}>{d.month}</Text>
+                <Text
+                  className={`text-xs font-semibold ${
+                    selectedDate === i ? 'text-white/70' : 'text-gray-400'
+                  }`}
+                >
+                  {d.day}
+                </Text>
+                <Text
+                  className={`text-2xl font-extrabold my-0.5 ${
+                    selectedDate === i ? 'text-white' : 'text-gray-800'
+                  }`}
+                >
+                  {d.date}
+                </Text>
+                <Text
+                  className={`text-[10px] ${
+                    selectedDate === i ? 'text-white/70' : 'text-gray-300'
+                  }`}
+                >
+                  {d.month}
+                </Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
         </View>
 
         {/* Time Selection */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Select Time</Text>
-          <View style={styles.timeGrid}>
+        <View className="px-6 mb-7">
+          <Text className="text-lg font-bold text-gray-800 mb-3">Select Time</Text>
+          <View className="flex-row flex-wrap gap-2.5">
             {times.map((time) => (
               <TouchableOpacity
                 key={time}
-                style={[styles.timeChip, selectedTime === time && styles.timeChipActive]}
+                className={`px-5 py-3 rounded-2xl ${
+                  selectedTime === time ? 'bg-teal' : 'bg-gray-50'
+                }`}
                 onPress={() => setSelectedTime(time)}
+                style={selectedTime === time ? {
+                  shadowColor: '#35615D',
+                  shadowOffset: { width: 0, height: 3 },
+                  shadowOpacity: 0.25,
+                  shadowRadius: 6,
+                  elevation: 4,
+                } : undefined}
               >
-                <Text style={[styles.timeText, selectedTime === time && styles.timeTextActive]}>{time}</Text>
+                <Text
+                  className={`text-sm font-semibold ${
+                    selectedTime === time ? 'text-white' : 'text-gray-500'
+                  }`}
+                >
+                  {time}
+                </Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -170,10 +267,22 @@ export default function BookingScreen({ navigation, route }) {
         <View style={{ height: 120 }} />
       </ScrollView>
 
-      <View style={styles.bottomBar}>
+      {/* Premium Bottom Bar */}
+      <View
+        className="flex-row items-center gap-4 px-6 pb-9 pt-5 bg-white"
+        style={{
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: -6 },
+          shadowOpacity: 0.08,
+          shadowRadius: 16,
+          elevation: 12,
+          borderTopLeftRadius: 24,
+          borderTopRightRadius: 24,
+        }}
+      >
         <View>
-          <Text style={styles.depositLabel}>Deposit required</Text>
-          <Text style={styles.depositAmount}>{formatPrice(servicePrice * 0.3)}</Text>
+          <Text className="text-xs text-gray-400 font-medium">Deposit required</Text>
+          <Text className="text-2xl font-extrabold text-gray-800">{formatPrice(servicePrice * 0.3)}</Text>
         </View>
         <Button
           title={submitting ? 'Booking...' : 'Confirm Booking'}
@@ -186,74 +295,3 @@ export default function BookingScreen({ navigation, route }) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
-  header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: SPACING.xl, paddingTop: 60, paddingBottom: SPACING.md,
-  },
-  backBtn: {
-    width: 40, height: 40, borderRadius: RADIUS.full,
-    backgroundColor: COLORS.backgroundGray, alignItems: 'center', justifyContent: 'center',
-  },
-  headerTitle: { fontSize: FONTS.sizes.xl, fontWeight: '700', color: COLORS.text },
-  providerCard: {
-    flexDirection: 'row', alignItems: 'center', gap: SPACING.md,
-    marginHorizontal: SPACING.xl, padding: SPACING.lg,
-    backgroundColor: COLORS.backgroundGray, borderRadius: RADIUS.lg, marginBottom: SPACING.xxl,
-  },
-  providerAvatar: {
-    width: 48, height: 48, borderRadius: 24, backgroundColor: COLORS.primary + '20',
-    alignItems: 'center', justifyContent: 'center',
-  },
-  avatarText: { fontSize: 20, fontWeight: '700', color: COLORS.primary },
-  providerName: { fontSize: FONTS.sizes.lg, fontWeight: '600', color: COLORS.text },
-  providerService: { fontSize: FONTS.sizes.sm, color: COLORS.textSecondary },
-  section: { paddingHorizontal: SPACING.xl, marginBottom: SPACING.xxl },
-  sectionTitle: { fontSize: FONTS.sizes.lg, fontWeight: '700', color: COLORS.text, marginBottom: SPACING.md },
-  serviceChip: {
-    flexDirection: 'row', alignItems: 'center', padding: SPACING.lg,
-    backgroundColor: COLORS.backgroundGray, borderRadius: RADIUS.lg, marginBottom: SPACING.sm,
-    borderWidth: 2, borderColor: 'transparent',
-  },
-  serviceChipActive: { borderColor: COLORS.primary, backgroundColor: COLORS.primary + '10' },
-  serviceChipName: { fontSize: FONTS.sizes.md, fontWeight: '600', color: COLORS.text },
-  serviceChipDuration: { fontSize: FONTS.sizes.sm, color: COLORS.textLight, marginTop: 2 },
-  typeRow: { flexDirection: 'row', gap: SPACING.md },
-  typeOption: {
-    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: SPACING.sm, padding: SPACING.lg, borderRadius: RADIUS.lg,
-    backgroundColor: COLORS.backgroundGray, borderWidth: 2, borderColor: 'transparent',
-  },
-  typeActive: { borderColor: COLORS.primary, backgroundColor: COLORS.primary + '10' },
-  typeText: { fontSize: FONTS.sizes.md, fontWeight: '600', color: COLORS.textSecondary },
-  typeTextActive: { color: COLORS.primary },
-  dateRow: { gap: SPACING.sm },
-  dateCard: {
-    width: 65, alignItems: 'center', paddingVertical: SPACING.md,
-    borderRadius: RADIUS.lg, backgroundColor: COLORS.backgroundGray,
-  },
-  dateCardActive: { backgroundColor: COLORS.primary },
-  dateDay: { fontSize: FONTS.sizes.sm, color: COLORS.textSecondary, fontWeight: '500' },
-  dateDayActive: { color: 'rgba(255,255,255,0.7)' },
-  dateNum: { fontSize: FONTS.sizes.xxl, fontWeight: '800', color: COLORS.text, marginVertical: 2 },
-  dateNumActive: { color: COLORS.textWhite },
-  dateMonth: { fontSize: FONTS.sizes.xs, color: COLORS.textLight },
-  dateMonthActive: { color: 'rgba(255,255,255,0.7)' },
-  timeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm },
-  timeChip: {
-    paddingHorizontal: SPACING.lg, paddingVertical: SPACING.sm + 2,
-    borderRadius: RADIUS.full, backgroundColor: COLORS.backgroundGray,
-  },
-  timeChipActive: { backgroundColor: COLORS.primary },
-  timeText: { fontSize: FONTS.sizes.md, color: COLORS.textSecondary, fontWeight: '500' },
-  timeTextActive: { color: COLORS.textWhite },
-  bottomBar: {
-    flexDirection: 'row', alignItems: 'center', gap: SPACING.lg,
-    padding: SPACING.xl, paddingBottom: 34,
-    backgroundColor: COLORS.card, borderTopWidth: 1, borderTopColor: COLORS.borderLight,
-  },
-  depositLabel: { fontSize: FONTS.sizes.sm, color: COLORS.textSecondary },
-  depositAmount: { fontSize: FONTS.sizes.xxl, fontWeight: '800', color: COLORS.text },
-});

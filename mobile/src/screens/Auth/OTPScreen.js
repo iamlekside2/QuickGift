@@ -1,12 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Alert, Platform } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, FONTS, SPACING, RADIUS } from '../../constants/theme';
 import Button from '../../components/common/Button';
 import { useAuth } from '../../context/AuthContext';
 
 export default function OTPScreen({ navigation, route }) {
-  const { phone, otpDev, fullName, email, isRegistration } = route.params || {};
+  const { phone, otpDev, fullName, role, isRegistration } = route.params || {};
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [timer, setTimer] = useState(60);
   const [loading, setLoading] = useState(false);
@@ -51,10 +51,21 @@ export default function OTPScreen({ navigation, route }) {
     setLoading(true);
     try {
       const code = otp.join('');
-      await verifyOTP(phone, code);
+      if (isRegistration) {
+        // Register new account then verify
+        await register({
+          full_name: fullName,
+          phone,
+          role: role || 'user',
+          otp: code,
+        });
+      } else {
+        // Login with OTP
+        await verifyOTP(phone, code);
+      }
       // Navigation is handled automatically by RootNavigator when user state updates
     } catch (err) {
-      Alert.alert('Error', err.response?.data?.detail || 'Invalid OTP');
+      Alert.alert('Error', err.response?.data?.detail || 'Invalid OTP. Please try again.');
       setLoading(false);
     }
   };
@@ -70,33 +81,66 @@ export default function OTPScreen({ navigation, route }) {
     }
   };
 
+  // Format phone for display
+  const displayPhone = phone || '+234 ****';
+
   return (
-    <View style={styles.container}>
-      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-        <Ionicons name="arrow-back" size={24} color={COLORS.text} />
+    <View
+      className="flex-1 bg-white px-6"
+      style={{ paddingTop: Platform.OS === 'ios' ? 60 : 40 }}
+    >
+      <StatusBar style="dark" />
+
+      {/* Back Button */}
+      <TouchableOpacity
+        className="w-11 h-11 rounded-2xl bg-gray-100 items-center justify-center mb-8"
+        onPress={() => navigation.goBack()}
+      >
+        <Ionicons name="arrow-back" size={20} color="#1F2937" />
       </TouchableOpacity>
 
-      <View style={styles.header}>
-        <Text style={styles.emoji}>📱</Text>
-        <Text style={styles.title}>Verify Phone</Text>
-        <Text style={styles.subtitle}>
+      {/* Header */}
+      <View className="items-center mb-10">
+        <View
+          className="w-20 h-20 rounded-3xl bg-teal-light items-center justify-center mb-4"
+          style={{
+            shadowColor: '#35615D',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.1,
+            shadowRadius: 12,
+            elevation: 3,
+          }}
+        >
+          <Ionicons name="shield-checkmark-outline" size={36} color="#35615D" />
+        </View>
+        <Text className="text-2xl font-extrabold text-gray-800 mb-2">Verify Phone</Text>
+        <Text className="text-sm text-gray-400 text-center leading-5">
           Enter the 6-digit code sent to{'\n'}
-          <Text style={styles.phone}>{phone || '+234 ****'}</Text>
+          <Text className="font-bold text-gray-800">{displayPhone}</Text>
         </Text>
       </View>
 
+      {/* Dev OTP banner */}
       {otpDev && (
-        <View style={{ backgroundColor: '#FFF3E0', padding: 10, borderRadius: 8, marginBottom: 12, alignItems: 'center' }}>
-          <Text style={{ fontSize: 12, color: '#E65100' }}>Your OTP code: {otpDev}</Text>
+        <View className="bg-orange-light rounded-2xl p-3.5 mb-5 items-center">
+          <Text className="text-xs text-orange font-bold">Dev OTP: {otpDev}</Text>
         </View>
       )}
 
-      <View style={styles.otpRow}>
+      {/* OTP Input Row */}
+      <View className="flex-row justify-center gap-2.5 mb-8">
         {otp.map((digit, index) => (
           <TextInput
             key={index}
             ref={(ref) => (inputs.current[index] = ref)}
-            style={[styles.otpInput, digit && styles.otpInputFilled]}
+            className={`w-12 h-14 rounded-2xl text-center text-xl font-bold ${
+              digit ? 'bg-teal-light text-teal' : 'bg-gray-50 text-gray-800'
+            }`}
+            style={{
+              borderWidth: 2,
+              borderColor: digit ? '#35615D' : 'transparent',
+              fontSize: 20,
+            }}
             keyboardType="number-pad"
             maxLength={1}
             value={digit}
@@ -107,104 +151,28 @@ export default function OTPScreen({ navigation, route }) {
         ))}
       </View>
 
+      {/* Verify Button */}
       <Button
-        title="Verify"
+        title={isRegistration ? 'Create Account' : 'Verify & Login'}
         onPress={handleVerify}
         loading={loading}
         disabled={!isComplete}
         size="lg"
-        style={styles.verifyButton}
+        style={{ width: '100%' }}
       />
 
-      <View style={styles.resendRow}>
+      {/* Resend Row */}
+      <View className="items-center mt-8">
         {timer > 0 ? (
-          <Text style={styles.timerText}>Resend code in {timer}s</Text>
+          <Text className="text-sm text-gray-400">
+            Resend code in <Text className="font-bold text-gray-600">{timer}s</Text>
+          </Text>
         ) : (
           <TouchableOpacity onPress={handleResend}>
-            <Text style={styles.resendText}>Resend Code</Text>
+            <Text className="text-sm text-teal font-bold">Resend Code</Text>
           </TouchableOpacity>
         )}
       </View>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-    paddingHorizontal: SPACING.xl,
-    paddingTop: 60,
-  },
-  backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: RADIUS.full,
-    backgroundColor: COLORS.backgroundGray,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: SPACING.xxl,
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: SPACING.xxxl,
-  },
-  emoji: {
-    fontSize: 48,
-    marginBottom: SPACING.md,
-  },
-  title: {
-    fontSize: FONTS.sizes.title,
-    fontWeight: '800',
-    color: COLORS.text,
-    marginBottom: SPACING.sm,
-  },
-  subtitle: {
-    fontSize: FONTS.sizes.lg,
-    color: COLORS.textSecondary,
-    textAlign: 'center',
-    lineHeight: 24,
-  },
-  phone: {
-    fontWeight: '700',
-    color: COLORS.text,
-  },
-  otpRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: SPACING.sm,
-    marginBottom: SPACING.xxl,
-  },
-  otpInput: {
-    width: 48,
-    height: 56,
-    borderRadius: RADIUS.lg,
-    backgroundColor: COLORS.backgroundGray,
-    textAlign: 'center',
-    fontSize: FONTS.sizes.xxl,
-    fontWeight: '700',
-    color: COLORS.text,
-    borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  otpInputFilled: {
-    borderColor: COLORS.primary,
-    backgroundColor: COLORS.primary + '10',
-  },
-  verifyButton: {
-    width: '100%',
-  },
-  resendRow: {
-    alignItems: 'center',
-    marginTop: SPACING.xxl,
-  },
-  timerText: {
-    fontSize: FONTS.sizes.md,
-    color: COLORS.textLight,
-  },
-  resendText: {
-    fontSize: FONTS.sizes.md,
-    color: COLORS.primary,
-    fontWeight: '600',
-  },
-});

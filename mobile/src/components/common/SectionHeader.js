@@ -1,36 +1,17 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { COLORS, FONTS, SPACING } from '../../constants/theme';
+import { View, Text, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function SectionHeader({ title, actionText = 'See All', onAction }) {
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>{title}</Text>
+    <View className="flex-row justify-between items-center px-5 mb-3.5">
+      <Text className="text-[17px] font-bold text-gray-800">{title}</Text>
       {onAction && (
-        <TouchableOpacity onPress={onAction}>
-          <Text style={styles.action}>{actionText}</Text>
+        <TouchableOpacity onPress={onAction} className="flex-row items-center gap-0.5">
+          <Text className="text-[13px] text-teal font-semibold">{actionText}</Text>
+          <Ionicons name="chevron-forward" size={14} color="#35615D" />
         </TouchableOpacity>
       )}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: SPACING.xl,
-    marginBottom: SPACING.md,
-  },
-  title: {
-    fontSize: FONTS.sizes.xl,
-    fontWeight: '700',
-    color: COLORS.text,
-  },
-  action: {
-    fontSize: FONTS.sizes.md,
-    color: COLORS.primary,
-    fontWeight: '600',
-  },
-});

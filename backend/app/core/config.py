@@ -25,10 +25,9 @@ class Settings(BaseModel):
     OTP_EXPIRE_MINUTES: int = 10
     OTP_LENGTH: int = 6
 
-    # Twilio SMS
-    TWILIO_ACCOUNT_SID: str = os.getenv("TWILIO_ACCOUNT_SID", "")
-    TWILIO_AUTH_TOKEN: str = os.getenv("TWILIO_AUTH_TOKEN", "")
-    TWILIO_PHONE_NUMBER: str = os.getenv("TWILIO_PHONE_NUMBER", "")
+    # Termii SMS
+    TERMII_API_KEY: str = os.getenv("TERMII_API_KEY", "")
+    TERMII_SENDER_ID: str = os.getenv("TERMII_SENDER_ID", "QuickGift")
 
     # Paystack
     PAYSTACK_SECRET_KEY: str = os.getenv("PAYSTACK_SECRET_KEY", "")

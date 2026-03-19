@@ -1,7 +1,7 @@
 export const OCCASIONS = [
-  { id: 'birthday', label: 'Birthday', icon: '🎂', color: '#FF6B6B' },
-  { id: 'anniversary', label: 'Anniversary', icon: '💝', color: '#E55555' },
-  { id: 'wedding', label: 'Wedding', icon: '💒', color: '#F57C1F' },
+  { id: 'birthday', label: 'Birthday', icon: '🎂', color: '#35615D' },
+  { id: 'anniversary', label: 'Anniversary', icon: '💝', color: '#2A4E4B' },
+  { id: 'wedding', label: 'Wedding', icon: '💒', color: '#FD8950' },
   { id: 'graduation', label: 'Graduation', icon: '🎓', color: '#10B981' },
   { id: 'apology', label: 'Apology', icon: '🙏', color: '#6366F1' },
   { id: 'get-well', label: 'Get Well', icon: '💐', color: '#F59E0B' },
@@ -32,21 +32,27 @@ export const BEAUTY_CATEGORIES = [
 export const ONBOARDING_SLIDES = [
   {
     id: '1',
-    title: 'Send Gifts Instantly',
-    description: 'Surprise your loved ones with cakes, flowers, hampers and more — delivered right to their door.',
-    icon: '🎁',
+    title: 'Send same-day Gift deliveries',
+    orangeWords: ['same-day'],
+    tealWords: ['Gift'],
+    description: 'Cakes, flowers, hampers and more! ordered in minutes, delivered before the moment passes.',
+    image: require('../../assets/images/add-to-cart.png'),
   },
   {
     id: '2',
-    title: 'Book Beauty Services',
-    description: 'Find top nail techs, hairdressers, makeup artists and barbers near you — at home or salon.',
-    icon: '💅',
+    title: 'Get your Beauty routine, on your own schedule.',
+    orangeWords: ['Beauty'],
+    tealWords: ['schedule.'],
+    description: 'Book a nail tech, hairstylist, or makeup artist, they come to you, you just show up as yourself.',
+    image: require('../../assets/images/shopping.png'),
   },
   {
     id: '3',
-    title: 'Make Moments Special',
-    description: 'Send a cake AND book a makeover for the celebrant. One app, endless possibilities.',
-    icon: '✨',
+    title: 'Make every Occasion feels like it was planned Perfectly.',
+    orangeWords: ['Occasion'],
+    tealWords: ['Perfectly.'],
+    description: 'Combine gifts and beauty services in one place, because the best surprises look effortless.',
+    image: require('../../assets/images/celebration.png'),
   },
 ];
 

@@ -14,9 +14,11 @@ class VerifyOTPRequest(BaseModel):
 class RegisterRequest(BaseModel):
     full_name: str
     phone: str
+    otp: str  # OTP code for phone verification
     email: Optional[str] = None
     password: Optional[str] = None
     city: Optional[str] = None
+    role: Optional[str] = "user"  # user or provider
 
 
 class LoginRequest(BaseModel):

@@ -1,195 +1,230 @@
 import React, { useState } from 'react';
 import {
   View, Text, KeyboardAvoidingView,
-  Platform, ScrollView, TouchableOpacity, StyleSheet,
+  Platform, ScrollView, TouchableOpacity, Image,
+  TextInput, Alert,
 } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, FONTS, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
-import Button from '../../components/common/Button';
 import { useAuth } from '../../context/AuthContext';
 
-export default function SignupScreen({ navigation }) {
-  const [selectedRole, setSelectedRole] = useState('user');
-  const { dummyLogin } = useAuth();
+const logoSmall = require('../../../assets/images/logo-small.png');
 
-  const handleSignup = () => {
-    dummyLogin(selectedRole);
+export default function SignupScreen({ navigation }) {
+  const [fullName, setFullName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [selectedRole, setSelectedRole] = useState('user');
+  const [loading, setLoading] = useState(false);
+  const { sendOTP } = useAuth();
+
+  const formatPhone = (text) => {
+    const digits = text.replace(/[^0-9]/g, '');
+    setPhone(digits);
+  };
+
+  const getFullPhone = () => {
+    if (phone.startsWith('0')) return '+234' + phone.slice(1);
+    if (phone.startsWith('234')) return '+' + phone;
+    if (phone.startsWith('+234')) return phone;
+    return '+234' + phone;
+  };
+
+  const isValidPhone = () => {
+    const digits = phone.replace(/[^0-9]/g, '');
+    return digits.length >= 10 && digits.length <= 13;
+  };
+
+  const isFormValid = () => fullName.trim().length >= 2 && isValidPhone();
+
+  const handleSignup = async () => {
+    if (!isFormValid()) {
+      Alert.alert('Missing Info', 'Please enter your name and a valid phone number');
+      return;
+    }
+    setLoading(true);
+    try {
+      const fullPhone = getFullPhone();
+      const data = await sendOTP(fullPhone);
+      navigation.navigate('OTP', {
+        phone: fullPhone,
+        otpDev: data?.otp_dev,
+        fullName: fullName.trim(),
+        role: selectedRole,
+        isRegistration: true,
+      });
+    } catch (err) {
+      Alert.alert('Error', err.response?.data?.detail || 'Failed to send OTP. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      className="flex-1 bg-white"
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <Text style={styles.emoji}>🎉</Text>
-          <Text style={styles.title}>Create Account</Text>
-          <Text style={styles.subtitle}>Choose how you want to use QuickGift</Text>
+      <StatusBar style="dark" />
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        className="px-6"
+      >
+        {/* Header */}
+        <View className="items-center mb-8">
+          <View
+            className="w-24 h-24 rounded-3xl bg-teal-light items-center justify-center mb-5"
+            style={{
+              shadowColor: '#35615D',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.15,
+              shadowRadius: 12,
+              elevation: 4,
+            }}
+          >
+            <Image
+              source={logoSmall}
+              style={{ width: 56, height: 56, resizeMode: 'contain' }}
+            />
+          </View>
+          <Text className="text-3xl font-extrabold text-gray-800 mb-2 tracking-tight">
+            Join QuickGift
+          </Text>
+          <Text className="text-base text-gray-400 font-medium">
+            Create your account in seconds
+          </Text>
         </View>
 
-        <View style={styles.form}>
-          <Text style={styles.label}>I want to join as</Text>
-
-          <TouchableOpacity
-            style={[styles.roleCard, selectedRole === 'user' && styles.roleCardActive]}
-            onPress={() => setSelectedRole('user')}
-          >
-            <View style={[styles.roleIcon, selectedRole === 'user' && styles.roleIconActive]}>
-              <Ionicons name="gift-outline" size={28} color={selectedRole === 'user' ? '#fff' : COLORS.primary} />
-            </View>
-            <View style={styles.roleInfo}>
-              <Text style={[styles.roleName, selectedRole === 'user' && styles.roleNameActive]}>Customer</Text>
-              <Text style={styles.roleDesc}>Browse and purchase gifts, book beauty services</Text>
-            </View>
-            <View style={[styles.radioOuter, selectedRole === 'user' && styles.radioOuterActive]}>
-              {selectedRole === 'user' && <View style={styles.radioInner} />}
-            </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.roleCard, selectedRole === 'provider' && styles.roleCardActive]}
-            onPress={() => setSelectedRole('provider')}
-          >
-            <View style={[styles.roleIcon, selectedRole === 'provider' && styles.roleIconActive]}>
-              <Ionicons name="cut-outline" size={28} color={selectedRole === 'provider' ? '#fff' : COLORS.primary} />
-            </View>
-            <View style={styles.roleInfo}>
-              <Text style={[styles.roleName, selectedRole === 'provider' && styles.roleNameActive]}>Service Provider</Text>
-              <Text style={styles.roleDesc}>Offer beauty services, manage bookings and clients</Text>
-            </View>
-            <View style={[styles.radioOuter, selectedRole === 'provider' && styles.radioOuterActive]}>
-              {selectedRole === 'provider' && <View style={styles.radioInner} />}
-            </View>
-          </TouchableOpacity>
-
-          <Button
-            title={selectedRole === 'provider' ? 'Join as Provider' : 'Join as Customer'}
-            onPress={handleSignup}
-            size="lg"
+        {/* Full Name */}
+        <View className="mb-4">
+          <Text className="text-sm font-bold text-gray-700 mb-2">Full Name</Text>
+          <TextInput
+            className="bg-gray-50 rounded-2xl px-4 py-4 text-base text-gray-800 font-medium"
+            style={{
+              borderWidth: 2,
+              borderColor: fullName ? '#35615D' : '#F3F4F6',
+            }}
+            placeholder="Enter your full name"
+            placeholderTextColor="#9CA3AF"
+            value={fullName}
+            onChangeText={setFullName}
+            autoCapitalize="words"
           />
+        </View>
 
-          <View style={styles.bottomRow}>
-            <Text style={styles.bottomText}>Already have an account? </Text>
-            <TouchableOpacity onPress={() => navigation.goBack()}>
-              <Text style={styles.linkText}>Log In</Text>
+        {/* Phone Number */}
+        <View className="mb-5">
+          <Text className="text-sm font-bold text-gray-700 mb-2">Phone Number</Text>
+          <View
+            className="flex-row items-center bg-gray-50 rounded-2xl overflow-hidden"
+            style={{
+              borderWidth: 2,
+              borderColor: phone ? '#35615D' : '#F3F4F6',
+            }}
+          >
+            <View className="px-4 py-4 bg-gray-100 border-r border-gray-200">
+              <Text className="text-base font-bold text-gray-600">+234</Text>
+            </View>
+            <TextInput
+              className="flex-1 px-4 py-4 text-base text-gray-800 font-medium"
+              placeholder="801 234 5678"
+              placeholderTextColor="#9CA3AF"
+              keyboardType="phone-pad"
+              value={phone}
+              onChangeText={formatPhone}
+              maxLength={11}
+            />
+          </View>
+        </View>
+
+        {/* Role Selection */}
+        <View className="mb-6">
+          <Text className="text-sm font-bold text-gray-700 mb-3">I want to join as</Text>
+          <View className="flex-row gap-3">
+            {/* Customer */}
+            <TouchableOpacity
+              className={`flex-1 items-center py-4 rounded-2xl border-2 ${
+                selectedRole === 'user'
+                  ? 'border-teal bg-teal-light'
+                  : 'border-gray-100 bg-white'
+              }`}
+              onPress={() => setSelectedRole('user')}
+            >
+              <View
+                className={`w-12 h-12 rounded-2xl items-center justify-center mb-2 ${
+                  selectedRole === 'user' ? 'bg-teal' : 'bg-teal-light'
+                }`}
+              >
+                <Ionicons
+                  name="gift-outline"
+                  size={24}
+                  color={selectedRole === 'user' ? '#fff' : '#35615D'}
+                />
+              </View>
+              <Text className={`text-sm font-bold ${
+                selectedRole === 'user' ? 'text-teal' : 'text-gray-600'
+              }`}>
+                Customer
+              </Text>
+            </TouchableOpacity>
+
+            {/* Provider */}
+            <TouchableOpacity
+              className={`flex-1 items-center py-4 rounded-2xl border-2 ${
+                selectedRole === 'provider'
+                  ? 'border-teal bg-teal-light'
+                  : 'border-gray-100 bg-white'
+              }`}
+              onPress={() => setSelectedRole('provider')}
+            >
+              <View
+                className={`w-12 h-12 rounded-2xl items-center justify-center mb-2 ${
+                  selectedRole === 'provider' ? 'bg-teal' : 'bg-orange-light'
+                }`}
+              >
+                <Ionicons
+                  name="cut-outline"
+                  size={24}
+                  color={selectedRole === 'provider' ? '#fff' : '#FD8950'}
+                />
+              </View>
+              <Text className={`text-sm font-bold ${
+                selectedRole === 'provider' ? 'text-teal' : 'text-gray-600'
+              }`}>
+                Provider
+              </Text>
             </TouchableOpacity>
           </View>
+        </View>
+
+        {/* Continue Button */}
+        <TouchableOpacity
+          className={`py-4 rounded-2xl items-center ${isFormValid() ? 'bg-teal' : 'bg-gray-200'}`}
+          style={isFormValid() ? {
+            shadowColor: '#35615D',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.25,
+            shadowRadius: 8,
+            elevation: 4,
+          } : undefined}
+          onPress={handleSignup}
+          disabled={!isFormValid() || loading}
+          activeOpacity={0.85}
+        >
+          <Text className={`text-base font-bold ${isFormValid() ? 'text-white' : 'text-gray-400'}`}>
+            {loading ? 'Sending OTP...' : 'Continue'}
+          </Text>
+        </TouchableOpacity>
+
+        {/* Login link */}
+        <View className="flex-row justify-center mt-5">
+          <Text className="text-sm text-gray-400">Already have an account? </Text>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Text className="text-sm text-teal font-bold">Log In</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  scroll: {
-    flexGrow: 1,
-    paddingHorizontal: SPACING.xl,
-    paddingTop: 80,
-    paddingBottom: 40,
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: SPACING.xxxl,
-  },
-  emoji: {
-    fontSize: 48,
-    marginBottom: SPACING.md,
-  },
-  title: {
-    fontSize: FONTS.sizes.title,
-    fontWeight: '800',
-    color: COLORS.text,
-    marginBottom: SPACING.sm,
-  },
-  subtitle: {
-    fontSize: FONTS.sizes.lg,
-    color: COLORS.textSecondary,
-  },
-  form: {
-    gap: SPACING.lg,
-  },
-  label: {
-    fontSize: FONTS.sizes.md,
-    fontWeight: '600',
-    color: COLORS.text,
-  },
-  roleCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.backgroundGray,
-    borderRadius: RADIUS.lg,
-    padding: SPACING.lg,
-    gap: SPACING.md,
-    borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  roleCardActive: {
-    borderColor: COLORS.primary,
-    backgroundColor: COLORS.primary + '08',
-  },
-  roleIcon: {
-    width: 52,
-    height: 52,
-    borderRadius: RADIUS.lg,
-    backgroundColor: COLORS.primary + '15',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  roleIconActive: {
-    backgroundColor: COLORS.primary,
-  },
-  roleInfo: {
-    flex: 1,
-  },
-  roleName: {
-    fontSize: FONTS.sizes.lg,
-    fontWeight: '700',
-    color: COLORS.text,
-    marginBottom: 2,
-  },
-  roleNameActive: {
-    color: COLORS.primary,
-  },
-  roleDesc: {
-    fontSize: FONTS.sizes.sm,
-    color: COLORS.textSecondary,
-    lineHeight: 18,
-  },
-  radioOuter: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    borderWidth: 2,
-    borderColor: COLORS.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  radioOuterActive: {
-    borderColor: COLORS.primary,
-  },
-  radioInner: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: COLORS.primary,
-  },
-  bottomRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: SPACING.md,
-  },
-  bottomText: {
-    fontSize: FONTS.sizes.md,
-    color: COLORS.textSecondary,
-  },
-  linkText: {
-    fontSize: FONTS.sizes.md,
-    color: COLORS.primary,
-    fontWeight: '600',
-  },
-});

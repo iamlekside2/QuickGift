@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Platform, Alert } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, FONTS, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
 import { ordersAPI, paymentsAPI } from '../../services/api';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
-import Button from '../../components/common/Button';
 
 export default function CartScreen({ navigation }) {
   const { items, removeItem, updateQuantity, clearCart, subtotal, itemCount } = useCart();
@@ -18,52 +17,33 @@ export default function CartScreen({ navigation }) {
 
   const handleCheckout = async () => {
     if (isGuest || !isAuthenticated) {
-      Alert.alert('Sign In Required', 'Please sign in to place an order.', [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Sign In', onPress: () => navigation.navigate('Auth') },
-      ]);
+      Alert.alert('Sign In Required', 'Please sign in to place an order.');
       return;
     }
-
     if (items.length === 0) return;
 
     setSubmitting(true);
     try {
       const orderData = {
         order_type: 'gift',
-        items: items.map((item) => ({
-          product_id: item.id,
-          quantity: item.quantity,
-        })),
+        items: items.map((item) => ({ product_id: item.id, quantity: item.quantity })),
         delivery_city: 'Lagos',
         is_express: false,
       };
-
       const res = await ordersAPI.create(orderData);
       const order = res.data;
 
-      // Initialize payment
       try {
-        const payRes = await paymentsAPI.initialize({
-          order_id: order.id,
-          amount: order.total,
-        });
-        // For now, show success since Paystack integration needs a WebView
-        Alert.alert(
-          'Order Placed! 🎉',
-          `Order ${order.order_number} has been created.\nTotal: ${formatPrice(order.total)}`,
-          [{ text: 'View Orders', onPress: () => { clearCart(); navigation.navigate('Orders'); } }]
-        );
-      } catch (payErr) {
-        // Payment init failed but order was created
-        Alert.alert(
-          'Order Created',
-          `Order ${order.order_number} created but payment setup failed. You can pay later from your orders.`,
-          [{ text: 'View Orders', onPress: () => { clearCart(); navigation.navigate('Orders'); } }]
-        );
-      }
+        await paymentsAPI.initialize({ order_id: order.id, amount: order.total });
+      } catch {}
+
+      Alert.alert(
+        'Order Placed!',
+        `Order ${order.order_number} created.\nTotal: ${formatPrice(order.total)}`,
+        [{ text: 'Done', onPress: () => { clearCart(); navigation.goBack(); } }]
+      );
     } catch (err) {
-      Alert.alert('Order Failed', err.response?.data?.detail || 'Something went wrong. Please try again.');
+      Alert.alert('Order Failed', err.response?.data?.detail || 'Something went wrong.');
     } finally {
       setSubmitting(false);
     }
@@ -71,171 +51,142 @@ export default function CartScreen({ navigation }) {
 
   if (items.length === 0) {
     return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <Text style={{ fontSize: 56, marginBottom: SPACING.md }}>🛒</Text>
-        <Text style={styles.emptyTitle}>Your cart is empty</Text>
-        <Text style={styles.emptySubtext}>Add some gifts to get started!</Text>
-        <TouchableOpacity
-          style={styles.shopBtn}
-          onPress={() => navigation.navigate('GiftsTab')}
+      <View className="flex-1 bg-white">
+        <StatusBar style="dark" />
+        <View
+          className="flex-row items-center justify-between px-5 pb-3"
+          style={{ paddingTop: Platform.OS === 'ios' ? 60 : 40 }}
         >
-          <Text style={styles.shopBtnText}>Browse Gifts</Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            className="w-10 h-10 rounded-full bg-gray-100 items-center justify-center"
+            onPress={() => navigation.goBack()}
+          >
+            <Ionicons name="arrow-back" size={22} color="#1F2937" />
+          </TouchableOpacity>
+          <Text className="text-xl font-bold text-gray-800">Cart</Text>
+          <View className="w-10" />
+        </View>
+        <View className="flex-1 items-center justify-center px-8">
+          <View className="w-24 h-24 rounded-full bg-gray-50 items-center justify-center mb-5">
+            <Text style={{ fontSize: 44 }}>🛒</Text>
+          </View>
+          <Text className="text-xl font-bold text-gray-800 mb-2">Your cart is empty</Text>
+          <Text className="text-sm text-gray-500 text-center mb-6">
+            Browse our collection and add gifts to your cart
+          </Text>
+          <TouchableOpacity
+            className="bg-teal px-8 py-3.5 rounded-2xl"
+            onPress={() => navigation.goBack()}
+          >
+            <Text className="text-sm font-semibold text-white">Start Shopping</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={24} color={COLORS.text} />
+    <View className="flex-1 bg-gray-50">
+      <StatusBar style="dark" />
+      <View
+        className="flex-row items-center justify-between px-5 pb-3 bg-white"
+        style={{ paddingTop: Platform.OS === 'ios' ? 60 : 40 }}
+      >
+        <TouchableOpacity
+          className="w-10 h-10 rounded-full bg-gray-100 items-center justify-center"
+          onPress={() => navigation.goBack()}
+        >
+          <Ionicons name="arrow-back" size={22} color="#1F2937" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Cart ({itemCount})</Text>
+        <Text className="text-xl font-bold text-gray-800">Cart ({itemCount})</Text>
         <TouchableOpacity onPress={() => {
-          Alert.alert('Clear Cart', 'Remove all items from your cart?', [
+          Alert.alert('Clear Cart', 'Remove all items?', [
             { text: 'Cancel', style: 'cancel' },
             { text: 'Clear', style: 'destructive', onPress: clearCart },
           ]);
         }}>
-          <Ionicons name="trash-outline" size={22} color={COLORS.error} />
+          <Ionicons name="trash-outline" size={22} color="#EF4444" />
         </TouchableOpacity>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+      <ScrollView className="flex-1 px-5 pt-4" showsVerticalScrollIndicator={false}>
         {items.map((item) => (
-          <View key={item.id} style={styles.cartItem}>
-            <View style={styles.itemIcon}>
-              <Text style={styles.itemEmoji}>{item.emoji || '🎁'}</Text>
-            </View>
-            <View style={styles.itemInfo}>
-              <Text style={styles.itemName} numberOfLines={1}>{item.name}</Text>
-              <Text style={styles.itemType}>{item.vendor_name || 'Gift'}</Text>
-              <View style={styles.qtyRow}>
-                <TouchableOpacity
-                  style={styles.qtyBtn}
-                  onPress={() => updateQuantity(item.id, item.quantity - 1)}
-                >
-                  <Ionicons name="remove" size={16} color={COLORS.text} />
-                </TouchableOpacity>
-                <Text style={styles.qtyText}>{item.quantity}</Text>
-                <TouchableOpacity
-                  style={styles.qtyBtn}
-                  onPress={() => updateQuantity(item.id, item.quantity + 1)}
-                >
-                  <Ionicons name="add" size={16} color={COLORS.text} />
-                </TouchableOpacity>
+          <View key={item.id} className="bg-white rounded-2xl p-4 mb-3 shadow-sm">
+            <View className="flex-row items-center">
+              <View className="w-14 h-14 rounded-xl bg-cream items-center justify-center">
+                <Text style={{ fontSize: 28 }}>{item.emoji || '🎁'}</Text>
               </View>
+              <View className="flex-1 ml-3">
+                <Text className="text-sm font-bold text-gray-800" numberOfLines={1}>{item.name}</Text>
+                <Text className="text-xs text-gray-500">{item.vendor_name || 'Gift'}</Text>
+                <Text className="text-base font-bold text-teal mt-1">{formatPrice(item.price * item.quantity)}</Text>
+              </View>
+              <TouchableOpacity className="ml-2" onPress={() => removeItem(item.id)}>
+                <Ionicons name="close-circle" size={22} color="#EF4444" />
+              </TouchableOpacity>
             </View>
-            <View style={styles.itemRight}>
-              <Text style={styles.itemPrice}>{formatPrice(item.price * item.quantity)}</Text>
-              <TouchableOpacity onPress={() => removeItem(item.id)}>
-                <Ionicons name="close-circle" size={20} color={COLORS.error} />
+            <View className="flex-row items-center justify-end mt-3 pt-3 border-t border-gray-100">
+              <TouchableOpacity
+                className="w-8 h-8 rounded-full bg-gray-100 items-center justify-center"
+                onPress={() => updateQuantity(item.id, item.quantity - 1)}
+              >
+                <Ionicons name="remove" size={16} color="#1F2937" />
+              </TouchableOpacity>
+              <Text className="text-base font-bold text-gray-800 mx-4">{item.quantity}</Text>
+              <TouchableOpacity
+                className="w-8 h-8 rounded-full bg-teal items-center justify-center"
+                onPress={() => updateQuantity(item.id, item.quantity + 1)}
+              >
+                <Ionicons name="add" size={16} color="#fff" />
               </TouchableOpacity>
             </View>
           </View>
         ))}
 
-        {/* Summary */}
-        <View style={styles.summary}>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Subtotal ({itemCount} items)</Text>
-            <Text style={styles.summaryValue}>{formatPrice(subtotal)}</Text>
-          </View>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Delivery Fee</Text>
-            <Text style={styles.summaryValue}>{formatPrice(deliveryFee)}</Text>
-          </View>
-          <View style={styles.divider} />
-          <View style={styles.summaryRow}>
-            <Text style={styles.totalLabel}>Total</Text>
-            <Text style={styles.totalValue}>{formatPrice(total)}</Text>
+        <View className="bg-white rounded-2xl p-5 mt-2 shadow-sm">
+          <Text className="text-base font-bold text-gray-800 mb-4">Order Summary</Text>
+          <View className="gap-3">
+            <View className="flex-row justify-between">
+              <Text className="text-sm text-gray-500">Subtotal ({itemCount} items)</Text>
+              <Text className="text-sm font-semibold text-gray-800">{formatPrice(subtotal)}</Text>
+            </View>
+            <View className="flex-row justify-between">
+              <Text className="text-sm text-gray-500">Delivery Fee</Text>
+              <Text className="text-sm font-semibold text-gray-800">{formatPrice(deliveryFee)}</Text>
+            </View>
+            <View className="h-px bg-gray-100" />
+            <View className="flex-row justify-between">
+              <Text className="text-base font-bold text-gray-800">Total</Text>
+              <Text className="text-lg font-extrabold text-teal">{formatPrice(total)}</Text>
+            </View>
           </View>
         </View>
 
-        {/* Delivery Address */}
-        <TouchableOpacity style={styles.addressCard}>
-          <Ionicons name="location-outline" size={22} color={COLORS.primary} />
-          <View style={{ flex: 1 }}>
-            <Text style={styles.addressTitle}>Delivery Address</Text>
-            <Text style={styles.addressSub}>Tap to add delivery address</Text>
+        <TouchableOpacity className="bg-white rounded-2xl p-4 mt-3 shadow-sm flex-row items-center gap-3">
+          <View className="w-10 h-10 rounded-full bg-teal-light items-center justify-center">
+            <Ionicons name="location-outline" size={20} color="#35615D" />
           </View>
-          <Ionicons name="chevron-forward" size={18} color={COLORS.textLight} />
+          <View className="flex-1">
+            <Text className="text-sm font-semibold text-gray-800">Delivery Address</Text>
+            <Text className="text-xs text-gray-500">Tap to add delivery address</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color="#D1D5DB" />
         </TouchableOpacity>
+
+        <View className="h-[120px]" />
       </ScrollView>
 
-      <View style={styles.bottomBar}>
-        <Button
-          title={submitting ? 'Placing Order...' : `Pay ${formatPrice(total)}`}
+      <View className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-5 pb-8 pt-4">
+        <TouchableOpacity
+          className={`py-4 rounded-2xl items-center ${submitting ? 'bg-gray-300' : 'bg-teal'}`}
           onPress={handleCheckout}
           disabled={submitting}
-          size="lg"
-          style={{ flex: 1 }}
-        />
+        >
+          <Text className="text-base font-semibold text-white">
+            {submitting ? 'Placing Order...' : `Pay ${formatPrice(total)}`}
+          </Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
-  header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: SPACING.xl, paddingTop: 60, paddingBottom: SPACING.md,
-  },
-  backBtn: {
-    width: 40, height: 40, borderRadius: RADIUS.full,
-    backgroundColor: COLORS.backgroundGray, alignItems: 'center', justifyContent: 'center',
-  },
-  headerTitle: { fontSize: FONTS.sizes.xl, fontWeight: '700', color: COLORS.text },
-  content: { paddingHorizontal: SPACING.xl, paddingBottom: 120 },
-  cartItem: {
-    flexDirection: 'row', alignItems: 'center', gap: SPACING.md,
-    padding: SPACING.lg, backgroundColor: COLORS.card, borderRadius: RADIUS.lg,
-    marginBottom: SPACING.md, ...SHADOWS.sm,
-  },
-  itemIcon: {
-    width: 52, height: 52, borderRadius: RADIUS.lg, backgroundColor: COLORS.backgroundLight,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  itemEmoji: { fontSize: 24 },
-  itemInfo: { flex: 1 },
-  itemName: { fontSize: FONTS.sizes.md, fontWeight: '600', color: COLORS.text },
-  itemType: { fontSize: FONTS.sizes.sm, color: COLORS.textLight, marginBottom: 4 },
-  qtyRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
-  qtyBtn: {
-    width: 28, height: 28, borderRadius: 14, backgroundColor: COLORS.backgroundGray,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  qtyText: { fontSize: FONTS.sizes.md, fontWeight: '700', color: COLORS.text, minWidth: 20, textAlign: 'center' },
-  itemRight: { alignItems: 'flex-end', gap: SPACING.sm },
-  itemPrice: { fontSize: FONTS.sizes.lg, fontWeight: '700', color: COLORS.text },
-  summary: {
-    backgroundColor: COLORS.backgroundGray, borderRadius: RADIUS.xl,
-    padding: SPACING.xl, marginTop: SPACING.md, gap: SPACING.md,
-  },
-  summaryRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  summaryLabel: { fontSize: FONTS.sizes.md, color: COLORS.textSecondary },
-  summaryValue: { fontSize: FONTS.sizes.md, fontWeight: '600', color: COLORS.text },
-  divider: { height: 1, backgroundColor: COLORS.border },
-  totalLabel: { fontSize: FONTS.sizes.lg, fontWeight: '700', color: COLORS.text },
-  totalValue: { fontSize: FONTS.sizes.xl, fontWeight: '800', color: COLORS.primary },
-  addressCard: {
-    flexDirection: 'row', alignItems: 'center', gap: SPACING.md,
-    padding: SPACING.lg, backgroundColor: COLORS.card, borderRadius: RADIUS.lg,
-    marginTop: SPACING.lg, ...SHADOWS.sm,
-  },
-  addressTitle: { fontSize: FONTS.sizes.md, fontWeight: '600', color: COLORS.text },
-  addressSub: { fontSize: FONTS.sizes.sm, color: COLORS.textLight },
-  bottomBar: {
-    padding: SPACING.xl, paddingBottom: 34,
-    backgroundColor: COLORS.card, borderTopWidth: 1, borderTopColor: COLORS.borderLight,
-  },
-  emptyTitle: { fontSize: FONTS.sizes.xl, fontWeight: '700', color: COLORS.text },
-  emptySubtext: { fontSize: FONTS.sizes.md, color: COLORS.textLight, marginTop: 4 },
-  shopBtn: {
-    marginTop: SPACING.xl, paddingHorizontal: SPACING.xxl, paddingVertical: SPACING.md,
-    backgroundColor: COLORS.primary, borderRadius: RADIUS.full,
-  },
-  shopBtnText: { fontSize: FONTS.sizes.md, fontWeight: '600', color: COLORS.textWhite },
-});

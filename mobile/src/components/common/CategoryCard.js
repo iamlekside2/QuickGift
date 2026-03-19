@@ -1,55 +1,34 @@
 import React from 'react';
-import { TouchableOpacity, Text, View, StyleSheet } from 'react-native';
-import { COLORS, FONTS, RADIUS, SPACING, SHADOWS } from '../../constants/theme';
+import { TouchableOpacity, Text, View } from 'react-native';
 
 export default function CategoryCard({ label, icon, color, onPress, size = 'md' }) {
+  const isSm = size === 'sm';
+
   return (
     <TouchableOpacity
-      style={[styles.container, size === 'sm' && styles.containerSm]}
+      className={`items-center ${isSm ? 'w-[72px]' : 'w-[85px]'} gap-2`}
       onPress={onPress}
-      activeOpacity={0.7}
+      activeOpacity={0.8}
     >
-      <View style={[styles.iconContainer, { backgroundColor: (color || COLORS.primary) + '15' }]}>
-        <Text style={[styles.icon, size === 'sm' && styles.iconSm]}>{icon}</Text>
+      <View
+        className={`${isSm ? 'w-[56px] h-[56px]' : 'w-[64px] h-[64px]'} rounded-2xl items-center justify-center`}
+        style={{
+          backgroundColor: (color || '#35615D') + '12',
+          shadowColor: color || '#35615D',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 6,
+          elevation: 2,
+        }}
+      >
+        <Text style={{ fontSize: isSm ? 24 : 28 }}>{icon}</Text>
       </View>
-      <Text style={[styles.label, size === 'sm' && styles.labelSm]} numberOfLines={2}>
+      <Text
+        className={`${isSm ? 'text-[10px]' : 'text-[11px]'} text-gray-700 font-semibold text-center`}
+        numberOfLines={2}
+      >
         {label}
       </Text>
     </TouchableOpacity>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    alignItems: 'center',
-    width: 85,
-    gap: SPACING.sm,
-  },
-  containerSm: {
-    width: 70,
-  },
-  iconContainer: {
-    width: 64,
-    height: 64,
-    borderRadius: RADIUS.xl,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...SHADOWS.sm,
-    backgroundColor: COLORS.backgroundGray,
-  },
-  icon: {
-    fontSize: 28,
-  },
-  iconSm: {
-    fontSize: 22,
-  },
-  label: {
-    fontSize: FONTS.sizes.sm,
-    color: COLORS.text,
-    fontWeight: '500',
-    textAlign: 'center',
-  },
-  labelSm: {
-    fontSize: FONTS.sizes.xs,
-  },
-});

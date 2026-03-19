@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, FONTS, SPACING, RADIUS } from '../../constants/theme';
 import { providersAPI } from '../../services/api';
 import ProviderCard from '../../components/common/ProviderCard';
 
@@ -39,39 +39,73 @@ export default function ProvidersListScreen({ navigation, route }) {
   });
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={24} color={COLORS.text} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{title || 'Providers'}</Text>
+    <View className="flex-1 bg-white">
+      <StatusBar style="dark" />
+      {/* Header */}
+      <View
+        className="flex-row items-center justify-between px-6 pb-4"
+        style={{ paddingTop: Platform.OS === 'ios' ? 60 : 40 }}
+      >
         <TouchableOpacity
-          style={styles.viewBtn}
+          className="w-11 h-11 rounded-2xl bg-gray-100 items-center justify-center"
+          onPress={() => navigation.goBack()}
+        >
+          <Ionicons name="arrow-back" size={22} color="#1F2937" />
+        </TouchableOpacity>
+        <Text className="text-xl font-bold text-gray-800">{title || 'Providers'}</Text>
+        <TouchableOpacity
+          className="w-11 h-11 rounded-2xl bg-gray-100 items-center justify-center"
           onPress={() => setViewMode(viewMode === 'list' ? 'map' : 'list')}
         >
-          <Ionicons name={viewMode === 'list' ? 'map-outline' : 'list-outline'} size={20} color={COLORS.text} />
+          <Ionicons name={viewMode === 'list' ? 'map-outline' : 'list-outline'} size={20} color="#1F2937" />
         </TouchableOpacity>
       </View>
 
-      <View style={styles.filterRow}>
+      {/* Filter Row */}
+      <View className="flex-row px-6 gap-2.5 mb-5">
         {filters.map((filter) => (
           <TouchableOpacity
             key={filter}
-            style={[styles.filterChip, activeFilter === filter && styles.filterActive]}
+            className={`px-4 py-2.5 rounded-full ${
+              activeFilter === filter ? 'bg-teal' : 'bg-gray-100'
+            }`}
             onPress={() => setActiveFilter(filter)}
+            style={activeFilter === filter ? {
+              shadowColor: '#35615D',
+              shadowOffset: { width: 0, height: 3 },
+              shadowOpacity: 0.2,
+              shadowRadius: 6,
+              elevation: 4,
+            } : undefined}
           >
-            <Text style={[styles.filterText, activeFilter === filter && styles.filterTextActive]}>{filter}</Text>
+            <Text
+              className={`text-xs font-semibold ${
+                activeFilter === filter ? 'text-white' : 'text-gray-500'
+              }`}
+            >
+              {filter}
+            </Text>
           </TouchableOpacity>
         ))}
       </View>
 
+      {/* Results Count */}
+      {!loading && (
+        <View className="px-6 mb-3">
+          <Text className="text-xs font-medium text-gray-400">
+            {filteredProviders.length} provider{filteredProviders.length !== 1 ? 's' : ''} found
+          </Text>
+        </View>
+      )}
+
+      {/* Provider List */}
       {loading ? (
-        <ActivityIndicator size="large" color={COLORS.primary} style={{ marginTop: 40 }} />
+        <ActivityIndicator size="large" color="#35615D" style={{ marginTop: 40 }} />
       ) : (
         <FlatList
           data={filteredProviders}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.list}
+          contentContainerStyle={{ paddingHorizontal: 24, gap: 14, paddingBottom: 100 }}
           showsVerticalScrollIndicator={false}
           renderItem={({ item }) => (
             <ProviderCard
@@ -80,9 +114,10 @@ export default function ProvidersListScreen({ navigation, route }) {
             />
           )}
           ListEmptyComponent={
-            <View style={styles.empty}>
-              <Text style={styles.emptyEmoji}>💈</Text>
-              <Text style={styles.emptyText}>No providers found</Text>
+            <View className="items-center pt-20">
+              <Text className="text-5xl mb-4">💈</Text>
+              <Text className="text-lg font-semibold text-gray-400">No providers found</Text>
+              <Text className="text-sm text-gray-300 mt-1">Try adjusting your filters</Text>
             </View>
           }
         />
@@ -90,34 +125,3 @@ export default function ProvidersListScreen({ navigation, route }) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
-  header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: SPACING.xl, paddingTop: 60, paddingBottom: SPACING.md,
-  },
-  backBtn: {
-    width: 40, height: 40, borderRadius: RADIUS.full,
-    backgroundColor: COLORS.backgroundGray, alignItems: 'center', justifyContent: 'center',
-  },
-  headerTitle: { fontSize: FONTS.sizes.xl, fontWeight: '700', color: COLORS.text },
-  viewBtn: {
-    width: 40, height: 40, borderRadius: RADIUS.full,
-    backgroundColor: COLORS.backgroundGray, alignItems: 'center', justifyContent: 'center',
-  },
-  filterRow: {
-    flexDirection: 'row', paddingHorizontal: SPACING.xl, gap: SPACING.sm, marginBottom: SPACING.lg,
-  },
-  filterChip: {
-    paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm,
-    borderRadius: RADIUS.full, backgroundColor: COLORS.backgroundGray,
-  },
-  filterActive: { backgroundColor: COLORS.primary },
-  filterText: { fontSize: FONTS.sizes.sm, color: COLORS.textSecondary, fontWeight: '500' },
-  filterTextActive: { color: COLORS.textWhite },
-  list: { paddingHorizontal: SPACING.xl, gap: SPACING.md, paddingBottom: 100 },
-  empty: { alignItems: 'center', paddingTop: 80 },
-  emptyEmoji: { fontSize: 48, marginBottom: SPACING.md },
-  emptyText: { fontSize: FONTS.sizes.lg, color: COLORS.textSecondary },
-});
