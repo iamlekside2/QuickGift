@@ -82,6 +82,16 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  const updateUser = async (fields) => {
+    const updatedUser = { ...user, ...fields };
+    setUser(updatedUser);
+    try {
+      await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
+    } catch (e) {
+      console.log('Error updating user:', e);
+    }
+  };
+
   const guestLogin = () => {
     setUser({ id: 'guest', full_name: 'Guest', role: 'guest' });
   };
@@ -105,6 +115,7 @@ export const AuthProvider = ({ children }) => {
         role: 'provider',
         city: 'Lagos',
         wallet_balance: 12000,
+        profile_complete: true,
       },
     };
     const dummyUser = users[role] || users.user;
@@ -128,6 +139,7 @@ export const AuthProvider = ({ children }) => {
         register,
         login,
         updateProfile,
+        updateUser,
         logout,
         guestLogin,
         dummyLogin,

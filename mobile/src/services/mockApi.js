@@ -258,6 +258,31 @@ export const providersAPI = {
     await delay(200);
     return { data: providerServices[id] || providerServices['1'] };
   },
+  register: async (data) => {
+    await delay(500);
+    return {
+      data: {
+        id: 'prov-' + Date.now(),
+        user_id: 'user-1',
+        business_name: data.business_name,
+        service_type: data.service_type,
+        bio: data.bio || null,
+        location: data.location,
+        city: data.city,
+        rating: 0,
+        review_count: 0,
+        booking_count: 0,
+        experience_years: 0,
+        status: 'pending',
+        plan: 'Free',
+        is_available: true,
+        offers_home_service: true,
+        offers_salon_service: true,
+        avatar_url: null,
+        created_at: new Date().toISOString(),
+      },
+    };
+  },
 };
 
 export const ordersAPI = {

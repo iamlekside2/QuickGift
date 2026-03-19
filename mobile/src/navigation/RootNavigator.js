@@ -8,6 +8,7 @@ import OnboardingScreen from '../screens/Auth/OnboardingScreen';
 import LoginScreen from '../screens/Auth/LoginScreen';
 import SignupScreen from '../screens/Auth/SignupScreen';
 import OTPScreen from '../screens/Auth/OTPScreen';
+import CompleteSetupScreen from '../screens/Provider/CompleteSetupScreen';
 import BuyerTabs from './BuyerTabs';
 import ProviderTabs from './ProviderTabs';
 import CartScreen from '../screens/Shared/CartScreen';
@@ -26,6 +27,7 @@ export default function RootNavigator() {
   }
 
   const isProvider = user?.role === 'provider';
+  const needsSetup = isProvider && user?.profile_complete === false;
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -37,6 +39,8 @@ export default function RootNavigator() {
           <Stack.Screen name="Signup" component={SignupScreen} />
           <Stack.Screen name="OTP" component={OTPScreen} />
         </>
+      ) : needsSetup ? (
+        <Stack.Screen name="CompleteSetup" component={CompleteSetupScreen} />
       ) : (
         <Stack.Screen
           name="MainApp"

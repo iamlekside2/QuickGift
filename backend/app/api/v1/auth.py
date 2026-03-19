@@ -12,6 +12,7 @@ from app.core.security import (
 from app.core.config import settings
 from app.core.sms import send_otp_sms
 from app.models.user import User, OTP
+from app.models.provider import Provider
 from app.schemas.auth import (
     SendOTPRequest, VerifyOTPRequest, RegisterRequest,
     LoginRequest, TokenResponse, UserResponse, UpdateProfileRequest,
@@ -71,6 +72,12 @@ async def verify_otp(req: VerifyOTPRequest, db: AsyncSession = Depends(get_db)):
     await db.commit()
     await db.refresh(user)
 
+    # Check if provider has completed profile
+    profile_complete = True
+    if user.role == "provider":
+        prov_result = await db.execute(select(Provider).where(Provider.user_id == user.id))
+        profile_complete = prov_result.scalars().first() is not None
+
     token = create_access_token({"sub": user.id, "role": user.role})
     return TokenResponse(
         access_token=token,
@@ -83,6 +90,7 @@ async def verify_otp(req: VerifyOTPRequest, db: AsyncSession = Depends(get_db)):
             "city": user.city,
             "wallet_balance": user.wallet_balance,
             "is_new_user": is_new,
+            "profile_complete": profile_complete,
         },
     )
 
@@ -144,6 +152,12 @@ async def register(req: RegisterRequest, db: AsyncSession = Depends(get_db)):
         await db.commit()
         await db.refresh(user)
 
+    # Check if provider has completed profile
+    profile_complete = True
+    if user.role == "provider":
+        prov_result = await db.execute(select(Provider).where(Provider.user_id == user.id))
+        profile_complete = prov_result.scalars().first() is not None
+
     token = create_access_token({"sub": user.id, "role": user.role})
     return TokenResponse(
         access_token=token,
@@ -155,6 +169,7 @@ async def register(req: RegisterRequest, db: AsyncSession = Depends(get_db)):
             "role": user.role,
             "city": user.city,
             "wallet_balance": user.wallet_balance,
+            "profile_complete": profile_complete,
         },
     )
 
@@ -176,6 +191,12 @@ async def login(req: LoginRequest, db: AsyncSession = Depends(get_db)):
     if not user.is_active:
         raise HTTPException(status_code=403, detail="Account deactivated")
 
+    # Check if provider has completed profile
+    profile_complete = True
+    if user.role == "provider":
+        prov_result = await db.execute(select(Provider).where(Provider.user_id == user.id))
+        profile_complete = prov_result.scalars().first() is not None
+
     token = create_access_token({"sub": user.id, "role": user.role})
     return TokenResponse(
         access_token=token,
@@ -187,6 +208,7 @@ async def login(req: LoginRequest, db: AsyncSession = Depends(get_db)):
             "role": user.role,
             "city": user.city,
             "wallet_balance": user.wallet_balance,
+            "profile_complete": profile_complete,
         },
     )
 

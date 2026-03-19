@@ -1,14 +1,24 @@
 import React, { useState } from 'react';
 import {
   View, Text, KeyboardAvoidingView,
-  Platform, ScrollView, TouchableOpacity, Image,
-  TextInput, Alert,
+  Platform, ScrollView, TouchableOpacity, Image, Alert,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { TextInput as PaperInput } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 
 const logoSmall = require('../../../assets/images/logo-small.png');
+
+const paperTheme = {
+  colors: {
+    primary: '#35615D',
+    onSurfaceVariant: '#9CA3AF',
+    outline: '#E5E7EB',
+    background: '#F9FAFB',
+  },
+  roundness: 12,
+};
 
 export default function SignupScreen({ navigation }) {
   const [fullName, setFullName] = useState('');
@@ -17,33 +27,25 @@ export default function SignupScreen({ navigation }) {
   const [loading, setLoading] = useState(false);
   const { sendOTP } = useAuth();
 
-  const formatPhone = (text) => {
-    const digits = text.replace(/[^0-9]/g, '');
-    setPhone(digits);
+  const normalizePhone = (raw) => {
+    const digits = raw.replace(/[^0-9+]/g, '');
+    if (digits.startsWith('+')) return digits;
+    if (digits.startsWith('0')) return '+234' + digits.slice(1);
+    if (digits.startsWith('234')) return '+' + digits;
+    return '+234' + digits;
   };
 
-  const getFullPhone = () => {
-    if (phone.startsWith('0')) return '+234' + phone.slice(1);
-    if (phone.startsWith('234')) return '+' + phone;
-    if (phone.startsWith('+234')) return phone;
-    return '+234' + phone;
-  };
-
-  const isValidPhone = () => {
-    const digits = phone.replace(/[^0-9]/g, '');
-    return digits.length >= 10 && digits.length <= 13;
-  };
-
-  const isFormValid = () => fullName.trim().length >= 2 && isValidPhone();
+  const isValidPhone = phone.replace(/[^0-9]/g, '').length >= 7;
+  const isFormValid = fullName.trim().length >= 2 && isValidPhone;
 
   const handleSignup = async () => {
-    if (!isFormValid()) {
+    if (!isFormValid) {
       Alert.alert('Missing Info', 'Please enter your name and a valid phone number');
       return;
     }
     setLoading(true);
     try {
-      const fullPhone = getFullPhone();
+      const fullPhone = normalizePhone(phone);
       const data = await sendOTP(fullPhone);
       navigation.navigate('OTP', {
         phone: fullPhone,
@@ -96,50 +98,8 @@ export default function SignupScreen({ navigation }) {
           </Text>
         </View>
 
-        {/* Full Name */}
-        <View className="mb-4">
-          <Text className="text-sm font-bold text-gray-700 mb-2">Full Name</Text>
-          <TextInput
-            className="bg-gray-50 rounded-2xl px-4 py-4 text-base text-gray-800 font-medium"
-            style={{
-              borderWidth: 2,
-              borderColor: fullName ? '#35615D' : '#F3F4F6',
-            }}
-            placeholder="Enter your full name"
-            placeholderTextColor="#9CA3AF"
-            value={fullName}
-            onChangeText={setFullName}
-            autoCapitalize="words"
-          />
-        </View>
-
-        {/* Phone Number */}
-        <View className="mb-5">
-          <Text className="text-sm font-bold text-gray-700 mb-2">Phone Number</Text>
-          <View
-            className="flex-row items-center bg-gray-50 rounded-2xl overflow-hidden"
-            style={{
-              borderWidth: 2,
-              borderColor: phone ? '#35615D' : '#F3F4F6',
-            }}
-          >
-            <View className="px-4 py-4 bg-gray-100 border-r border-gray-200">
-              <Text className="text-base font-bold text-gray-600">+234</Text>
-            </View>
-            <TextInput
-              className="flex-1 px-4 py-4 text-base text-gray-800 font-medium"
-              placeholder="801 234 5678"
-              placeholderTextColor="#9CA3AF"
-              keyboardType="phone-pad"
-              value={phone}
-              onChangeText={formatPhone}
-              maxLength={11}
-            />
-          </View>
-        </View>
-
         {/* Role Selection */}
-        <View className="mb-6">
+        <View className="mb-5">
           <Text className="text-sm font-bold text-gray-700 mb-3">I want to join as</Text>
           <View className="flex-row gap-3">
             {/* Customer */}
@@ -198,10 +158,42 @@ export default function SignupScreen({ navigation }) {
           </View>
         </View>
 
+        {/* Full Name */}
+        <View className="mb-4">
+          <PaperInput
+            mode="outlined"
+            label="Full Name"
+            placeholder="John Doe"
+            value={fullName}
+            onChangeText={setFullName}
+            autoCapitalize="words"
+            left={<PaperInput.Icon icon="account-outline" color="#9CA3AF" />}
+            theme={paperTheme}
+            outlineStyle={{ borderRadius: 12 }}
+            style={{ backgroundColor: '#F9FAFB' }}
+          />
+        </View>
+
+        {/* Phone Number */}
+        <View className="mb-6">
+          <PaperInput
+            mode="outlined"
+            label="Phone Number"
+            placeholder="801 234 5678"
+            value={phone}
+            onChangeText={setPhone}
+            keyboardType="phone-pad"
+            left={<PaperInput.Affix text="+234" textStyle={{ color: '#374151', fontWeight: '600' }} />}
+            theme={paperTheme}
+            outlineStyle={{ borderRadius: 12 }}
+            style={{ backgroundColor: '#F9FAFB' }}
+          />
+        </View>
+
         {/* Continue Button */}
         <TouchableOpacity
-          className={`py-4 rounded-2xl items-center ${isFormValid() ? 'bg-teal' : 'bg-gray-200'}`}
-          style={isFormValid() ? {
+          className={`py-4 rounded-2xl items-center ${isFormValid ? 'bg-teal' : 'bg-gray-200'}`}
+          style={isFormValid ? {
             shadowColor: '#35615D',
             shadowOffset: { width: 0, height: 4 },
             shadowOpacity: 0.25,
@@ -209,10 +201,10 @@ export default function SignupScreen({ navigation }) {
             elevation: 4,
           } : undefined}
           onPress={handleSignup}
-          disabled={!isFormValid() || loading}
+          disabled={!isFormValid || loading}
           activeOpacity={0.85}
         >
-          <Text className={`text-base font-bold ${isFormValid() ? 'text-white' : 'text-gray-400'}`}>
+          <Text className={`text-base font-bold ${isFormValid ? 'text-white' : 'text-gray-400'}`}>
             {loading ? 'Sending OTP...' : 'Continue'}
           </Text>
         </TouchableOpacity>
