@@ -3,41 +3,9 @@ import { View, Text, ScrollView, TouchableOpacity, Platform, TextInput, Alert } 
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 
-const MOCK_ADDRESSES = [
-  {
-    id: '1',
-    label: 'Home',
-    name: 'Adewale Johnson',
-    address: '15B Admiralty Way, Lekki Phase 1',
-    city: 'Lagos',
-    phone: '+234 809 123 4567',
-    isDefault: true,
-    icon: 'home',
-  },
-  {
-    id: '2',
-    label: 'Office',
-    name: 'Adewale Johnson',
-    address: '42 Marina Road, Victoria Island',
-    city: 'Lagos',
-    phone: '+234 809 123 4567',
-    isDefault: false,
-    icon: 'business',
-  },
-  {
-    id: '3',
-    label: "Mom's House",
-    name: 'Funke Adeyemi',
-    address: '8 Oluwole Street, Surulere',
-    city: 'Lagos',
-    phone: '+234 802 345 6789',
-    isDefault: false,
-    icon: 'heart',
-  },
-];
 
 export default function AddressesScreen({ navigation }) {
-  const [addresses, setAddresses] = useState(MOCK_ADDRESSES);
+  const [addresses, setAddresses] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [newAddress, setNewAddress] = useState({ label: '', name: '', address: '', city: '', phone: '' });
 
@@ -283,9 +251,9 @@ export default function AddressesScreen({ navigation }) {
             <View className="w-24 h-24 rounded-full bg-blue-50 items-center justify-center mb-5">
               <Ionicons name="location-outline" size={40} color="#3B82F6" />
             </View>
-            <Text className="text-lg font-bold text-gray-800 mb-2">No addresses saved</Text>
+            <Text className="text-lg font-bold text-gray-800 mb-2">No saved addresses</Text>
             <Text className="text-sm text-gray-400 text-center leading-5">
-              Add delivery addresses to make sending gifts faster and easier.
+              Add a delivery address to get started
             </Text>
           </View>
         )}

@@ -3,48 +3,6 @@ import { View, Text, ScrollView, TouchableOpacity, Platform, Switch } from 'reac
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 
-const MOCK_REMINDERS = [
-  {
-    id: '1',
-    name: 'Mom\'s Birthday',
-    person: 'Funke Adeyemi',
-    date: 'April 12, 2026',
-    daysLeft: 24,
-    type: 'birthday',
-    icon: '🎂',
-    active: true,
-  },
-  {
-    id: '2',
-    name: 'Wedding Anniversary',
-    person: 'You & Partner',
-    date: 'May 8, 2026',
-    daysLeft: 50,
-    type: 'anniversary',
-    icon: '💍',
-    active: true,
-  },
-  {
-    id: '3',
-    name: 'Tunde\'s Graduation',
-    person: 'Tunde Okafor',
-    date: 'June 20, 2026',
-    daysLeft: 93,
-    type: 'celebration',
-    icon: '🎓',
-    active: true,
-  },
-  {
-    id: '4',
-    name: 'Sister\'s Birthday',
-    person: 'Chioma Adeyemi',
-    date: 'August 3, 2026',
-    daysLeft: 137,
-    type: 'birthday',
-    icon: '🎁',
-    active: false,
-  },
-];
 
 const OCCASION_PRESETS = [
   { id: '1', label: 'Birthday', icon: '🎂', color: '#FD8950' },
@@ -56,7 +14,7 @@ const OCCASION_PRESETS = [
 ];
 
 export default function RemindersScreen({ navigation }) {
-  const [reminders, setReminders] = useState(MOCK_REMINDERS);
+  const [reminders, setReminders] = useState([]);
 
   const toggleReminder = (id) => {
     setReminders(prev => prev.map(r =>
@@ -135,6 +93,17 @@ export default function RemindersScreen({ navigation }) {
         {/* Upcoming */}
         <View className="px-5 pt-5">
           <Text className="text-[13px] font-bold text-gray-400 uppercase tracking-wider mb-3">Upcoming</Text>
+          {reminders.length === 0 ? (
+            <View className="items-center mt-10 px-8 mb-6">
+              <View className="w-24 h-24 rounded-full bg-orange-light items-center justify-center mb-5">
+                <Ionicons name="notifications-outline" size={40} color="#FD8950" />
+              </View>
+              <Text className="text-lg font-bold text-gray-800 mb-2">No reminders yet</Text>
+              <Text className="text-sm text-gray-400 text-center leading-5">
+                Set reminders for special occasions
+              </Text>
+            </View>
+          ) : (
           <View className="gap-3">
             {reminders.map((reminder) => {
               const urgency = getUrgencyColor(reminder.daysLeft);
@@ -189,6 +158,7 @@ export default function RemindersScreen({ navigation }) {
               );
             })}
           </View>
+          )}
         </View>
 
         {/* Tips Card */}

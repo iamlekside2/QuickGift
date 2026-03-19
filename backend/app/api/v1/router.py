@@ -7,6 +7,7 @@ from app.api.v1.orders import router as orders_router
 from app.api.v1.bookings import router as bookings_router
 from app.api.v1.payments import router as payments_router
 from app.api.v1.reviews import router as reviews_router
+from app.api.v1.chats import router as chats_router
 from app.api.v1.admin import router as admin_router
 
 api_router = APIRouter(prefix="/api/v1")
@@ -18,4 +19,5 @@ api_router.include_router(orders_router)
 api_router.include_router(bookings_router)
 api_router.include_router(payments_router)
 api_router.include_router(reviews_router)
+api_router.include_router(chats_router)
 api_router.include_router(admin_router)

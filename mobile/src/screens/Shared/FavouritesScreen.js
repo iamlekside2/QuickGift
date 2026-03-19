@@ -3,18 +3,8 @@ import { View, Text, ScrollView, TouchableOpacity, Platform, FlatList } from 're
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 
-const MOCK_GIFT_FAVOURITES = [
-  { id: '1', name: 'Luxury Birthday Box', vendor: 'GiftWrap Lagos', price: 25000, rating: 4.8, emoji: '🎁' },
-  { id: '2', name: 'Rose Bouquet Deluxe', vendor: 'Bloom & Petals', price: 18000, rating: 4.9, emoji: '💐' },
-  { id: '3', name: 'Chocolate Truffle Set', vendor: 'Sweet Cravings', price: 12000, rating: 4.7, emoji: '🍫' },
-  { id: '4', name: 'Celebration Cake', vendor: 'The Cake Place', price: 35000, rating: 4.6, emoji: '🎂' },
-];
-
-const MOCK_PROVIDER_FAVOURITES = [
-  { id: '1', name: 'Glam by Amara', service: 'Nail Technician', rating: 4.9, reviews: 234, available: true },
-  { id: '2', name: 'Beauty by Blessing', service: 'Hair Stylist', rating: 4.8, reviews: 189, available: false },
-  { id: '3', name: 'Lashes & More', service: 'Lash Extensions', rating: 4.7, reviews: 156, available: true },
-];
+const giftFavourites = [];
+const providerFavourites = [];
 
 export default function FavouritesScreen({ navigation }) {
   const [activeTab, setActiveTab] = useState('gifts');
@@ -93,7 +83,7 @@ export default function FavouritesScreen({ navigation }) {
     </TouchableOpacity>
   );
 
-  const data = activeTab === 'gifts' ? MOCK_GIFT_FAVOURITES : MOCK_PROVIDER_FAVOURITES;
+  const data = activeTab === 'gifts' ? giftFavourites : providerFavourites;
 
   return (
     <View className="flex-1 bg-gray-50">
@@ -134,7 +124,7 @@ export default function FavouritesScreen({ navigation }) {
             onPress={() => setActiveTab('gifts')}
           >
             <Text className={`text-sm font-bold ${activeTab === 'gifts' ? 'text-white' : 'text-gray-400'}`}>
-              Gifts ({MOCK_GIFT_FAVOURITES.length})
+              Gifts ({giftFavourites.length})
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -149,7 +139,7 @@ export default function FavouritesScreen({ navigation }) {
             onPress={() => setActiveTab('providers')}
           >
             <Text className={`text-sm font-bold ${activeTab === 'providers' ? 'text-white' : 'text-gray-400'}`}>
-              Providers ({MOCK_PROVIDER_FAVOURITES.length})
+              Providers ({providerFavourites.length})
             </Text>
           </TouchableOpacity>
         </View>
@@ -169,7 +159,7 @@ export default function FavouritesScreen({ navigation }) {
             </View>
             <Text className="text-lg font-bold text-gray-800 mb-2">No favourites yet</Text>
             <Text className="text-sm text-gray-400 text-center leading-5">
-              Tap the heart icon on any gift or provider to save them here for quick access.
+              Items you love will appear here
             </Text>
           </View>
         }

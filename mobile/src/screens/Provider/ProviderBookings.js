@@ -1,29 +1,47 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Platform } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, Platform, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
+import { bookingsAPI } from '../../services/api';
 
 const TABS = ['Upcoming', 'Pending', 'Completed'];
 
-const MOCK_BOOKINGS = {
-  Upcoming: [
-    { id: '1', client: 'Amina Okafor', service: 'Gel Nails - Full Set', time: '10:00 AM', date: 'Today, Mar 19', price: 8000, status: 'confirmed' },
-    { id: '2', client: 'Blessing Eze', service: 'Box Braids', time: '1:30 PM', date: 'Today, Mar 19', price: 15000, status: 'confirmed' },
-    { id: '3', client: 'Chioma Adeyemi', service: 'Bridal Makeup', time: '9:00 AM', date: 'Tomorrow, Mar 20', price: 25000, status: 'confirmed' },
-  ],
-  Pending: [
-    { id: '4', client: 'Fatima Yusuf', service: 'Makeup Session', time: '4:00 PM', date: 'Mar 21', price: 12000, status: 'pending' },
-    { id: '5', client: 'Grace Okwu', service: 'Nail Art', time: '11:00 AM', date: 'Mar 22', price: 6000, status: 'pending' },
-  ],
-  Completed: [
-    { id: '6', client: 'Hannah Bello', service: 'Hair Treatment', time: '2:00 PM', date: 'Mar 17', price: 10000, status: 'completed' },
-    { id: '7', client: 'Ifeoma Nwankwo', service: 'Gel Nails', time: '10:00 AM', date: 'Mar 16', price: 8000, status: 'completed' },
-  ],
-};
-
 export default function ProviderBookings({ navigation }) {
   const [activeTab, setActiveTab] = useState('Upcoming');
-  const bookings = MOCK_BOOKINGS[activeTab] || [];
+  const [allBookings, setAllBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
+      const fetchBookings = async () => {
+        try {
+          setLoading(true);
+          const res = await bookingsAPI.list();
+          if (!cancelled) {
+            const data = res.data || res;
+            setAllBookings(Array.isArray(data) ? data : []);
+          }
+        } catch (err) {
+          console.log('Failed to fetch bookings:', err);
+          if (!cancelled) setAllBookings([]);
+        } finally {
+          if (!cancelled) setLoading(false);
+        }
+      };
+      fetchBookings();
+      return () => { cancelled = true; };
+    }, [])
+  );
+
+  const bookings = allBookings.filter((b) => {
+    const status = (b.status || '').toLowerCase();
+    if (activeTab === 'Upcoming') return status === 'confirmed' || status === 'upcoming';
+    if (activeTab === 'Pending') return status === 'pending';
+    if (activeTab === 'Completed') return status === 'completed';
+    return false;
+  });
 
   return (
     <View className="flex-1 bg-gray-50">
@@ -60,7 +78,12 @@ export default function ProviderBookings({ navigation }) {
 
       {/* Bookings List */}
       <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false}>
-        {bookings.length === 0 ? (
+        {loading ? (
+          <View className="items-center mt-16">
+            <ActivityIndicator size="large" color="#35615D" />
+            <Text className="text-sm text-gray-400 mt-3">Loading bookings...</Text>
+          </View>
+        ) : bookings.length === 0 ? (
           <View className="items-center mt-16">
             <Ionicons name="calendar-outline" size={48} color="#9CA3AF" />
             <Text className="text-base font-bold text-gray-800 mt-3">No {activeTab.toLowerCase()} bookings</Text>
@@ -77,14 +100,14 @@ export default function ProviderBookings({ navigation }) {
               <View className="flex-row justify-between items-start mb-2">
                 <View className="flex-row items-center gap-3">
                   <View className="w-10 h-10 rounded-full bg-teal-light items-center justify-center">
-                    <Text className="text-teal font-bold">{booking.client.charAt(0)}</Text>
+                    <Text className="text-teal font-bold">{(booking.client || '?').charAt(0)}</Text>
                   </View>
                   <View>
                     <Text className="text-sm font-bold text-gray-800">{booking.client}</Text>
                     <Text className="text-xs text-gray-400">{booking.service}</Text>
                   </View>
                 </View>
-                <Text className="text-sm font-extrabold text-teal">{'\u20A6'}{booking.price.toLocaleString()}</Text>
+                <Text className="text-sm font-extrabold text-teal">{'\u20A6'}{(booking.price || 0).toLocaleString()}</Text>
               </View>
 
               <View className="flex-row justify-between items-center mt-2 pt-2 border-t border-gray-100">

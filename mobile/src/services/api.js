@@ -1,15 +1,14 @@
 // ══════════════════════════════════════════════════════
-// API Toggle — switch between mock and real per service
-// Set to true = use dummy data, false = use real backend
+// API Toggle — ALL real backend now
 // ══════════════════════════════════════════════════════
-const USE_MOCK_AUTH = false;       // ← Real backend auth
-const USE_MOCK_PRODUCTS = true;
-const USE_MOCK_PROVIDERS = true;
-const USE_MOCK_ORDERS = true;
-const USE_MOCK_BOOKINGS = true;
-const USE_MOCK_PAYMENTS = true;
-const USE_MOCK_REVIEWS = true;
-const USE_MOCK_CHATS = true;
+const USE_MOCK_AUTH = false;
+const USE_MOCK_PRODUCTS = false;
+const USE_MOCK_PROVIDERS = false;
+const USE_MOCK_ORDERS = false;
+const USE_MOCK_BOOKINGS = false;
+const USE_MOCK_PAYMENTS = false;
+const USE_MOCK_REVIEWS = false;
+const USE_MOCK_CHATS = false;
 
 // ─── Mock API (dummy data) ───────────────────────────
 import {

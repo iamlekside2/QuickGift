@@ -5,11 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 const REFERRAL_CODE = 'QUICKGIFT500';
 
-const MOCK_REFERRALS = [
-  { id: '1', name: 'Amina O.', date: 'Mar 15, 2026', status: 'completed', earned: 500 },
-  { id: '2', name: 'Tunde K.', date: 'Mar 10, 2026', status: 'completed', earned: 500 },
-  { id: '3', name: 'Blessing E.', date: 'Mar 5, 2026', status: 'pending', earned: 0 },
-];
+const referrals = [];
 
 const HOW_IT_WORKS = [
   { step: '1', title: 'Share your code', desc: 'Send your unique referral code to friends', icon: 'share-outline', color: '#35615D' },
@@ -19,7 +15,7 @@ const HOW_IT_WORKS = [
 
 export default function ReferFriendScreen({ navigation }) {
   const [copied, setCopied] = useState(false);
-  const totalEarned = MOCK_REFERRALS.filter(r => r.status === 'completed').reduce((sum, r) => sum + r.earned, 0);
+  const totalEarned = referrals.filter(r => r.status === 'completed').reduce((sum, r) => sum + r.earned, 0);
 
   const handleShare = async () => {
     try {
@@ -62,7 +58,7 @@ export default function ReferFriendScreen({ navigation }) {
               ₦{totalEarned.toLocaleString()}
             </Text>
             <Text className="text-white/50 text-xs mt-1">
-              {MOCK_REFERRALS.filter(r => r.status === 'completed').length} successful referrals
+              {referrals.filter(r => r.status === 'completed').length} successful referrals
             </Text>
           </View>
         </View>
@@ -150,8 +146,19 @@ export default function ReferFriendScreen({ navigation }) {
         {/* Referral History */}
         <View className="px-5 mb-5">
           <Text className="text-[13px] font-bold text-gray-400 uppercase tracking-wider mb-3">
-            Your Referrals ({MOCK_REFERRALS.length})
+            Your Referrals ({referrals.length})
           </Text>
+          {referrals.length === 0 ? (
+            <View className="items-center py-8 px-8">
+              <View className="w-16 h-16 rounded-full bg-teal-light items-center justify-center mb-4">
+                <Ionicons name="people-outline" size={28} color="#35615D" />
+              </View>
+              <Text className="text-base font-bold text-gray-800 mb-1">No referrals yet</Text>
+              <Text className="text-xs text-gray-400 text-center leading-4">
+                Share your code with friends to start earning rewards
+              </Text>
+            </View>
+          ) : (
           <View
             className="bg-white rounded-2xl overflow-hidden"
             style={{
@@ -162,11 +169,11 @@ export default function ReferFriendScreen({ navigation }) {
               elevation: 2,
             }}
           >
-            {MOCK_REFERRALS.map((ref, i) => (
+            {referrals.map((ref, i) => (
               <View
                 key={ref.id}
                 className={`flex-row items-center px-4 py-3.5 ${
-                  i < MOCK_REFERRALS.length - 1 ? 'border-b border-gray-50' : ''
+                  i < referrals.length - 1 ? 'border-b border-gray-50' : ''
                 }`}
               >
                 <View className="w-10 h-10 rounded-xl bg-teal-light items-center justify-center mr-3">
@@ -189,6 +196,7 @@ export default function ReferFriendScreen({ navigation }) {
               </View>
             ))}
           </View>
+          )}
         </View>
 
         {/* Reward Card */}
