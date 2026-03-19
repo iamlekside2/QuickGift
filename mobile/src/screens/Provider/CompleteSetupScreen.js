@@ -85,7 +85,11 @@ export default function CompleteSetupScreen() {
     >
       <StatusBar style="dark" />
       <ScrollView
-        contentContainerStyle={{ flexGrow: 1, paddingVertical: 40 }}
+        contentContainerStyle={{
+          flexGrow: 1,
+          paddingTop: Platform.OS === 'ios' ? 70 : 50,
+          paddingBottom: 40,
+        }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         className="px-6"

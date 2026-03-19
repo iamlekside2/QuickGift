@@ -115,7 +115,15 @@ async def register(req: RegisterRequest, db: AsyncSession = Depends(get_db)):
     existing_user = existing.scalars().first()
 
     if existing_user:
-        # User was auto-created by verify-otp earlier — update their profile
+        # If user was auto-created by verify-otp (placeholder name), allow profile update
+        # Otherwise, this is an already-registered user — reject
+        if existing_user.full_name != "QuickGift User":
+            raise HTTPException(
+                status_code=400,
+                detail="This phone number is already registered. Please log in instead."
+            )
+
+        # Update the auto-created placeholder user
         existing_user.full_name = req.full_name
         if req.email:
             existing_user.email = req.email

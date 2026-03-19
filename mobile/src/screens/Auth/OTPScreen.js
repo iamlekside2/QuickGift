@@ -65,7 +65,18 @@ export default function OTPScreen({ navigation, route }) {
       }
       // Navigation is handled automatically by RootNavigator when user state updates
     } catch (err) {
-      Alert.alert('Error', err.response?.data?.detail || 'Invalid OTP. Please try again.');
+      const detail = err.response?.data?.detail || 'Invalid OTP. Please try again.';
+      const isAlreadyRegistered = detail.includes('already registered');
+      Alert.alert(
+        isAlreadyRegistered ? 'Account Exists' : 'Error',
+        detail,
+        isAlreadyRegistered
+          ? [
+              { text: 'Go to Login', onPress: () => navigation.navigate('Login') },
+              { text: 'Cancel', style: 'cancel' },
+            ]
+          : [{ text: 'OK' }]
+      );
       setLoading(false);
     }
   };
