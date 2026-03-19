@@ -21,6 +21,15 @@ from app.schemas.auth import (
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
+@router.post("/check-phone")
+async def check_phone(req: SendOTPRequest, db: AsyncSession = Depends(get_db)):
+    """Check if a phone number is already registered."""
+    result = await db.execute(select(User).where(User.phone == req.phone))
+    user = result.scalars().first()
+    exists = user is not None and user.full_name != "QuickGift User"
+    return {"exists": exists}
+
+
 @router.post("/send-otp")
 async def send_otp(req: SendOTPRequest, db: AsyncSession = Depends(get_db)):
     code = generate_otp()

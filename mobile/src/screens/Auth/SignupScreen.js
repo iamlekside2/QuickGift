@@ -25,7 +25,7 @@ export default function SignupScreen({ navigation }) {
   const [phone, setPhone] = useState('');
   const [selectedRole, setSelectedRole] = useState('user');
   const [loading, setLoading] = useState(false);
-  const { sendOTP } = useAuth();
+  const { checkPhone, sendOTP } = useAuth();
 
   const normalizePhone = (raw) => {
     const digits = raw.replace(/[^0-9+]/g, '');
@@ -46,6 +46,22 @@ export default function SignupScreen({ navigation }) {
     setLoading(true);
     try {
       const fullPhone = normalizePhone(phone);
+
+      // Check if phone is already registered before sending OTP
+      const { exists } = await checkPhone(fullPhone);
+      if (exists) {
+        Alert.alert(
+          'Account Exists',
+          'This phone number is already registered. Please log in instead.',
+          [
+            { text: 'Go to Login', onPress: () => navigation.navigate('Login') },
+            { text: 'Cancel', style: 'cancel' },
+          ]
+        );
+        setLoading(false);
+        return;
+      }
+
       const data = await sendOTP(fullPhone);
       navigation.navigate('OTP', {
         phone: fullPhone,

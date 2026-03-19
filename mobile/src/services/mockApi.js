@@ -151,6 +151,10 @@ const dummyBookings = [
 // ═══════════════════════════════════════════════════════
 
 export const authAPI = {
+  checkPhone: async (phone) => {
+    await delay(200);
+    return { data: { exists: false } };
+  },
   sendOTP: async (phone) => {
     await delay(500);
     const code = '123456';

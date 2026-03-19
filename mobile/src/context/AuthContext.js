@@ -39,6 +39,11 @@ export const AuthProvider = ({ children }) => {
     setUser(userData);
   };
 
+  const checkPhone = async (phone) => {
+    const res = await authAPI.checkPhone(phone);
+    return res.data;
+  };
+
   const sendOTP = async (phone) => {
     const res = await authAPI.sendOTP(phone);
     return res.data;
@@ -134,6 +139,7 @@ export const AuthProvider = ({ children }) => {
         loading,
         isAuthenticated: !!token,
         isGuest: user?.role === 'guest',
+        checkPhone,
         sendOTP,
         verifyOTP,
         register,

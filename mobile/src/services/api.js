@@ -55,6 +55,7 @@ api.interceptors.response.use(
 );
 
 const realAuthAPI = {
+  checkPhone: (phone) => api.post('/auth/check-phone', { phone }),
   sendOTP: (phone) => api.post('/auth/send-otp', { phone }),
   verifyOTP: (phone, code) => api.post('/auth/verify-otp', { phone, code }),
   register: (data) => api.post('/auth/register', {
