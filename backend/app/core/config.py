@@ -48,19 +48,21 @@ class Settings(BaseModel):
     DELIVERY_PER_KM: int = 200
     EXPRESS_MULTIPLIER: float = 2.5
 
-    # CORS — production URLs + local dev
-    ALLOWED_ORIGINS: list = [
-        o.strip() for o in os.getenv("ALLOWED_ORIGINS", "").split(",") if o.strip()
-    ] or [
-        "https://quickgift-admin.onrender.com",
-        "https://quickgift-landing.onrender.com",
-        "http://localhost:5173",
-        "http://localhost:5174",
-        "http://localhost:5175",
-        "http://localhost:5176",
-        "http://localhost:3000",
-        "http://localhost:8081",
-    ]
+    # CORS — always include production + local dev, plus any from env
+    ALLOWED_ORIGINS: list = list(set(
+        [
+            "https://quickgift-admin.onrender.com",
+            "https://quickgift-landing.onrender.com",
+            "http://localhost:5173",
+            "http://localhost:5174",
+            "http://localhost:5175",
+            "http://localhost:5176",
+            "http://localhost:3000",
+            "http://localhost:8081",
+        ] + [
+            o.strip() for o in os.getenv("ALLOWED_ORIGINS", "").split(",") if o.strip()
+        ]
+    ))
 
     @property
     def async_database_url(self) -> str:
