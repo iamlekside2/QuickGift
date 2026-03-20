@@ -455,7 +455,21 @@ async def main():
     # Create all tables if they don't exist
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    print("  Tables: ensured all tables exist.\n")
+    print("  Tables: ensured all tables exist.")
+
+    # Add new columns to existing tables (PostgreSQL won't auto-add with create_all)
+    migrations = [
+        ("users", "push_token", "VARCHAR(200)"),
+    ]
+    async with engine.begin() as conn:
+        for table, column, col_type in migrations:
+            try:
+                from sqlalchemy import text
+                await conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {column} {col_type}"))
+                print(f"  Migration: added {table}.{column}")
+            except Exception:
+                print(f"  Migration: {table}.{column} already exists")
+    print()
 
     async with async_session() as session:
         async with session.begin():
