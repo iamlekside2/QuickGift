@@ -5,6 +5,7 @@ databases:
     user: quickgift
 
 services:
+  # Backend API
   - type: web
     name: quickgift-api
     runtime: python
@@ -23,3 +24,28 @@ services:
         value: false
       - key: PYTHON_VERSION
         value: 3.11.0
+
+  # Admin Dashboard
+  - type: web
+    name: quickgift-admin
+    runtime: node
+    plan: free
+    rootDir: admin
+    buildCommand: npm install && npm run build
+    startCommand: npx serve dist -s -l $PORT
+    envVars:
+      - key: NODE_VERSION
+        value: 20.11.0
+
+  # Landing Page
+  - type: web
+    name: quickgift-landing
+    runtime: static
+    plan: free
+    rootDir: landing
+    buildCommand: echo "No build needed"
+    staticPublishPath: .
+    headers:
+      - path: /*
+        name: Cache-Control
+        value: public, max-age=3600
