@@ -17,54 +17,18 @@ html {
   background-clip: text;
 }
 
-/* ============ MESH GRADIENTS ============ */
-.mesh-gradient-1 {
-  background: radial-gradient(ellipse at center, rgba(253, 137, 80, 0.25) 0%, transparent 70%);
-  filter: blur(60px);
-}
-
-.mesh-gradient-2 {
-  background: radial-gradient(ellipse at center, rgba(53, 97, 93, 0.2) 0%, transparent 70%);
-  filter: blur(60px);
-}
-
 /* ============ NAVBAR ============ */
 #navbar {
-  background: rgba(255, 248, 240, 0);
+  background: rgba(255, 255, 255, 0);
   backdrop-filter: blur(0px);
   -webkit-backdrop-filter: blur(0px);
 }
 
 #navbar.scrolled {
-  background: rgba(255, 248, 240, 0.85);
+  background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  box-shadow: 0 1px 0 rgba(53, 97, 93, 0.08);
-}
-
-/* ============ MARQUEE ============ */
-.marquee-track {
-  animation: marquee 30s linear infinite;
-  width: max-content;
-}
-
-@keyframes marquee {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}
-
-.marquee-container:hover .marquee-track {
-  animation-play-state: paused;
-}
-
-/* ============ BENTO CARDS ============ */
-.bento-card {
-  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.5s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.bento-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 20px 60px -15px rgba(53, 97, 93, 0.15);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04);
 }
 
 /* ============ FLOATING ANIMATIONS ============ */
@@ -109,6 +73,16 @@ html {
   animation: float-slow 6s ease-in-out infinite;
 }
 
+/* ============ BENTO CARDS ============ */
+.bento-card {
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.bento-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 60px -15px rgba(0, 0, 0, 0.1);
+}
+
 /* ============ SCROLL REVEAL ============ */
 .reveal-up {
   opacity: 0;
@@ -121,7 +95,6 @@ html {
   transform: translateY(0);
 }
 
-/* Stagger children */
 .reveal-up:nth-child(2) { transition-delay: 0.1s; }
 .reveal-up:nth-child(3) { transition-delay: 0.2s; }
 .reveal-up:nth-child(4) { transition-delay: 0.3s; }
@@ -180,8 +153,8 @@ html {
 
 /* ============ SELECTION ============ */
 ::selection {
-  background-color: rgba(253, 137, 80, 0.2);
-  color: #2A4E4B;
+  background-color: rgba(253, 137, 80, 0.15);
+  color: #1a1a1a;
 }
 
 /* ============ SCROLLBAR ============ */
@@ -190,19 +163,19 @@ html {
 }
 
 ::-webkit-scrollbar-track {
-  background: #FFF8F0;
+  background: #fafafa;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #A3C3BF;
+  background: #d1d5db;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #75A59F;
+  background: #9ca3af;
 }
 
-/* ============ RESPONSIVE TWEAKS ============ */
+/* ============ RESPONSIVE ============ */
 @media (max-width: 768px) {
   .phone-mockup {
     animation: float-slow 8s ease-in-out infinite;
@@ -224,10 +197,6 @@ html {
     opacity: 1;
     transform: none;
     transition: none;
-  }
-
-  .marquee-track {
-    animation: none;
   }
 
   .animate-float-slow,
