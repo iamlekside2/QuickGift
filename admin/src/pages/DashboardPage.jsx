@@ -2,12 +2,11 @@ import { Link } from 'react-router-dom'
 import {
   ShoppingCart, Users, DollarSign,
   Sparkles, ArrowUpRight, ArrowDownRight, Loader2, Package,
-  CalendarCheck, TrendingUp
+  CalendarCheck, TrendingUp, ArrowRight
 } from 'lucide-react'
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts'
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts'
 import { useGetDashboardStatsQuery, useGetAdminOrdersQuery } from '../services/api'
 
-// Placeholder chart data (will come from analytics API later)
 const REVENUE_DATA = [
   { name: 'Mon', gifts: 180000, beauty: 95000 },
   { name: 'Tue', gifts: 220000, beauty: 120000 },
@@ -19,20 +18,20 @@ const REVENUE_DATA = [
 ]
 
 const CATEGORY_DATA = [
-  { name: 'Cakes', orders: 145 },
-  { name: 'Flowers', orders: 98 },
-  { name: 'Hampers', orders: 76 },
-  { name: 'Nails', orders: 120 },
-  { name: 'Hair', orders: 89 },
-  { name: 'Makeup', orders: 65 },
+  { name: 'Cakes', orders: 145, fill: '#35615D' },
+  { name: 'Flowers', orders: 98, fill: '#51a399' },
+  { name: 'Hampers', orders: 76, fill: '#7dbab3' },
+  { name: 'Nails', orders: 120, fill: '#FD8950' },
+  { name: 'Hair', orders: 89, fill: '#fdac72' },
+  { name: 'Makeup', orders: 65, fill: '#ffc9a3' },
 ]
 
 const STATUS_STYLES = {
-  delivered: 'bg-green-100 text-green-700',
-  confirmed: 'bg-blue-100 text-blue-700',
-  in_transit: 'bg-yellow-100 text-yellow-700',
-  pending: 'bg-gray-100 text-gray-700',
-  cancelled: 'bg-red-100 text-red-700',
+  delivered: 'badge-green',
+  confirmed: 'badge-blue',
+  in_transit: 'badge-yellow',
+  pending: 'badge-gray',
+  cancelled: 'badge-red',
 }
 
 const STATUS_LABELS = {
@@ -47,6 +46,24 @@ const formatAmount = (amount) => {
   return `\u20A6${amount.toLocaleString()}`
 }
 
+const CustomTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-gray-900 text-white px-4 py-3 rounded-lg shadow-xl text-xs border border-gray-800">
+        <p className="font-semibold mb-1.5">{label}</p>
+        {payload.map((entry, i) => (
+          <p key={i} className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full" style={{ background: entry.color }} />
+            <span className="text-gray-400 capitalize">{entry.dataKey}:</span>
+            <span className="font-semibold">{'\u20A6'}{entry.value?.toLocaleString()}</span>
+          </p>
+        ))}
+      </div>
+    )
+  }
+  return null
+}
+
 export default function DashboardPage() {
   const { data: stats, isLoading: statsLoading } = useGetDashboardStatsQuery()
   const { data: ordersData, isLoading: ordersLoading } = useGetAdminOrdersQuery({ per_page: 5 })
@@ -57,54 +74,59 @@ export default function DashboardPage() {
     {
       label: 'Total Revenue',
       value: formatAmount(stats?.revenue?.total || 0),
-      change: formatAmount(stats?.commission?.total || 0) + ' earned',
-      up: true,
+      sub: formatAmount(stats?.commission?.total || 0) + ' earned',
       icon: DollarSign,
-      color: 'bg-green-100 text-green-600',
+      iconBg: 'bg-emerald-500/10',
+      iconColor: 'text-emerald-600',
+      trend: 'up',
     },
     {
       label: 'Total Orders',
       value: String(stats?.counts?.orders || 0),
-      change: `${stats?.pending?.orders || 0} pending`,
-      up: true,
+      sub: `${stats?.pending?.orders || 0} pending`,
       icon: ShoppingCart,
-      color: 'bg-teal-100 text-teal-500',
+      iconBg: 'bg-teal-500/10',
+      iconColor: 'text-teal-600',
+      trend: 'up',
     },
     {
       label: 'Total Bookings',
       value: String(stats?.counts?.bookings || 0),
-      change: `${stats?.pending?.bookings || 0} pending`,
-      up: true,
+      sub: `${stats?.pending?.bookings || 0} pending`,
       icon: CalendarCheck,
-      color: 'bg-orange-100 text-orange-500',
+      iconBg: 'bg-orange-500/10',
+      iconColor: 'text-orange-600',
+      trend: 'up',
     },
     {
       label: 'Total Users',
       value: String(stats?.counts?.users || 0),
-      change: `${stats?.counts?.products || 0} products`,
-      up: true,
+      sub: `${stats?.counts?.products || 0} products`,
       icon: Users,
-      color: 'bg-purple-100 text-purple-600',
+      iconBg: 'bg-violet-500/10',
+      iconColor: 'text-violet-600',
+      trend: 'up',
     },
     {
       label: 'Providers',
       value: String(stats?.counts?.providers || 0),
-      change: `${stats?.pending?.providers || 0} pending`,
-      up: (stats?.pending?.providers || 0) === 0,
+      sub: `${stats?.pending?.providers || 0} pending`,
       icon: Sparkles,
-      color: 'bg-blue-100 text-blue-600',
+      iconBg: 'bg-blue-500/10',
+      iconColor: 'text-blue-600',
+      trend: (stats?.pending?.providers || 0) === 0 ? 'up' : 'down',
     },
     {
       label: 'Products',
       value: String(stats?.counts?.products || 0),
-      change: 'Listed',
-      up: true,
+      sub: 'Listed',
       icon: Package,
-      color: 'bg-pink-100 text-pink-600',
+      iconBg: 'bg-pink-500/10',
+      iconColor: 'text-pink-600',
+      trend: 'up',
     },
   ]
 
-  // Commission breakdown
   const commissionGifts = stats?.commission?.gifts || 0
   const commissionBeauty = stats?.commission?.beauty || 0
   const commissionTotal = stats?.commission?.total || 0
@@ -112,55 +134,64 @@ export default function DashboardPage() {
   if (statsLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 text-teal-500 animate-spin" />
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="w-8 h-8 text-teal-500 animate-spin" />
+          <p className="text-sm text-gray-400">Loading dashboard...</p>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-fade-in">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Dashboard</h1>
+        <p className="text-sm text-gray-500 mt-1">Overview of your platform performance</p>
+      </div>
+
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {STATS.map((stat) => (
-          <div key={stat.label} className="bg-white rounded-2xl border border-gray-200 p-5">
-            <div className="flex items-center justify-between mb-3">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${stat.color}`}>
-                <stat.icon className="w-5 h-5" />
+        {STATS.map((stat, i) => (
+          <div key={stat.label} className="card p-5 hover:shadow-md transition-shadow duration-200 animate-slide-up" style={{ animationDelay: `${i * 50}ms` }}>
+            <div className="flex items-start justify-between">
+              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${stat.iconBg}`}>
+                <stat.icon className={`w-5 h-5 ${stat.iconColor}`} />
               </div>
-              <div className={`flex items-center gap-0.5 text-sm font-medium ${stat.up ? 'text-green-600' : 'text-orange-500'}`}>
-                {stat.up ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
-                {stat.change}
+              <div className={`flex items-center gap-0.5 text-xs font-medium ${stat.trend === 'up' ? 'text-emerald-600' : 'text-orange-500'}`}>
+                {stat.trend === 'up' ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
+                {stat.sub}
               </div>
             </div>
-            <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-            <p className="text-sm text-gray-500 mt-0.5">{stat.label}</p>
+            <p className="text-2xl font-bold text-gray-900 mt-4 tracking-tight">{stat.value}</p>
+            <p className="text-[13px] text-gray-500 mt-0.5">{stat.label}</p>
           </div>
         ))}
       </div>
 
       {/* Commission Breakdown */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 bg-teal-100 rounded-xl flex items-center justify-center">
-            <TrendingUp className="w-5 h-5 text-teal-500" />
+      <div className="card p-6">
+        <div className="flex items-center gap-3 mb-5">
+          <div className="w-9 h-9 bg-teal-500/10 rounded-lg flex items-center justify-center">
+            <TrendingUp className="w-5 h-5 text-teal-600" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-gray-900">Commission Earned</h3>
-            <p className="text-sm text-gray-500">Breakdown by category</p>
+            <h3 className="text-sm font-semibold text-gray-900">Commission Earned</h3>
+            <p className="text-xs text-gray-500">Breakdown by category</p>
           </div>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="bg-teal-50 rounded-xl p-4">
-            <p className="text-sm text-teal-700 font-medium">Total Commission</p>
-            <p className="text-2xl font-bold text-teal-800 mt-1">{formatAmount(commissionTotal)}</p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="bg-gradient-to-br from-teal-500 to-teal-700 rounded-xl p-5 text-white">
+            <p className="text-xs font-medium text-teal-200">Total Commission</p>
+            <p className="text-2xl font-bold mt-1.5 tracking-tight">{formatAmount(commissionTotal)}</p>
           </div>
-          <div className="bg-orange-50 rounded-xl p-4">
-            <p className="text-sm text-orange-700 font-medium">Gifts Commission</p>
-            <p className="text-2xl font-bold text-orange-800 mt-1">{formatAmount(commissionGifts)}</p>
+          <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
+            <p className="text-xs font-medium text-gray-500">Gifts Commission</p>
+            <p className="text-2xl font-bold text-gray-900 mt-1.5 tracking-tight">{formatAmount(commissionGifts)}</p>
           </div>
-          <div className="bg-purple-50 rounded-xl p-4">
-            <p className="text-sm text-purple-700 font-medium">Beauty Commission</p>
-            <p className="text-2xl font-bold text-purple-800 mt-1">{formatAmount(commissionBeauty)}</p>
+          <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
+            <p className="text-xs font-medium text-gray-500">Beauty Commission</p>
+            <p className="text-2xl font-bold text-gray-900 mt-1.5 tracking-tight">{formatAmount(commissionBeauty)}</p>
           </div>
         </div>
       </div>
@@ -168,98 +199,119 @@ export default function DashboardPage() {
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Revenue Chart */}
-        <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-200 p-6">
+        <div className="lg:col-span-2 card p-6">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h3 className="text-lg font-bold text-gray-900">Revenue Overview</h3>
-              <p className="text-sm text-gray-500">This week&apos;s performance</p>
+              <h3 className="text-sm font-semibold text-gray-900">Revenue Overview</h3>
+              <p className="text-xs text-gray-500 mt-0.5">This week's performance</p>
             </div>
-            <div className="flex items-center gap-4 text-sm">
+            <div className="flex items-center gap-4 text-xs">
               <div className="flex items-center gap-1.5">
-                <div className="w-3 h-3 rounded-full bg-teal-400" />
+                <div className="w-2.5 h-2.5 rounded-full bg-teal-500" />
                 <span className="text-gray-500">Gifts</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <div className="w-3 h-3 rounded-full bg-orange-400" />
+                <div className="w-2.5 h-2.5 rounded-full bg-orange-400" />
                 <span className="text-gray-500">Beauty</span>
               </div>
             </div>
           </div>
-          <ResponsiveContainer width="100%" height={280}>
+          <ResponsiveContainer width="100%" height={300}>
             <AreaChart data={REVENUE_DATA}>
               <defs>
                 <linearGradient id="giftGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#35615D" stopOpacity={0.15} />
-                  <stop offset="95%" stopColor="#35615D" stopOpacity={0} />
+                  <stop offset="0%" stopColor="#35615D" stopOpacity={0.12} />
+                  <stop offset="100%" stopColor="#35615D" stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id="beautyGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#FD8950" stopOpacity={0.15} />
-                  <stop offset="95%" stopColor="#FD8950" stopOpacity={0} />
+                  <stop offset="0%" stopColor="#FD8950" stopOpacity={0.12} />
+                  <stop offset="100%" stopColor="#FD8950" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" vertical={false} />
               <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 12, fill: '#9ca3af' }} axisLine={false} tickLine={false} tickFormatter={(v) => `\u20A6${v / 1000}k`} />
-              <Tooltip formatter={(v) => `\u20A6${v.toLocaleString()}`} />
-              <Area type="monotone" dataKey="gifts" stroke="#35615D" fill="url(#giftGrad)" strokeWidth={2} />
-              <Area type="monotone" dataKey="beauty" stroke="#FD8950" fill="url(#beautyGrad)" strokeWidth={2} />
+              <Tooltip content={<CustomTooltip />} />
+              <Area type="monotone" dataKey="gifts" stroke="#35615D" fill="url(#giftGrad)" strokeWidth={2} dot={false} activeDot={{ r: 4, fill: '#35615D', strokeWidth: 2, stroke: '#fff' }} />
+              <Area type="monotone" dataKey="beauty" stroke="#FD8950" fill="url(#beautyGrad)" strokeWidth={2} dot={false} activeDot={{ r: 4, fill: '#FD8950', strokeWidth: 2, stroke: '#fff' }} />
             </AreaChart>
           </ResponsiveContainer>
         </div>
 
         {/* Category Chart */}
-        <div className="bg-white rounded-2xl border border-gray-200 p-6">
-          <h3 className="text-lg font-bold text-gray-900 mb-1">Top Categories</h3>
-          <p className="text-sm text-gray-500 mb-6">Orders by category</p>
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={CATEGORY_DATA} layout="vertical">
-              <XAxis type="number" tick={{ fontSize: 12, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
+        <div className="card p-6">
+          <h3 className="text-sm font-semibold text-gray-900">Top Categories</h3>
+          <p className="text-xs text-gray-500 mt-0.5 mb-6">Orders by category</p>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={CATEGORY_DATA} layout="vertical" margin={{ left: 0 }}>
+              <XAxis type="number" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
               <YAxis type="category" dataKey="name" tick={{ fontSize: 12, fill: '#6b7280' }} axisLine={false} tickLine={false} width={60} />
-              <Tooltip />
-              <Bar dataKey="orders" fill="#35615D" radius={[0, 6, 6, 0]} barSize={20} />
+              <Tooltip
+                content={({ active, payload }) => {
+                  if (active && payload && payload.length) {
+                    return (
+                      <div className="bg-gray-900 text-white px-3 py-2 rounded-lg text-xs shadow-xl">
+                        <span className="font-semibold">{payload[0]?.payload?.name}:</span> {payload[0]?.value} orders
+                      </div>
+                    )
+                  }
+                  return null
+                }}
+              />
+              <Bar dataKey="orders" radius={[0, 6, 6, 0]} barSize={22}>
+                {CATEGORY_DATA.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.fill} />
+                ))}
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>
       </div>
 
       {/* Recent Orders */}
-      <div className="bg-white rounded-2xl border border-gray-200">
-        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-          <h3 className="text-lg font-bold text-gray-900">Recent Orders</h3>
-          <Link to="/orders" className="text-sm text-teal-500 font-semibold hover:text-teal-600">View All</Link>
+      <div className="card overflow-hidden">
+        <div className="px-6 py-4 flex items-center justify-between border-b border-gray-100">
+          <div>
+            <h3 className="text-sm font-semibold text-gray-900">Recent Orders</h3>
+            <p className="text-xs text-gray-500 mt-0.5">Latest transactions on the platform</p>
+          </div>
+          <Link to="/orders" className="btn-ghost text-xs text-teal-600 hover:text-teal-700">
+            View All
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-gray-100">
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Order ID</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Type</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Amount</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
+              <tr className="border-b border-gray-100 bg-gray-50/50">
+                <th className="table-header">Order ID</th>
+                <th className="table-header">Type</th>
+                <th className="table-header">Amount</th>
+                <th className="table-header">Status</th>
+                <th className="table-header">Date</th>
               </tr>
             </thead>
             <tbody>
               {ordersLoading ? (
-                <tr><td colSpan={5} className="px-6 py-8 text-center text-gray-400"><Loader2 className="w-5 h-5 animate-spin mx-auto" /></td></tr>
+                <tr><td colSpan={5} className="px-6 py-10 text-center text-gray-400"><Loader2 className="w-5 h-5 animate-spin mx-auto" /></td></tr>
               ) : recentOrders.length === 0 ? (
-                <tr><td colSpan={5} className="px-6 py-8 text-center text-gray-400">No orders yet</td></tr>
+                <tr><td colSpan={5} className="px-6 py-10 text-center text-gray-400 text-sm">No orders yet</td></tr>
               ) : (
                 recentOrders.map((order) => (
-                  <tr key={order.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
-                    <td className="px-6 py-3.5 text-sm font-mono font-medium text-gray-900">{order.order_number}</td>
-                    <td className="px-6 py-3.5">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${order.order_type === 'gift' ? 'bg-teal-50 text-teal-600' : 'bg-orange-50 text-orange-600'}`}>
+                  <tr key={order.id} className="table-row">
+                    <td className="table-cell font-mono font-medium text-gray-900 text-xs">{order.order_number}</td>
+                    <td className="table-cell">
+                      <span className={`badge ${order.order_type === 'gift' ? 'badge-teal' : 'badge-orange'}`}>
                         {order.order_type === 'gift' ? 'Gift' : 'Beauty'}
                       </span>
                     </td>
-                    <td className="px-6 py-3.5 text-sm font-semibold text-gray-900">{'\u20A6'}{(order.total || 0).toLocaleString()}</td>
-                    <td className="px-6 py-3.5">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${STATUS_STYLES[order.status] || 'bg-gray-100 text-gray-700'}`}>
+                    <td className="table-cell font-semibold text-gray-900">{'\u20A6'}{(order.total || 0).toLocaleString()}</td>
+                    <td className="table-cell">
+                      <span className={`badge ${STATUS_STYLES[order.status] || 'badge-gray'}`}>
                         {STATUS_LABELS[order.status] || order.status}
                       </span>
                     </td>
-                    <td className="px-6 py-3.5 text-sm text-gray-500">{new Date(order.created_at).toLocaleDateString()}</td>
+                    <td className="table-cell text-gray-500">{new Date(order.created_at).toLocaleDateString()}</td>
                   </tr>
                 ))
               )}

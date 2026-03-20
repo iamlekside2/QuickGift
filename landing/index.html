@@ -9,7 +9,7 @@
   <link rel="icon" type="image/png" href="logo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -18,7 +18,7 @@
           colors: {
             teal: { DEFAULT: '#35615D', light: '#4A7A75', dark: '#2A4E4B', 50: '#E8F0EF', 100: '#D1E1DF', 200: '#A3C3BF', 300: '#75A59F', 400: '#4A7A75', 500: '#35615D', 600: '#2A4E4B', 700: '#203B38', 800: '#152826', 900: '#0B1413' },
             orange: { DEFAULT: '#FD8950', light: '#FDAB7E', dark: '#E5713A', 50: '#FFF3EC', 100: '#FFE7D9', 200: '#FDCFB3', 300: '#FDB78D', 400: '#FD9F67', 500: '#FD8950', 600: '#E5713A', 700: '#CC5924', 800: '#993F18', 900: '#66250C' },
-            cream: '#FFF8F0',
+            cream: { DEFAULT: '#FFF8F0', dark: '#FFF0E0' },
           },
           fontFamily: {
             sans: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
@@ -30,208 +30,213 @@
   </script>
   <link rel="stylesheet" href="styles.css">
 </head>
-<body class="font-sans text-gray-800 antialiased overflow-x-hidden">
+<body class="bg-cream font-sans text-teal-900 antialiased overflow-x-hidden">
 
-  <!-- Navigation -->
-  <nav class="fixed top-0 left-0 right-0 z-50 transition-all duration-500" id="navbar">
-    <div class="max-w-7xl mx-auto px-5 sm:px-8">
-      <div class="flex items-center justify-between h-20">
-        <a href="#" class="flex items-center gap-3 group">
-          <img src="logo.png" alt="QuickGift" class="h-9 w-auto">
+  <!-- ============ NAVBAR ============ -->
+  <nav id="navbar" class="fixed top-0 left-0 right-0 z-50 transition-all duration-500">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16 md:h-20">
+        <!-- Logo -->
+        <a href="#" class="flex items-center gap-2 z-10">
+          <img src="logo.png" alt="QuickGift" class="h-8 md:h-10 w-auto">
         </a>
-
         <!-- Desktop Nav -->
-        <div class="hidden md:flex items-center gap-1">
-          <a href="#features" class="nav-link px-4 py-2 text-sm font-medium text-white/70 hover:text-white rounded-full hover:bg-white/10 transition-all">Features</a>
-          <a href="#how-it-works" class="nav-link px-4 py-2 text-sm font-medium text-white/70 hover:text-white rounded-full hover:bg-white/10 transition-all">How It Works</a>
-          <a href="#providers" class="nav-link px-4 py-2 text-sm font-medium text-white/70 hover:text-white rounded-full hover:bg-white/10 transition-all">For Providers</a>
-          <a href="#testimonials" class="nav-link px-4 py-2 text-sm font-medium text-white/70 hover:text-white rounded-full hover:bg-white/10 transition-all">Reviews</a>
-          <a href="#download" class="ml-4 px-6 py-2.5 bg-orange hover:bg-orange-dark text-white text-sm font-semibold rounded-full transition-all hover:shadow-lg hover:shadow-orange/30 hover:-translate-y-0.5 active:translate-y-0">
-            Get the App
+        <div class="hidden md:flex items-center gap-8">
+          <a href="#features" class="text-sm font-medium text-teal-700 hover:text-orange transition-colors">Features</a>
+          <a href="#how-it-works" class="text-sm font-medium text-teal-700 hover:text-orange transition-colors">How It Works</a>
+          <a href="#providers" class="text-sm font-medium text-teal-700 hover:text-orange transition-colors">For Providers</a>
+          <a href="#testimonials" class="text-sm font-medium text-teal-700 hover:text-orange transition-colors">Reviews</a>
+          <a href="#download" class="inline-flex items-center gap-2 bg-teal text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-teal-dark transition-all hover:shadow-lg hover:shadow-teal/20 hover:-translate-y-0.5">
+            Download App
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
           </a>
         </div>
-
         <!-- Mobile Menu Button -->
-        <button id="menu-toggle" class="md:hidden relative w-10 h-10 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-all flex items-center justify-center" aria-label="Toggle menu">
-          <div class="hamburger-lines" id="hamburger">
-            <span></span><span></span><span></span>
+        <button id="mobile-menu-btn" class="md:hidden z-10 p-2 -mr-2" aria-label="Toggle menu">
+          <div class="hamburger-lines">
+            <span class="block w-6 h-0.5 bg-teal-800 transition-all duration-300 mb-1.5"></span>
+            <span class="block w-6 h-0.5 bg-teal-800 transition-all duration-300 mb-1.5"></span>
+            <span class="block w-4 h-0.5 bg-teal-800 transition-all duration-300"></span>
           </div>
         </button>
       </div>
     </div>
-
     <!-- Mobile Menu -->
-    <div id="mobile-menu" class="md:hidden hidden">
-      <div class="mx-4 mt-1 p-5 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl">
-        <div class="space-y-1">
-          <a href="#features" class="mobile-nav-link block px-4 py-3 text-sm font-medium text-white/80 hover:text-white hover:bg-white/10 rounded-xl transition-all">Features</a>
-          <a href="#how-it-works" class="mobile-nav-link block px-4 py-3 text-sm font-medium text-white/80 hover:text-white hover:bg-white/10 rounded-xl transition-all">How It Works</a>
-          <a href="#providers" class="mobile-nav-link block px-4 py-3 text-sm font-medium text-white/80 hover:text-white hover:bg-white/10 rounded-xl transition-all">For Providers</a>
-          <a href="#testimonials" class="mobile-nav-link block px-4 py-3 text-sm font-medium text-white/80 hover:text-white hover:bg-white/10 rounded-xl transition-all">Reviews</a>
-        </div>
-        <div class="mt-4 pt-4 border-t border-white/10">
-          <a href="#download" class="block text-center px-5 py-3 bg-orange hover:bg-orange-dark text-white text-sm font-semibold rounded-xl transition-all">
-            Get the App
-          </a>
-        </div>
-      </div>
+    <div id="mobile-menu" class="md:hidden fixed inset-0 bg-cream/98 backdrop-blur-xl z-40 flex flex-col items-center justify-center gap-8 opacity-0 pointer-events-none transition-all duration-500">
+      <a href="#features" class="mobile-nav-link text-2xl font-semibold text-teal-800 hover:text-orange transition-colors">Features</a>
+      <a href="#how-it-works" class="mobile-nav-link text-2xl font-semibold text-teal-800 hover:text-orange transition-colors">How It Works</a>
+      <a href="#providers" class="mobile-nav-link text-2xl font-semibold text-teal-800 hover:text-orange transition-colors">For Providers</a>
+      <a href="#testimonials" class="mobile-nav-link text-2xl font-semibold text-teal-800 hover:text-orange transition-colors">Reviews</a>
+      <a href="#download" class="inline-flex items-center gap-2 bg-teal text-white px-8 py-3.5 rounded-full text-lg font-semibold hover:bg-teal-dark transition-all">
+        Download App
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+      </a>
     </div>
   </nav>
 
-  <!-- ============================================ -->
-  <!-- HERO -->
-  <!-- ============================================ -->
-  <section class="relative min-h-screen flex items-center overflow-hidden" id="hero">
-    <!-- Gradient Background -->
-    <div class="absolute inset-0 bg-gradient-to-br from-teal-dark via-teal to-teal-light"></div>
-    <!-- Mesh Gradient Orbs -->
-    <div class="absolute top-0 right-0 w-[600px] h-[600px] bg-orange/15 rounded-full blur-[120px] -translate-y-1/3 translate-x-1/4"></div>
-    <div class="absolute bottom-0 left-0 w-[500px] h-[500px] bg-teal-300/20 rounded-full blur-[100px] translate-y-1/3 -translate-x-1/4"></div>
-    <div class="absolute top-1/2 left-1/2 w-[300px] h-[300px] bg-orange/10 rounded-full blur-[80px]"></div>
-    <!-- Grid Pattern -->
-    <div class="absolute inset-0 opacity-[0.03]" style="background-image: url('data:image/svg+xml,%3Csvg width=&quot;60&quot; height=&quot;60&quot; viewBox=&quot;0 0 60 60&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot;%3E%3Cg fill=&quot;none&quot; fill-rule=&quot;evenodd&quot;%3E%3Cg fill=&quot;%23ffffff&quot; fill-opacity=&quot;1&quot;%3E%3Cpath d=&quot;M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z&quot;/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');"></div>
+  <!-- ============ HERO ============ -->
+  <section class="relative min-h-screen flex items-center pt-20 overflow-hidden">
+    <!-- Background Mesh Gradient -->
+    <div class="absolute inset-0 pointer-events-none">
+      <div class="mesh-gradient-1 absolute -top-1/4 -right-1/4 w-[800px] h-[800px] rounded-full opacity-30"></div>
+      <div class="mesh-gradient-2 absolute -bottom-1/4 -left-1/4 w-[600px] h-[600px] rounded-full opacity-20"></div>
+      <div class="absolute top-20 left-10 w-2 h-2 bg-orange/40 rounded-full animate-float-slow"></div>
+      <div class="absolute top-40 right-20 w-3 h-3 bg-teal-200 rounded-full animate-float-medium"></div>
+      <div class="absolute bottom-32 left-1/4 w-1.5 h-1.5 bg-orange-300 rounded-full animate-float-fast"></div>
+    </div>
 
-    <div class="relative max-w-7xl mx-auto px-5 sm:px-8 py-32 lg:py-0 w-full">
-      <div class="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center min-h-screen lg:py-32">
-        <!-- Left Content -->
-        <div class="order-2 lg:order-1">
-          <div class="reveal">
-            <div class="inline-flex items-center gap-2.5 px-4 py-2 bg-white/[0.08] backdrop-blur-md rounded-full text-sm text-white/90 mb-8 border border-white/[0.08]">
-              <span class="relative flex h-2.5 w-2.5">
-                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange opacity-75"></span>
-                <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-orange"></span>
-              </span>
-              Available across Nigeria
-            </div>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
+      <div class="grid lg:grid-cols-2 gap-12 lg:gap-8 items-center">
+        <!-- Hero Content -->
+        <div class="relative z-10 text-center lg:text-left">
+          <!-- Badge -->
+          <div class="reveal-up inline-flex items-center gap-2 bg-white/70 backdrop-blur-sm border border-teal-100 rounded-full px-4 py-2 mb-6 shadow-sm">
+            <span class="flex h-2 w-2 relative">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+            </span>
+            <span class="text-xs sm:text-sm font-medium text-teal-700">Now delivering across Lagos & Abuja</span>
           </div>
 
-          <h1 class="reveal text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-extrabold text-white leading-[1.05] tracking-tight mb-6">
-            Send Love,
-            <br>
-            <span class="font-serif italic font-bold text-orange-light">Instantly.</span>
+          <!-- Headline -->
+          <h1 class="reveal-up">
+            <span class="block text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-teal-900 leading-[1.05]">
+              Send Joy.
+            </span>
+            <span class="block text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.05]">
+              <span class="text-gradient-orange">Same Day.</span>
+            </span>
+            <span class="block font-serif text-3xl sm:text-4xl md:text-5xl lg:text-5xl text-teal-600 italic mt-2 font-semibold">
+              Anywhere in Nigeria.
+            </span>
           </h1>
 
-          <p class="reveal text-base sm:text-lg text-white/60 max-w-md mb-10 leading-relaxed">
-            Same-day gift delivery and beauty bookings — cakes, flowers, nail techs, stylists, all in one app.
+          <!-- Subheadline -->
+          <p class="reveal-up mt-6 text-base sm:text-lg md:text-xl text-teal-600 max-w-xl mx-auto lg:mx-0 leading-relaxed">
+            Cakes, flowers, perfumes, skincare hampers, and beauty pros — delivered to their door or booked to their location in hours. No wahala.
           </p>
 
-          <div class="reveal flex flex-col sm:flex-row gap-3">
-            <a href="#download" class="group inline-flex items-center justify-center gap-2.5 px-7 py-4 bg-orange hover:bg-orange-dark text-white font-semibold rounded-2xl transition-all duration-300 hover:shadow-2xl hover:shadow-orange/30 hover:-translate-y-0.5 active:translate-y-0">
-              <svg class="w-5 h-5 transition-transform group-hover:-translate-y-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-              Download Free
-            </a>
-            <a href="#how-it-works" class="group inline-flex items-center justify-center gap-2.5 px-7 py-4 bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.1] text-white font-semibold rounded-2xl transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0 backdrop-blur-sm">
-              See How It Works
+          <!-- CTAs -->
+          <div class="reveal-up mt-8 flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start">
+            <a href="#download" class="group w-full sm:w-auto inline-flex items-center justify-center gap-3 bg-teal text-white px-8 py-4 rounded-2xl text-base font-bold hover:bg-teal-dark transition-all hover:shadow-2xl hover:shadow-teal/30 hover:-translate-y-1 active:translate-y-0">
+              <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/></svg>
+              Download for iOS
               <svg class="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+            </a>
+            <a href="#download" class="group w-full sm:w-auto inline-flex items-center justify-center gap-3 bg-white text-teal border-2 border-teal-100 px-8 py-4 rounded-2xl text-base font-bold hover:border-teal hover:shadow-xl transition-all hover:-translate-y-1 active:translate-y-0">
+              <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 01-.61-.92V2.734a1 1 0 01.609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-3.199l2.807 1.626a1 1 0 010 1.732l-2.808 1.626L15.206 12l2.492-2.492zM5.864 2.658L16.8 8.99l-2.302 2.302-8.634-8.634z"/></svg>
+              Get on Android
             </a>
           </div>
 
           <!-- Social Proof -->
-          <div class="reveal mt-12 flex items-center gap-5">
+          <div class="reveal-up mt-10 flex items-center gap-6 justify-center lg:justify-start">
             <div class="flex -space-x-3">
-              <div class="w-10 h-10 rounded-full bg-gradient-to-br from-orange to-orange-dark border-[3px] border-teal flex items-center justify-center text-xs font-bold text-white shadow-lg">A</div>
-              <div class="w-10 h-10 rounded-full bg-gradient-to-br from-teal-200 to-teal-400 border-[3px] border-teal flex items-center justify-center text-xs font-bold text-teal-dark shadow-lg">B</div>
-              <div class="w-10 h-10 rounded-full bg-gradient-to-br from-orange-200 to-orange-400 border-[3px] border-teal flex items-center justify-center text-xs font-bold text-teal-dark shadow-lg">C</div>
-              <div class="w-10 h-10 rounded-full bg-gradient-to-br from-teal-100 to-teal-300 border-[3px] border-teal flex items-center justify-center text-xs font-bold text-teal-dark shadow-lg">+</div>
+              <div class="w-10 h-10 rounded-full bg-teal-200 border-2 border-cream flex items-center justify-center text-xs font-bold text-teal-700">AO</div>
+              <div class="w-10 h-10 rounded-full bg-orange-200 border-2 border-cream flex items-center justify-center text-xs font-bold text-orange-700">CB</div>
+              <div class="w-10 h-10 rounded-full bg-teal-300 border-2 border-cream flex items-center justify-center text-xs font-bold text-teal-800">NE</div>
+              <div class="w-10 h-10 rounded-full bg-orange-100 border-2 border-cream flex items-center justify-center text-xs font-bold text-orange-600">TI</div>
+              <div class="w-10 h-10 rounded-full bg-teal-100 border-2 border-cream flex items-center justify-center text-xs font-bold text-teal-600">+2k</div>
             </div>
             <div>
-              <div class="flex items-center gap-1 mb-0.5">
-                <svg class="w-4 h-4 text-orange" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                <svg class="w-4 h-4 text-orange" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                <svg class="w-4 h-4 text-orange" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                <svg class="w-4 h-4 text-orange" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                <svg class="w-4 h-4 text-orange" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+              <div class="flex items-center gap-1">
+                <span class="text-orange">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+                <span class="text-sm font-semibold text-teal-700">4.9</span>
               </div>
-              <p class="text-sm text-white/50"><span class="text-white/80 font-semibold">1,500+</span> happy users</p>
+              <p class="text-xs text-teal-500">2,000+ happy users in Nigeria</p>
             </div>
           </div>
         </div>
 
-        <!-- Right — Hero Illustration -->
-        <div class="order-1 lg:order-2 flex justify-center lg:justify-end reveal">
-          <div class="relative">
-            <!-- Floating glow behind phone -->
-            <div class="absolute inset-0 bg-orange/20 rounded-[40px] blur-[60px] scale-90"></div>
-            <!-- Phone Mockup -->
-            <div class="relative bg-gradient-to-b from-white/[0.12] to-white/[0.04] backdrop-blur-xl rounded-[40px] p-3 border border-white/[0.15] shadow-2xl max-w-[320px] mx-auto">
-              <div class="bg-teal-dark rounded-[32px] overflow-hidden">
-                <!-- Notch -->
-                <div class="flex justify-center pt-3 pb-2">
-                  <div class="w-28 h-6 bg-black rounded-full"></div>
-                </div>
-                <!-- Screen Content -->
-                <div class="px-5 pb-6">
-                  <!-- Mini Header -->
-                  <div class="flex items-center justify-between mb-5">
-                    <div>
-                      <p class="text-white/50 text-xs">Good morning</p>
-                      <p class="text-white font-bold text-sm">Amina</p>
-                    </div>
-                    <div class="w-9 h-9 rounded-full bg-orange/20 flex items-center justify-center">
-                      <span class="text-sm">👋</span>
+        <!-- Phone Mockup -->
+        <div class="reveal-up relative flex justify-center lg:justify-end">
+          <div class="phone-mockup relative w-[280px] sm:w-[320px] md:w-[340px]">
+            <!-- Phone Frame -->
+            <div class="relative bg-teal-900 rounded-[3rem] p-3 shadow-2xl shadow-teal-900/30">
+              <!-- Notch -->
+              <div class="absolute top-0 left-1/2 -translate-x-1/2 w-28 h-7 bg-teal-900 rounded-b-2xl z-10"></div>
+              <!-- Screen -->
+              <div class="relative bg-cream rounded-[2.4rem] overflow-hidden aspect-[9/19.5]">
+                <!-- App UI Mockup -->
+                <div class="p-4 pt-10 h-full flex flex-col">
+                  <!-- Status Bar -->
+                  <div class="flex items-center justify-between mb-4 px-1">
+                    <span class="text-[10px] font-semibold text-teal-700">9:41</span>
+                    <div class="flex items-center gap-1">
+                      <div class="w-4 h-2 border border-teal-400 rounded-sm relative"><div class="absolute inset-0.5 bg-green-500 rounded-[1px]" style="width: 70%"></div></div>
                     </div>
                   </div>
-                  <!-- Search Bar -->
-                  <div class="bg-white/10 rounded-2xl px-4 py-3 mb-5 flex items-center gap-2">
-                    <svg class="w-4 h-4 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                    <span class="text-white/30 text-xs">Search gifts, services...</span>
+                  <!-- Greeting -->
+                  <div class="mb-3">
+                    <p class="text-[10px] text-teal-500">Good morning</p>
+                    <p class="text-sm font-bold text-teal-900">Chioma</p>
                   </div>
-                  <!-- Category Pills -->
-                  <div class="flex gap-2 mb-5 overflow-hidden">
-                    <div class="flex-shrink-0 px-4 py-2 bg-orange rounded-full text-white text-xs font-semibold">Gifts</div>
-                    <div class="flex-shrink-0 px-4 py-2 bg-white/10 rounded-full text-white/70 text-xs font-medium">Beauty</div>
-                    <div class="flex-shrink-0 px-4 py-2 bg-white/10 rounded-full text-white/70 text-xs font-medium">Cakes</div>
+                  <!-- Search -->
+                  <div class="bg-white rounded-xl px-3 py-2 mb-3 flex items-center gap-2 shadow-sm">
+                    <svg class="w-3.5 h-3.5 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    <span class="text-[9px] text-teal-400">Search gifts & services...</span>
                   </div>
-                  <!-- Product Cards -->
-                  <div class="grid grid-cols-2 gap-3">
-                    <div class="bg-white/[0.08] rounded-2xl p-3">
-                      <div class="w-full h-20 bg-gradient-to-br from-orange-100/20 to-orange/10 rounded-xl mb-2 flex items-center justify-center text-2xl">🎂</div>
-                      <p class="text-white text-xs font-semibold">Birthday Cake</p>
-                      <p class="text-orange text-xs font-bold mt-0.5">₦15,000</p>
-                    </div>
-                    <div class="bg-white/[0.08] rounded-2xl p-3">
-                      <div class="w-full h-20 bg-gradient-to-br from-pink-100/20 to-pink-500/10 rounded-xl mb-2 flex items-center justify-center text-2xl">💐</div>
-                      <p class="text-white text-xs font-semibold">Rose Bouquet</p>
-                      <p class="text-orange text-xs font-bold mt-0.5">₦12,000</p>
-                    </div>
+                  <!-- Categories -->
+                  <div class="flex gap-2 mb-3 overflow-hidden">
+                    <div class="flex-shrink-0 bg-teal text-white px-3 py-1.5 rounded-lg text-[8px] font-semibold">All</div>
+                    <div class="flex-shrink-0 bg-white px-3 py-1.5 rounded-lg text-[8px] font-medium text-teal-700 shadow-sm">Cakes</div>
+                    <div class="flex-shrink-0 bg-white px-3 py-1.5 rounded-lg text-[8px] font-medium text-teal-700 shadow-sm">Flowers</div>
+                    <div class="flex-shrink-0 bg-white px-3 py-1.5 rounded-lg text-[8px] font-medium text-teal-700 shadow-sm">Beauty</div>
                   </div>
-                  <!-- Bottom Nav -->
-                  <div class="flex items-center justify-around mt-5 pt-4 border-t border-white/10">
-                    <div class="flex flex-col items-center gap-1">
-                      <svg class="w-5 h-5 text-orange" fill="currentColor" viewBox="0 0 20 20"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/></svg>
-                      <span class="text-orange text-[9px] font-semibold">Home</span>
+                  <!-- Featured -->
+                  <p class="text-[10px] font-bold text-teal-800 mb-2">Popular Gifts</p>
+                  <div class="grid grid-cols-2 gap-2 flex-1">
+                    <div class="bg-white rounded-xl p-2 shadow-sm">
+                      <div class="bg-orange-50 rounded-lg aspect-square mb-1.5 flex items-center justify-center">
+                        <span class="text-2xl">🎂</span>
+                      </div>
+                      <p class="text-[8px] font-semibold text-teal-800 truncate">Red Velvet Cake</p>
+                      <p class="text-[8px] font-bold text-orange">&#8358;15,000</p>
                     </div>
-                    <div class="flex flex-col items-center gap-1">
-                      <svg class="w-5 h-5 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                      <span class="text-white/40 text-[9px]">Explore</span>
+                    <div class="bg-white rounded-xl p-2 shadow-sm">
+                      <div class="bg-teal-50 rounded-lg aspect-square mb-1.5 flex items-center justify-center">
+                        <span class="text-2xl">💐</span>
+                      </div>
+                      <p class="text-[8px] font-semibold text-teal-800 truncate">Rose Bouquet</p>
+                      <p class="text-[8px] font-bold text-orange">&#8358;12,000</p>
                     </div>
-                    <div class="flex flex-col items-center gap-1">
-                      <svg class="w-5 h-5 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
-                      <span class="text-white/40 text-[9px]">Cart</span>
+                    <div class="bg-white rounded-xl p-2 shadow-sm">
+                      <div class="bg-orange-50 rounded-lg aspect-square mb-1.5 flex items-center justify-center">
+                        <span class="text-2xl">🧴</span>
+                      </div>
+                      <p class="text-[8px] font-semibold text-teal-800 truncate">Skincare Hamper</p>
+                      <p class="text-[8px] font-bold text-orange">&#8358;25,000</p>
                     </div>
-                    <div class="flex flex-col items-center gap-1">
-                      <svg class="w-5 h-5 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                      <span class="text-white/40 text-[9px]">Profile</span>
+                    <div class="bg-white rounded-xl p-2 shadow-sm">
+                      <div class="bg-teal-50 rounded-lg aspect-square mb-1.5 flex items-center justify-center">
+                        <span class="text-2xl">💅</span>
+                      </div>
+                      <p class="text-[8px] font-semibold text-teal-800 truncate">Nail Service</p>
+                      <p class="text-[8px] font-bold text-orange">&#8358;8,000</p>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-            <!-- Floating Cards -->
-            <div class="absolute -left-12 top-1/3 float-card bg-white/[0.12] backdrop-blur-xl rounded-2xl px-4 py-3 border border-white/[0.15] shadow-xl hidden sm:flex items-center gap-3">
-              <div class="w-10 h-10 bg-green-500/20 rounded-xl flex items-center justify-center">
-                <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-              </div>
-              <div>
-                <p class="text-white text-xs font-semibold">Gift Delivered!</p>
-                <p class="text-white/50 text-[10px]">Just now</p>
+            <!-- Floating Elements -->
+            <div class="absolute -top-4 -right-4 bg-white rounded-2xl shadow-xl p-3 animate-float-slow border border-teal-50">
+              <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                  <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                </div>
+                <div>
+                  <p class="text-[10px] font-bold text-teal-800">Delivered!</p>
+                  <p class="text-[8px] text-teal-500">2 hours ago</p>
+                </div>
               </div>
             </div>
-            <div class="absolute -right-8 bottom-1/3 float-card-delayed bg-white/[0.12] backdrop-blur-xl rounded-2xl px-4 py-3 border border-white/[0.15] shadow-xl hidden sm:flex items-center gap-3">
-              <div class="w-10 h-10 bg-orange/20 rounded-xl flex items-center justify-center text-lg">💅</div>
-              <div>
-                <p class="text-white text-xs font-semibold">Booking confirmed</p>
-                <p class="text-white/50 text-[10px]">Nails by Tolu · 2pm</p>
+            <div class="absolute -bottom-2 -left-6 bg-white rounded-2xl shadow-xl p-3 animate-float-medium border border-orange-50">
+              <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center text-sm">🎁</div>
+                <div>
+                  <p class="text-[10px] font-bold text-teal-800">New Order</p>
+                  <p class="text-[8px] text-orange font-semibold">&#8358;18,500</p>
+                </div>
               </div>
             </div>
           </div>
@@ -239,142 +244,149 @@
       </div>
     </div>
 
-    <!-- Scroll Cue -->
-    <div class="absolute bottom-8 left-1/2 -translate-x-1/2 hidden lg:flex flex-col items-center gap-2 text-white/30">
-      <div class="w-6 h-10 border-2 border-white/20 rounded-full flex items-start justify-center p-1.5">
-        <div class="w-1.5 h-3 bg-white/40 rounded-full animate-bounce"></div>
+    <!-- Scroll Indicator -->
+    <div class="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-60 animate-bounce-slow">
+      <span class="text-xs text-teal-500 font-medium">Scroll to explore</span>
+      <svg class="w-5 h-5 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>
+    </div>
+  </section>
+
+  <!-- ============ LOGO MARQUEE ============ -->
+  <section class="py-10 md:py-14 border-t border-teal-100/50 bg-white/50 backdrop-blur-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <p class="text-center text-sm font-medium text-teal-400 mb-8 uppercase tracking-widest">Trusted by thousands across Nigeria</p>
+      <div class="marquee-container overflow-hidden">
+        <div class="marquee-track flex items-center gap-12 md:gap-20">
+          <span class="marquee-item text-xl md:text-2xl font-bold text-teal-200 whitespace-nowrap">Same-Day Delivery</span>
+          <span class="marquee-item text-orange-200 text-2xl">&#9733;</span>
+          <span class="marquee-item text-xl md:text-2xl font-bold text-teal-200 whitespace-nowrap">2,000+ Users</span>
+          <span class="marquee-item text-orange-200 text-2xl">&#9733;</span>
+          <span class="marquee-item text-xl md:text-2xl font-bold text-teal-200 whitespace-nowrap">Lagos &amp; Abuja</span>
+          <span class="marquee-item text-orange-200 text-2xl">&#9733;</span>
+          <span class="marquee-item text-xl md:text-2xl font-bold text-teal-200 whitespace-nowrap">4.9 Star Rating</span>
+          <span class="marquee-item text-orange-200 text-2xl">&#9733;</span>
+          <span class="marquee-item text-xl md:text-2xl font-bold text-teal-200 whitespace-nowrap">Beauty Pros On-Demand</span>
+          <span class="marquee-item text-orange-200 text-2xl">&#9733;</span>
+          <span class="marquee-item text-xl md:text-2xl font-bold text-teal-200 whitespace-nowrap">10,000+ Gifts Sent</span>
+          <span class="marquee-item text-orange-200 text-2xl">&#9733;</span>
+          <!-- Duplicate for seamless loop -->
+          <span class="marquee-item text-xl md:text-2xl font-bold text-teal-200 whitespace-nowrap">Same-Day Delivery</span>
+          <span class="marquee-item text-orange-200 text-2xl">&#9733;</span>
+          <span class="marquee-item text-xl md:text-2xl font-bold text-teal-200 whitespace-nowrap">2,000+ Users</span>
+          <span class="marquee-item text-orange-200 text-2xl">&#9733;</span>
+          <span class="marquee-item text-xl md:text-2xl font-bold text-teal-200 whitespace-nowrap">Lagos &amp; Abuja</span>
+          <span class="marquee-item text-orange-200 text-2xl">&#9733;</span>
+          <span class="marquee-item text-xl md:text-2xl font-bold text-teal-200 whitespace-nowrap">4.9 Star Rating</span>
+          <span class="marquee-item text-orange-200 text-2xl">&#9733;</span>
+          <span class="marquee-item text-xl md:text-2xl font-bold text-teal-200 whitespace-nowrap">Beauty Pros On-Demand</span>
+          <span class="marquee-item text-orange-200 text-2xl">&#9733;</span>
+          <span class="marquee-item text-xl md:text-2xl font-bold text-teal-200 whitespace-nowrap">10,000+ Gifts Sent</span>
+          <span class="marquee-item text-orange-200 text-2xl">&#9733;</span>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- ============================================ -->
-  <!-- MARQUEE (Scrolling text) -->
-  <!-- ============================================ -->
-  <div class="bg-orange py-4 overflow-hidden">
-    <div class="marquee-track">
-      <div class="marquee-content">
-        <span class="mx-8 text-sm font-bold text-white/90 uppercase tracking-wider">Same-Day Delivery</span>
-        <span class="text-white/50">✦</span>
-        <span class="mx-8 text-sm font-bold text-white/90 uppercase tracking-wider">Beauty Bookings</span>
-        <span class="text-white/50">✦</span>
-        <span class="mx-8 text-sm font-bold text-white/90 uppercase tracking-wider">Verified Providers</span>
-        <span class="text-white/50">✦</span>
-        <span class="mx-8 text-sm font-bold text-white/90 uppercase tracking-wider">Secure Payments</span>
-        <span class="text-white/50">✦</span>
-        <span class="mx-8 text-sm font-bold text-white/90 uppercase tracking-wider">Live Chat</span>
-        <span class="text-white/50">✦</span>
-        <span class="mx-8 text-sm font-bold text-white/90 uppercase tracking-wider">Cakes & Flowers</span>
-        <span class="text-white/50">✦</span>
-        <span class="mx-8 text-sm font-bold text-white/90 uppercase tracking-wider">Nails & Hair</span>
-        <span class="text-white/50">✦</span>
-        <span class="mx-8 text-sm font-bold text-white/90 uppercase tracking-wider">Same-Day Delivery</span>
-        <span class="text-white/50">✦</span>
-        <span class="mx-8 text-sm font-bold text-white/90 uppercase tracking-wider">Beauty Bookings</span>
-        <span class="text-white/50">✦</span>
-        <span class="mx-8 text-sm font-bold text-white/90 uppercase tracking-wider">Verified Providers</span>
-        <span class="text-white/50">✦</span>
-        <span class="mx-8 text-sm font-bold text-white/90 uppercase tracking-wider">Secure Payments</span>
-        <span class="text-white/50">✦</span>
-        <span class="mx-8 text-sm font-bold text-white/90 uppercase tracking-wider">Live Chat</span>
-        <span class="text-white/50">✦</span>
-        <span class="mx-8 text-sm font-bold text-white/90 uppercase tracking-wider">Cakes & Flowers</span>
-        <span class="text-white/50">✦</span>
-        <span class="mx-8 text-sm font-bold text-white/90 uppercase tracking-wider">Nails & Hair</span>
-        <span class="text-white/50">✦</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- ============================================ -->
-  <!-- FEATURES — Bento Grid -->
-  <!-- ============================================ -->
-  <section class="py-24 lg:py-32 bg-white" id="features">
-    <div class="max-w-7xl mx-auto px-5 sm:px-8">
-      <div class="text-center max-w-2xl mx-auto mb-16 lg:mb-20 reveal">
-        <span class="inline-block px-4 py-1.5 bg-teal-50 text-teal text-xs font-bold uppercase tracking-wider rounded-full mb-5">Features</span>
-        <h2 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 tracking-tight">
-          Everything you need,
-          <br><span class="font-serif italic text-teal">one tap away</span>
+  <!-- ============ FEATURES BENTO GRID ============ -->
+  <section id="features" class="py-20 md:py-32">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <!-- Section Header -->
+      <div class="text-center max-w-2xl mx-auto mb-16">
+        <div class="reveal-up inline-flex items-center gap-2 bg-orange-50 rounded-full px-4 py-1.5 mb-4">
+          <span class="w-1.5 h-1.5 bg-orange rounded-full"></span>
+          <span class="text-xs font-semibold text-orange-700 uppercase tracking-wider">Features</span>
+        </div>
+        <h2 class="reveal-up text-3xl sm:text-4xl md:text-5xl font-extrabold text-teal-900 leading-tight">
+          Everything you need to<br>
+          <span class="font-serif italic text-orange">make someone smile</span>
         </h2>
+        <p class="reveal-up mt-4 text-base md:text-lg text-teal-500 leading-relaxed">
+          From curated gift boxes to on-demand beauty services, QuickGift brings joy to every occasion.
+        </p>
       </div>
 
       <!-- Bento Grid -->
-      <div class="grid md:grid-cols-3 gap-4 lg:gap-5">
-        <!-- Large Card — Gifts -->
-        <div class="md:col-span-2 group reveal">
-          <div class="relative h-full p-8 lg:p-10 bg-gradient-to-br from-orange-50 to-cream rounded-3xl border border-orange/10 hover:border-orange/20 transition-all duration-500 hover:shadow-2xl hover:shadow-orange/10 overflow-hidden">
-            <div class="absolute top-0 right-0 w-64 h-64 bg-orange/5 rounded-full blur-3xl translate-x-20 -translate-y-20"></div>
-            <div class="relative">
-              <div class="inline-flex items-center justify-center w-14 h-14 bg-orange/10 rounded-2xl mb-5 group-hover:scale-110 transition-transform duration-500">
-                <span class="text-3xl">🎁</span>
-              </div>
-              <h3 class="text-2xl font-bold text-gray-900 mb-3">Same-Day Gift Delivery</h3>
-              <p class="text-gray-500 leading-relaxed max-w-md">
-                Cakes, flowers, chocolates, hampers and personalized gifts. Pick a gift, add a message, and we'll deliver it today.
-              </p>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
+        <!-- Card 1: Same-Day Delivery (Large) -->
+        <div class="reveal-up bento-card md:col-span-2 lg:col-span-2 group relative overflow-hidden bg-teal rounded-3xl p-8 md:p-10 text-white min-h-[280px] flex flex-col justify-between">
+          <div class="absolute top-0 right-0 w-64 h-64 bg-teal-light/20 rounded-full -translate-y-1/2 translate-x-1/2 group-hover:scale-110 transition-transform duration-700"></div>
+          <div class="relative z-10">
+            <div class="w-14 h-14 bg-white/15 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-6">
+              <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
             </div>
-            <!-- Mini product preview -->
-            <div class="flex gap-3 mt-8">
-              <div class="px-4 py-2.5 bg-white rounded-xl shadow-sm border border-gray-100 flex items-center gap-2 text-sm font-medium text-gray-700">🎂 Cakes</div>
-              <div class="px-4 py-2.5 bg-white rounded-xl shadow-sm border border-gray-100 flex items-center gap-2 text-sm font-medium text-gray-700">💐 Flowers</div>
-              <div class="px-4 py-2.5 bg-white rounded-xl shadow-sm border border-gray-100 flex items-center gap-2 text-sm font-medium text-gray-700">🍫 Chocolates</div>
-              <div class="px-4 py-2.5 bg-white rounded-xl shadow-sm border border-gray-100 flex items-center gap-2 text-sm font-medium text-gray-700 hidden sm:flex">🎈 Hampers</div>
+            <h3 class="text-2xl md:text-3xl font-bold mb-3">Same-Day Delivery</h3>
+            <p class="text-teal-100 text-base md:text-lg max-w-md leading-relaxed">Order before 2PM and we deliver the same day. Perfect for those "oh no, I forgot" moments. Lagos and Abuja coverage.</p>
+          </div>
+          <div class="relative z-10 mt-6 flex items-center gap-3">
+            <div class="flex items-center gap-1 bg-white/15 backdrop-blur-sm rounded-full px-3 py-1.5 text-sm font-medium">
+              <svg class="w-4 h-4 text-green-300" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+              2-4 hour delivery
+            </div>
+            <div class="flex items-center gap-1 bg-white/15 backdrop-blur-sm rounded-full px-3 py-1.5 text-sm font-medium">
+              <svg class="w-4 h-4 text-green-300" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+              Live tracking
             </div>
           </div>
         </div>
 
-        <!-- Small Card — Track -->
-        <div class="group reveal">
-          <div class="relative h-full p-8 lg:p-10 bg-gradient-to-br from-teal-50 to-white rounded-3xl border border-teal/10 hover:border-teal/20 transition-all duration-500 hover:shadow-2xl hover:shadow-teal/10 overflow-hidden">
-            <div class="absolute bottom-0 right-0 w-40 h-40 bg-teal/5 rounded-full blur-3xl translate-x-10 translate-y-10"></div>
-            <div class="relative">
-              <div class="inline-flex items-center justify-center w-14 h-14 bg-teal/10 rounded-2xl mb-5 group-hover:scale-110 transition-transform duration-500">
-                <svg class="w-7 h-7 text-teal" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
-              </div>
-              <h3 class="text-xl font-bold text-gray-900 mb-3">Real-Time Tracking</h3>
-              <p class="text-gray-500 leading-relaxed text-sm">
-                Track your gift delivery and order status live from the app.
-              </p>
-            </div>
+        <!-- Card 2: Gift Categories -->
+        <div class="reveal-up bento-card group relative overflow-hidden bg-white rounded-3xl p-8 min-h-[280px] flex flex-col border border-teal-50 hover:border-orange-200 transition-colors duration-500">
+          <div class="w-14 h-14 bg-orange-50 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
+            <span class="text-3xl">🎁</span>
+          </div>
+          <h3 class="text-xl font-bold text-teal-900 mb-2">200+ Gift Options</h3>
+          <p class="text-teal-500 text-sm leading-relaxed flex-1">Cakes, flowers, perfumes, hampers, chocolates, skincare bundles, and more. Curated for every budget.</p>
+          <div class="mt-4 flex flex-wrap gap-2">
+            <span class="text-xs bg-cream px-3 py-1 rounded-full font-medium text-teal-600">From &#8358;5,000</span>
+            <span class="text-xs bg-orange-50 px-3 py-1 rounded-full font-medium text-orange-600">Premium gifts</span>
           </div>
         </div>
 
-        <!-- Small Card — Chat -->
-        <div class="group reveal">
-          <div class="relative h-full p-8 lg:p-10 bg-gradient-to-br from-gray-50 to-white rounded-3xl border border-gray-200/60 hover:border-teal/20 transition-all duration-500 hover:shadow-2xl hover:shadow-teal/10 overflow-hidden">
-            <div class="relative">
-              <div class="inline-flex items-center justify-center w-14 h-14 bg-teal/10 rounded-2xl mb-5 group-hover:scale-110 transition-transform duration-500">
-                <span class="text-3xl">💬</span>
-              </div>
-              <h3 class="text-xl font-bold text-gray-900 mb-3">In-App Chat</h3>
-              <p class="text-gray-500 leading-relaxed text-sm">
-                Message providers directly. Discuss details, share preferences, and coordinate.
-              </p>
-            </div>
+        <!-- Card 3: Beauty Booking -->
+        <div class="reveal-up bento-card group relative overflow-hidden bg-gradient-to-br from-orange-50 to-cream rounded-3xl p-8 min-h-[280px] flex flex-col border border-orange-100">
+          <div class="w-14 h-14 bg-orange/10 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
+            <span class="text-3xl">💅</span>
+          </div>
+          <h3 class="text-xl font-bold text-teal-900 mb-2">Beauty On-Demand</h3>
+          <p class="text-teal-500 text-sm leading-relaxed flex-1">Book verified nail technicians, makeup artists, hair stylists, and lash techs. They come to you.</p>
+          <div class="mt-4 flex items-center gap-2 text-sm text-orange-600 font-semibold">
+            <span>Book now</span>
+            <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
           </div>
         </div>
 
-        <!-- Large Card — Beauty -->
-        <div class="md:col-span-2 group reveal">
-          <div class="relative h-full p-8 lg:p-10 bg-gradient-to-br from-teal-800 to-teal-dark rounded-3xl transition-all duration-500 hover:shadow-2xl hover:shadow-teal/20 overflow-hidden">
-            <div class="absolute top-0 right-0 w-72 h-72 bg-orange/10 rounded-full blur-3xl translate-x-20 -translate-y-20"></div>
-            <div class="absolute bottom-0 left-0 w-40 h-40 bg-teal-light/20 rounded-full blur-3xl -translate-x-10 translate-y-10"></div>
-            <div class="relative">
-              <div class="inline-flex items-center justify-center w-14 h-14 bg-white/10 rounded-2xl mb-5 group-hover:scale-110 transition-transform duration-500">
-                <span class="text-3xl">💅</span>
-              </div>
-              <h3 class="text-2xl font-bold text-white mb-3">Book Beauty Professionals</h3>
-              <p class="text-white/60 leading-relaxed max-w-md">
-                Nail technicians, hair stylists, makeup artists, barbers — browse portfolios, check reviews, and book instantly. They come to you or you visit their studio.
-              </p>
+        <!-- Card 4: Gift Cards -->
+        <div class="reveal-up bento-card group relative overflow-hidden bg-white rounded-3xl p-8 min-h-[240px] flex flex-col border border-teal-50 hover:border-teal-200 transition-colors duration-500">
+          <div class="w-14 h-14 bg-teal-50 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
+            <svg class="w-7 h-7 text-teal" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+          </div>
+          <h3 class="text-xl font-bold text-teal-900 mb-2">Digital Gift Cards</h3>
+          <p class="text-teal-500 text-sm leading-relaxed">Can't decide? Send a QuickGift card. Let them choose what makes them happy.</p>
+        </div>
+
+        <!-- Card 5: Live Tracking (Large) -->
+        <div class="reveal-up bento-card md:col-span-2 group relative overflow-hidden bg-teal-900 rounded-3xl p-8 md:p-10 text-white min-h-[240px] flex flex-col justify-between">
+          <div class="absolute inset-0 opacity-10" style="background-image: radial-gradient(circle at 20% 80%, #FD8950 0%, transparent 50%), radial-gradient(circle at 80% 20%, #4A7A75 0%, transparent 50%);"></div>
+          <div class="relative z-10">
+            <div class="w-14 h-14 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-6">
+              <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
             </div>
-            <!-- Service chips -->
-            <div class="flex flex-wrap gap-2 mt-8">
-              <div class="px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-sm font-medium text-white/80 border border-white/10">💅 Nails</div>
-              <div class="px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-sm font-medium text-white/80 border border-white/10">💇‍♀️ Hair</div>
-              <div class="px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-sm font-medium text-white/80 border border-white/10">💄 Makeup</div>
-              <div class="px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-sm font-medium text-white/80 border border-white/10">💈 Barber</div>
-              <div class="px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-sm font-medium text-white/80 border border-white/10">🧖‍♀️ Spa</div>
+            <h3 class="text-2xl md:text-3xl font-bold mb-3">Real-Time Tracking</h3>
+            <p class="text-teal-200 text-base md:text-lg max-w-lg leading-relaxed">Watch your gift journey from our store to their door. Get notified the moment it arrives. Peace of mind, guaranteed.</p>
+          </div>
+          <!-- Fake Map Dots -->
+          <div class="relative z-10 mt-4 flex items-center gap-4">
+            <div class="flex items-center gap-2">
+              <span class="relative flex h-3 w-3">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-3 w-3 bg-orange"></span>
+              </span>
+              <span class="text-sm text-teal-200">Driver en route</span>
+            </div>
+            <div class="h-0.5 flex-1 bg-gradient-to-r from-orange to-teal-400 rounded-full max-w-[200px]"></div>
+            <div class="flex items-center gap-2">
+              <svg class="w-5 h-5 text-teal-300" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/></svg>
+              <span class="text-sm text-teal-200">Lekki, Lagos</span>
             </div>
           </div>
         </div>
@@ -382,342 +394,395 @@
     </div>
   </section>
 
-  <!-- ============================================ -->
-  <!-- HOW IT WORKS -->
-  <!-- ============================================ -->
-  <section class="py-24 lg:py-32 bg-cream" id="how-it-works">
-    <div class="max-w-7xl mx-auto px-5 sm:px-8">
-      <div class="text-center max-w-2xl mx-auto mb-16 lg:mb-20 reveal">
-        <span class="inline-block px-4 py-1.5 bg-teal-50 text-teal text-xs font-bold uppercase tracking-wider rounded-full mb-5">How It Works</span>
-        <h2 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 tracking-tight">
-          Three steps. <span class="font-serif italic text-teal">That's it.</span>
+  <!-- ============ HOW IT WORKS ============ -->
+  <section id="how-it-works" class="py-20 md:py-32 bg-white relative overflow-hidden">
+    <div class="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-teal-200 to-transparent"></div>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-2xl mx-auto mb-16">
+        <div class="reveal-up inline-flex items-center gap-2 bg-teal-50 rounded-full px-4 py-1.5 mb-4">
+          <span class="w-1.5 h-1.5 bg-teal rounded-full"></span>
+          <span class="text-xs font-semibold text-teal-700 uppercase tracking-wider">How It Works</span>
+        </div>
+        <h2 class="reveal-up text-3xl sm:text-4xl md:text-5xl font-extrabold text-teal-900 leading-tight">
+          Three steps to<br>
+          <span class="font-serif italic text-teal">making their day</span>
         </h2>
       </div>
 
-      <div class="grid md:grid-cols-3 gap-8 lg:gap-12">
-        <div class="reveal text-center group">
-          <div class="relative mx-auto w-24 h-24 bg-white rounded-3xl flex items-center justify-center mb-7 shadow-xl shadow-gray-200/50 group-hover:-translate-y-2 transition-transform duration-500">
-            <svg class="w-10 h-10 text-teal" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-            <div class="absolute -top-2 -right-2 w-8 h-8 bg-orange text-white text-sm font-bold rounded-xl flex items-center justify-center shadow-lg shadow-orange/30">1</div>
+      <div class="grid md:grid-cols-3 gap-8 md:gap-12 relative">
+        <!-- Connecting Line (Desktop) -->
+        <div class="hidden md:block absolute top-24 left-[calc(16.67%+24px)] right-[calc(16.67%+24px)] h-0.5 bg-gradient-to-r from-teal-200 via-orange-200 to-teal-200"></div>
+
+        <!-- Step 1 -->
+        <div class="reveal-up text-center relative">
+          <div class="relative inline-flex items-center justify-center mb-8">
+            <div class="w-20 h-20 bg-teal-50 rounded-3xl flex items-center justify-center group-hover:bg-teal-100 transition-colors relative z-10">
+              <span class="text-4xl">🛍</span>
+            </div>
+            <div class="absolute -top-2 -right-2 w-8 h-8 bg-teal text-white rounded-full flex items-center justify-center text-sm font-bold shadow-lg z-20">1</div>
           </div>
-          <h3 class="text-xl font-bold text-gray-900 mb-2">Browse</h3>
-          <p class="text-gray-500 leading-relaxed max-w-xs mx-auto text-sm">
-            Explore gifts or beauty professionals near you. Filter by category, price, or rating.
-          </p>
+          <h3 class="text-xl font-bold text-teal-900 mb-3">Browse & Choose</h3>
+          <p class="text-teal-500 leading-relaxed">Scroll through curated gifts or browse beauty services. Filter by budget, occasion, or category.</p>
         </div>
 
-        <div class="reveal text-center group">
-          <div class="relative mx-auto w-24 h-24 bg-white rounded-3xl flex items-center justify-center mb-7 shadow-xl shadow-gray-200/50 group-hover:-translate-y-2 transition-transform duration-500">
-            <svg class="w-10 h-10 text-teal" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
-            <div class="absolute -top-2 -right-2 w-8 h-8 bg-orange text-white text-sm font-bold rounded-xl flex items-center justify-center shadow-lg shadow-orange/30">2</div>
+        <!-- Step 2 -->
+        <div class="reveal-up text-center relative">
+          <div class="relative inline-flex items-center justify-center mb-8">
+            <div class="w-20 h-20 bg-orange-50 rounded-3xl flex items-center justify-center">
+              <span class="text-4xl">📝</span>
+            </div>
+            <div class="absolute -top-2 -right-2 w-8 h-8 bg-orange text-white rounded-full flex items-center justify-center text-sm font-bold shadow-lg z-20">2</div>
           </div>
-          <h3 class="text-xl font-bold text-gray-900 mb-2">Pay Securely</h3>
-          <p class="text-gray-500 leading-relaxed max-w-xs mx-auto text-sm">
-            Pay via card, bank transfer, or your QuickGift wallet. Fast and secure with Paystack.
-          </p>
+          <h3 class="text-xl font-bold text-teal-900 mb-3">Add a Personal Touch</h3>
+          <p class="text-teal-500 leading-relaxed">Write a heartfelt message, choose gift wrapping, schedule delivery time, and enter their address.</p>
         </div>
 
-        <div class="reveal text-center group">
-          <div class="relative mx-auto w-24 h-24 bg-white rounded-3xl flex items-center justify-center mb-7 shadow-xl shadow-gray-200/50 group-hover:-translate-y-2 transition-transform duration-500">
-            <svg class="w-10 h-10 text-teal" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            <div class="absolute -top-2 -right-2 w-8 h-8 bg-orange text-white text-sm font-bold rounded-xl flex items-center justify-center shadow-lg shadow-orange/30">3</div>
+        <!-- Step 3 -->
+        <div class="reveal-up text-center relative">
+          <div class="relative inline-flex items-center justify-center mb-8">
+            <div class="w-20 h-20 bg-teal-50 rounded-3xl flex items-center justify-center">
+              <span class="text-4xl">🎉</span>
+            </div>
+            <div class="absolute -top-2 -right-2 w-8 h-8 bg-teal text-white rounded-full flex items-center justify-center text-sm font-bold shadow-lg z-20">3</div>
           </div>
-          <h3 class="text-xl font-bold text-gray-900 mb-2">Enjoy</h3>
-          <p class="text-gray-500 leading-relaxed max-w-xs mx-auto text-sm">
-            Get your gift delivered same-day or enjoy your beauty appointment. Simple.
-          </p>
+          <h3 class="text-xl font-bold text-teal-900 mb-3">Watch Them Smile</h3>
+          <p class="text-teal-500 leading-relaxed">Track your gift in real-time. Get notified when it's delivered. Bask in the joy you just created.</p>
+        </div>
+      </div>
+
+      <!-- Illustration -->
+      <div class="reveal-up mt-16 flex justify-center">
+        <div class="relative max-w-md">
+          <div class="absolute inset-0 bg-gradient-to-b from-orange/10 to-teal/10 rounded-3xl blur-2xl"></div>
+          <img src="add-to-cart.png" alt="Shopping illustration" class="relative w-full max-w-[300px] mx-auto drop-shadow-lg" loading="lazy">
         </div>
       </div>
     </div>
   </section>
 
-  <!-- ============================================ -->
-  <!-- FOR PROVIDERS -->
-  <!-- ============================================ -->
-  <section class="py-24 lg:py-32 bg-gray-950 relative overflow-hidden" id="providers">
-    <!-- Background Art -->
-    <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-teal/10 rounded-full blur-[120px] -translate-y-1/3 translate-x-1/4"></div>
-    <div class="absolute bottom-0 left-0 w-[400px] h-[400px] bg-orange/10 rounded-full blur-[100px] translate-y-1/3 -translate-x-1/4"></div>
-
-    <div class="relative max-w-7xl mx-auto px-5 sm:px-8">
-      <div class="grid lg:grid-cols-2 gap-16 items-center">
-        <!-- Left Content -->
-        <div class="reveal">
-          <span class="inline-block px-4 py-1.5 bg-white/[0.06] text-white/80 text-xs font-bold uppercase tracking-wider rounded-full mb-6 border border-white/[0.08]">For Providers</span>
-          <h2 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight mb-6 leading-tight">
-            Grow your business
-            <br><span class="font-serif italic text-orange">with QuickGift</span>
+  <!-- ============ FOR PROVIDERS ============ -->
+  <section id="providers" class="py-20 md:py-32 relative overflow-hidden">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+        <!-- Content -->
+        <div>
+          <div class="reveal-up inline-flex items-center gap-2 bg-orange-50 rounded-full px-4 py-1.5 mb-4">
+            <span class="w-1.5 h-1.5 bg-orange rounded-full"></span>
+            <span class="text-xs font-semibold text-orange-700 uppercase tracking-wider">For Providers</span>
+          </div>
+          <h2 class="reveal-up text-3xl sm:text-4xl md:text-5xl font-extrabold text-teal-900 leading-tight mb-6">
+            Turn your talent into a<br>
+            <span class="font-serif italic text-orange">thriving business</span>
           </h2>
-          <p class="text-base text-white/50 mb-10 leading-relaxed max-w-md">
-            Whether you're a nail tech, hairstylist, cake baker, or gift vendor — join thousands of providers earning more on QuickGift.
+          <p class="reveal-up text-base md:text-lg text-teal-500 leading-relaxed mb-8">
+            Whether you're a baker, florist, nail tech, makeup artist, or gift shop owner — QuickGift connects you with customers ready to pay for premium services.
           </p>
-          <a href="#download" class="group inline-flex items-center gap-2.5 px-7 py-4 bg-orange hover:bg-orange-dark text-white font-semibold rounded-2xl transition-all duration-300 hover:shadow-2xl hover:shadow-orange/30 hover:-translate-y-0.5">
-            Become a Provider
-            <svg class="w-5 h-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
-          </a>
+
+          <div class="space-y-5">
+            <div class="reveal-up flex items-start gap-4">
+              <div class="flex-shrink-0 w-12 h-12 bg-teal-50 rounded-2xl flex items-center justify-center">
+                <svg class="w-6 h-6 text-teal" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              </div>
+              <div>
+                <h4 class="font-bold text-teal-900">Earn More, Consistently</h4>
+                <p class="text-sm text-teal-500 mt-1">Get a steady stream of orders. Top providers earn over &#8358;500,000/month.</p>
+              </div>
+            </div>
+            <div class="reveal-up flex items-start gap-4">
+              <div class="flex-shrink-0 w-12 h-12 bg-orange-50 rounded-2xl flex items-center justify-center">
+                <svg class="w-6 h-6 text-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+              </div>
+              <div>
+                <h4 class="font-bold text-teal-900">Verified & Trusted</h4>
+                <p class="text-sm text-teal-500 mt-1">Build credibility with reviews, ratings, and our verification badge. Customers trust verified pros.</p>
+              </div>
+            </div>
+            <div class="reveal-up flex items-start gap-4">
+              <div class="flex-shrink-0 w-12 h-12 bg-teal-50 rounded-2xl flex items-center justify-center">
+                <svg class="w-6 h-6 text-teal" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"/></svg>
+              </div>
+              <div>
+                <h4 class="font-bold text-teal-900">Dashboard & Analytics</h4>
+                <p class="text-sm text-teal-500 mt-1">Track orders, earnings, and customer insights from your provider dashboard.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="reveal-up mt-10">
+            <a href="#download" class="inline-flex items-center gap-3 bg-orange text-white px-8 py-4 rounded-2xl font-bold text-base hover:bg-orange-dark transition-all hover:shadow-xl hover:shadow-orange/30 hover:-translate-y-1">
+              Join as a Provider
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+            </a>
+          </div>
         </div>
 
-        <!-- Right — Benefits Grid -->
-        <div class="grid grid-cols-2 gap-4 reveal">
-          <div class="p-6 bg-white/[0.04] backdrop-blur-sm rounded-2xl border border-white/[0.06] hover:border-orange/20 transition-all hover:-translate-y-1 duration-300">
-            <div class="w-12 h-12 bg-orange/10 rounded-2xl flex items-center justify-center mb-4">
-              <svg class="w-6 h-6 text-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        <!-- Illustration -->
+        <div class="reveal-up relative flex justify-center">
+          <div class="absolute inset-0 bg-gradient-to-br from-orange/5 to-teal/5 rounded-3xl"></div>
+          <div class="relative">
+            <img src="shopping.png" alt="Beauty provider illustration" class="w-full max-w-[380px] drop-shadow-lg" loading="lazy">
+            <!-- Floating Stats -->
+            <div class="absolute -top-4 -left-4 md:-left-12 bg-white rounded-2xl shadow-xl p-4 animate-float-slow border border-teal-50">
+              <p class="text-2xl font-extrabold text-teal-900">&#8358;520K</p>
+              <p class="text-xs text-teal-500">Avg. monthly earnings</p>
             </div>
-            <h4 class="text-white font-bold mb-1.5">Smart Scheduling</h4>
-            <p class="text-white/40 text-sm leading-relaxed">Manage your calendar and accept bookings automatically.</p>
-          </div>
-          <div class="p-6 bg-white/[0.04] backdrop-blur-sm rounded-2xl border border-white/[0.06] hover:border-orange/20 transition-all hover:-translate-y-1 duration-300">
-            <div class="w-12 h-12 bg-orange/10 rounded-2xl flex items-center justify-center mb-4">
-              <svg class="w-6 h-6 text-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <div class="absolute -bottom-4 -right-4 md:-right-12 bg-white rounded-2xl shadow-xl p-4 animate-float-medium border border-orange-50">
+              <p class="text-2xl font-extrabold text-orange">340+</p>
+              <p class="text-xs text-teal-500">Active providers</p>
             </div>
-            <h4 class="text-white font-bold mb-1.5">Fast Payouts</h4>
-            <p class="text-white/40 text-sm leading-relaxed">Get paid directly to your bank account. No delays.</p>
-          </div>
-          <div class="p-6 bg-white/[0.04] backdrop-blur-sm rounded-2xl border border-white/[0.06] hover:border-orange/20 transition-all hover:-translate-y-1 duration-300">
-            <div class="w-12 h-12 bg-orange/10 rounded-2xl flex items-center justify-center mb-4">
-              <svg class="w-6 h-6 text-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
-            </div>
-            <h4 class="text-white font-bold mb-1.5">Grow Your Reach</h4>
-            <p class="text-white/40 text-sm leading-relaxed">Get discovered by thousands of new customers daily.</p>
-          </div>
-          <div class="p-6 bg-white/[0.04] backdrop-blur-sm rounded-2xl border border-white/[0.06] hover:border-orange/20 transition-all hover:-translate-y-1 duration-300">
-            <div class="w-12 h-12 bg-orange/10 rounded-2xl flex items-center justify-center mb-4">
-              <svg class="w-6 h-6 text-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-            </div>
-            <h4 class="text-white font-bold mb-1.5">Verified & Trusted</h4>
-            <p class="text-white/40 text-sm leading-relaxed">Build trust with verified badges and customer reviews.</p>
           </div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- ============================================ -->
-  <!-- TESTIMONIALS -->
-  <!-- ============================================ -->
-  <section class="py-24 lg:py-32 bg-white" id="testimonials">
-    <div class="max-w-7xl mx-auto px-5 sm:px-8">
-      <div class="text-center max-w-2xl mx-auto mb-16 lg:mb-20 reveal">
-        <span class="inline-block px-4 py-1.5 bg-orange-50 text-orange text-xs font-bold uppercase tracking-wider rounded-full mb-5">Testimonials</span>
-        <h2 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 tracking-tight">
-          Loved by <span class="font-serif italic text-teal">thousands</span>
+  <!-- ============ TESTIMONIALS ============ -->
+  <section id="testimonials" class="py-20 md:py-32 bg-teal-900 relative overflow-hidden">
+    <div class="absolute inset-0 opacity-10" style="background-image: radial-gradient(circle at 10% 20%, #FD8950 0%, transparent 40%), radial-gradient(circle at 90% 80%, #4A7A75 0%, transparent 40%);"></div>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div class="text-center max-w-2xl mx-auto mb-16">
+        <div class="reveal-up inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-1.5 mb-4">
+          <span class="w-1.5 h-1.5 bg-orange rounded-full"></span>
+          <span class="text-xs font-semibold text-teal-200 uppercase tracking-wider">Testimonials</span>
+        </div>
+        <h2 class="reveal-up text-3xl sm:text-4xl md:text-5xl font-extrabold text-white leading-tight">
+          People love<br>
+          <span class="font-serif italic text-orange-light">QuickGift</span>
         </h2>
       </div>
 
-      <div class="grid md:grid-cols-3 gap-6">
-        <div class="reveal">
-          <div class="p-7 bg-gray-50 rounded-3xl border border-gray-100 hover:shadow-xl hover:shadow-gray-200/50 transition-all duration-500 hover:-translate-y-1 h-full flex flex-col">
-            <div class="flex gap-0.5 mb-5">
-              <svg class="w-5 h-5 text-orange" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-              <svg class="w-5 h-5 text-orange" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-              <svg class="w-5 h-5 text-orange" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-              <svg class="w-5 h-5 text-orange" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-              <svg class="w-5 h-5 text-orange" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-            </div>
-            <p class="text-gray-600 leading-relaxed flex-grow mb-6 text-[15px]">
-              "Sent my mom a birthday cake from Lagos to Abuja and it arrived same day, perfectly decorated. She was so surprised!"
-            </p>
-            <div class="flex items-center gap-3">
-              <div class="w-11 h-11 bg-gradient-to-br from-teal-100 to-teal-200 rounded-full flex items-center justify-center text-sm font-bold text-teal-dark">AO</div>
-              <div>
-                <p class="text-sm font-bold text-gray-900">Amina O.</p>
-                <p class="text-xs text-gray-400">Lagos, Nigeria</p>
-              </div>
-            </div>
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Testimonial 1 -->
+        <div class="reveal-up testimonial-card bg-white/5 backdrop-blur-sm border border-white/10 rounded-3xl p-8 hover:bg-white/10 transition-all duration-500">
+          <div class="flex items-center gap-1 mb-4">
+            <span class="text-orange">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
           </div>
-        </div>
-
-        <div class="reveal">
-          <div class="p-7 bg-gray-50 rounded-3xl border border-gray-100 hover:shadow-xl hover:shadow-gray-200/50 transition-all duration-500 hover:-translate-y-1 h-full flex flex-col">
-            <div class="flex gap-0.5 mb-5">
-              <svg class="w-5 h-5 text-orange" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-              <svg class="w-5 h-5 text-orange" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-              <svg class="w-5 h-5 text-orange" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-              <svg class="w-5 h-5 text-orange" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-              <svg class="w-5 h-5 text-orange" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-            </div>
-            <p class="text-gray-600 leading-relaxed flex-grow mb-6 text-[15px]">
-              "I book all my nail appointments through QuickGift now. The providers are verified and the whole process is seamless."
-            </p>
-            <div class="flex items-center gap-3">
-              <div class="w-11 h-11 bg-gradient-to-br from-orange-100 to-orange-200 rounded-full flex items-center justify-center text-sm font-bold text-orange-dark">BE</div>
-              <div>
-                <p class="text-sm font-bold text-gray-900">Blessing E.</p>
-                <p class="text-xs text-gray-400">Abuja, Nigeria</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="reveal">
-          <div class="p-7 bg-gray-50 rounded-3xl border border-gray-100 hover:shadow-xl hover:shadow-gray-200/50 transition-all duration-500 hover:-translate-y-1 h-full flex flex-col">
-            <div class="flex gap-0.5 mb-5">
-              <svg class="w-5 h-5 text-orange" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-              <svg class="w-5 h-5 text-orange" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-              <svg class="w-5 h-5 text-orange" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-              <svg class="w-5 h-5 text-orange" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-              <svg class="w-5 h-5 text-orange" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-            </div>
-            <p class="text-gray-600 leading-relaxed flex-grow mb-6 text-[15px]">
-              "My nail business grew 3x since I joined QuickGift as a provider. The booking system is amazing and I get paid instantly."
-            </p>
-            <div class="flex items-center gap-3">
-              <div class="w-11 h-11 bg-gradient-to-br from-teal-100 to-teal-200 rounded-full flex items-center justify-center text-sm font-bold text-teal-dark">TB</div>
-              <div>
-                <p class="text-sm font-bold text-gray-900">Tolu B.</p>
-                <p class="text-xs text-gray-400">Port Harcourt, Nigeria</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ============================================ -->
-  <!-- STATS -->
-  <!-- ============================================ -->
-  <section class="py-20 bg-cream border-y border-orange/5">
-    <div class="max-w-7xl mx-auto px-5 sm:px-8">
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
-        <div class="text-center reveal">
-          <div class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-teal mb-1 tabular-nums" data-count="1000">0</div>
-          <p class="text-sm text-gray-400 font-medium uppercase tracking-wider">Gifts Delivered</p>
-        </div>
-        <div class="text-center reveal">
-          <div class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-teal mb-1 tabular-nums" data-count="500">0</div>
-          <p class="text-sm text-gray-400 font-medium uppercase tracking-wider">Beauty Bookings</p>
-        </div>
-        <div class="text-center reveal">
-          <div class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-teal mb-1 tabular-nums" data-count="100">0</div>
-          <p class="text-sm text-gray-400 font-medium uppercase tracking-wider">Verified Providers</p>
-        </div>
-        <div class="text-center reveal">
-          <div class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-orange mb-1">4.8<span class="text-3xl">&#9733;</span></div>
-          <p class="text-sm text-gray-400 font-medium uppercase tracking-wider">Average Rating</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ============================================ -->
-  <!-- DOWNLOAD CTA -->
-  <!-- ============================================ -->
-  <section class="py-24 lg:py-32 bg-white" id="download">
-    <div class="max-w-7xl mx-auto px-5 sm:px-8">
-      <div class="relative overflow-hidden rounded-[2rem]">
-        <!-- BG -->
-        <div class="absolute inset-0 bg-gradient-to-br from-teal via-teal-dark to-gray-950"></div>
-        <div class="absolute top-0 right-0 w-[400px] h-[400px] bg-orange/20 rounded-full blur-[100px] -translate-y-1/3 translate-x-1/4"></div>
-        <div class="absolute bottom-0 left-0 w-[300px] h-[300px] bg-teal-light/20 rounded-full blur-[80px] translate-y-1/3 -translate-x-1/4"></div>
-
-        <div class="relative px-8 py-16 sm:px-16 sm:py-20 lg:px-24 lg:py-28">
-          <div class="grid lg:grid-cols-2 gap-12 items-center">
-            <!-- Text -->
-            <div class="reveal">
-              <h2 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight mb-5 leading-tight">
-                Ready to make
-                <br>someone's day<span class="text-orange">?</span>
-              </h2>
-              <p class="text-base text-white/50 mb-10 max-w-md leading-relaxed">
-                Download QuickGift for free and start sending gifts or booking beauty services in minutes. Available on iOS and Android.
-              </p>
-
-              <div class="flex flex-col sm:flex-row gap-3">
-                <!-- App Store -->
-                <a href="#" class="group inline-flex items-center gap-3 px-6 py-4 bg-white/[0.08] hover:bg-white/[0.15] border border-white/[0.1] rounded-2xl transition-all duration-300 hover:-translate-y-0.5 backdrop-blur-sm">
-                  <svg class="w-8 h-8 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
-                  <div>
-                    <div class="text-[10px] text-white/50 uppercase tracking-wide">Download on the</div>
-                    <div class="text-base font-bold text-white -mt-0.5">App Store</div>
-                  </div>
-                </a>
-                <!-- Google Play -->
-                <a href="#" class="group inline-flex items-center gap-3 px-6 py-4 bg-white/[0.08] hover:bg-white/[0.15] border border-white/[0.1] rounded-2xl transition-all duration-300 hover:-translate-y-0.5 backdrop-blur-sm">
-                  <svg class="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 01-.61-.92V2.734a1 1 0 01.609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-1.4l2.651 1.535a1.001 1.001 0 010 1.316l-2.651 1.535-2.537-2.537 2.537-2.849zM5.864 2.658L16.8 9.291l-2.302 2.302-8.634-8.935z"/></svg>
-                  <div>
-                    <div class="text-[10px] text-white/50 uppercase tracking-wide">Get it on</div>
-                    <div class="text-base font-bold text-white -mt-0.5">Google Play</div>
-                  </div>
-                </a>
-              </div>
-            </div>
-
-            <!-- Logo / Visual -->
-            <div class="reveal hidden lg:flex justify-center">
-              <div class="relative">
-                <div class="absolute inset-0 bg-orange/20 rounded-full blur-[60px] scale-75"></div>
-                <div class="relative bg-white/[0.08] backdrop-blur-xl rounded-[2rem] p-8 border border-white/[0.1]">
-                  <img src="logo.png" alt="QuickGift Logo" class="w-48 h-auto mx-auto">
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ============================================ -->
-  <!-- FOOTER -->
-  <!-- ============================================ -->
-  <footer class="bg-gray-950">
-    <div class="max-w-7xl mx-auto px-5 sm:px-8 py-16 lg:py-20">
-      <div class="grid md:grid-cols-12 gap-10 mb-14">
-        <!-- Brand -->
-        <div class="md:col-span-5">
-          <div class="flex items-center gap-3 mb-5">
-            <img src="logo.png" alt="QuickGift" class="h-10 w-auto brightness-0 invert">
-          </div>
-          <p class="text-gray-400 text-sm leading-relaxed max-w-sm mb-8">
-            Same-day gift delivery and beauty services booking across Nigeria. Making it easy to spread joy and look amazing.
-          </p>
+          <p class="text-teal-100 leading-relaxed mb-6">"I used QuickGift to surprise my wife on our anniversary. Ordered a cake and flower bouquet at 10am, and it was at our door by 1pm. She was so shocked! The cake was fresh and beautiful."</p>
           <div class="flex items-center gap-3">
-            <a href="#" class="w-10 h-10 bg-white/[0.04] hover:bg-white/[0.08] rounded-xl flex items-center justify-center transition-all duration-300 hover:-translate-y-0.5" aria-label="Instagram">
-              <svg class="w-5 h-5 text-gray-500 hover:text-white transition-colors" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+            <div class="w-10 h-10 bg-teal-700 rounded-full flex items-center justify-center text-sm font-bold text-teal-200">OA</div>
+            <div>
+              <p class="font-semibold text-white text-sm">Oluwaseun Adeyemi</p>
+              <p class="text-xs text-teal-400">Lekki, Lagos</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Testimonial 2 -->
+        <div class="reveal-up testimonial-card bg-white/5 backdrop-blur-sm border border-white/10 rounded-3xl p-8 hover:bg-white/10 transition-all duration-500">
+          <div class="flex items-center gap-1 mb-4">
+            <span class="text-orange">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+          </div>
+          <p class="text-teal-100 leading-relaxed mb-6">"As a nail tech, QuickGift changed my business completely. I went from getting 3-4 clients a week to being fully booked. The app handles everything — bookings, payments, even reminders."</p>
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-orange-800 rounded-full flex items-center justify-center text-sm font-bold text-orange-200">CN</div>
+            <div>
+              <p class="font-semibold text-white text-sm">Chiamaka Nwosu</p>
+              <p class="text-xs text-teal-400">Ikeja, Lagos &middot; Verified Provider</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Testimonial 3 -->
+        <div class="reveal-up testimonial-card bg-white/5 backdrop-blur-sm border border-white/10 rounded-3xl p-8 hover:bg-white/10 transition-all duration-500">
+          <div class="flex items-center gap-1 mb-4">
+            <span class="text-orange">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+          </div>
+          <p class="text-teal-100 leading-relaxed mb-6">"Sent a birthday hamper to my best friend in Abuja from all the way in London. The tracking feature let me watch the delivery happen live. She called me crying happy tears!"</p>
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-teal-600 rounded-full flex items-center justify-center text-sm font-bold text-teal-100">TO</div>
+            <div>
+              <p class="font-semibold text-white text-sm">Tobiloba Ogundimu</p>
+              <p class="text-xs text-teal-400">Diaspora &middot; Sending to Abuja</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Testimonial 4 -->
+        <div class="reveal-up testimonial-card bg-white/5 backdrop-blur-sm border border-white/10 rounded-3xl p-8 hover:bg-white/10 transition-all duration-500 md:col-span-2 lg:col-span-1">
+          <div class="flex items-center gap-1 mb-4">
+            <span class="text-orange">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+          </div>
+          <p class="text-teal-100 leading-relaxed mb-6">"I booked a makeup artist for my sister's bridal shower through QuickGift. The MUA was professional, punctual, and talented. All 8 girls looked stunning. Easiest booking ever."</p>
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-orange-700 rounded-full flex items-center justify-center text-sm font-bold text-orange-100">AE</div>
+            <div>
+              <p class="font-semibold text-white text-sm">Aisha Eze</p>
+              <p class="text-xs text-teal-400">Victoria Island, Lagos</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Testimonial 5 -->
+        <div class="reveal-up testimonial-card bg-white/5 backdrop-blur-sm border border-white/10 rounded-3xl p-8 hover:bg-white/10 transition-all duration-500 lg:col-span-2">
+          <div class="flex items-center gap-1 mb-4">
+            <span class="text-orange">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+          </div>
+          <p class="text-teal-100 leading-relaxed mb-6">"My girlfriend is obsessed with skincare so I ordered the luxury skincare hamper. The packaging was immaculate — literally gift-shop quality. She posted it on her Instagram story and tagged QuickGift. I scored major boyfriend points. Definitely ordering again for Val's Day."</p>
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-teal-700 rounded-full flex items-center justify-center text-sm font-bold text-teal-200">EC</div>
+            <div>
+              <p class="font-semibold text-white text-sm">Emeka Chukwuma</p>
+              <p class="text-xs text-teal-400">Wuse, Abuja</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ STATS ============ -->
+  <section class="py-20 md:py-28 bg-white relative">
+    <div class="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-teal-200 to-transparent"></div>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12">
+        <div class="reveal-up text-center">
+          <p class="text-4xl md:text-5xl lg:text-6xl font-extrabold text-teal-900" data-count="10000">0</p>
+          <p class="text-sm md:text-base text-teal-500 mt-2 font-medium">Gifts Delivered</p>
+        </div>
+        <div class="reveal-up text-center">
+          <p class="text-4xl md:text-5xl lg:text-6xl font-extrabold text-orange" data-count="2000">0</p>
+          <p class="text-sm md:text-base text-teal-500 mt-2 font-medium">Happy Customers</p>
+        </div>
+        <div class="reveal-up text-center">
+          <p class="text-4xl md:text-5xl lg:text-6xl font-extrabold text-teal-900" data-count="340">0</p>
+          <p class="text-sm md:text-base text-teal-500 mt-2 font-medium">Verified Providers</p>
+        </div>
+        <div class="reveal-up text-center">
+          <div class="flex items-baseline justify-center gap-1">
+            <p class="text-4xl md:text-5xl lg:text-6xl font-extrabold text-orange">4.9</p>
+            <span class="text-orange text-xl">&#9733;</span>
+          </div>
+          <p class="text-sm md:text-base text-teal-500 mt-2 font-medium">App Store Rating</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ DOWNLOAD CTA ============ -->
+  <section id="download" class="py-20 md:py-32 relative overflow-hidden">
+    <div class="absolute inset-0 bg-gradient-to-b from-cream to-white"></div>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div class="relative bg-teal rounded-[2rem] md:rounded-[3rem] overflow-hidden p-8 md:p-16 lg:p-20">
+        <!-- Background Decor -->
+        <div class="absolute inset-0 overflow-hidden">
+          <div class="absolute -top-20 -right-20 w-80 h-80 bg-teal-light/20 rounded-full"></div>
+          <div class="absolute -bottom-20 -left-20 w-60 h-60 bg-orange/10 rounded-full"></div>
+          <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-teal-light/5 rounded-full"></div>
+        </div>
+
+        <div class="relative z-10 grid lg:grid-cols-2 gap-12 items-center">
+          <div class="text-center lg:text-left">
+            <h2 class="reveal-up text-3xl sm:text-4xl md:text-5xl font-extrabold text-white leading-tight">
+              Ready to make<br>
+              <span class="font-serif italic text-orange-light">someone's day?</span>
+            </h2>
+            <p class="reveal-up mt-6 text-base md:text-lg text-teal-100 leading-relaxed max-w-lg mx-auto lg:mx-0">
+              Download QuickGift and send joy to anyone, anywhere in Nigeria. First-time users get <strong class="text-orange-light">&#8358;2,000 off</strong> their first order.
+            </p>
+
+            <div class="reveal-up mt-10 flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start">
+              <!-- App Store Button -->
+              <a href="#" class="group w-full sm:w-auto inline-flex items-center gap-4 bg-white text-teal-900 px-7 py-4 rounded-2xl hover:shadow-2xl hover:-translate-y-1 transition-all">
+                <svg class="w-8 h-8 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/></svg>
+                <div class="text-left">
+                  <p class="text-[10px] text-teal-500 uppercase tracking-wider font-medium leading-none">Download on the</p>
+                  <p class="text-lg font-bold leading-tight">App Store</p>
+                </div>
+              </a>
+              <!-- Play Store Button -->
+              <a href="#" class="group w-full sm:w-auto inline-flex items-center gap-4 bg-white/10 backdrop-blur-sm text-white border border-white/20 px-7 py-4 rounded-2xl hover:bg-white/20 hover:shadow-2xl hover:-translate-y-1 transition-all">
+                <svg class="w-8 h-8 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 01-.61-.92V2.734a1 1 0 01.609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-3.199l2.807 1.626a1 1 0 010 1.732l-2.808 1.626L15.206 12l2.492-2.492zM5.864 2.658L16.8 8.99l-2.302 2.302-8.634-8.634z"/></svg>
+                <div class="text-left">
+                  <p class="text-[10px] text-teal-200 uppercase tracking-wider font-medium leading-none">Get it on</p>
+                  <p class="text-lg font-bold leading-tight">Google Play</p>
+                </div>
+              </a>
+            </div>
+
+            <!-- Urgency -->
+            <div class="reveal-up mt-8 inline-flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-full px-5 py-2.5">
+              <span class="relative flex h-2 w-2">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2 w-2 bg-orange"></span>
+              </span>
+              <span class="text-sm text-teal-100 font-medium">127 people downloaded in the last 24 hours</span>
+            </div>
+          </div>
+
+          <!-- Celebration Illustration -->
+          <div class="reveal-up hidden lg:flex justify-center">
+            <img src="celebration.png" alt="Celebration" class="w-full max-w-[350px] drop-shadow-2xl" loading="lazy">
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FOOTER ============ -->
+  <footer class="bg-teal-900 text-white pt-16 pb-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
+        <!-- Brand -->
+        <div class="col-span-2 md:col-span-1">
+          <img src="logo.png" alt="QuickGift" class="h-10 w-auto mb-4 brightness-0 invert opacity-90">
+          <p class="text-sm text-teal-300 leading-relaxed max-w-xs">Same-day gifts and beauty services across Nigeria. Making every moment special.</p>
+          <div class="flex items-center gap-4 mt-6">
+            <!-- Twitter/X -->
+            <a href="#" class="w-9 h-9 bg-white/10 rounded-lg flex items-center justify-center hover:bg-white/20 transition-colors" aria-label="Twitter">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
             </a>
-            <a href="#" class="w-10 h-10 bg-white/[0.04] hover:bg-white/[0.08] rounded-xl flex items-center justify-center transition-all duration-300 hover:-translate-y-0.5" aria-label="Twitter/X">
-              <svg class="w-5 h-5 text-gray-500 hover:text-white transition-colors" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+            <!-- Instagram -->
+            <a href="#" class="w-9 h-9 bg-white/10 rounded-lg flex items-center justify-center hover:bg-white/20 transition-colors" aria-label="Instagram">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
             </a>
-            <a href="#" class="w-10 h-10 bg-white/[0.04] hover:bg-white/[0.08] rounded-xl flex items-center justify-center transition-all duration-300 hover:-translate-y-0.5" aria-label="TikTok">
-              <svg class="w-5 h-5 text-gray-500 hover:text-white transition-colors" fill="currentColor" viewBox="0 0 24 24"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 00-.79-.05A6.34 6.34 0 003.15 15.2a6.34 6.34 0 0010.86 4.48v-7.1a8.16 8.16 0 005.58 2.2v-3.45a4.85 4.85 0 01-1-.14c.01 0-.99-.5-.99-.5z"/></svg>
+            <!-- TikTok -->
+            <a href="#" class="w-9 h-9 bg-white/10 rounded-lg flex items-center justify-center hover:bg-white/20 transition-colors" aria-label="TikTok">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 00-.79-.05A6.34 6.34 0 003.15 15.2a6.34 6.34 0 0010.86 4.48v-7.13a8.16 8.16 0 005.58 2.2V11.3a4.85 4.85 0 01-3-.4V6.69h3z"/></svg>
             </a>
           </div>
         </div>
 
-        <!-- Links -->
-        <div class="md:col-span-3 md:col-start-7">
-          <h4 class="text-xs font-bold text-white uppercase tracking-widest mb-5">Company</h4>
-          <ul class="space-y-3.5">
-            <li><a href="#features" class="text-sm text-gray-400 hover:text-white transition-colors">Features</a></li>
-            <li><a href="#providers" class="text-sm text-gray-400 hover:text-white transition-colors">For Providers</a></li>
-            <li><a href="#" class="text-sm text-gray-400 hover:text-white transition-colors">Privacy Policy</a></li>
-            <li><a href="#" class="text-sm text-gray-400 hover:text-white transition-colors">Terms of Service</a></li>
+        <!-- Product -->
+        <div>
+          <h4 class="font-bold text-white mb-4 text-sm uppercase tracking-wider">Product</h4>
+          <ul class="space-y-3">
+            <li><a href="#features" class="text-sm text-teal-300 hover:text-orange transition-colors">Features</a></li>
+            <li><a href="#how-it-works" class="text-sm text-teal-300 hover:text-orange transition-colors">How It Works</a></li>
+            <li><a href="#download" class="text-sm text-teal-300 hover:text-orange transition-colors">Download</a></li>
+            <li><a href="#" class="text-sm text-teal-300 hover:text-orange transition-colors">Pricing</a></li>
           </ul>
         </div>
-        <div class="md:col-span-3">
-          <h4 class="text-xs font-bold text-white uppercase tracking-widest mb-5">Contact</h4>
-          <ul class="space-y-3.5">
-            <li>
-              <a href="mailto:hello@quickgift.co" class="text-sm text-gray-400 hover:text-white transition-colors flex items-center gap-2.5">
-                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-                hello@quickgift.co
-              </a>
-            </li>
-            <li>
-              <a href="#" class="text-sm text-gray-400 hover:text-white transition-colors flex items-center gap-2.5">
-                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                Lagos, Nigeria
-              </a>
-            </li>
+
+        <!-- Company -->
+        <div>
+          <h4 class="font-bold text-white mb-4 text-sm uppercase tracking-wider">Company</h4>
+          <ul class="space-y-3">
+            <li><a href="#" class="text-sm text-teal-300 hover:text-orange transition-colors">About</a></li>
+            <li><a href="#" class="text-sm text-teal-300 hover:text-orange transition-colors">Careers</a></li>
+            <li><a href="#" class="text-sm text-teal-300 hover:text-orange transition-colors">Blog</a></li>
+            <li><a href="#" class="text-sm text-teal-300 hover:text-orange transition-colors">Contact</a></li>
+          </ul>
+        </div>
+
+        <!-- Legal -->
+        <div>
+          <h4 class="font-bold text-white mb-4 text-sm uppercase tracking-wider">Legal</h4>
+          <ul class="space-y-3">
+            <li><a href="#" class="text-sm text-teal-300 hover:text-orange transition-colors">Privacy Policy</a></li>
+            <li><a href="#" class="text-sm text-teal-300 hover:text-orange transition-colors">Terms of Service</a></li>
+            <li><a href="#" class="text-sm text-teal-300 hover:text-orange transition-colors">Refund Policy</a></li>
           </ul>
         </div>
       </div>
 
-      <!-- Divider -->
-      <div class="pt-8 border-t border-white/[0.06] flex flex-col sm:flex-row items-center justify-between gap-4">
-        <p class="text-sm text-gray-600">&copy; 2026 QuickGift. All rights reserved.</p>
-        <p class="text-xs text-gray-700">Made with care in Nigeria</p>
+      <!-- Bottom Bar -->
+      <div class="border-t border-white/10 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
+        <p class="text-sm text-teal-400">&copy; 2026 QuickGift. All rights reserved.</p>
+        <div class="flex items-center gap-2 text-sm text-teal-400">
+          <span>Made with</span>
+          <span class="text-orange">&#10084;</span>
+          <span>in Lagos, Nigeria</span>
+        </div>
       </div>
     </div>
   </footer>

@@ -1,109 +1,240 @@
-/* ===== Base ===== */
-* { margin: 0; padding: 0; box-sizing: border-box; }
-html { scroll-behavior: smooth; }
-
-/* ===== Reveal Animation ===== */
-.reveal {
-  opacity: 0;
-  transform: translateY(30px);
-  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
-              transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+/* ============ BASE ============ */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
-.reveal.visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-.reveal:nth-child(2) { transition-delay: 0.08s; }
-.reveal:nth-child(3) { transition-delay: 0.16s; }
-.reveal:nth-child(4) { transition-delay: 0.24s; }
 
-/* ===== Navbar ===== */
+html {
+  scroll-behavior: smooth;
+}
+
+/* ============ GRADIENT TEXT ============ */
+.text-gradient-orange {
+  background: linear-gradient(135deg, #FD8950 0%, #E5713A 50%, #FD8950 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ============ MESH GRADIENTS ============ */
+.mesh-gradient-1 {
+  background: radial-gradient(ellipse at center, rgba(253, 137, 80, 0.25) 0%, transparent 70%);
+  filter: blur(60px);
+}
+
+.mesh-gradient-2 {
+  background: radial-gradient(ellipse at center, rgba(53, 97, 93, 0.2) 0%, transparent 70%);
+  filter: blur(60px);
+}
+
+/* ============ NAVBAR ============ */
 #navbar {
-  background: transparent;
-  transition: background-color 0.4s ease, backdrop-filter 0.4s ease, box-shadow 0.4s ease;
+  background: rgba(255, 248, 240, 0);
+  backdrop-filter: blur(0px);
+  -webkit-backdrop-filter: blur(0px);
 }
+
 #navbar.scrolled {
-  background: rgba(42, 78, 75, 0.85);
+  background: rgba(255, 248, 240, 0.85);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 4px 16px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 0 rgba(53, 97, 93, 0.08);
 }
 
-/* ===== Hamburger Menu ===== */
-.hamburger-lines { display: flex; flex-direction: column; gap: 5px; }
-.hamburger-lines span {
-  display: block;
-  width: 20px;
-  height: 2px;
-  background: currentColor;
-  border-radius: 2px;
-  transition: transform 0.3s ease, opacity 0.3s ease;
-}
-.hamburger-lines.active span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
-.hamburger-lines.active span:nth-child(2) { opacity: 0; }
-.hamburger-lines.active span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
-
-/* ===== Floating Cards ===== */
-.float-card {
-  animation: floatUp 3s ease-in-out infinite;
-}
-.float-card-delayed {
-  animation: floatUp 3s ease-in-out 1.5s infinite;
-}
-@keyframes floatUp {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
-}
-
-/* ===== Marquee ===== */
+/* ============ MARQUEE ============ */
 .marquee-track {
-  overflow: hidden;
-  white-space: nowrap;
+  animation: marquee 30s linear infinite;
+  width: max-content;
 }
-.marquee-content {
-  display: inline-flex;
-  align-items: center;
-  animation: marquee 25s linear infinite;
-}
+
 @keyframes marquee {
   0% { transform: translateX(0); }
   100% { transform: translateX(-50%); }
 }
 
-/* ===== Counter Animation ===== */
-@keyframes countUp {
-  from { opacity: 0; transform: scale(0.8); }
-  to { opacity: 1; transform: scale(1); }
-}
-.count-animated {
-  animation: countUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+.marquee-container:hover .marquee-track {
+  animation-play-state: paused;
 }
 
-/* ===== Selection ===== */
-::selection {
-  background: rgba(253, 137, 80, 0.2);
-  color: #35615D;
+/* ============ BENTO CARDS ============ */
+.bento-card {
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.5s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* ===== Focus ===== */
-a:focus-visible,
-button:focus-visible {
-  outline: 2px solid #FD8950;
-  outline-offset: 2px;
-  border-radius: 8px;
+.bento-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 60px -15px rgba(53, 97, 93, 0.15);
 }
 
-/* ===== Scrollbar ===== */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #35615D; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #2A4E4B; }
+/* ============ FLOATING ANIMATIONS ============ */
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-12px); }
+}
 
-/* ===== Smooth page transitions ===== */
-body {
+@keyframes float-medium {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes float-fast {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes bounce-slow {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(-8px); }
+}
+
+.animate-float-slow {
+  animation: float-slow 6s ease-in-out infinite;
+}
+
+.animate-float-medium {
+  animation: float-medium 4s ease-in-out infinite;
+}
+
+.animate-float-fast {
+  animation: float-fast 3s ease-in-out infinite;
+}
+
+.animate-bounce-slow {
+  animation: bounce-slow 3s ease-in-out infinite;
+}
+
+/* ============ PHONE MOCKUP ============ */
+.phone-mockup {
+  animation: float-slow 6s ease-in-out infinite;
+}
+
+/* ============ SCROLL REVEAL ============ */
+.reveal-up {
   opacity: 0;
-  animation: pageLoad 0.6s ease-out 0.1s forwards;
+  transform: translateY(30px);
+  transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1), transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
 }
-@keyframes pageLoad {
-  to { opacity: 1; }
+
+.reveal-up.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Stagger children */
+.reveal-up:nth-child(2) { transition-delay: 0.1s; }
+.reveal-up:nth-child(3) { transition-delay: 0.2s; }
+.reveal-up:nth-child(4) { transition-delay: 0.3s; }
+.reveal-up:nth-child(5) { transition-delay: 0.4s; }
+
+/* ============ TESTIMONIALS ============ */
+.testimonial-card {
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.5s ease;
+}
+
+.testimonial-card:hover {
+  transform: translateY(-4px);
+}
+
+/* ============ MOBILE MENU ============ */
+#mobile-menu.active {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.mobile-nav-link {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.4s ease, transform 0.4s ease, color 0.3s ease;
+}
+
+#mobile-menu.active .mobile-nav-link {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+#mobile-menu.active .mobile-nav-link:nth-child(1) { transition-delay: 0.1s; }
+#mobile-menu.active .mobile-nav-link:nth-child(2) { transition-delay: 0.15s; }
+#mobile-menu.active .mobile-nav-link:nth-child(3) { transition-delay: 0.2s; }
+#mobile-menu.active .mobile-nav-link:nth-child(4) { transition-delay: 0.25s; }
+#mobile-menu.active .mobile-nav-link:nth-child(5) { transition-delay: 0.3s; }
+
+/* Hamburger Animation */
+.menu-open .hamburger-lines span:nth-child(1) {
+  transform: translateY(6px) rotate(45deg);
+}
+
+.menu-open .hamburger-lines span:nth-child(2) {
+  opacity: 0;
+}
+
+.menu-open .hamburger-lines span:nth-child(3) {
+  transform: translateY(-6px) rotate(-45deg);
+  width: 1.5rem;
+}
+
+/* ============ COUNTER ANIMATION ============ */
+[data-count] {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ============ SELECTION ============ */
+::selection {
+  background-color: rgba(253, 137, 80, 0.2);
+  color: #2A4E4B;
+}
+
+/* ============ SCROLLBAR ============ */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #FFF8F0;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #A3C3BF;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #75A59F;
+}
+
+/* ============ RESPONSIVE TWEAKS ============ */
+@media (max-width: 768px) {
+  .phone-mockup {
+    animation: float-slow 8s ease-in-out infinite;
+  }
+
+  .bento-card:hover {
+    transform: none;
+    box-shadow: none;
+  }
+
+  .testimonial-card:hover {
+    transform: none;
+  }
+}
+
+/* ============ REDUCED MOTION ============ */
+@media (prefers-reduced-motion: reduce) {
+  .reveal-up {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .marquee-track {
+    animation: none;
+  }
+
+  .animate-float-slow,
+  .animate-float-medium,
+  .animate-float-fast,
+  .animate-bounce-slow,
+  .phone-mockup {
+    animation: none;
+  }
 }

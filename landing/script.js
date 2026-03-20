@@ -1,79 +1,79 @@
-// ===== Mobile Menu Toggle =====
-const menuToggle = document.getElementById('menu-toggle');
+// ============ MOBILE MENU ============
+const mobileMenuBtn = document.getElementById('mobile-menu-btn');
 const mobileMenu = document.getElementById('mobile-menu');
-const hamburger = document.getElementById('hamburger');
+let menuOpen = false;
 
-menuToggle.addEventListener('click', () => {
-  const isOpen = !mobileMenu.classList.contains('hidden');
-  mobileMenu.classList.toggle('hidden');
-  hamburger.classList.toggle('active');
-  menuToggle.setAttribute('aria-expanded', !isOpen);
+mobileMenuBtn.addEventListener('click', () => {
+  menuOpen = !menuOpen;
+  mobileMenu.classList.toggle('active', menuOpen);
+  mobileMenuBtn.classList.toggle('menu-open', menuOpen);
+  document.body.style.overflow = menuOpen ? 'hidden' : '';
 });
 
-document.querySelectorAll('.mobile-nav-link').forEach(link => {
+// Close mobile menu on link click
+mobileMenu.querySelectorAll('a').forEach(link => {
   link.addEventListener('click', () => {
-    mobileMenu.classList.add('hidden');
-    hamburger.classList.remove('active');
+    menuOpen = false;
+    mobileMenu.classList.remove('active');
+    mobileMenuBtn.classList.remove('menu-open');
+    document.body.style.overflow = '';
   });
 });
 
-// ===== Navbar Scroll Effect =====
+// ============ NAVBAR SCROLL ============
 const navbar = document.getElementById('navbar');
+let lastScroll = 0;
 
-function handleNavScroll() {
-  navbar.classList.toggle('scrolled', window.scrollY > 50);
+function handleNavbarScroll() {
+  const currentScroll = window.scrollY;
+  if (currentScroll > 50) {
+    navbar.classList.add('scrolled');
+  } else {
+    navbar.classList.remove('scrolled');
+  }
+  lastScroll = currentScroll;
 }
 
-window.addEventListener('scroll', handleNavScroll, { passive: true });
-handleNavScroll();
+window.addEventListener('scroll', handleNavbarScroll, { passive: true });
+handleNavbarScroll();
 
-// ===== Reveal on Scroll (IntersectionObserver) =====
-const revealElements = document.querySelectorAll('.reveal');
+// ============ SCROLL REVEAL ============
+const revealElements = document.querySelectorAll('.reveal-up');
 
-const revealObserver = new IntersectionObserver(
-  (entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('visible');
-        revealObserver.unobserve(entry.target);
-      }
-    });
-  },
-  { threshold: 0.1, rootMargin: '0px 0px -60px 0px' }
-);
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('revealed');
+      revealObserver.unobserve(entry.target);
+    }
+  });
+}, {
+  threshold: 0.1,
+  rootMargin: '0px 0px -40px 0px'
+});
 
-revealElements.forEach((el) => revealObserver.observe(el));
+revealElements.forEach(el => revealObserver.observe(el));
 
-// ===== Counter Animation =====
-const counters = document.querySelectorAll('[data-count]');
+// ============ COUNTER ANIMATION ============
+const counterElements = document.querySelectorAll('[data-count]');
 
-const counterObserver = new IntersectionObserver(
-  (entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        const el = entry.target;
-        const target = parseInt(el.getAttribute('data-count'), 10);
-        animateCounter(el, target);
-        counterObserver.unobserve(el);
-      }
-    });
-  },
-  { threshold: 0.3 }
-);
-
-counters.forEach((counter) => counterObserver.observe(counter));
-
-function animateCounter(el, target) {
-  const duration = 1800;
+function animateCounter(el) {
+  const target = parseInt(el.dataset.count, 10);
+  const duration = 2000;
   const startTime = performance.now();
 
   function update(currentTime) {
     const elapsed = currentTime - startTime;
     const progress = Math.min(elapsed / duration, 1);
-    const eased = 1 - Math.pow(1 - progress, 4); // ease-out quart
+    // Ease out cubic
+    const eased = 1 - Math.pow(1 - progress, 3);
     const current = Math.round(eased * target);
 
-    el.textContent = current.toLocaleString() + '+';
+    if (target >= 1000) {
+      el.textContent = current.toLocaleString() + '+';
+    } else {
+      el.textContent = current + '+';
+    }
 
     if (progress < 1) {
       requestAnimationFrame(update);
@@ -83,23 +83,43 @@ function animateCounter(el, target) {
   requestAnimationFrame(update);
 }
 
-// ===== Smooth Scroll for Anchor Links =====
-document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
-  anchor.addEventListener('click', function (e) {
-    const targetId = this.getAttribute('href');
-    if (targetId === '#') return;
+const counterObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      animateCounter(entry.target);
+      counterObserver.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.3 });
 
-    const targetEl = document.querySelector(targetId);
-    if (targetEl) {
+counterElements.forEach(el => counterObserver.observe(el));
+
+// ============ SMOOTH ANCHOR SCROLL ============
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+  anchor.addEventListener('click', function (e) {
+    const target = document.querySelector(this.getAttribute('href'));
+    if (target) {
       e.preventDefault();
       const navHeight = navbar.offsetHeight;
-      const targetPosition = targetEl.getBoundingClientRect().top + window.scrollY - navHeight;
-
-      window.scrollTo({ top: targetPosition, behavior: 'smooth' });
-
-      // Close mobile menu if open
-      mobileMenu.classList.add('hidden');
-      hamburger.classList.remove('active');
+      const targetPos = target.getBoundingClientRect().top + window.scrollY - navHeight - 20;
+      window.scrollTo({ top: targetPos, behavior: 'smooth' });
     }
   });
 });
+
+// ============ ACTIVE NAV LINK HIGHLIGHT ============
+const sections = document.querySelectorAll('section[id]');
+const navLinks = document.querySelectorAll('nav a[href^="#"]');
+
+const activeObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const id = entry.target.getAttribute('id');
+      navLinks.forEach(link => {
+        link.classList.toggle('text-orange', link.getAttribute('href') === '#' + id);
+      });
+    }
+  });
+}, { threshold: 0.3, rootMargin: '-20% 0px -60% 0px' });
+
+sections.forEach(section => activeObserver.observe(section));

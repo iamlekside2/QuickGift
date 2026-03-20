@@ -24,10 +24,159 @@
   --color-orange-900: #60280d;
 
   --color-cream: #FFF8F0;
+  --color-surface: #FAFBFC;
+  --color-surface-raised: #FFFFFF;
+  --color-border: #E5E7EB;
+  --color-border-subtle: #F3F4F6;
+
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
 }
 
-body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@layer base {
+  body {
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: var(--color-surface);
+    color: #111827;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #d1d5db transparent;
+  }
+
+  *::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background-color: #d1d5db;
+    border-radius: 3px;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: #9ca3af;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-teal-500 hover:bg-teal-600 active:bg-teal-700 text-white rounded-lg text-sm font-semibold transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm shadow-teal-500/10;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white hover:bg-gray-50 active:bg-gray-100 text-gray-700 rounded-lg text-sm font-medium transition-all duration-150 border border-gray-200 shadow-sm;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 px-3 py-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg text-sm font-medium transition-all duration-150;
+  }
+
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-red-500 hover:bg-red-600 active:bg-red-700 text-white rounded-lg text-sm font-semibold transition-all duration-150 disabled:opacity-50;
+  }
+
+  .input {
+    @apply w-full px-3.5 py-2.5 rounded-lg border border-gray-200 bg-white text-sm text-gray-900 placeholder-gray-400 focus:border-teal-400 focus:ring-2 focus:ring-teal-500/10 outline-none transition-all duration-150;
+  }
+
+  .select {
+    @apply px-3.5 py-2.5 rounded-lg border border-gray-200 bg-white text-sm text-gray-700 focus:border-teal-400 focus:ring-2 focus:ring-teal-500/10 outline-none transition-all duration-150 cursor-pointer;
+  }
+
+  .card {
+    @apply bg-white rounded-xl border border-gray-100 shadow-sm;
+  }
+
+  .badge {
+    @apply inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold tracking-wide;
+  }
+
+  .badge-green {
+    @apply bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/10;
+  }
+
+  .badge-blue {
+    @apply bg-blue-50 text-blue-700 ring-1 ring-blue-600/10;
+  }
+
+  .badge-yellow {
+    @apply bg-amber-50 text-amber-700 ring-1 ring-amber-600/10;
+  }
+
+  .badge-gray {
+    @apply bg-gray-50 text-gray-600 ring-1 ring-gray-500/10;
+  }
+
+  .badge-red {
+    @apply bg-red-50 text-red-700 ring-1 ring-red-600/10;
+  }
+
+  .badge-teal {
+    @apply bg-teal-50 text-teal-700 ring-1 ring-teal-600/10;
+  }
+
+  .badge-orange {
+    @apply bg-orange-50 text-orange-700 ring-1 ring-orange-600/10;
+  }
+
+  .badge-purple {
+    @apply bg-purple-50 text-purple-700 ring-1 ring-purple-600/10;
+  }
+
+  .table-header {
+    @apply text-left px-5 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider;
+  }
+
+  .table-cell {
+    @apply px-5 py-3.5 text-sm;
+  }
+
+  .table-row {
+    @apply border-b border-gray-50 hover:bg-gray-50/60 transition-colors duration-100;
+  }
+
+  .page-header {
+    @apply text-lg font-semibold text-gray-900;
+  }
+
+  .page-subtitle {
+    @apply text-sm text-gray-500 mt-0.5;
+  }
+}
+
+@layer utilities {
+  .animate-fade-in {
+    animation: fadeIn 0.2s ease-out;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.25s ease-out;
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.2s ease-out;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
 }
