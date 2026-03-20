@@ -37,10 +37,9 @@ services:
       - key: NODE_VERSION
         value: 20.11.0
 
+staticSites:
   # Landing Page
-  - type: web
-    name: quickgift-landing
-    runtime: static
+  - name: quickgift-landing
     rootDir: landing
     buildCommand: echo "No build needed"
     staticPublishPath: .
