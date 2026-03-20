@@ -71,6 +71,8 @@ async def create_booking(
 @router.get("", response_model=List[BookingResponse])
 async def list_bookings(
     status: Optional[str] = None,
+    page: int = 1,
+    per_page: int = 20,
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -90,6 +92,7 @@ async def list_bookings(
         query = query.where(Booking.status == status)
 
     query = query.order_by(Booking.created_at.desc())
+    query = query.offset((page - 1) * per_page).limit(per_page)
     result = await db.execute(query)
     return result.scalars().all()
 

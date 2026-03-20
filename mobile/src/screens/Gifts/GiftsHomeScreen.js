@@ -69,6 +69,7 @@ export default function GiftsHomeScreen({ navigation }) {
         {/* Search Bar */}
         <TouchableOpacity
           className="flex-row items-center bg-white/15 rounded-2xl px-5 py-3.5 mt-4 gap-3"
+          onPress={() => navigation.navigate('GiftsList', { title: 'Search', search: true })}
         >
           <Ionicons name="search" size={18} color="rgba(255,255,255,0.6)" />
           <Text className="text-white/50 text-sm">Search gifts...</Text>

@@ -22,6 +22,8 @@ async def list_providers(
     available: Optional[bool] = None,
     search: Optional[str] = None,
     sort: str = Query("rating", pattern="^(rating|bookings|newest)$"),
+    page: int = 1,
+    per_page: int = 20,
     db: AsyncSession = Depends(get_db),
 ):
     query = select(Provider).where(Provider.status == "verified")
@@ -42,6 +44,7 @@ async def list_providers(
     elif sort == "newest":
         query = query.order_by(Provider.created_at.desc())
 
+    query = query.offset((page - 1) * per_page).limit(per_page)
     result = await db.execute(query)
     return result.scalars().all()
 

@@ -1,8 +1,9 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Platform, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Platform, ActivityIndicator, Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
+import { notificationsAPI } from '../../services/api';
 
 const ICON_MAP = {
   booking: { name: 'calendar', bg: 'bg-teal-light', color: '#35615D' },
@@ -16,13 +17,36 @@ export default function ProviderNotifications({ navigation }) {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  const fetchNotifications = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await notificationsAPI.list();
+      const items = (res.data || []).map((n) => ({
+        ...n,
+        unread: !n.is_read,
+      }));
+      setNotifications(items);
+    } catch (err) {
+      console.warn('Failed to fetch notifications', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useFocusEffect(
     useCallback(() => {
-      // No notifications API yet — show empty state
-      setLoading(false);
-      setNotifications([]);
-    }, [])
+      fetchNotifications();
+    }, [fetchNotifications])
   );
+
+  const handleMarkAllRead = async () => {
+    try {
+      await notificationsAPI.markAllRead();
+      setNotifications((prev) => prev.map((n) => ({ ...n, unread: false, is_read: true })));
+    } catch (err) {
+      Alert.alert('Error', 'Failed to mark notifications as read');
+    }
+  };
 
   return (
     <View className="flex-1 bg-gray-50">
@@ -44,11 +68,7 @@ export default function ProviderNotifications({ navigation }) {
           </View>
           {notifications.length > 0 && (
             <TouchableOpacity
-              onPress={() => {
-                setNotifications((prev) =>
-                  prev.map((n) => ({ ...n, unread: false }))
-                );
-              }}
+              onPress={handleMarkAllRead}
             >
               <Text className="text-sm text-teal font-bold">Mark all read</Text>
             </TouchableOpacity>

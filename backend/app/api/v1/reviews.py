@@ -94,11 +94,15 @@ async def create_review(
 async def list_reviews(
     target_type: str,
     target_id: str,
+    page: int = 1,
+    per_page: int = 20,
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(
         select(Review)
         .where(Review.target_type == target_type, Review.target_id == target_id)
         .order_by(Review.created_at.desc())
+        .offset((page - 1) * per_page)
+        .limit(per_page)
     )
     return result.scalars().all()

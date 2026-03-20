@@ -9,6 +9,7 @@ export default function GiftDetailScreen({ navigation, route }) {
   const { gift } = route.params || {};
   const [quantity, setQuantity] = useState(1);
   const [message, setMessage] = useState('');
+  const [isFavorite, setIsFavorite] = useState(false);
   const { addItem } = useCart();
 
   const formatPrice = (price) => '\u20A6' + price.toLocaleString();
@@ -47,8 +48,9 @@ export default function GiftDetailScreen({ navigation, route }) {
             shadowRadius: 12,
             elevation: 4,
           }}
+          onPress={() => setIsFavorite(!isFavorite)}
         >
-          <Ionicons name="heart-outline" size={22} color="#35615D" />
+          <Ionicons name={isFavorite ? 'heart' : 'heart-outline'} size={22} color={isFavorite ? '#EF4444' : '#35615D'} />
         </TouchableOpacity>
       </View>
 

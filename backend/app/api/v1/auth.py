@@ -17,6 +17,7 @@ from app.schemas.auth import (
     SendOTPRequest, VerifyOTPRequest, RegisterRequest,
     LoginRequest, TokenResponse, UserResponse, UpdateProfileRequest,
 )
+from app.utils.helpers import validate_nigerian_phone
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -24,6 +25,12 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 @router.post("/check-phone")
 async def check_phone(req: SendOTPRequest, db: AsyncSession = Depends(get_db)):
     """Check if a phone number is already registered."""
+    if not validate_nigerian_phone(req.phone):
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid phone number. Please use a valid Nigerian number (e.g. +2348012345678, 08012345678).",
+        )
+
     result = await db.execute(select(User).where(User.phone == req.phone))
     user = result.scalars().first()
     exists = user is not None and user.full_name != "QuickGift User"
@@ -32,6 +39,12 @@ async def check_phone(req: SendOTPRequest, db: AsyncSession = Depends(get_db)):
 
 @router.post("/send-otp")
 async def send_otp(req: SendOTPRequest, db: AsyncSession = Depends(get_db)):
+    if not validate_nigerian_phone(req.phone):
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid phone number. Please use a valid Nigerian number (e.g. +2348012345678, 08012345678).",
+        )
+
     code = generate_otp()
     otp = OTP(
         phone=req.phone,
@@ -106,6 +119,12 @@ async def verify_otp(req: VerifyOTPRequest, db: AsyncSession = Depends(get_db)):
 
 @router.post("/register", response_model=TokenResponse)
 async def register(req: RegisterRequest, db: AsyncSession = Depends(get_db)):
+    if not validate_nigerian_phone(req.phone):
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid phone number. Please use a valid Nigerian number (e.g. +2348012345678, 08012345678).",
+        )
+
     # Verify OTP first
     otp_result = await db.execute(
         select(OTP)

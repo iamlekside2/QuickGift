@@ -1,15 +1,112 @@
-import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Platform } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, Platform, Alert, ActivityIndicator, RefreshControl } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../../context/AuthContext';
+import { walletAPI } from '../../services/api';
 
 export default function WalletScreen() {
   const { user } = useAuth();
-  const balance = user?.wallet_balance || 0;
   const isProvider = user?.role === 'provider';
 
-  const transactions = [];
+  const [balance, setBalance] = useState(user?.wallet_balance || 0);
+  const [transactions, setTransactions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchData = useCallback(async () => {
+    try {
+      const [balRes, txRes] = await Promise.all([
+        walletAPI.getBalance(),
+        walletAPI.getTransactions({ page: 1, per_page: 20 }),
+      ]);
+      setBalance(balRes.data?.balance ?? 0);
+      setTransactions(txRes.data || []);
+    } catch (e) {
+      // Silently fail — keep existing data
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      setLoading(true);
+      fetchData();
+    }, [fetchData])
+  );
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    fetchData();
+  }, [fetchData]);
+
+  const handleFund = () => {
+    Alert.prompt(
+      'Fund Wallet',
+      'Enter amount (₦)',
+      async (text) => {
+        const amount = parseFloat(text);
+        if (!amount || amount <= 0) {
+          Alert.alert('Error', 'Please enter a valid amount');
+          return;
+        }
+        try {
+          const reference = `FND-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+          await walletAPI.fund(amount, reference);
+          Alert.alert('Success', `₦${amount.toLocaleString()} added to your wallet`);
+          fetchData();
+        } catch (e) {
+          Alert.alert('Error', e.response?.data?.detail || 'Failed to fund wallet');
+        }
+      },
+      'plain-text',
+      '',
+      'numeric'
+    );
+  };
+
+  const handleTransfer = () => {
+    Alert.prompt(
+      'Transfer',
+      'Enter recipient phone number',
+      (phone) => {
+        if (!phone || phone.length < 10) {
+          Alert.alert('Error', 'Please enter a valid phone number');
+          return;
+        }
+        Alert.prompt(
+          'Transfer Amount',
+          `Enter amount to send to ${phone} (₦)`,
+          async (text) => {
+            const amount = parseFloat(text);
+            if (!amount || amount <= 0) {
+              Alert.alert('Error', 'Please enter a valid amount');
+              return;
+            }
+            try {
+              await walletAPI.transfer(phone, amount);
+              Alert.alert('Success', `₦${amount.toLocaleString()} sent to ${phone}`);
+              fetchData();
+            } catch (e) {
+              Alert.alert('Error', e.response?.data?.detail || 'Transfer failed');
+            }
+          },
+          'plain-text',
+          '',
+          'numeric'
+        );
+      },
+      'plain-text'
+    );
+  };
+
+  const formatDate = (dateStr) => {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('en-NG', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  };
 
   return (
     <View className="flex-1 bg-gray-50">
@@ -22,7 +119,13 @@ export default function WalletScreen() {
         <Text className="text-2xl font-extrabold text-gray-800">Wallet</Text>
       </View>
 
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+      <ScrollView
+        className="flex-1"
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#35615D" />
+        }
+      >
         {/* Balance Card */}
         <View
           className="mx-5 mt-4 bg-teal rounded-3xl overflow-hidden"
@@ -43,13 +146,19 @@ export default function WalletScreen() {
               ₦{balance.toLocaleString()}
             </Text>
             <View className="flex-row gap-3 mt-6 w-full">
-              <TouchableOpacity className="flex-1 flex-row items-center justify-center bg-white/20 py-3.5 rounded-2xl gap-2">
+              <TouchableOpacity
+                onPress={handleFund}
+                className="flex-1 flex-row items-center justify-center bg-white/20 py-3.5 rounded-2xl gap-2"
+              >
                 <Ionicons name="add-circle-outline" size={20} color="#fff" />
                 <Text className="text-white text-sm font-bold">
                   {isProvider ? 'Withdraw' : 'Fund'}
                 </Text>
               </TouchableOpacity>
-              <TouchableOpacity className="flex-1 flex-row items-center justify-center bg-white/20 py-3.5 rounded-2xl gap-2">
+              <TouchableOpacity
+                onPress={handleTransfer}
+                className="flex-1 flex-row items-center justify-center bg-white/20 py-3.5 rounded-2xl gap-2"
+              >
                 <Ionicons name="swap-horizontal-outline" size={20} color="#fff" />
                 <Text className="text-white text-sm font-bold">Transfer</Text>
               </TouchableOpacity>
@@ -96,7 +205,11 @@ export default function WalletScreen() {
           </View>
         </View>
 
-        {transactions.length > 0 ? (
+        {loading ? (
+          <View className="mx-5 bg-white rounded-3xl py-12 items-center">
+            <ActivityIndicator size="large" color="#35615D" />
+          </View>
+        ) : transactions.length > 0 ? (
           <View className="mx-5 bg-white rounded-3xl overflow-hidden"
             style={{
               shadowColor: '#1F2937',
@@ -123,16 +236,16 @@ export default function WalletScreen() {
                   />
                 </View>
                 <View className="flex-1 ml-3">
-                  <Text className="text-[13px] font-bold text-gray-800">{tx.title}</Text>
-                  <Text className="text-[11px] text-gray-400 mt-0.5">{tx.desc}</Text>
+                  <Text className="text-[13px] font-bold text-gray-800">{tx.description || 'Transaction'}</Text>
+                  <Text className="text-[11px] text-gray-400 mt-0.5">{tx.reference}</Text>
                 </View>
                 <View className="items-end">
                   <Text className={`text-[14px] font-extrabold ${
                     tx.type === 'credit' ? 'text-green-600' : 'text-red-500'
                   }`}>
-                    {tx.type === 'credit' ? '+' : ''}₦{Math.abs(tx.amount).toLocaleString()}
+                    {tx.type === 'credit' ? '+' : '-'}₦{Math.abs(tx.amount).toLocaleString()}
                   </Text>
-                  <Text className="text-[10px] text-gray-400 mt-0.5">{tx.date}</Text>
+                  <Text className="text-[10px] text-gray-400 mt-0.5">{formatDate(tx.created_at)}</Text>
                 </View>
               </View>
             ))}

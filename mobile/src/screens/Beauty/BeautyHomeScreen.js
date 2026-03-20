@@ -74,7 +74,10 @@ export default function BeautyHomeScreen({ navigation }) {
         </Text>
 
         {/* Search Bar */}
-        <TouchableOpacity className="flex-row items-center bg-white/15 rounded-2xl px-4 py-3.5 mt-4 gap-2.5">
+        <TouchableOpacity
+          className="flex-row items-center bg-white/15 rounded-2xl px-4 py-3.5 mt-4 gap-2.5"
+          onPress={() => navigation.navigate('ProvidersList', { title: 'Search Providers', search: true })}
+        >
           <Ionicons name="search" size={18} color="rgba(255,255,255,0.6)" />
           <Text className="text-sm text-white/50">Search services or providers...</Text>
         </TouchableOpacity>

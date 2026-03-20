@@ -6,3 +6,5 @@ from app.models.booking import Booking
 from app.models.payment import Payment
 from app.models.review import Review
 from app.models.chat import Conversation, Message
+from app.models.notification import Notification
+from app.models.transaction import Transaction

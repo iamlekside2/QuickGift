@@ -77,7 +77,7 @@ export default function EditProfileScreen({ navigation }) {
           <View className="w-20 h-20 rounded-full bg-teal items-center justify-center">
             <Text className="text-white text-3xl font-bold">{fullName.charAt(0) || 'U'}</Text>
           </View>
-          <TouchableOpacity className="mt-2">
+          <TouchableOpacity className="mt-2" onPress={() => Alert.alert('Coming Soon', 'Photo upload will be available in a future update.')}>
             <Text className="text-sm text-teal font-medium">Change Photo</Text>
           </TouchableOpacity>
         </View>

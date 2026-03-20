@@ -8,7 +8,7 @@ load_dotenv()
 class Settings(BaseModel):
     APP_NAME: str = "QuickGift API"
     VERSION: str = "1.0.0"
-    DEBUG: bool = os.getenv("DEBUG", "true").lower() == "true"
+    DEBUG: bool = os.getenv("DEBUG", "false").lower() == "true"
 
     # Database (SQLite for dev, PostgreSQL for production)
     DATABASE_URL: str = os.getenv(

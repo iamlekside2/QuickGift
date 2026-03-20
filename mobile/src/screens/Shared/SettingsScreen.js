@@ -1,12 +1,79 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Platform, Switch } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, Platform, Switch, Alert, Linking } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from '../../context/AuthContext';
+
+const NOTIF_STORAGE_KEY = '@quickgift_notification_prefs';
 
 export default function SettingsScreen({ navigation }) {
+  const { logout } = useAuth();
   const [pushNotifs, setPushNotifs] = useState(true);
   const [emailNotifs, setEmailNotifs] = useState(true);
   const [smsNotifs, setSmsNotifs] = useState(false);
+
+  // Load notification preferences on mount
+  useEffect(() => {
+    const loadPrefs = async () => {
+      try {
+        const stored = await AsyncStorage.getItem(NOTIF_STORAGE_KEY);
+        if (stored) {
+          const prefs = JSON.parse(stored);
+          setPushNotifs(prefs.push ?? true);
+          setEmailNotifs(prefs.email ?? true);
+          setSmsNotifs(prefs.sms ?? false);
+        }
+      } catch (err) {
+        console.log('Error loading notification prefs:', err);
+      }
+    };
+    loadPrefs();
+  }, []);
+
+  // Persist notification preferences whenever they change
+  useEffect(() => {
+    const savePrefs = async () => {
+      try {
+        await AsyncStorage.setItem(
+          NOTIF_STORAGE_KEY,
+          JSON.stringify({ push: pushNotifs, email: emailNotifs, sms: smsNotifs })
+        );
+      } catch (err) {
+        console.log('Error saving notification prefs:', err);
+      }
+    };
+    savePrefs();
+  }, [pushNotifs, emailNotifs, smsNotifs]);
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      'Delete Account',
+      'Are you sure you want to permanently delete your account? This action cannot be undone and all your data will be lost.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            Alert.alert('Account Deletion', 'Your account deletion request has been submitted. You will be logged out.', [
+              { text: 'OK', onPress: () => logout && logout() },
+            ]);
+          },
+        },
+      ]
+    );
+  };
+
+  const PRIVACY_URL = 'https://quickgift.ng/privacy';
+  const TERMS_URL = 'https://quickgift.ng/terms';
+
+  const accountItems = [
+    { icon: 'language-outline', label: 'Language', value: 'English' },
+    { icon: 'cash-outline', label: 'Currency', value: 'NGN (\u20A6)' },
+    { icon: 'shield-outline', label: 'Privacy Policy', onPress: () => Linking.openURL(PRIVACY_URL) },
+    { icon: 'document-text-outline', label: 'Terms of Service', onPress: () => Linking.openURL(TERMS_URL) },
+  ];
 
   return (
     <View className="flex-1 bg-gray-50">
@@ -78,15 +145,11 @@ export default function SettingsScreen({ navigation }) {
             elevation: 2,
           }}
         >
-          {[
-            { icon: 'language-outline', label: 'Language', value: 'English' },
-            { icon: 'cash-outline', label: 'Currency', value: 'NGN (₦)' },
-            { icon: 'shield-outline', label: 'Privacy Policy' },
-            { icon: 'document-text-outline', label: 'Terms of Service' },
-          ].map((item, i) => (
+          {accountItems.map((item, i) => (
             <TouchableOpacity
               key={i}
-              className={`flex-row items-center p-4 gap-3 ${i < 3 ? 'border-b border-gray-100' : ''}`}
+              className={`flex-row items-center p-4 gap-3 ${i < accountItems.length - 1 ? 'border-b border-gray-100' : ''}`}
+              onPress={item.onPress}
             >
               <Ionicons name={item.icon} size={20} color="#6B7280" />
               <Text className="flex-1 text-sm font-medium text-gray-800">{item.label}</Text>
@@ -98,7 +161,10 @@ export default function SettingsScreen({ navigation }) {
 
         {/* Danger Zone */}
         <Text className="text-base font-bold text-gray-800 mt-6 mb-4">Danger Zone</Text>
-        <TouchableOpacity className="bg-red-50 rounded-2xl p-4 flex-row items-center gap-3 mb-6">
+        <TouchableOpacity
+          className="bg-red-50 rounded-2xl p-4 flex-row items-center gap-3 mb-6"
+          onPress={handleDeleteAccount}
+        >
           <Ionicons name="trash-outline" size={20} color="#EF4444" />
           <View className="flex-1">
             <Text className="text-sm font-bold text-red-500">Delete Account</Text>

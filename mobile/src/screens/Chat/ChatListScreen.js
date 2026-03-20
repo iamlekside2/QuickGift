@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, FlatList, TouchableOpacity, Platform, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, TextInput, Platform, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
@@ -10,6 +10,8 @@ export default function ChatListScreen({ navigation }) {
   const { user } = useAuth();
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchVisible, setSearchVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const isProvider = user?.role === 'provider';
 
@@ -29,6 +31,13 @@ export default function ChatListScreen({ navigation }) {
       setLoading(false);
     }
   };
+
+  const filteredConversations = searchQuery.trim()
+    ? conversations.filter((c) => {
+        const name = isProvider ? c.buyer_name : c.provider_name;
+        return name?.toLowerCase().includes(searchQuery.toLowerCase());
+      })
+    : conversations;
 
   const formatTime = (dateStr) => {
     const date = new Date(dateStr);
@@ -126,11 +135,36 @@ export default function ChatListScreen({ navigation }) {
         <View className="flex-row items-center justify-between">
           <Text className="text-xl font-extrabold text-white tracking-tight">Messages</Text>
           <View className="flex-row gap-2">
-            <TouchableOpacity className="w-10 h-10 rounded-2xl bg-white/15 items-center justify-center">
-              <Ionicons name="search" size={18} color="#fff" />
+            <TouchableOpacity
+              className="w-10 h-10 rounded-2xl bg-white/15 items-center justify-center"
+              onPress={() => {
+                setSearchVisible(!searchVisible);
+                if (searchVisible) setSearchQuery('');
+              }}
+            >
+              <Ionicons name={searchVisible ? 'close' : 'search'} size={18} color="#fff" />
             </TouchableOpacity>
           </View>
         </View>
+
+        {searchVisible && (
+          <View className="flex-row items-center bg-white/15 rounded-2xl px-4 py-3 mt-3 gap-2.5">
+            <Ionicons name="search" size={16} color="rgba(255,255,255,0.6)" />
+            <TextInput
+              className="flex-1 text-sm text-white"
+              placeholder="Search conversations..."
+              placeholderTextColor="rgba(255,255,255,0.5)"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              autoFocus
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchQuery('')}>
+                <Ionicons name="close-circle" size={16} color="rgba(255,255,255,0.6)" />
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
       </View>
 
       {loading ? (
@@ -139,7 +173,7 @@ export default function ChatListScreen({ navigation }) {
         </View>
       ) : (
         <FlatList
-          data={conversations}
+          data={filteredConversations}
           keyExtractor={(item) => item.id}
           renderItem={renderConversation}
           contentContainerStyle={{ flexGrow: 1 }}

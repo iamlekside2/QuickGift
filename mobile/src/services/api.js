@@ -108,12 +108,25 @@ const realReviewsAPI = {
   list: (targetType, targetId) => api.get(`/reviews/${targetType}/${targetId}`),
 };
 
+const realNotificationsAPI = {
+  list: (params = {}) => api.get('/notifications', { params }),
+  markRead: (id) => api.patch(`/notifications/${id}/read`),
+  markAllRead: () => api.patch('/notifications/read-all'),
+};
+
 const realChatsAPI = {
   listConversations: () => api.get('/chats'),
   getMessages: (conversationId) => api.get(`/chats/${conversationId}/messages`),
   sendMessage: (conversationId, text, senderRole) => api.post(`/chats/${conversationId}/messages`, { text, sender_role: senderRole }),
   createConversation: (providerId, providerName, initialMessage) =>
     api.post('/chats', { provider_id: providerId, provider_name: providerName, initial_message: initialMessage }),
+};
+
+const realWalletAPI = {
+  getBalance: () => api.get('/wallet/balance'),
+  getTransactions: (params = {}) => api.get('/wallet/transactions', { params }),
+  fund: (amount, reference) => api.post('/wallet/fund', { amount, reference }),
+  transfer: (recipientPhone, amount) => api.post('/wallet/transfer', { recipient_phone: recipientPhone, amount }),
 };
 
 // ─── Export based on per-service toggles ─────────────
@@ -125,5 +138,7 @@ export const bookingsAPI = USE_MOCK_BOOKINGS ? mockBookingsAPI : realBookingsAPI
 export const paymentsAPI = USE_MOCK_PAYMENTS ? mockPaymentsAPI : realPaymentsAPI;
 export const reviewsAPI = USE_MOCK_REVIEWS ? mockReviewsAPI : realReviewsAPI;
 export const chatsAPI = USE_MOCK_CHATS ? mockChatsAPI : realChatsAPI;
+export const notificationsAPI = realNotificationsAPI;
+export const walletAPI = realWalletAPI;
 
 export default api;

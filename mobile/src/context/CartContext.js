@@ -1,9 +1,42 @@
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useState, useContext, useEffect, useRef } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
+const CART_STORAGE_KEY = '@quickgift_cart';
 const CartContext = createContext({});
 
 export const CartProvider = ({ children }) => {
   const [items, setItems] = useState([]);
+  const isLoaded = useRef(false);
+
+  // Load cart from AsyncStorage on mount
+  useEffect(() => {
+    const loadCart = async () => {
+      try {
+        const stored = await AsyncStorage.getItem(CART_STORAGE_KEY);
+        if (stored) {
+          setItems(JSON.parse(stored));
+        }
+      } catch (err) {
+        console.log('Error loading cart:', err);
+      } finally {
+        isLoaded.current = true;
+      }
+    };
+    loadCart();
+  }, []);
+
+  // Persist cart to AsyncStorage whenever it changes
+  useEffect(() => {
+    if (!isLoaded.current) return;
+    const saveCart = async () => {
+      try {
+        await AsyncStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+      } catch (err) {
+        console.log('Error saving cart:', err);
+      }
+    };
+    saveCart();
+  }, [items]);
 
   const addItem = (product, quantity = 1) => {
     setItems((prev) => {

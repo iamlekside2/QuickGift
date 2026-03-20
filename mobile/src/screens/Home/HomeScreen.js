@@ -111,6 +111,7 @@ export default function HomeScreen({ navigation }) {
               shadowRadius: 16,
               elevation: 6,
             }}
+            onPress={() => navigation.navigate('GiftsList', { title: 'Search', search: true })}
           >
             <View className="w-9 h-9 rounded-xl bg-teal-light items-center justify-center">
               <Ionicons name="search" size={18} color="#35615D" />
