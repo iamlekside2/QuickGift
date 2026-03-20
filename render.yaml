@@ -41,7 +41,6 @@ services:
   - type: web
     name: quickgift-landing
     runtime: static
-    plan: free
     rootDir: landing
     buildCommand: echo "No build needed"
     staticPublishPath: .
