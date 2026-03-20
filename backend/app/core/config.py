@@ -48,10 +48,12 @@ class Settings(BaseModel):
     DELIVERY_PER_KM: int = 200
     EXPRESS_MULTIPLIER: float = 2.5
 
-    # CORS — include production URLs + local dev
+    # CORS — production URLs + local dev
     ALLOWED_ORIGINS: list = [
         o.strip() for o in os.getenv("ALLOWED_ORIGINS", "").split(",") if o.strip()
     ] or [
+        "https://quickgift-admin.onrender.com",
+        "https://quickgift-landing.onrender.com",
         "http://localhost:5173",
         "http://localhost:5174",
         "http://localhost:5175",
