@@ -6,7 +6,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.security import get_current_user
+from app.core.push import send_push
 from app.models.chat import Conversation, Message
+from app.models.user import User
 from app.schemas.chat import (
     CreateConversationRequest,
     SendMessageRequest,
@@ -104,6 +106,26 @@ async def send_message(
 
     await db.commit()
     await db.refresh(message)
+
+    # Push notification to the other participant
+    sender = await db.execute(select(User).where(User.id == user_id))
+    sender_user = sender.scalars().first()
+    sender_name = sender_user.full_name if sender_user else "Someone"
+
+    # Determine the recipient (the other participant)
+    recipient_id = (
+        conversation.provider_id if user_id == conversation.buyer_id else conversation.buyer_id
+    )
+    recipient_result = await db.execute(select(User).where(User.id == recipient_id))
+    recipient = recipient_result.scalars().first()
+    if recipient and recipient.push_token:
+        await send_push(
+            recipient.push_token,
+            f"New message from {sender_name}",
+            req.text[:100],
+            {"type": "chat", "conversation_id": conversation_id},
+        )
+
     return message
 
 

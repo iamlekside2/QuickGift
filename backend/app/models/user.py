@@ -23,6 +23,7 @@ class User(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     wallet_balance: Mapped[float] = mapped_column(Float, default=0.0)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    push_token: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 

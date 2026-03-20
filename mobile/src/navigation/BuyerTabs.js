@@ -29,6 +29,7 @@ import BookingScreen from '../screens/Beauty/BookingScreen';
 
 import ChatListScreen from '../screens/Chat/ChatListScreen';
 import ChatScreen from '../screens/Chat/ChatScreen';
+import PaystackWebView from '../screens/Shared/PaystackWebView';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -48,6 +49,7 @@ function HomeStack() {
       <Stack.Screen name="Booking" component={BookingScreen} />
       <Stack.Screen name="Favourites" component={FavouritesScreen} />
       <Stack.Screen name="ChatScreen" component={ChatScreen} />
+      <Stack.Screen name="PaystackWebView" component={PaystackWebView} />
     </Stack.Navigator>
   );
 }

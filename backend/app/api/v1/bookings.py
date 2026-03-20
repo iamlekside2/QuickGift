@@ -9,8 +9,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.security import get_current_user, require_admin
 from app.core.config import settings
+from app.core.push import send_push
 from app.models.booking import Booking
 from app.models.provider import Provider, Service
+from app.models.user import User
 from app.schemas.booking import BookingCreate, BookingResponse, BookingStatusUpdate
 
 router = APIRouter(prefix="/bookings", tags=["Beauty Bookings"])
@@ -65,6 +67,21 @@ async def create_booking(
     db.add(booking)
     await db.commit()
     await db.refresh(booking)
+
+    # Push notification to provider
+    buyer_result = await db.execute(select(User).where(User.id == current_user["user_id"]))
+    buyer = buyer_result.scalars().first()
+    provider_user_result = await db.execute(select(User).where(User.id == provider.user_id))
+    provider_user = provider_user_result.scalars().first()
+    if provider_user and provider_user.push_token:
+        buyer_name = buyer.full_name if buyer else "A customer"
+        await send_push(
+            provider_user.push_token,
+            "New Booking Request",
+            f"{buyer_name} booked {service.name}",
+            {"type": "booking", "booking_id": booking.id},
+        )
+
     return booking
 
 
@@ -154,4 +171,17 @@ async def update_booking_status(
     booking.status = req.status
     await db.commit()
     await db.refresh(booking)
+
+    # Push notification to buyer about status change
+    buyer_result = await db.execute(select(User).where(User.id == booking.user_id))
+    buyer = buyer_result.scalars().first()
+    if buyer and buyer.push_token:
+        status_label = req.status.replace("_", " ").title()
+        await send_push(
+            buyer.push_token,
+            f"Booking {status_label}",
+            f"Your booking for {booking.service_name} has been {status_label.lower()}",
+            {"type": "booking_status", "booking_id": booking.id, "status": req.status},
+        )
+
     return booking

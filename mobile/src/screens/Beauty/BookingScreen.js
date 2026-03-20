@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Alert, Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
-import { bookingsAPI } from '../../services/api';
+import { bookingsAPI, paymentsAPI } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 import Button from '../../components/common/Button';
 
 export default function BookingScreen({ navigation, route }) {
+  const { user } = useAuth();
   const { provider, services = [] } = route.params || {};
   const [selectedDate, setSelectedDate] = useState(0);
   const [selectedTime, setSelectedTime] = useState(null);
@@ -49,10 +51,33 @@ export default function BookingScreen({ navigation, route }) {
         notes: `${serviceType === 'home' ? 'Home Service' : 'Salon Visit'}`,
       };
 
-      await bookingsAPI.create(bookingData);
+      const bookingRes = await bookingsAPI.create(bookingData);
+      const booking = bookingRes.data;
+
+      // Initialize Paystack payment for the deposit
+      const depositAmount = servicePrice * 0.3;
+      const payRes = await paymentsAPI.initialize({
+        booking_id: booking.id,
+        amount: depositAmount,
+        email: user?.email || user?.phone + '@quickgift.ng',
+      });
+      const payData = payRes.data;
+
+      if (payData.authorization_url) {
+        // Navigate to Paystack WebView for card payment
+        setSubmitting(false);
+        navigation.navigate('PaystackWebView', {
+          authorization_url: payData.authorization_url,
+          reference: payData.reference,
+          successScreen: 'Orders',
+        });
+        return;
+      }
+
+      // Dev mode fallback — no Paystack key configured
       Alert.alert(
-        'Booking Confirmed! 🎉',
-        `Your appointment with ${provider?.business_name || provider?.name} has been booked for ${dates[selectedDate].day} ${dates[selectedDate].date} ${dates[selectedDate].month} at ${selectedTime}.`,
+        'Booking Confirmed!',
+        payData.message || `Your appointment with ${provider?.business_name || provider?.name} has been booked for ${dates[selectedDate].day} ${dates[selectedDate].date} ${dates[selectedDate].month} at ${selectedTime}.`,
         [{ text: 'View Orders', onPress: () => navigation.navigate('Orders') }]
       );
     } catch (err) {

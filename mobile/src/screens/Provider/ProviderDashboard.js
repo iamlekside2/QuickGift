@@ -190,7 +190,7 @@ export default function ProviderDashboard({ navigation }) {
             {[
               { icon: 'star-outline', label: 'Reviews', screen: 'ProviderReviews' },
               { icon: 'time-outline', label: 'Availability', screen: 'AvailabilityScreen' },
-              { icon: 'briefcase-outline', label: 'Business', screen: 'BusinessProfile' },
+              { icon: 'cash-outline', label: 'Earnings', screen: 'WalletScreen' },
             ].map((action, i) => (
               <TouchableOpacity
                 key={i}

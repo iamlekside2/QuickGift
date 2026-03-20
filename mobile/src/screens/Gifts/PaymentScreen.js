@@ -34,24 +34,55 @@ export default function PaymentScreen({ route, navigation }) {
       });
       const order = orderRes.data;
 
-      // Step 2: Initialize payment
-      await paymentsAPI.initialize({
-        order_id: order.id,
-        amount: total,
-        payment_method: selectedMethod,
-      });
+      if (selectedMethod === 'card') {
+        // Step 2a: Initialize Paystack payment for card
+        const payRes = await paymentsAPI.initialize({
+          order_id: order.id,
+          amount: total,
+          email: user?.email || user?.phone + '@quickgift.ng',
+        });
+        const payData = payRes.data;
 
-      // Step 3: Success
-      Alert.alert(
-        'Order Successful!',
-        `The gift for ${recipient.name} has been sent and will arrive shortly.`,
-        [
-          { text: 'Send Another Gift', onPress: () => navigation.navigate('GiftsHome') },
-          { text: 'Back to Home', onPress: () => navigation.popToTop() },
-        ]
-      );
+        if (payData.authorization_url) {
+          // Step 3a: Navigate to Paystack WebView
+          setPaying(false);
+          navigation.navigate('PaystackWebView', {
+            authorization_url: payData.authorization_url,
+            reference: payData.reference,
+            successScreen: 'GiftsHome',
+          });
+          return;
+        } else {
+          // Dev mode fallback — no Paystack key configured
+          Alert.alert(
+            'Order Successful!',
+            payData.message || `The gift for ${recipient.name} has been placed.`,
+            [
+              { text: 'Send Another Gift', onPress: () => navigation.navigate('GiftsHome') },
+              { text: 'Back to Home', onPress: () => navigation.popToTop() },
+            ]
+          );
+        }
+      } else {
+        // Step 2b: Wallet payment — initialize directly
+        await paymentsAPI.initialize({
+          order_id: order.id,
+          amount: total,
+          email: user?.email || user?.phone + '@quickgift.ng',
+        });
+
+        // Step 3b: Success for wallet
+        Alert.alert(
+          'Order Successful!',
+          `The gift for ${recipient.name} has been sent and will arrive shortly.`,
+          [
+            { text: 'Send Another Gift', onPress: () => navigation.navigate('GiftsHome') },
+            { text: 'Back to Home', onPress: () => navigation.popToTop() },
+          ]
+        );
+      }
     } catch (err) {
-      const message = err.response?.data?.message || err.message || 'Something went wrong. Please try again.';
+      const message = err.response?.data?.detail || err.response?.data?.message || err.message || 'Something went wrong. Please try again.';
       Alert.alert('Payment Failed', message);
     } finally {
       setPaying(false);

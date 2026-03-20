@@ -13,11 +13,16 @@ from app.core.config import settings
 from app.core.sms import send_otp_sms
 from app.models.user import User, OTP
 from app.models.provider import Provider
+from pydantic import BaseModel
 from app.schemas.auth import (
     SendOTPRequest, VerifyOTPRequest, RegisterRequest,
     LoginRequest, TokenResponse, UserResponse, UpdateProfileRequest,
 )
 from app.utils.helpers import validate_nigerian_phone
+
+
+class PushTokenRequest(BaseModel):
+    token: str
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -279,3 +284,20 @@ async def update_profile(
     await db.commit()
     await db.refresh(user)
     return user
+
+
+@router.post("/push-token")
+async def register_push_token(
+    req: PushTokenRequest,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Register an Expo push notification token for the authenticated user."""
+    result = await db.execute(select(User).where(User.id == current_user["user_id"]))
+    user = result.scalars().first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user.push_token = req.token
+    await db.commit()
+    return {"message": "Push token registered"}

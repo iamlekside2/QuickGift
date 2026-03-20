@@ -9,8 +9,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.security import get_current_user, require_admin
 from app.core.config import settings
+from app.core.push import send_push
 from app.models.order import Order, OrderItem
 from app.models.product import Product
+from app.models.user import User
 from app.schemas.order import (
     OrderCreate, OrderResponse, OrderDetailResponse,
     OrderItemResponse, OrderStatusUpdate,
@@ -158,4 +160,17 @@ async def update_order_status(
     order.status = req.status
     await db.commit()
     await db.refresh(order)
+
+    # Push notification to buyer about order status change
+    buyer_result = await db.execute(select(User).where(User.id == order.user_id))
+    buyer = buyer_result.scalars().first()
+    if buyer and buyer.push_token:
+        status_label = req.status.replace("_", " ").title()
+        await send_push(
+            buyer.push_token,
+            f"Order {status_label}",
+            f"Your order {order.order_number} is now {status_label.lower()}",
+            {"type": "order_status", "order_id": order.id, "status": req.status},
+        )
+
     return order

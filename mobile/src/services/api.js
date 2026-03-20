@@ -68,6 +68,7 @@ const realAuthAPI = {
   login: (phone, password) => api.post('/auth/login', { phone, password }),
   getProfile: () => api.get('/auth/me'),
   updateProfile: (data) => api.patch('/auth/me', data),
+  registerPushToken: (token) => api.post('/auth/push-token', { token }),
 };
 
 const realProductsAPI = {
@@ -122,6 +123,16 @@ const realChatsAPI = {
     api.post('/chats', { provider_id: providerId, provider_name: providerName, initial_message: initialMessage }),
 };
 
+const realUploadAPI = {
+  image: (uri) => {
+    const formData = new FormData();
+    formData.append('file', { uri, type: 'image/jpeg', name: 'photo.jpg' });
+    return api.post('/upload/image', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+};
+
 const realWalletAPI = {
   getBalance: () => api.get('/wallet/balance'),
   getTransactions: (params = {}) => api.get('/wallet/transactions', { params }),
@@ -140,5 +151,6 @@ export const reviewsAPI = USE_MOCK_REVIEWS ? mockReviewsAPI : realReviewsAPI;
 export const chatsAPI = USE_MOCK_CHATS ? mockChatsAPI : realChatsAPI;
 export const notificationsAPI = realNotificationsAPI;
 export const walletAPI = realWalletAPI;
+export const uploadAPI = realUploadAPI;
 
 export default api;

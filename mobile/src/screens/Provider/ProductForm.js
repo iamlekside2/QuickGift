@@ -15,7 +15,7 @@ export default function ProductForm({ route, navigation }) {
   const [price, setPrice] = useState(existing.price?.toString() || '');
   const [category, setCategory] = useState(existing.category || 'Cakes');
   const [inStock, setInStock] = useState(existing.inStock !== false);
-  const [delivery, setDelivery] = useState('Both');
+  const [delivery, setDelivery] = useState(existing.delivery || 'Both');
 
   const handleSave = () => {
     if (!name || !price) {

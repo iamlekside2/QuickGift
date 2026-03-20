@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Platform, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, Platform, Alert, ActivityIndicator, Image } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../../context/AuthContext';
+import { uploadAPI } from '../../services/api';
 
 export default function EditProfileScreen({ navigation }) {
   const { user, updateProfile } = useAuth();
@@ -12,6 +14,42 @@ export default function EditProfileScreen({ navigation }) {
   const [email, setEmail] = useState(user?.email || '');
   const [city, setCity] = useState(user?.city || 'Lagos');
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState(user?.avatar_url || null);
+
+  const handlePickImage = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Required', 'Please allow access to your photo library to change your profile photo.');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (result.canceled) return;
+
+      const uri = result.assets[0].uri;
+      setUploading(true);
+
+      const response = await uploadAPI.image(uri);
+      const url = response.data.url;
+
+      await updateProfile({ avatar_url: url });
+      setAvatarUrl(url);
+      Alert.alert('Success', 'Profile photo updated!');
+    } catch (err) {
+      const message = err?.response?.data?.detail || err.message || 'Failed to upload photo.';
+      Alert.alert('Upload Failed', message);
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!fullName.trim()) {
@@ -74,11 +112,23 @@ export default function EditProfileScreen({ navigation }) {
       <ScrollView className="flex-1 px-5 pt-6" showsVerticalScrollIndicator={false}>
         {/* Avatar */}
         <View className="items-center mb-6">
-          <View className="w-20 h-20 rounded-full bg-teal items-center justify-center">
-            <Text className="text-white text-3xl font-bold">{fullName.charAt(0) || 'U'}</Text>
-          </View>
-          <TouchableOpacity className="mt-2" onPress={() => Alert.alert('Coming Soon', 'Photo upload will be available in a future update.')}>
-            <Text className="text-sm text-teal font-medium">Change Photo</Text>
+          {avatarUrl ? (
+            <Image
+              source={{ uri: avatarUrl }}
+              className="w-20 h-20 rounded-full"
+              style={{ backgroundColor: '#E5E7EB' }}
+            />
+          ) : (
+            <View className="w-20 h-20 rounded-full bg-teal items-center justify-center">
+              <Text className="text-white text-3xl font-bold">{fullName.charAt(0) || 'U'}</Text>
+            </View>
+          )}
+          <TouchableOpacity className="mt-2" onPress={handlePickImage} disabled={uploading}>
+            {uploading ? (
+              <ActivityIndicator size="small" color="#35615D" />
+            ) : (
+              <Text className="text-sm text-teal font-medium">Change Photo</Text>
+            )}
           </TouchableOpacity>
         </View>
 

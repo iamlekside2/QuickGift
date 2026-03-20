@@ -14,3 +14,4 @@ aiosqlite==0.21.0
 python-dotenv==1.2.1
 aiohttp==3.13.3
 requests==2.32.3
+cloudinary==1.41.0

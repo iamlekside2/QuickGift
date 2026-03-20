@@ -1,6 +1,7 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authAPI } from '../services/api';
+import { registerForPushNotifications } from '../utils/notifications';
 
 const AuthContext = createContext({});
 
@@ -54,6 +55,7 @@ export const AuthProvider = ({ children }) => {
     const data = res.data;
     if (data?.access_token && data?.user) {
       await saveAuth(data.access_token, data.user);
+      registerForPushNotifications().catch(() => {});
     } else if (data?.user) {
       setUser(data.user);
     }
@@ -63,12 +65,14 @@ export const AuthProvider = ({ children }) => {
   const register = async (data) => {
     const res = await authAPI.register(data);
     await saveAuth(res.data.access_token, res.data.user);
+    registerForPushNotifications().catch(() => {});
     return res.data;
   };
 
   const login = async (phone, password) => {
     const res = await authAPI.login(phone, password);
     await saveAuth(res.data.access_token, res.data.user);
+    registerForPushNotifications().catch(() => {});
     return res.data;
   };
 
