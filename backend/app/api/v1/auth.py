@@ -218,8 +218,11 @@ async def register(req: RegisterRequest, db: AsyncSession = Depends(get_db)):
 @router.post("/login", response_model=TokenResponse)
 async def login(req: LoginRequest, db: AsyncSession = Depends(get_db)):
     # Support login by phone OR email
+    identifier = req.phone or req.email
+    if not identifier:
+        raise HTTPException(status_code=400, detail="Phone or email is required")
     result = await db.execute(
-        select(User).where((User.phone == req.phone) | (User.email == req.phone))
+        select(User).where((User.phone == identifier) | (User.email == identifier))
     )
     user = result.scalars().first()
 
