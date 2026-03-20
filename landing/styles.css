@@ -1,51 +1,73 @@
-/* ===== Base & Reset ===== */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+/* ===== Base ===== */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
 
-html {
-  scroll-behavior: smooth;
-}
-
-/* ===== Fade-in Animation ===== */
-.fade-in {
+/* ===== Reveal Animation ===== */
+.reveal {
   opacity: 0;
-  transform: translateY(24px);
-  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
-              transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: translateY(30px);
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
 }
-
-.fade-in.visible {
+.reveal.visible {
   opacity: 1;
   transform: translateY(0);
 }
-
-/* Stagger children */
-.fade-in:nth-child(2) { transition-delay: 0.1s; }
-.fade-in:nth-child(3) { transition-delay: 0.2s; }
-.fade-in:nth-child(4) { transition-delay: 0.3s; }
+.reveal:nth-child(2) { transition-delay: 0.08s; }
+.reveal:nth-child(3) { transition-delay: 0.16s; }
+.reveal:nth-child(4) { transition-delay: 0.24s; }
 
 /* ===== Navbar ===== */
 #navbar {
   background: transparent;
-  transition: background-color 0.3s ease, backdrop-filter 0.3s ease, box-shadow 0.3s ease;
+  transition: background-color 0.4s ease, backdrop-filter 0.4s ease, box-shadow 0.4s ease;
 }
-
 #navbar.scrolled {
-  background: rgba(53, 97, 93, 0.95);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  background: rgba(42, 78, 75, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 4px 16px rgba(0, 0, 0, 0.1);
 }
 
-#navbar.scrolled .nav-link {
-  color: rgba(255, 255, 255, 0.8);
+/* ===== Hamburger Menu ===== */
+.hamburger-lines { display: flex; flex-direction: column; gap: 5px; }
+.hamburger-lines span {
+  display: block;
+  width: 20px;
+  height: 2px;
+  background: currentColor;
+  border-radius: 2px;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+.hamburger-lines.active span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.hamburger-lines.active span:nth-child(2) { opacity: 0; }
+.hamburger-lines.active span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+/* ===== Floating Cards ===== */
+.float-card {
+  animation: floatUp 3s ease-in-out infinite;
+}
+.float-card-delayed {
+  animation: floatUp 3s ease-in-out 1.5s infinite;
+}
+@keyframes floatUp {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
 }
 
-#navbar.scrolled .nav-link:hover {
-  color: white;
+/* ===== Marquee ===== */
+.marquee-track {
+  overflow: hidden;
+  white-space: nowrap;
+}
+.marquee-content {
+  display: inline-flex;
+  align-items: center;
+  animation: marquee 25s linear infinite;
+}
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
 }
 
 /* ===== Counter Animation ===== */
@@ -53,7 +75,6 @@ html {
   from { opacity: 0; transform: scale(0.8); }
   to { opacity: 1; transform: scale(1); }
 }
-
 .count-animated {
   animation: countUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
@@ -64,28 +85,25 @@ html {
   color: #35615D;
 }
 
-/* ===== Smooth focus ===== */
+/* ===== Focus ===== */
 a:focus-visible,
 button:focus-visible {
   outline: 2px solid #FD8950;
   outline-offset: 2px;
-  border-radius: 4px;
+  border-radius: 8px;
 }
 
-/* ===== Scrollbar (webkit) ===== */
-::-webkit-scrollbar {
-  width: 8px;
-}
+/* ===== Scrollbar ===== */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #35615D; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #2A4E4B; }
 
-::-webkit-scrollbar-track {
-  background: #f1f1f1;
+/* ===== Smooth page transitions ===== */
+body {
+  opacity: 0;
+  animation: pageLoad 0.6s ease-out 0.1s forwards;
 }
-
-::-webkit-scrollbar-thumb {
-  background: #35615D;
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #2A4E4B;
+@keyframes pageLoad {
+  to { opacity: 1; }
 }
