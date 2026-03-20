@@ -20,6 +20,7 @@ export default function OrdersPage() {
   const [statusFilter, setStatusFilter] = useState('')
   const [typeFilter, setTypeFilter] = useState('')
   const [page, setPage] = useState(1)
+  const [expandedOrder, setExpandedOrder] = useState(null)
 
   const { data, isLoading, isFetching } = useGetAdminOrdersQuery({
     status: statusFilter || undefined,
@@ -33,13 +34,13 @@ export default function OrdersPage() {
   const total = data?.total || 0
   const totalPages = Math.ceil(total / 20)
 
-  // Client-side search filter (server handles status/type)
+  // Client-side search filter
   const filtered = orders.filter(o => {
     if (search && !o.order_number?.toLowerCase().includes(search.toLowerCase()) && !o.recipient_name?.toLowerCase().includes(search.toLowerCase())) return false
     return true
   })
 
-  const formatPrice = (price) => '₦' + (price || 0).toLocaleString()
+  const formatPrice = (price) => '\u20A6' + (price || 0).toLocaleString()
 
   const NEXT_STATUS = {
     pending: ['confirmed', 'cancelled'],
@@ -66,13 +67,13 @@ export default function OrdersPage() {
             placeholder="Search orders by ID or recipient..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-300 focus:border-red-500 focus:ring-2 focus:ring-red-100 outline-none text-sm"
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-300 focus:border-teal-500 focus:ring-2 focus:ring-teal-100 outline-none text-sm"
           />
         </div>
         <select
           value={statusFilter}
           onChange={(e) => { setStatusFilter(e.target.value); setPage(1) }}
-          className="px-4 py-2.5 rounded-xl border border-gray-300 text-sm text-gray-700 focus:border-red-500 outline-none"
+          className="px-4 py-2.5 rounded-xl border border-gray-300 text-sm text-gray-700 focus:border-teal-500 outline-none"
         >
           <option value="">All Status</option>
           <option value="pending">Pending</option>
@@ -84,7 +85,7 @@ export default function OrdersPage() {
         <select
           value={typeFilter}
           onChange={(e) => { setTypeFilter(e.target.value); setPage(1) }}
-          className="px-4 py-2.5 rounded-xl border border-gray-300 text-sm text-gray-700 focus:border-red-500 outline-none"
+          className="px-4 py-2.5 rounded-xl border border-gray-300 text-sm text-gray-700 focus:border-teal-500 outline-none"
         >
           <option value="">All Types</option>
           <option value="gift">Gifts</option>
@@ -103,53 +104,53 @@ export default function OrdersPage() {
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50/50">
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Order</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Recipient</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">City</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Amount</th>
+                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Customer</th>
+                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Items</th>
+                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Total</th>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Payment</th>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
                 <th className="px-6 py-3"></th>
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
-                <tr><td colSpan={8} className="px-6 py-12 text-center"><Loader2 className="w-6 h-6 text-red-500 animate-spin mx-auto" /></td></tr>
+                <tr><td colSpan={7} className="px-6 py-12 text-center"><Loader2 className="w-6 h-6 text-teal-500 animate-spin mx-auto" /></td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={8} className="px-6 py-12 text-center text-gray-400">No orders found</td></tr>
+                <tr><td colSpan={7} className="px-6 py-12 text-center text-gray-400">No orders found</td></tr>
               ) : (
                 filtered.map((order) => (
-                  <tr key={order.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                  <tr
+                    key={order.id}
+                    className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors cursor-pointer"
+                    onClick={() => setExpandedOrder(expandedOrder === order.id ? null : order.id)}
+                  >
                     <td className="px-6 py-3.5">
                       <div className="text-sm font-mono font-medium text-gray-900">{order.order_number}</div>
-                      <div className="text-xs text-gray-400">{order.order_type === 'gift' ? '🎁 Gift' : '💅 Beauty'}</div>
+                      <div className={`text-xs mt-0.5 ${order.order_type === 'gift' ? 'text-teal-500' : 'text-orange-500'}`}>
+                        {order.order_type === 'gift' ? 'Gift' : 'Beauty'}
+                      </div>
                     </td>
                     <td className="px-6 py-3.5">
-                      <div className="text-sm font-medium text-gray-900">{order.recipient_name || '—'}</div>
+                      <div className="text-sm font-medium text-gray-900">{order.recipient_name || order.user_name || '\u2014'}</div>
                       <div className="text-xs text-gray-400">{order.recipient_phone || ''}</div>
                     </td>
-                    <td className="px-6 py-3.5 text-sm text-gray-500">{order.delivery_city || '—'}</td>
+                    <td className="px-6 py-3.5 text-sm text-gray-600">
+                      {order.items?.length || order.item_count || '\u2014'} item{(order.items?.length || order.item_count || 0) !== 1 ? 's' : ''}
+                    </td>
                     <td className="px-6 py-3.5 text-sm font-semibold text-gray-900">{formatPrice(order.total)}</td>
                     <td className="px-6 py-3.5">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${STATUS_STYLES[order.status] || 'bg-gray-100 text-gray-700'}`}>
                         {STATUS_LABELS[order.status] || order.status}
                       </span>
                     </td>
-                    <td className="px-6 py-3.5">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                        order.payment_status === 'paid' ? 'bg-green-50 text-green-600' : 'bg-orange-50 text-orange-600'
-                      }`}>
-                        {order.payment_status}
-                      </span>
-                    </td>
                     <td className="px-6 py-3.5 text-sm text-gray-500">{new Date(order.created_at).toLocaleDateString()}</td>
-                    <td className="px-6 py-3.5">
+                    <td className="px-6 py-3.5" onClick={(e) => e.stopPropagation()}>
                       {NEXT_STATUS[order.status] ? (
                         <div className="relative inline-block">
                           <select
                             onChange={(e) => { if (e.target.value) handleStatusChange(order.id, e.target.value); e.target.value = '' }}
                             defaultValue=""
-                            className="appearance-none pl-3 pr-7 py-1.5 text-xs font-medium bg-white border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer focus:border-red-500 outline-none"
+                            className="appearance-none pl-3 pr-7 py-1.5 text-xs font-medium bg-white border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer focus:border-teal-500 outline-none"
                           >
                             <option value="" disabled>Update</option>
                             {NEXT_STATUS[order.status].map(s => (
@@ -159,7 +160,7 @@ export default function OrdersPage() {
                           <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" />
                         </div>
                       ) : (
-                        <span className="text-xs text-gray-400">—</span>
+                        <span className="text-xs text-gray-400">\u2014</span>
                       )}
                     </td>
                   </tr>
@@ -173,31 +174,33 @@ export default function OrdersPage() {
             {isFetching && <Loader2 className="w-3 h-3 animate-spin inline mr-1" />}
             Showing {filtered.length} of {total} orders
           </span>
-          <div className="flex gap-1">
-            <button
-              onClick={() => setPage(p => Math.max(1, p - 1))}
-              disabled={page <= 1}
-              className="px-3 py-1 rounded-lg hover:bg-gray-100 disabled:opacity-50"
-            >
-              Previous
-            </button>
-            {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => i + 1).map(p => (
+          {totalPages > 1 && (
+            <div className="flex gap-1">
               <button
-                key={p}
-                onClick={() => setPage(p)}
-                className={`px-3 py-1 rounded-lg ${page === p ? 'bg-red-50 text-red-600 font-medium' : 'hover:bg-gray-100'}`}
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page <= 1}
+                className="px-3 py-1 rounded-lg hover:bg-gray-100 disabled:opacity-50"
               >
-                {p}
+                Previous
               </button>
-            ))}
-            <button
-              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-              disabled={page >= totalPages}
-              className="px-3 py-1 rounded-lg hover:bg-gray-100 disabled:opacity-50"
-            >
-              Next
-            </button>
-          </div>
+              {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => i + 1).map(p => (
+                <button
+                  key={p}
+                  onClick={() => setPage(p)}
+                  className={`px-3 py-1 rounded-lg ${page === p ? 'bg-teal-50 text-teal-600 font-medium' : 'hover:bg-gray-100'}`}
+                >
+                  {p}
+                </button>
+              ))}
+              <button
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                disabled={page >= totalPages}
+                className="px-3 py-1 rounded-lg hover:bg-gray-100 disabled:opacity-50"
+              >
+                Next
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

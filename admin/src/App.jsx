@@ -5,6 +5,7 @@ import AdminLayout from './layouts/AdminLayout'
 import LoginPage from './pages/LoginPage'
 import DashboardPage from './pages/DashboardPage'
 import OrdersPage from './pages/OrdersPage'
+import BookingsPage from './pages/BookingsPage'
 import ProductsPage from './pages/ProductsPage'
 import ProvidersPage from './pages/ProvidersPage'
 import UsersPage from './pages/UsersPage'
@@ -23,6 +24,7 @@ function App() {
       <Route path="/" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
         <Route index element={<DashboardPage />} />
         <Route path="orders" element={<OrdersPage />} />
+        <Route path="bookings" element={<BookingsPage />} />
         <Route path="products" element={<ProductsPage />} />
         <Route path="providers" element={<ProvidersPage />} />
         <Route path="users" element={<UsersPage />} />

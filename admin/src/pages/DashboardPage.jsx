@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom'
 import {
   ShoppingCart, Users, DollarSign,
-  Sparkles, ArrowUpRight, ArrowDownRight, Loader2, Package
+  Sparkles, ArrowUpRight, ArrowDownRight, Loader2, Package,
+  CalendarCheck, TrendingUp
 } from 'lucide-react'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts'
 import { useGetDashboardStatsQuery, useGetAdminOrdersQuery } from '../services/api'
@@ -40,10 +41,10 @@ const STATUS_LABELS = {
 }
 
 const formatAmount = (amount) => {
-  if (!amount && amount !== 0) return '₦0'
-  if (amount >= 1_000_000) return `₦${(amount / 1_000_000).toFixed(1)}M`
-  if (amount >= 1000) return `₦${(amount / 1000).toFixed(0)}k`
-  return `₦${amount.toLocaleString()}`
+  if (!amount && amount !== 0) return '\u20A60'
+  if (amount >= 1_000_000) return `\u20A6${(amount / 1_000_000).toFixed(1)}M`
+  if (amount >= 1000) return `\u20A6${(amount / 1000).toFixed(0)}k`
+  return `\u20A6${amount.toLocaleString()}`
 }
 
 export default function DashboardPage() {
@@ -67,7 +68,15 @@ export default function DashboardPage() {
       change: `${stats?.pending?.orders || 0} pending`,
       up: true,
       icon: ShoppingCart,
-      color: 'bg-blue-100 text-blue-600',
+      color: 'bg-teal-100 text-teal-500',
+    },
+    {
+      label: 'Total Bookings',
+      value: String(stats?.counts?.bookings || 0),
+      change: `${stats?.pending?.bookings || 0} pending`,
+      up: true,
+      icon: CalendarCheck,
+      color: 'bg-orange-100 text-orange-500',
     },
     {
       label: 'Total Users',
@@ -83,14 +92,27 @@ export default function DashboardPage() {
       change: `${stats?.pending?.providers || 0} pending`,
       up: (stats?.pending?.providers || 0) === 0,
       icon: Sparkles,
-      color: 'bg-orange-100 text-orange-600',
+      color: 'bg-blue-100 text-blue-600',
+    },
+    {
+      label: 'Products',
+      value: String(stats?.counts?.products || 0),
+      change: 'Listed',
+      up: true,
+      icon: Package,
+      color: 'bg-pink-100 text-pink-600',
     },
   ]
+
+  // Commission breakdown
+  const commissionGifts = stats?.commission?.gifts || 0
+  const commissionBeauty = stats?.commission?.beauty || 0
+  const commissionTotal = stats?.commission?.total || 0
 
   if (statsLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 text-red-500 animate-spin" />
+        <Loader2 className="w-8 h-8 text-teal-500 animate-spin" />
       </div>
     )
   }
@@ -98,7 +120,7 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {STATS.map((stat) => (
           <div key={stat.label} className="bg-white rounded-2xl border border-gray-200 p-5">
             <div className="flex items-center justify-between mb-3">
@@ -116,6 +138,33 @@ export default function DashboardPage() {
         ))}
       </div>
 
+      {/* Commission Breakdown */}
+      <div className="bg-white rounded-2xl border border-gray-200 p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 bg-teal-100 rounded-xl flex items-center justify-center">
+            <TrendingUp className="w-5 h-5 text-teal-500" />
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-gray-900">Commission Earned</h3>
+            <p className="text-sm text-gray-500">Breakdown by category</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="bg-teal-50 rounded-xl p-4">
+            <p className="text-sm text-teal-700 font-medium">Total Commission</p>
+            <p className="text-2xl font-bold text-teal-800 mt-1">{formatAmount(commissionTotal)}</p>
+          </div>
+          <div className="bg-orange-50 rounded-xl p-4">
+            <p className="text-sm text-orange-700 font-medium">Gifts Commission</p>
+            <p className="text-2xl font-bold text-orange-800 mt-1">{formatAmount(commissionGifts)}</p>
+          </div>
+          <div className="bg-purple-50 rounded-xl p-4">
+            <p className="text-sm text-purple-700 font-medium">Beauty Commission</p>
+            <p className="text-2xl font-bold text-purple-800 mt-1">{formatAmount(commissionBeauty)}</p>
+          </div>
+        </div>
+      </div>
+
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Revenue Chart */}
@@ -127,11 +176,11 @@ export default function DashboardPage() {
             </div>
             <div className="flex items-center gap-4 text-sm">
               <div className="flex items-center gap-1.5">
-                <div className="w-3 h-3 rounded-full bg-red-400" />
+                <div className="w-3 h-3 rounded-full bg-teal-400" />
                 <span className="text-gray-500">Gifts</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <div className="w-3 h-3 rounded-full bg-purple-400" />
+                <div className="w-3 h-3 rounded-full bg-orange-400" />
                 <span className="text-gray-500">Beauty</span>
               </div>
             </div>
@@ -140,20 +189,20 @@ export default function DashboardPage() {
             <AreaChart data={REVENUE_DATA}>
               <defs>
                 <linearGradient id="giftGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#f87171" stopOpacity={0.15} />
-                  <stop offset="95%" stopColor="#f87171" stopOpacity={0} />
+                  <stop offset="5%" stopColor="#35615D" stopOpacity={0.15} />
+                  <stop offset="95%" stopColor="#35615D" stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id="beautyGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#a78bfa" stopOpacity={0.15} />
-                  <stop offset="95%" stopColor="#a78bfa" stopOpacity={0} />
+                  <stop offset="5%" stopColor="#FD8950" stopOpacity={0.15} />
+                  <stop offset="95%" stopColor="#FD8950" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
               <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 12, fill: '#9ca3af' }} axisLine={false} tickLine={false} tickFormatter={(v) => `₦${v / 1000}k`} />
-              <Tooltip formatter={(v) => `₦${v.toLocaleString()}`} />
-              <Area type="monotone" dataKey="gifts" stroke="#f87171" fill="url(#giftGrad)" strokeWidth={2} />
-              <Area type="monotone" dataKey="beauty" stroke="#a78bfa" fill="url(#beautyGrad)" strokeWidth={2} />
+              <YAxis tick={{ fontSize: 12, fill: '#9ca3af' }} axisLine={false} tickLine={false} tickFormatter={(v) => `\u20A6${v / 1000}k`} />
+              <Tooltip formatter={(v) => `\u20A6${v.toLocaleString()}`} />
+              <Area type="monotone" dataKey="gifts" stroke="#35615D" fill="url(#giftGrad)" strokeWidth={2} />
+              <Area type="monotone" dataKey="beauty" stroke="#FD8950" fill="url(#beautyGrad)" strokeWidth={2} />
             </AreaChart>
           </ResponsiveContainer>
         </div>
@@ -167,7 +216,7 @@ export default function DashboardPage() {
               <XAxis type="number" tick={{ fontSize: 12, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
               <YAxis type="category" dataKey="name" tick={{ fontSize: 12, fill: '#6b7280' }} axisLine={false} tickLine={false} width={60} />
               <Tooltip />
-              <Bar dataKey="orders" fill="#f87171" radius={[0, 6, 6, 0]} barSize={20} />
+              <Bar dataKey="orders" fill="#35615D" radius={[0, 6, 6, 0]} barSize={20} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -177,7 +226,7 @@ export default function DashboardPage() {
       <div className="bg-white rounded-2xl border border-gray-200">
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
           <h3 className="text-lg font-bold text-gray-900">Recent Orders</h3>
-          <Link to="/orders" className="text-sm text-red-500 font-semibold hover:text-red-600">View All</Link>
+          <Link to="/orders" className="text-sm text-teal-500 font-semibold hover:text-teal-600">View All</Link>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -200,11 +249,11 @@ export default function DashboardPage() {
                   <tr key={order.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
                     <td className="px-6 py-3.5 text-sm font-mono font-medium text-gray-900">{order.order_number}</td>
                     <td className="px-6 py-3.5">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${order.order_type === 'gift' ? 'bg-red-50 text-red-600' : 'bg-purple-50 text-purple-600'}`}>
-                        {order.order_type === 'gift' ? '🎁 Gift' : '💅 Beauty'}
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${order.order_type === 'gift' ? 'bg-teal-50 text-teal-600' : 'bg-orange-50 text-orange-600'}`}>
+                        {order.order_type === 'gift' ? 'Gift' : 'Beauty'}
                       </span>
                     </td>
-                    <td className="px-6 py-3.5 text-sm font-semibold text-gray-900">₦{(order.total || 0).toLocaleString()}</td>
+                    <td className="px-6 py-3.5 text-sm font-semibold text-gray-900">{'\u20A6'}{(order.total || 0).toLocaleString()}</td>
                     <td className="px-6 py-3.5">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${STATUS_STYLES[order.status] || 'bg-gray-100 text-gray-700'}`}>
                         {STATUS_LABELS[order.status] || order.status}

@@ -44,7 +44,7 @@ export default function SettingsPage() {
               type="text"
               value={settings.platformName}
               onChange={(e) => updateSetting('platformName', e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:border-red-500 focus:ring-2 focus:ring-red-100 outline-none text-sm"
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:border-teal-500 focus:ring-2 focus:ring-teal-100 outline-none text-sm"
             />
           </div>
           <div>
@@ -53,7 +53,7 @@ export default function SettingsPage() {
               type="email"
               value={settings.supportEmail}
               onChange={(e) => updateSetting('supportEmail', e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:border-red-500 focus:ring-2 focus:ring-red-100 outline-none text-sm"
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:border-teal-500 focus:ring-2 focus:ring-teal-100 outline-none text-sm"
             />
           </div>
         </div>
@@ -77,7 +77,7 @@ export default function SettingsPage() {
               type="number"
               value={settings.giftCommission}
               onChange={(e) => updateSetting('giftCommission', Number(e.target.value))}
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:border-red-500 focus:ring-2 focus:ring-red-100 outline-none text-sm"
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:border-teal-500 focus:ring-2 focus:ring-teal-100 outline-none text-sm"
             />
             <p className="text-xs text-gray-400 mt-1">20-35% recommended</p>
           </div>
@@ -87,17 +87,17 @@ export default function SettingsPage() {
               type="number"
               value={settings.beautyCommission}
               onChange={(e) => updateSetting('beautyCommission', Number(e.target.value))}
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:border-red-500 focus:ring-2 focus:ring-red-100 outline-none text-sm"
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:border-teal-500 focus:ring-2 focus:ring-teal-100 outline-none text-sm"
             />
             <p className="text-xs text-gray-400 mt-1">15-25% recommended</p>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Min. Order Amount (₦)</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Min. Order Amount ({'\u20A6'})</label>
             <input
               type="number"
               value={settings.minOrderAmount}
               onChange={(e) => updateSetting('minOrderAmount', Number(e.target.value))}
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:border-red-500 focus:ring-2 focus:ring-red-100 outline-none text-sm"
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:border-teal-500 focus:ring-2 focus:ring-teal-100 outline-none text-sm"
             />
           </div>
           <div>
@@ -106,7 +106,7 @@ export default function SettingsPage() {
               type="number"
               value={settings.groupGiftFee}
               onChange={(e) => updateSetting('groupGiftFee', Number(e.target.value))}
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:border-red-500 focus:ring-2 focus:ring-red-100 outline-none text-sm"
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:border-teal-500 focus:ring-2 focus:ring-teal-100 outline-none text-sm"
             />
           </div>
         </div>
@@ -125,21 +125,21 @@ export default function SettingsPage() {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Base Fee (₦)</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Base Fee ({'\u20A6'})</label>
             <input
               type="number"
               value={settings.deliveryFeeBase}
               onChange={(e) => updateSetting('deliveryFeeBase', Number(e.target.value))}
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:border-red-500 focus:ring-2 focus:ring-red-100 outline-none text-sm"
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:border-teal-500 focus:ring-2 focus:ring-teal-100 outline-none text-sm"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Per Km (₦)</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Per Km ({'\u20A6'})</label>
             <input
               type="number"
               value={settings.deliveryFeePerKm}
               onChange={(e) => updateSetting('deliveryFeePerKm', Number(e.target.value))}
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:border-red-500 focus:ring-2 focus:ring-red-100 outline-none text-sm"
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:border-teal-500 focus:ring-2 focus:ring-teal-100 outline-none text-sm"
             />
           </div>
           <div>
@@ -149,7 +149,7 @@ export default function SettingsPage() {
               step="0.1"
               value={settings.expressMultiplier}
               onChange={(e) => updateSetting('expressMultiplier', Number(e.target.value))}
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:border-red-500 focus:ring-2 focus:ring-red-100 outline-none text-sm"
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:border-teal-500 focus:ring-2 focus:ring-teal-100 outline-none text-sm"
             />
           </div>
         </div>
@@ -179,7 +179,7 @@ export default function SettingsPage() {
               </div>
               <button
                 onClick={() => updateSetting(item.key, !settings[item.key])}
-                className={`relative w-11 h-6 rounded-full transition-colors ${settings[item.key] ? 'bg-red-500' : 'bg-gray-300'}`}
+                className={`relative w-11 h-6 rounded-full transition-colors ${settings[item.key] ? 'bg-teal-500' : 'bg-gray-300'}`}
               >
                 <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${settings[item.key] ? 'translate-x-5' : ''}`} />
               </button>
@@ -192,7 +192,7 @@ export default function SettingsPage() {
       <div className="flex items-center gap-4">
         <button
           onClick={() => { setSaved(true); setTimeout(() => setSaved(false), 3000) }}
-          className="flex items-center gap-2 px-6 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-xl text-sm font-semibold transition-colors"
+          className="flex items-center gap-2 px-6 py-2.5 bg-teal-500 hover:bg-teal-600 text-white rounded-xl text-sm font-semibold transition-colors"
         >
           <Save className="w-4 h-4" />
           Save Settings

@@ -3,17 +3,17 @@ import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import {
   LayoutDashboard, ShoppingCart, Package, Sparkles,
-  Users, Settings, Menu, X, LogOut, Gift, Bell
+  Users, Menu, X, LogOut, Gift, Bell, CalendarCheck
 } from 'lucide-react'
 import { logout, selectCurrentUser } from '../features/authSlice'
 
 const NAV_ITEMS = [
   { path: '/', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/orders', label: 'Orders', icon: ShoppingCart },
+  { path: '/bookings', label: 'Bookings', icon: CalendarCheck },
   { path: '/products', label: 'Products', icon: Package },
   { path: '/providers', label: 'Providers', icon: Sparkles },
   { path: '/users', label: 'Users', icon: Users },
-  { path: '/settings', label: 'Settings', icon: Settings },
 ]
 
 export default function AdminLayout() {
@@ -51,7 +51,7 @@ export default function AdminLayout() {
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
         <div className="flex items-center gap-3 px-6 py-5 border-b border-gray-100">
-          <div className="w-9 h-9 bg-red-500 rounded-xl flex items-center justify-center">
+          <div className="w-9 h-9 bg-teal-500 rounded-xl flex items-center justify-center">
             <Gift className="w-5 h-5 text-white" />
           </div>
           <div>
@@ -76,7 +76,7 @@ export default function AdminLayout() {
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
                   isActive
-                    ? 'bg-red-50 text-red-600'
+                    ? 'bg-teal-50 text-teal-500'
                     : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                 }`
               }
@@ -112,10 +112,10 @@ export default function AdminLayout() {
           <div className="ml-auto flex items-center gap-3">
             <button className="relative p-2 text-gray-400 hover:text-gray-600 transition-colors">
               <Bell className="w-5 h-5" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-orange-400 rounded-full" />
             </button>
-            <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-              <span className="text-sm font-bold text-red-600">{user?.full_name?.charAt(0) || 'A'}</span>
+            <div className="w-8 h-8 bg-teal-100 rounded-full flex items-center justify-center">
+              <span className="text-sm font-bold text-teal-600">{user?.full_name?.charAt(0) || 'A'}</span>
             </div>
           </div>
         </header>

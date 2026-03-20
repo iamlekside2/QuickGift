@@ -1,6 +1,12 @@
 import { useState } from 'react'
-import { Search, Plus, Star, MapPin, Check, X, Shield, Loader2 } from 'lucide-react'
+import { Search, Star, MapPin, Check, X, Shield, Loader2 } from 'lucide-react'
 import { useGetAdminProvidersQuery, useApproveProviderMutation, useRejectProviderMutation } from '../services/api'
+
+const STATUS_STYLES = {
+  verified: 'bg-green-100 text-green-700',
+  pending: 'bg-yellow-100 text-yellow-700',
+  suspended: 'bg-red-100 text-red-700',
+}
 
 const PLAN_STYLES = {
   Free: 'bg-gray-100 text-gray-600',
@@ -17,13 +23,14 @@ export default function ProvidersPage() {
   const [rejectProvider, { isLoading: rejecting }] = useRejectProviderMutation()
   const updating = approving || rejecting
 
-  const filtered = (Array.isArray(providers) ? providers : []).filter(p => {
-    if (search && !p.business_name?.toLowerCase().includes(search.toLowerCase())) return false
+  const allProviders = Array.isArray(providers) ? providers : []
+  const filtered = allProviders.filter(p => {
+    if (search && !p.business_name?.toLowerCase().includes(search.toLowerCase()) && !p.name?.toLowerCase().includes(search.toLowerCase())) return false
     return true
   })
 
-  const verifiedCount = filtered.filter(p => p.status === 'verified' || p.is_verified).length
-  const pendingCount = filtered.filter(p => p.status === 'pending').length
+  const verifiedCount = allProviders.filter(p => p.status === 'verified' || p.is_verified).length
+  const pendingCount = allProviders.filter(p => p.status === 'pending').length
 
   const handleApprove = async (id) => {
     try {
@@ -44,11 +51,11 @@ export default function ProvidersPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Header stats */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex gap-6">
           <div className="text-center">
-            <p className="text-2xl font-bold text-gray-900">{filtered.length}</p>
+            <p className="text-2xl font-bold text-gray-900">{allProviders.length}</p>
             <p className="text-xs text-gray-500">Total</p>
           </div>
           <div className="text-center">
@@ -60,10 +67,6 @@ export default function ProvidersPage() {
             <p className="text-xs text-gray-500">Pending</p>
           </div>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-xl text-sm font-semibold transition-colors">
-          <Plus className="w-4 h-4" />
-          Add Provider
-        </button>
       </div>
 
       {/* Filters */}
@@ -75,108 +78,119 @@ export default function ProvidersPage() {
             placeholder="Search providers..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-300 focus:border-red-500 focus:ring-2 focus:ring-red-100 outline-none text-sm"
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-300 focus:border-teal-500 focus:ring-2 focus:ring-teal-100 outline-none text-sm"
           />
         </div>
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-4 py-2.5 rounded-xl border border-gray-300 text-sm text-gray-700 focus:border-red-500 outline-none"
+          className="px-4 py-2.5 rounded-xl border border-gray-300 text-sm text-gray-700 focus:border-teal-500 outline-none"
         >
           <option value="">All Status</option>
           <option value="verified">Verified</option>
           <option value="pending">Pending Approval</option>
+          <option value="suspended">Suspended</option>
         </select>
       </div>
 
-      {/* Cards */}
+      {/* Table */}
       {isLoading ? (
         <div className="flex items-center justify-center h-48">
-          <Loader2 className="w-8 h-8 text-red-500 animate-spin" />
+          <Loader2 className="w-8 h-8 text-teal-500 animate-spin" />
         </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-16 text-gray-400">
-          <p className="text-4xl mb-2">💈</p>
-          <p>No providers found</p>
+          <p className="text-lg mb-1">No providers found</p>
+          <p className="text-sm">Try adjusting your search or filters</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {filtered.map((provider) => {
-            const isVerified = provider.status === 'verified' || provider.is_verified
-            const isPending = provider.status === 'pending'
-            return (
-              <div key={provider.id} className="bg-white rounded-2xl border border-gray-200 p-5 hover:shadow-md transition-shadow">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
-                      <span className="text-lg font-bold text-red-600">{(provider.business_name || provider.name || 'P').charAt(0)}</span>
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="text-sm font-semibold text-gray-900">{provider.business_name || provider.name}</h3>
-                        {isVerified && <Shield className="w-4 h-4 text-blue-500" />}
-                      </div>
-                      <p className="text-xs text-gray-500">{provider.service_type}</p>
-                    </div>
-                  </div>
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${PLAN_STYLES[provider.plan || 'Free']}`}>
-                    {provider.plan || 'Free'}
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-4 mb-3 text-xs text-gray-500">
-                  <div className="flex items-center gap-1">
-                    <MapPin className="w-3 h-3" />
-                    {provider.city || 'Lagos'}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                    {provider.rating || '—'} ({provider.review_count || 0})
-                  </div>
-                  <div className={`flex items-center gap-1 ${provider.is_available ? 'text-green-600' : 'text-gray-400'}`}>
-                    <div className={`w-1.5 h-1.5 rounded-full ${provider.is_available ? 'bg-green-500' : 'bg-gray-300'}`} />
-                    {provider.is_available ? 'Online' : 'Offline'}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 mb-4 p-3 bg-gray-50 rounded-xl">
-                  <div>
-                    <p className="text-xs text-gray-500">Phone</p>
-                    <p className="text-sm font-bold text-gray-900">{provider.phone || '—'}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500">Joined</p>
-                    <p className="text-sm font-bold text-gray-900">{provider.created_at ? new Date(provider.created_at).toLocaleDateString() : '—'}</p>
-                  </div>
-                </div>
-
-                {isPending ? (
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleApprove(provider.id)}
-                      disabled={updating}
-                      className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-green-500 hover:bg-green-600 text-white rounded-xl text-sm font-semibold transition-colors disabled:opacity-50"
-                    >
-                      <Check className="w-4 h-4" />
-                      Approve
-                    </button>
-                    <button
-                      onClick={() => handleReject(provider.id)}
-                      disabled={updating}
-                      className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50"
-                    >
-                      <X className="w-4 h-4" />
-                      Reject
-                    </button>
-                  </div>
-                ) : (
-                  <button className="w-full py-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-xl text-sm font-semibold transition-colors">
-                    View Details
-                  </button>
-                )}
-              </div>
-            )
-          })}
+        <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-gray-100 bg-gray-50/50">
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Business Name</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Owner</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Service Type</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">City</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Rating</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Plan</th>
+                  <th className="px-6 py-3"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((provider) => {
+                  const isVerified = provider.status === 'verified' || provider.is_verified
+                  const isPending = provider.status === 'pending'
+                  const providerStatus = isVerified ? 'verified' : provider.status || 'pending'
+                  return (
+                    <tr key={provider.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                      <td className="px-6 py-3.5">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 bg-teal-100 rounded-full flex items-center justify-center">
+                            <span className="text-sm font-bold text-teal-600">{(provider.business_name || provider.name || 'P').charAt(0)}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium text-gray-900">{provider.business_name || provider.name}</span>
+                            {isVerified && <Shield className="w-4 h-4 text-blue-500" />}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-3.5 text-sm text-gray-600">{provider.owner_name || provider.full_name || '\u2014'}</td>
+                      <td className="px-6 py-3.5 text-sm text-gray-600">{provider.service_type || '\u2014'}</td>
+                      <td className="px-6 py-3.5">
+                        <div className="flex items-center gap-1 text-sm text-gray-500">
+                          <MapPin className="w-3 h-3" />
+                          {provider.city || 'Lagos'}
+                        </div>
+                      </td>
+                      <td className="px-6 py-3.5">
+                        <div className="flex items-center gap-1 text-sm text-gray-600">
+                          <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
+                          {provider.rating || '\u2014'} ({provider.review_count || 0})
+                        </div>
+                      </td>
+                      <td className="px-6 py-3.5">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${STATUS_STYLES[providerStatus] || 'bg-gray-100 text-gray-700'}`}>
+                          {providerStatus.charAt(0).toUpperCase() + providerStatus.slice(1)}
+                        </span>
+                      </td>
+                      <td className="px-6 py-3.5">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${PLAN_STYLES[provider.plan || 'Free']}`}>
+                          {provider.plan || 'Free'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-3.5">
+                        {isPending ? (
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => handleApprove(provider.id)}
+                              disabled={updating}
+                              className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg transition-colors disabled:opacity-50"
+                              title="Approve"
+                            >
+                              <Check className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleReject(provider.id)}
+                              disabled={updating}
+                              className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                              title="Reject"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-gray-400">\u2014</span>
+                        )}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>
