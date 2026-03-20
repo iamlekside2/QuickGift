@@ -1,29 +1,58 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Platform, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Platform, Alert, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
+import { bookingsAPI } from '../../services/api';
 
 export default function BookingDetail({ route, navigation }) {
   const booking = route.params?.booking || {};
   const [status, setStatus] = useState(booking.status || 'pending');
+  const [actionLoading, setActionLoading] = useState(false);
+
+  const bookingId = booking.id || booking._id;
+
+  const updateStatus = async (newStatus, successMsg) => {
+    if (!bookingId) {
+      Alert.alert('Error', 'Booking ID not found.');
+      return;
+    }
+    try {
+      setActionLoading(true);
+      await bookingsAPI.updateStatus(bookingId, newStatus);
+      setStatus(newStatus);
+      Alert.alert('Success', successMsg);
+    } catch (e) {
+      console.log('Error updating booking status:', e);
+      Alert.alert('Error', 'Failed to update booking status. Please try again.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   const handleAccept = () => {
-    setStatus('confirmed');
-    Alert.alert('Booking Accepted', 'The client has been notified.');
+    updateStatus('confirmed', 'Booking accepted. The client has been notified.');
   };
 
   const handleDecline = () => {
     Alert.alert('Decline Booking', 'Are you sure you want to decline?', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Decline', style: 'destructive', onPress: () => { setStatus('cancelled'); navigation.goBack(); } },
+      {
+        text: 'Decline',
+        style: 'destructive',
+        onPress: async () => {
+          await updateStatus('cancelled', 'Booking declined.');
+          navigation.goBack();
+        },
+      },
     ]);
   };
 
-  const handleStart = () => setStatus('in_progress');
+  const handleStart = () => {
+    updateStatus('in_progress', 'Service started.');
+  };
 
   const handleComplete = () => {
-    setStatus('completed');
-    Alert.alert('Service Completed', 'Great work! The client can now leave a review.');
+    updateStatus('completed', 'Great work! The client can now leave a review.');
   };
 
   const statusColors = {
@@ -35,6 +64,16 @@ export default function BookingDetail({ route, navigation }) {
   };
 
   const s = statusColors[status] || statusColors.pending;
+
+  const clientName = booking.client_name || booking.client || 'N/A';
+  const clientPhone = booking.client_phone || booking.phone || 'Not provided';
+  const serviceName = booking.service_name || booking.service || 'N/A';
+  const bookingDate = booking.date || booking.booking_date || 'N/A';
+  const bookingTime = booking.time || booking.booking_time || 'N/A';
+  const duration = booking.duration || 'N/A';
+  const price = booking.price || booking.amount;
+  const address = booking.address || booking.location || 'Not provided';
+  const notes = booking.notes || booking.client_notes;
 
   return (
     <View className="flex-1 bg-gray-50">
@@ -68,16 +107,18 @@ export default function BookingDetail({ route, navigation }) {
         >
           <View className="w-14 h-14 rounded-full bg-teal-light items-center justify-center">
             <Text className="text-teal font-bold text-xl">
-              {(booking.client || 'A').charAt(0)}
+              {clientName.charAt(0)}
             </Text>
           </View>
           <View className="flex-1 ml-4">
-            <Text className="text-base font-bold text-gray-800">{booking.client || 'Client Name'}</Text>
-            <Text className="text-sm text-gray-400 mt-0.5">+234 806 789 1234</Text>
+            <Text className="text-base font-bold text-gray-800">{clientName}</Text>
+            <Text className="text-sm text-gray-400 mt-0.5">{clientPhone}</Text>
           </View>
-          <TouchableOpacity className="w-10 h-10 rounded-full bg-teal-light items-center justify-center">
-            <Ionicons name="call-outline" size={18} color="#35615D" />
-          </TouchableOpacity>
+          {clientPhone !== 'Not provided' && (
+            <TouchableOpacity className="w-10 h-10 rounded-full bg-teal-light items-center justify-center">
+              <Ionicons name="call-outline" size={18} color="#35615D" />
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Service Details */}
@@ -88,23 +129,25 @@ export default function BookingDetail({ route, navigation }) {
         >
           <View className="flex-row justify-between">
             <Text className="text-sm text-gray-400">Service</Text>
-            <Text className="text-sm font-bold text-gray-800">{booking.service || 'Gel Nails'}</Text>
+            <Text className="text-sm font-bold text-gray-800">{serviceName}</Text>
           </View>
           <View className="flex-row justify-between">
             <Text className="text-sm text-gray-400">Date</Text>
-            <Text className="text-sm font-bold text-gray-800">{booking.date || 'Mar 19, 2026'}</Text>
+            <Text className="text-sm font-bold text-gray-800">{bookingDate}</Text>
           </View>
           <View className="flex-row justify-between">
             <Text className="text-sm text-gray-400">Time</Text>
-            <Text className="text-sm font-bold text-gray-800">{booking.time || '10:00 AM'}</Text>
+            <Text className="text-sm font-bold text-gray-800">{bookingTime}</Text>
           </View>
           <View className="flex-row justify-between">
             <Text className="text-sm text-gray-400">Duration</Text>
-            <Text className="text-sm font-bold text-gray-800">1.5 hours</Text>
+            <Text className="text-sm font-bold text-gray-800">{duration}</Text>
           </View>
           <View className="flex-row justify-between border-t border-gray-100 pt-3">
             <Text className="text-sm font-bold text-gray-800">Total</Text>
-            <Text className="text-lg font-extrabold text-teal">{'\u20A6'}{(booking.price || 8000).toLocaleString()}</Text>
+            <Text className="text-lg font-extrabold text-teal">
+              {price != null ? `${'\u20A6'}${Number(price).toLocaleString()}` : 'N/A'}
+            </Text>
           </View>
         </View>
 
@@ -118,8 +161,8 @@ export default function BookingDetail({ route, navigation }) {
             <Ionicons name="location-outline" size={18} color="#35615D" />
           </View>
           <View className="flex-1">
-            <Text className="text-sm font-bold text-gray-800">Home Service</Text>
-            <Text className="text-xs text-gray-400 mt-0.5">15 Freedom Avenue, Lekki, Lagos</Text>
+            <Text className="text-sm font-bold text-gray-800">{booking.service_type || 'Location'}</Text>
+            <Text className="text-xs text-gray-400 mt-0.5">{address}</Text>
           </View>
         </View>
 
@@ -130,23 +173,32 @@ export default function BookingDetail({ route, navigation }) {
           style={{ shadowColor: '#1F2937', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
         >
           <Text className="text-sm text-gray-600 leading-5">
-            I'd like a French tip design with some glitter accents. Please bring nude and white gel colors.
+            {notes || 'No notes provided'}
           </Text>
         </View>
 
         {/* Completed - Rating */}
-        {status === 'completed' && (
+        {status === 'completed' && booking.review && (
           <View
             className="bg-white rounded-2xl p-4 mb-6 items-center"
             style={{ shadowColor: '#1F2937', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
           >
             <View className="flex-row mb-1">
               {[1, 2, 3, 4, 5].map((star) => (
-                <Ionicons key={star} name="star" size={20} color="#FD8950" />
+                <Ionicons
+                  key={star}
+                  name={star <= (booking.review?.rating || 0) ? 'star' : 'star-outline'}
+                  size={20}
+                  color="#FD8950"
+                />
               ))}
             </View>
-            <Text className="text-sm font-bold text-green-700 mt-1">Client rated 5.0</Text>
-            <Text className="text-xs text-gray-400 mt-1">"Amazing work! Will book again."</Text>
+            <Text className="text-sm font-bold text-green-700 mt-1">
+              Client rated {booking.review?.rating || 0}.0
+            </Text>
+            {booking.review?.comment ? (
+              <Text className="text-xs text-gray-400 mt-1">"{booking.review.comment}"</Text>
+            ) : null}
           </View>
         )}
 
@@ -159,45 +211,53 @@ export default function BookingDetail({ route, navigation }) {
           className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-5 pb-8 pt-4"
           style={{ shadowColor: '#1F2937', shadowOffset: { width: 0, height: -2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 4 }}
         >
-          {status === 'pending' && (
-            <View className="flex-row gap-3">
-              <TouchableOpacity
-                className="flex-1 bg-gray-100 py-4 rounded-2xl items-center"
-                onPress={handleDecline}
-              >
-                <Text className="text-base font-bold text-gray-600">Decline</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                className="flex-1 bg-teal py-4 rounded-2xl items-center"
-                onPress={handleAccept}
-              >
-                <Text className="text-base font-bold text-white">Accept</Text>
-              </TouchableOpacity>
+          {actionLoading ? (
+            <View className="py-4 items-center">
+              <ActivityIndicator size="small" color="#35615D" />
             </View>
-          )}
-          {status === 'confirmed' && (
-            <View className="flex-row gap-3">
-              <TouchableOpacity
-                className="flex-1 bg-gray-100 py-4 rounded-2xl items-center"
-                onPress={handleDecline}
-              >
-                <Text className="text-base font-bold text-gray-600">Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                className="flex-1 bg-teal py-4 rounded-2xl items-center"
-                onPress={handleStart}
-              >
-                <Text className="text-base font-bold text-white">Start Service</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-          {status === 'in_progress' && (
-            <TouchableOpacity
-              className="bg-teal py-4 rounded-2xl items-center"
-              onPress={handleComplete}
-            >
-              <Text className="text-base font-bold text-white">Complete Service</Text>
-            </TouchableOpacity>
+          ) : (
+            <>
+              {status === 'pending' && (
+                <View className="flex-row gap-3">
+                  <TouchableOpacity
+                    className="flex-1 bg-gray-100 py-4 rounded-2xl items-center"
+                    onPress={handleDecline}
+                  >
+                    <Text className="text-base font-bold text-gray-600">Decline</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    className="flex-1 bg-teal py-4 rounded-2xl items-center"
+                    onPress={handleAccept}
+                  >
+                    <Text className="text-base font-bold text-white">Accept</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+              {status === 'confirmed' && (
+                <View className="flex-row gap-3">
+                  <TouchableOpacity
+                    className="flex-1 bg-gray-100 py-4 rounded-2xl items-center"
+                    onPress={handleDecline}
+                  >
+                    <Text className="text-base font-bold text-gray-600">Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    className="flex-1 bg-teal py-4 rounded-2xl items-center"
+                    onPress={handleStart}
+                  >
+                    <Text className="text-base font-bold text-white">Start Service</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+              {status === 'in_progress' && (
+                <TouchableOpacity
+                  className="bg-teal py-4 rounded-2xl items-center"
+                  onPress={handleComplete}
+                >
+                  <Text className="text-base font-bold text-white">Complete Service</Text>
+                </TouchableOpacity>
+              )}
+            </>
           )}
         </View>
       )}

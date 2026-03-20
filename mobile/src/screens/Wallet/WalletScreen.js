@@ -9,13 +9,7 @@ export default function WalletScreen() {
   const balance = user?.wallet_balance || 0;
   const isProvider = user?.role === 'provider';
 
-  const transactions = [
-    { id: '1', type: 'credit', title: 'Payment received', desc: 'Gel Nails - Amina O.', amount: 8000, date: 'Mar 18' },
-    { id: '2', type: 'debit', title: 'Withdrawal', desc: 'To GTBank ***4521', amount: -20000, date: 'Mar 17' },
-    { id: '3', type: 'credit', title: 'Payment received', desc: 'Hair Braids - Blessing E.', amount: 15000, date: 'Mar 16' },
-    { id: '4', type: 'credit', title: 'Refund', desc: 'Order #QG-1201', amount: 5000, date: 'Mar 15' },
-    { id: '5', type: 'debit', title: 'Gift purchase', desc: 'Birthday Gift Box', amount: -12000, date: 'Mar 14' },
-  ];
+  const transactions = [];
 
   return (
     <View className="flex-1 bg-gray-50">
@@ -102,46 +96,62 @@ export default function WalletScreen() {
           </View>
         </View>
 
-        <View className="mx-5 bg-white rounded-3xl overflow-hidden"
-          style={{
-            shadowColor: '#1F2937',
-            shadowOffset: { width: 0, height: 3 },
-            shadowOpacity: 0.06,
-            shadowRadius: 12,
-            elevation: 3,
-          }}
-        >
-          {transactions.map((tx, i) => (
-            <View
-              key={tx.id}
-              className={`flex-row items-center px-4 py-4 ${
-                i < transactions.length - 1 ? 'border-b border-gray-50' : ''
-              }`}
-            >
-              <View className={`w-11 h-11 rounded-2xl items-center justify-center ${
-                tx.type === 'credit' ? 'bg-green-50' : 'bg-red-50'
-              }`}>
-                <Ionicons
-                  name={tx.type === 'credit' ? 'arrow-down' : 'arrow-up'}
-                  size={18}
-                  color={tx.type === 'credit' ? '#10B981' : '#EF4444'}
-                />
-              </View>
-              <View className="flex-1 ml-3">
-                <Text className="text-[13px] font-bold text-gray-800">{tx.title}</Text>
-                <Text className="text-[11px] text-gray-400 mt-0.5">{tx.desc}</Text>
-              </View>
-              <View className="items-end">
-                <Text className={`text-[14px] font-extrabold ${
-                  tx.type === 'credit' ? 'text-green-600' : 'text-red-500'
+        {transactions.length > 0 ? (
+          <View className="mx-5 bg-white rounded-3xl overflow-hidden"
+            style={{
+              shadowColor: '#1F2937',
+              shadowOffset: { width: 0, height: 3 },
+              shadowOpacity: 0.06,
+              shadowRadius: 12,
+              elevation: 3,
+            }}
+          >
+            {transactions.map((tx, i) => (
+              <View
+                key={tx.id}
+                className={`flex-row items-center px-4 py-4 ${
+                  i < transactions.length - 1 ? 'border-b border-gray-50' : ''
+                }`}
+              >
+                <View className={`w-11 h-11 rounded-2xl items-center justify-center ${
+                  tx.type === 'credit' ? 'bg-green-50' : 'bg-red-50'
                 }`}>
-                  {tx.type === 'credit' ? '+' : ''}₦{Math.abs(tx.amount).toLocaleString()}
-                </Text>
-                <Text className="text-[10px] text-gray-400 mt-0.5">{tx.date}</Text>
+                  <Ionicons
+                    name={tx.type === 'credit' ? 'arrow-down' : 'arrow-up'}
+                    size={18}
+                    color={tx.type === 'credit' ? '#10B981' : '#EF4444'}
+                  />
+                </View>
+                <View className="flex-1 ml-3">
+                  <Text className="text-[13px] font-bold text-gray-800">{tx.title}</Text>
+                  <Text className="text-[11px] text-gray-400 mt-0.5">{tx.desc}</Text>
+                </View>
+                <View className="items-end">
+                  <Text className={`text-[14px] font-extrabold ${
+                    tx.type === 'credit' ? 'text-green-600' : 'text-red-500'
+                  }`}>
+                    {tx.type === 'credit' ? '+' : ''}₦{Math.abs(tx.amount).toLocaleString()}
+                  </Text>
+                  <Text className="text-[10px] text-gray-400 mt-0.5">{tx.date}</Text>
+                </View>
               </View>
-            </View>
-          ))}
-        </View>
+            ))}
+          </View>
+        ) : (
+          <View className="mx-5 bg-white rounded-3xl py-12 items-center"
+            style={{
+              shadowColor: '#1F2937',
+              shadowOffset: { width: 0, height: 3 },
+              shadowOpacity: 0.06,
+              shadowRadius: 12,
+              elevation: 3,
+            }}
+          >
+            <Ionicons name="receipt-outline" size={48} color="#D1D5DB" />
+            <Text className="text-base font-semibold text-gray-400 mt-3">No transactions yet</Text>
+            <Text className="text-xs text-gray-300 mt-1">Your transaction history will appear here</Text>
+          </View>
+        )}
 
         <View className="h-[100px]" />
       </ScrollView>

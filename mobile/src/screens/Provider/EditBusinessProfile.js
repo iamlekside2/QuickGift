@@ -1,23 +1,45 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Platform, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, Platform, Alert, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../../context/AuthContext';
+import { authAPI } from '../../services/api';
 
 const CATEGORIES = ['Nails', 'Hair Styling', 'Makeup', 'Barber', 'Waxing', 'Massage'];
 const SERVICE_TYPES = ['Home Service', 'Salon Visit', 'Both'];
 
 export default function EditBusinessProfile({ navigation }) {
-  const [name, setName] = useState('Test Provider');
-  const [bio, setBio] = useState('Professional nail technician with 5+ years experience.');
-  const [category, setCategory] = useState('Nails');
-  const [phone, setPhone] = useState('+234 809 876 5432');
-  const [email, setEmail] = useState('provider@quickgift.ng');
-  const [address, setAddress] = useState('15 Admiralty Way, Lekki, Lagos');
-  const [serviceType, setServiceType] = useState('Both');
+  const { user, updateProfile } = useAuth();
 
-  const handleSave = () => {
-    Alert.alert('Profile Updated', 'Your business profile has been saved.');
-    navigation.goBack();
+  const [name, setName] = useState(user?.full_name || '');
+  const [bio, setBio] = useState(user?.bio || user?.description || '');
+  const [category, setCategory] = useState(user?.category || '');
+  const [phone, setPhone] = useState(user?.phone || '');
+  const [email, setEmail] = useState(user?.email || '');
+  const [address, setAddress] = useState(user?.address || user?.city || '');
+  const [serviceType, setServiceType] = useState(user?.service_type || '');
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      await updateProfile({
+        full_name: name,
+        bio,
+        category,
+        phone,
+        email,
+        address,
+        service_type: serviceType,
+      });
+      Alert.alert('Profile Updated', 'Your business profile has been saved.');
+      navigation.goBack();
+    } catch (e) {
+      console.log('Error saving profile:', e);
+      Alert.alert('Error', 'Failed to save profile. Please try again.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -124,6 +146,7 @@ export default function EditBusinessProfile({ navigation }) {
             className="bg-white rounded-2xl px-4 py-4 text-sm text-gray-800 mb-4 border border-gray-100"
             value={phone}
             onChangeText={setPhone}
+            placeholder="Your phone number"
             keyboardType="phone-pad"
             placeholderTextColor="#9CA3AF"
           />
@@ -134,6 +157,7 @@ export default function EditBusinessProfile({ navigation }) {
             className="bg-white rounded-2xl px-4 py-4 text-sm text-gray-800 mb-4 border border-gray-100"
             value={email}
             onChangeText={setEmail}
+            placeholder="Your email address"
             keyboardType="email-address"
             autoCapitalize="none"
             placeholderTextColor="#9CA3AF"
@@ -145,6 +169,7 @@ export default function EditBusinessProfile({ navigation }) {
             className="bg-white rounded-2xl px-4 py-4 text-sm text-gray-800 border border-gray-100"
             value={address}
             onChangeText={setAddress}
+            placeholder="Your business address"
             placeholderTextColor="#9CA3AF"
           />
         </View>
@@ -194,10 +219,16 @@ export default function EditBusinessProfile({ navigation }) {
             shadowOpacity: 0.25,
             shadowRadius: 8,
             elevation: 4,
+            opacity: saving ? 0.7 : 1,
           }}
           onPress={handleSave}
+          disabled={saving}
         >
-          <Text className="text-base font-bold text-white">Save Changes</Text>
+          {saving ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Text className="text-base font-bold text-white">Save Changes</Text>
+          )}
         </TouchableOpacity>
 
         <View className="h-[40px]" />

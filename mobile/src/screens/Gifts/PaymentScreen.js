@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Platform, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Platform, Alert, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
+import { ordersAPI, paymentsAPI } from '../../services/api';
 
 export default function PaymentScreen({ route, navigation }) {
   const { user } = useAuth();
@@ -11,20 +12,50 @@ export default function PaymentScreen({ route, navigation }) {
   const walletBalance = user?.wallet_balance || 0;
 
   const [selectedMethod, setSelectedMethod] = useState('wallet');
+  const [paying, setPaying] = useState(false);
 
   const price = gift.price || 0;
   const deliveryFee = 1500;
   const total = price + deliveryFee;
 
-  const handlePay = () => {
-    Alert.alert(
-      'Order Successful!',
-      `The gift for ${recipient.name} has been sent and will arrive shortly.`,
-      [
-        { text: 'Send Another Gift', onPress: () => navigation.popToTop() },
-        { text: 'Back to Home', onPress: () => navigation.popToTop() },
-      ]
-    );
+  const handlePay = async () => {
+    if (paying) return;
+    setPaying(true);
+    try {
+      // Step 1: Create the order
+      const orderRes = await ordersAPI.create({
+        product_id: gift.id,
+        recipient_name: recipient.name,
+        recipient_phone: recipient.phone,
+        recipient_address: recipient.address,
+        delivery_fee: deliveryFee,
+        total_amount: total,
+        payment_method: selectedMethod,
+      });
+      const order = orderRes.data;
+
+      // Step 2: Initialize payment
+      await paymentsAPI.initialize({
+        order_id: order.id,
+        amount: total,
+        payment_method: selectedMethod,
+      });
+
+      // Step 3: Success
+      Alert.alert(
+        'Order Successful!',
+        `The gift for ${recipient.name} has been sent and will arrive shortly.`,
+        [
+          { text: 'Send Another Gift', onPress: () => navigation.popToTop() },
+          { text: 'Back to Home', onPress: () => navigation.popToTop() },
+        ]
+      );
+    } catch (err) {
+      const message = err.response?.data?.message || err.message || 'Something went wrong. Please try again.';
+      Alert.alert('Payment Failed', message);
+    } finally {
+      setPaying(false);
+    }
   };
 
   return (
@@ -197,7 +228,7 @@ export default function PaymentScreen({ route, navigation }) {
         }}
       >
         <TouchableOpacity
-          className="bg-teal py-4 rounded-2xl items-center"
+          className={`py-4 rounded-2xl items-center ${paying ? 'bg-teal/70' : 'bg-teal'}`}
           style={{
             shadowColor: '#35615D',
             shadowOffset: { width: 0, height: 4 },
@@ -206,8 +237,13 @@ export default function PaymentScreen({ route, navigation }) {
             elevation: 4,
           }}
           onPress={handlePay}
+          disabled={paying}
         >
-          <Text className="text-base font-bold text-white">Pay ₦{total.toLocaleString()}</Text>
+          {paying ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text className="text-base font-bold text-white">Pay ₦{total.toLocaleString()}</Text>
+          )}
         </TouchableOpacity>
       </View>
     </View>

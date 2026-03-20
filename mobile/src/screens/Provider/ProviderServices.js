@@ -1,18 +1,43 @@
-import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Platform } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, Platform, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
-
-const SERVICES = [
-  { id: '1', name: 'Gel Nails - Full Set', duration: '1.5 hrs', price: 8000, active: true },
-  { id: '2', name: 'Gel Nails - Refill', duration: '1 hr', price: 5000, active: true },
-  { id: '3', name: 'Nail Art (per nail)', duration: '30 min', price: 1500, active: true },
-  { id: '4', name: 'Acrylic Nails', duration: '2 hrs', price: 12000, active: true },
-  { id: '5', name: 'Manicure & Pedicure', duration: '1.5 hrs', price: 6000, active: false },
-  { id: '6', name: 'Press-On Nails', duration: '45 min', price: 4000, active: true },
-];
+import { useFocusEffect } from '@react-navigation/native';
+import { useAuth } from '../../context/AuthContext';
+import { providersAPI } from '../../services/api';
 
 export default function ProviderServices({ navigation }) {
+  const { user } = useAuth();
+  const [services, setServices] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchServices = useCallback(async () => {
+    try {
+      setLoading(true);
+      const providerId = user?.id || user?._id;
+      if (providerId) {
+        const res = await providersAPI.services(providerId);
+        const data = res.data?.services || res.data || [];
+        setServices(Array.isArray(data) ? data : []);
+      } else {
+        setServices([]);
+      }
+    } catch (e) {
+      console.log('Error fetching services:', e);
+      setServices([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchServices();
+    }, [fetchServices])
+  );
+
+  const activeServices = services.filter((s) => s.active !== false);
+
   return (
     <View className="flex-1 bg-gray-50">
       <StatusBar style="dark" />
@@ -43,49 +68,75 @@ export default function ProviderServices({ navigation }) {
 
       {/* Services List */}
       <ScrollView className="flex-1 px-5 pt-4" showsVerticalScrollIndicator={false}>
-        {SERVICES.map((service) => (
-          <TouchableOpacity
-            key={service.id}
-            className="flex-row items-center bg-white rounded-2xl p-4 mb-3"
-            style={{ shadowColor: '#1F2937', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
-            onPress={() => navigation.navigate('ServiceForm', { mode: 'edit', service })}
-          >
-            <View className="flex-1">
-              <View className="flex-row items-center gap-2">
-                <Text className="text-sm font-bold text-gray-800">{service.name}</Text>
-                {!service.active && (
-                  <View className="bg-gray-200 px-2.5 py-0.5 rounded-full">
-                    <Text className="text-[10px] text-gray-400 font-bold">Inactive</Text>
-                  </View>
-                )}
-              </View>
-              <View className="flex-row items-center gap-3 mt-1.5">
-                <View className="flex-row items-center gap-1">
-                  <Ionicons name="time-outline" size={12} color="#9CA3AF" />
-                  <Text className="text-xs text-gray-400">{service.duration}</Text>
-                </View>
-                <Text className="text-sm font-extrabold text-teal">{'\u20A6'}{service.price.toLocaleString()}</Text>
-              </View>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
-          </TouchableOpacity>
-        ))}
-
-        {/* Summary */}
-        <View
-          className="bg-white rounded-2xl p-4 mt-3 mb-6"
-          style={{ shadowColor: '#1F2937', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
-        >
-          <View className="flex-row items-center gap-2 mb-1">
-            <View className="w-2 h-2 rounded-full bg-teal" />
-            <Text className="text-[17px] font-bold text-teal">
-              {SERVICES.filter(s => s.active).length} active services
-            </Text>
+        {loading ? (
+          <View className="items-center py-16">
+            <ActivityIndicator size="large" color="#35615D" />
           </View>
-          <Text className="text-xs text-gray-400 ml-4">
-            Price range: {'\u20A6'}{Math.min(...SERVICES.map(s => s.price)).toLocaleString()} - {'\u20A6'}{Math.max(...SERVICES.map(s => s.price)).toLocaleString()}
-          </Text>
-        </View>
+        ) : services.length === 0 ? (
+          <View className="items-center mt-16">
+            <Ionicons name="pricetag-outline" size={48} color="#9CA3AF" />
+            <Text className="text-base font-bold text-gray-800 mt-3">No services yet</Text>
+            <Text className="text-sm text-gray-400 mt-1">Add your first service!</Text>
+            <TouchableOpacity
+              className="bg-teal px-6 py-3 rounded-2xl mt-4"
+              onPress={() => navigation.navigate('ServiceForm', { mode: 'add' })}
+            >
+              <Text className="text-sm text-white font-bold">Add First Service</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <>
+            {services.map((service) => (
+              <TouchableOpacity
+                key={service.id || service._id}
+                className="flex-row items-center bg-white rounded-2xl p-4 mb-3"
+                style={{ shadowColor: '#1F2937', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
+                onPress={() => navigation.navigate('ServiceForm', { mode: 'edit', service })}
+              >
+                <View className="flex-1">
+                  <View className="flex-row items-center gap-2">
+                    <Text className="text-sm font-bold text-gray-800">{service.name}</Text>
+                    {service.active === false && (
+                      <View className="bg-gray-200 px-2.5 py-0.5 rounded-full">
+                        <Text className="text-[10px] text-gray-400 font-bold">Inactive</Text>
+                      </View>
+                    )}
+                  </View>
+                  <View className="flex-row items-center gap-3 mt-1.5">
+                    {service.duration ? (
+                      <View className="flex-row items-center gap-1">
+                        <Ionicons name="time-outline" size={12} color="#9CA3AF" />
+                        <Text className="text-xs text-gray-400">{service.duration}</Text>
+                      </View>
+                    ) : null}
+                    {service.price != null && (
+                      <Text className="text-sm font-extrabold text-teal">{'\u20A6'}{Number(service.price).toLocaleString()}</Text>
+                    )}
+                  </View>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
+              </TouchableOpacity>
+            ))}
+
+            {/* Summary */}
+            <View
+              className="bg-white rounded-2xl p-4 mt-3 mb-6"
+              style={{ shadowColor: '#1F2937', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
+            >
+              <View className="flex-row items-center gap-2 mb-1">
+                <View className="w-2 h-2 rounded-full bg-teal" />
+                <Text className="text-[17px] font-bold text-teal">
+                  {activeServices.length} active service{activeServices.length !== 1 ? 's' : ''}
+                </Text>
+              </View>
+              {services.length > 0 && services.some((s) => s.price != null) && (
+                <Text className="text-xs text-gray-400 ml-4">
+                  Price range: {'\u20A6'}{Math.min(...services.filter((s) => s.price != null).map((s) => Number(s.price))).toLocaleString()} - {'\u20A6'}{Math.max(...services.filter((s) => s.price != null).map((s) => Number(s.price))).toLocaleString()}
+                </Text>
+              )}
+            </View>
+          </>
+        )}
 
         <View className="h-[40px]" />
       </ScrollView>

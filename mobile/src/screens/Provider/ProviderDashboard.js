@@ -1,27 +1,58 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Platform } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, Platform, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../../context/AuthContext';
+import { bookingsAPI } from '../../services/api';
 
 export default function ProviderDashboard({ navigation }) {
   const { user } = useAuth();
   const firstName = user?.full_name?.split(' ')[0] || 'Provider';
 
-  const stats = {
-    todayBookings: 3,
-    pendingRequests: 5,
-    totalEarnings: 87500,
-    rating: 4.8,
-    completedJobs: 42,
-    thisMonthEarnings: 32000,
-  };
+  const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const upcomingBookings = [
-    { id: '1', client: 'Amina Okafor', service: 'Gel Nails', time: '10:00 AM', date: 'Today', status: 'confirmed' },
-    { id: '2', client: 'Blessing Eze', service: 'Hair Braiding', time: '1:30 PM', date: 'Today', status: 'confirmed' },
-    { id: '3', client: 'Fatima Yusuf', service: 'Makeup', time: '4:00 PM', date: 'Today', status: 'pending' },
-  ];
+  const todayStr = new Date().toISOString().split('T')[0];
+
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await bookingsAPI.list();
+      const all = res.data?.bookings || res.data || [];
+      setBookings(Array.isArray(all) ? all : []);
+    } catch (e) {
+      console.log('Error fetching bookings:', e);
+      setBookings([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchData();
+    }, [fetchData])
+  );
+
+  const todayBookings = bookings.filter((b) => {
+    const bDate = b.date || b.booking_date || '';
+    return bDate.startsWith(todayStr);
+  });
+  const pendingBookings = bookings.filter((b) => b.status === 'pending');
+  const completedBookings = bookings.filter((b) => b.status === 'completed');
+  const upcomingBookings = bookings.filter(
+    (b) => b.status === 'pending' || b.status === 'confirmed'
+  ).slice(0, 5);
+
+  const stats = {
+    todayBookings: todayBookings.length,
+    pendingRequests: pendingBookings.length,
+    completedJobs: completedBookings.length,
+    totalEarnings: 0,
+    thisMonthEarnings: 0,
+    rating: 0,
+  };
 
   return (
     <View className="flex-1 bg-gray-50">
@@ -48,7 +79,6 @@ export default function ProviderDashboard({ navigation }) {
             onPress={() => navigation.navigate('ProviderNotifications')}
           >
             <Ionicons name="notifications-outline" size={22} color="#1F2937" />
-            <View className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-orange" />
           </TouchableOpacity>
         </View>
       </View>
@@ -70,12 +100,12 @@ export default function ProviderDashboard({ navigation }) {
             <Text className="text-white/60 text-sm font-medium">This Month's Earnings</Text>
           </View>
           <Text className="text-white text-[34px] font-extrabold tracking-tight">
-            ₦{stats.thisMonthEarnings.toLocaleString()}
+            {'\u20A6'}{stats.thisMonthEarnings.toLocaleString()}
           </Text>
           <View className="flex-row mt-5 gap-6">
             <View>
               <Text className="text-white/50 text-[10px] font-medium">Total Earnings</Text>
-              <Text className="text-white text-base font-bold">₦{stats.totalEarnings.toLocaleString()}</Text>
+              <Text className="text-white text-base font-bold">{'\u20A6'}{stats.totalEarnings.toLocaleString()}</Text>
             </View>
             <View>
               <Text className="text-white/50 text-[10px] font-medium">Completed</Text>
@@ -83,7 +113,7 @@ export default function ProviderDashboard({ navigation }) {
             </View>
             <View>
               <Text className="text-white/50 text-[10px] font-medium">Rating</Text>
-              <Text className="text-white text-base font-bold">{stats.rating}</Text>
+              <Text className="text-white text-base font-bold">{stats.rating || '--'}</Text>
             </View>
           </View>
         </View>
@@ -180,42 +210,59 @@ export default function ProviderDashboard({ navigation }) {
             </TouchableOpacity>
           </View>
 
-          {upcomingBookings.map((booking) => (
-            <TouchableOpacity
-              key={booking.id}
-              className="flex-row items-center bg-white rounded-2xl p-4 mb-3 gap-3"
-              style={{
-                shadowColor: '#1F2937',
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.04,
-                shadowRadius: 8,
-                elevation: 2,
-              }}
-              onPress={() => navigation.navigate('BookingDetail', { booking })}
-            >
-              <View className="w-12 h-12 rounded-2xl bg-teal-light items-center justify-center">
-                <Text className="text-teal font-extrabold text-lg">
-                  {booking.client.charAt(0)}
-                </Text>
-              </View>
-              <View className="flex-1">
-                <Text className="text-[13px] font-bold text-gray-800">{booking.client}</Text>
-                <Text className="text-xs text-gray-400">{booking.service}</Text>
-              </View>
-              <View className="items-end">
-                <Text className="text-xs font-bold text-gray-800">{booking.time}</Text>
-                <View className={`mt-1 px-2 py-0.5 rounded-full ${
-                  booking.status === 'confirmed' ? 'bg-green-50' : 'bg-orange-light'
-                }`}>
-                  <Text className={`text-[10px] font-bold ${
-                    booking.status === 'confirmed' ? 'text-green-600' : 'text-orange'
-                  }`}>
-                    {booking.status === 'confirmed' ? 'Confirmed' : 'Pending'}
-                  </Text>
-                </View>
-              </View>
-            </TouchableOpacity>
-          ))}
+          {loading ? (
+            <View className="items-center py-8">
+              <ActivityIndicator size="large" color="#35615D" />
+            </View>
+          ) : upcomingBookings.length === 0 ? (
+            <View className="items-center py-8">
+              <Ionicons name="calendar-outline" size={48} color="#9CA3AF" />
+              <Text className="text-base font-bold text-gray-800 mt-3">No upcoming bookings</Text>
+              <Text className="text-sm text-gray-400 mt-1">New bookings will appear here</Text>
+            </View>
+          ) : (
+            upcomingBookings.map((booking) => {
+              const clientName = booking.client_name || booking.client || 'Client';
+              const serviceName = booking.service_name || booking.service || 'Service';
+              const bookingTime = booking.time || booking.booking_time || '';
+              return (
+                <TouchableOpacity
+                  key={booking.id || booking._id}
+                  className="flex-row items-center bg-white rounded-2xl p-4 mb-3 gap-3"
+                  style={{
+                    shadowColor: '#1F2937',
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.04,
+                    shadowRadius: 8,
+                    elevation: 2,
+                  }}
+                  onPress={() => navigation.navigate('BookingDetail', { booking })}
+                >
+                  <View className="w-12 h-12 rounded-2xl bg-teal-light items-center justify-center">
+                    <Text className="text-teal font-extrabold text-lg">
+                      {clientName.charAt(0)}
+                    </Text>
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-[13px] font-bold text-gray-800">{clientName}</Text>
+                    <Text className="text-xs text-gray-400">{serviceName}</Text>
+                  </View>
+                  <View className="items-end">
+                    <Text className="text-xs font-bold text-gray-800">{bookingTime}</Text>
+                    <View className={`mt-1 px-2 py-0.5 rounded-full ${
+                      booking.status === 'confirmed' ? 'bg-green-50' : 'bg-orange-light'
+                    }`}>
+                      <Text className={`text-[10px] font-bold ${
+                        booking.status === 'confirmed' ? 'text-green-600' : 'text-orange'
+                      }`}>
+                        {booking.status === 'confirmed' ? 'Confirmed' : 'Pending'}
+                      </Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              );
+            })
+          )}
         </View>
 
         <View className="h-[100px]" />

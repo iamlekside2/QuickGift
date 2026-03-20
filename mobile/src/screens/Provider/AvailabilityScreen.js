@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Platform, Alert, Switch } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Platform, Alert, Switch, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -17,26 +17,41 @@ const BUFFER_OPTIONS = ['15 min', '30 min', '1 hr'];
 
 export default function AvailabilityScreen({ navigation }) {
   const [schedule, setSchedule] = useState({
-    mon: { active: true, start: '9:00 AM', end: '7:00 PM' },
-    tue: { active: true, start: '9:00 AM', end: '7:00 PM' },
-    wed: { active: true, start: '9:00 AM', end: '7:00 PM' },
-    thu: { active: true, start: '9:00 AM', end: '7:00 PM' },
-    fri: { active: true, start: '9:00 AM', end: '7:00 PM' },
-    sat: { active: true, start: '10:00 AM', end: '5:00 PM' },
+    mon: { active: true, start: '9:00 AM', end: '5:00 PM' },
+    tue: { active: true, start: '9:00 AM', end: '5:00 PM' },
+    wed: { active: true, start: '9:00 AM', end: '5:00 PM' },
+    thu: { active: true, start: '9:00 AM', end: '5:00 PM' },
+    fri: { active: true, start: '9:00 AM', end: '5:00 PM' },
+    sat: { active: false, start: '', end: '' },
     sun: { active: false, start: '', end: '' },
   });
   const [buffer, setBuffer] = useState('30 min');
+  const [blockedDates, setBlockedDates] = useState([]);
+  const [saving, setSaving] = useState(false);
 
   const toggleDay = (key) => {
-    setSchedule(prev => ({
+    setSchedule((prev) => ({
       ...prev,
       [key]: { ...prev[key], active: !prev[key].active },
     }));
   };
 
-  const handleSave = () => {
-    Alert.alert('Availability Saved', 'Your working hours have been updated.');
-    navigation.goBack();
+  const removeBlockedDate = (index) => {
+    setBlockedDates((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      // No schedule API yet — just show success
+      Alert.alert('Availability Saved', 'Your working hours have been updated.');
+      navigation.goBack();
+    } catch (e) {
+      console.log('Error saving availability:', e);
+      Alert.alert('Error', 'Failed to save availability. Please try again.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -128,26 +143,42 @@ export default function AvailabilityScreen({ navigation }) {
           <Ionicons name="add-circle-outline" size={22} color="#35615D" />
           <Text className="text-sm text-teal font-bold">Add holiday or time off</Text>
         </TouchableOpacity>
-        <View
-          className="flex-row items-center bg-white rounded-2xl p-4 mb-6 gap-3"
-          style={{ shadowColor: '#1F2937', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2, borderLeftWidth: 3, borderLeftColor: '#FD8950' }}
-        >
-          <Ionicons name="calendar-outline" size={18} color="#FD8950" />
-          <View className="flex-1">
-            <Text className="text-sm font-bold text-gray-800">Easter Holiday</Text>
-            <Text className="text-xs text-gray-400">Apr 18 - Apr 21, 2026</Text>
+
+        {blockedDates.length === 0 ? (
+          <View className="items-center py-4 mb-4">
+            <Text className="text-sm text-gray-400">No blocked dates</Text>
           </View>
-          <TouchableOpacity>
-            <Ionicons name="close-circle" size={20} color="#9CA3AF" />
-          </TouchableOpacity>
-        </View>
+        ) : (
+          blockedDates.map((blocked, index) => (
+            <View
+              key={index}
+              className="flex-row items-center bg-white rounded-2xl p-4 mb-2 gap-3"
+              style={{ shadowColor: '#1F2937', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2, borderLeftWidth: 3, borderLeftColor: '#FD8950' }}
+            >
+              <Ionicons name="calendar-outline" size={18} color="#FD8950" />
+              <View className="flex-1">
+                <Text className="text-sm font-bold text-gray-800">{blocked.name}</Text>
+                <Text className="text-xs text-gray-400">{blocked.dates}</Text>
+              </View>
+              <TouchableOpacity onPress={() => removeBlockedDate(index)}>
+                <Ionicons name="close-circle" size={20} color="#9CA3AF" />
+              </TouchableOpacity>
+            </View>
+          ))
+        )}
 
         {/* Save */}
         <TouchableOpacity
-          className="bg-teal py-4 rounded-2xl items-center mb-10"
+          className="bg-teal py-4 rounded-2xl items-center mb-10 mt-4"
+          style={{ opacity: saving ? 0.7 : 1 }}
           onPress={handleSave}
+          disabled={saving}
         >
-          <Text className="text-base font-bold text-white">Save Availability</Text>
+          {saving ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Text className="text-base font-bold text-white">Save Availability</Text>
+          )}
         </TouchableOpacity>
 
         <View className="h-[40px]" />

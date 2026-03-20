@@ -98,7 +98,7 @@ export default function ProviderProfileScreen({ navigation, route }) {
             }}
           >
             <View className="items-center flex-1">
-              <Text className="text-2xl font-extrabold text-gray-800">{provider?.rating || '4.8'}</Text>
+              <Text className="text-2xl font-extrabold text-gray-800">{provider?.rating || 0}</Text>
               <Text className="text-xs text-gray-400 mt-0.5">Rating</Text>
             </View>
             <View className="w-px h-8 bg-gray-200" />
@@ -108,7 +108,7 @@ export default function ProviderProfileScreen({ navigation, route }) {
             </View>
             <View className="w-px h-8 bg-gray-200" />
             <View className="items-center flex-1">
-              <Text className="text-2xl font-extrabold text-gray-800">{provider?.experience || '2yr'}</Text>
+              <Text className="text-2xl font-extrabold text-gray-800">{provider?.experience || 'N/A'}</Text>
               <Text className="text-xs text-gray-400 mt-0.5">Experience</Text>
             </View>
           </View>
@@ -172,16 +172,9 @@ export default function ProviderProfileScreen({ navigation, route }) {
         {/* Portfolio */}
         <View className="px-6 mb-6">
           <Text className="text-xl font-bold text-gray-800 mb-4">Portfolio</Text>
-          <View className="flex-row flex-wrap gap-2.5">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <View
-                key={i}
-                className="rounded-2xl bg-cream items-center justify-center"
-                style={{ width: '31%', aspectRatio: 1 }}
-              >
-                <Text className="text-3xl">{'\uD83D\uDC85'}</Text>
-              </View>
-            ))}
+          <View className="bg-gray-50 rounded-2xl py-10 items-center">
+            <Ionicons name="images-outline" size={48} color="#D1D5DB" />
+            <Text className="text-sm font-semibold text-gray-400 mt-3">No portfolio yet</Text>
           </View>
         </View>
 
