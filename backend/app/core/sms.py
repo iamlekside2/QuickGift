@@ -1,4 +1,4 @@
-import requests
+import httpx
 from app.core.config import settings
 import logging
 
@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 TERMII_BASE_URL = "https://v3.api.termii.com/api/sms/send"
 
 
-def send_sms(to: str, body: str) -> bool:
+async def send_sms(to: str, body: str) -> bool:
     """Send an SMS via Termii. Returns True on success, False on failure."""
     if not settings.TERMII_API_KEY:
         logger.warning("Termii API key not configured — SMS not sent")
@@ -22,7 +22,8 @@ def send_sms(to: str, body: str) -> bool:
             "channel": "generic",
             "api_key": settings.TERMII_API_KEY,
         }
-        response = requests.post(TERMII_BASE_URL, json=payload, timeout=10)
+        async with httpx.AsyncClient() as client:
+            response = await client.post(TERMII_BASE_URL, json=payload, timeout=10)
         data = response.json()
 
         if response.status_code == 200 and data.get("message") == "Successfully Sent":
@@ -36,7 +37,7 @@ def send_sms(to: str, body: str) -> bool:
         return False
 
 
-def send_otp_sms(phone: str, code: str) -> bool:
+async def send_otp_sms(phone: str, code: str) -> bool:
     """Send OTP code via SMS."""
     body = f"Your QuickGift verification code is: {code}. It expires in {settings.OTP_EXPIRE_MINUTES} minutes. Do not share this code."
-    return send_sms(to=phone, body=body)
+    return await send_sms(to=phone, body=body)

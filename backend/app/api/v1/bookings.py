@@ -74,7 +74,17 @@ async def list_bookings(
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    query = select(Booking).where(Booking.user_id == current_user["user_id"])
+    if current_user.get("role") == "provider":
+        # Look up Provider record by user_id to get the provider's id
+        provider_result = await db.execute(
+            select(Provider).where(Provider.user_id == current_user["user_id"])
+        )
+        provider = provider_result.scalars().first()
+        if not provider:
+            raise HTTPException(status_code=404, detail="Provider profile not found")
+        query = select(Booking).where(Booking.provider_id == provider.id)
+    else:
+        query = select(Booking).where(Booking.user_id == current_user["user_id"])
 
     if status:
         query = query.where(Booking.status == status)
@@ -113,11 +123,22 @@ async def update_booking_status(
     if not booking:
         raise HTTPException(status_code=404, detail="Booking not found")
 
+    # Only the provider associated with this booking can update status
+    provider_result = await db.execute(
+        select(Provider).where(Provider.user_id == current_user["user_id"])
+    )
+    provider = provider_result.scalars().first()
+    if not provider or provider.id != booking.provider_id:
+        if current_user.get("role") != "admin":
+            raise HTTPException(status_code=403, detail="Only the assigned provider can update booking status")
+
     valid_transitions = {
-        "pending": ["confirmed", "cancelled"],
+        "pending": ["accepted", "confirmed", "declined", "cancelled"],
+        "accepted": ["in_progress", "cancelled"],
         "confirmed": ["in_progress", "cancelled"],
         "in_progress": ["completed"],
         "completed": [],
+        "declined": [],
         "cancelled": [],
     }
 

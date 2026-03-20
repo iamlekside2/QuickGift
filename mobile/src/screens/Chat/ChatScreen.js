@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity, TextInput,
   KeyboardAvoidingView, Platform, ActivityIndicator,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../../context/AuthContext';
 import { chatsAPI } from '../../services/api';
 
@@ -24,6 +25,21 @@ export default function ChatScreen({ navigation, route }) {
   useEffect(() => {
     loadMessages();
   }, []);
+
+  // Poll for new messages every 5 seconds while screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      const interval = setInterval(async () => {
+        try {
+          const res = await chatsAPI.getMessages(conversationId);
+          setMessages(res.data || []);
+        } catch (err) {
+          // Silently ignore polling errors
+        }
+      }, 5000);
+      return () => clearInterval(interval);
+    }, [conversationId])
+  );
 
   const loadMessages = async () => {
     try {

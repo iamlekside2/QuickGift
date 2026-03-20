@@ -23,10 +23,10 @@ export default function ProductForm({ route, navigation }) {
       return;
     }
     Alert.alert(
-      mode === 'add' ? 'Product Added' : 'Product Updated',
-      `"${name}" has been ${mode === 'add' ? 'added to' : 'updated in'} your products.`
+      'Coming Soon',
+      'Product management for providers is not yet available. Please contact support to have your products listed.',
+      [{ text: 'OK' }]
     );
-    navigation.goBack();
   };
 
   const handleDelete = () => {

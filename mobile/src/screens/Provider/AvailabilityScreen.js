@@ -139,6 +139,22 @@ export default function AvailabilityScreen({ navigation }) {
         <TouchableOpacity
           className="flex-row items-center bg-white rounded-2xl p-4 mb-2 gap-3"
           style={{ shadowColor: '#1F2937', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
+          onPress={() => {
+            Alert.prompt(
+              'Add Blocked Date',
+              'Enter a label (e.g. "Easter Holiday")',
+              (label) => {
+                if (label && label.trim()) {
+                  const today = new Date();
+                  const dateStr = today.toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' });
+                  setBlockedDates((prev) => [...prev, { name: label.trim(), dates: dateStr }]);
+                }
+              },
+              'plain-text',
+              '',
+              'default'
+            );
+          }}
         >
           <Ionicons name="add-circle-outline" size={22} color="#35615D" />
           <Text className="text-sm text-teal font-bold">Add holiday or time off</Text>

@@ -202,13 +202,13 @@ export const authAPI = {
     return {
       data: {
         access_token: 'mock-token-12345',
-        user: { id: 'user-1', full_name: 'Test User', phone, role: 'customer', city: 'Lagos' },
+        user: { id: 'user-1', full_name: 'Test User', phone, role: 'user', city: 'Lagos' },
       },
     };
   },
   getProfile: async () => {
     await delay(200);
-    return { data: { id: 'user-1', full_name: 'Test User', phone: '+2348012345678', role: 'customer', city: 'Lagos' } };
+    return { data: { id: 'user-1', full_name: 'Test User', phone: '+2348012345678', role: 'user', city: 'Lagos' } };
   },
   updateProfile: async (data) => {
     await delay(300);

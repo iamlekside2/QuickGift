@@ -41,8 +41,8 @@ async def send_otp(req: SendOTPRequest, db: AsyncSession = Depends(get_db)):
     db.add(otp)
     await db.commit()
 
-    # Send OTP via Twilio SMS
-    sms_sent = send_otp_sms(req.phone, code)
+    # Send OTP via Termii SMS
+    sms_sent = await send_otp_sms(req.phone, code)
 
     response = {"message": "OTP sent successfully"}
 

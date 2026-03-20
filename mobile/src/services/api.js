@@ -82,6 +82,7 @@ const realProvidersAPI = {
   get: (id) => api.get(`/providers/${id}`),
   services: (id) => api.get(`/providers/${id}/services`),
   register: (data) => api.post('/providers', data),
+  addService: (providerId, data) => api.post(`/providers/${providerId}/services`, data),
 };
 
 const realOrdersAPI = {

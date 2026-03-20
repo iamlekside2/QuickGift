@@ -43,7 +43,13 @@ export default function ProviderNotifications({ navigation }) {
             <Text className="text-[22px] font-bold text-gray-800" style={{ letterSpacing: 0.3 }}>Notifications</Text>
           </View>
           {notifications.length > 0 && (
-            <TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => {
+                setNotifications((prev) =>
+                  prev.map((n) => ({ ...n, unread: false }))
+                );
+              }}
+            >
               <Text className="text-sm text-teal font-bold">Mark all read</Text>
             </TouchableOpacity>
           )}

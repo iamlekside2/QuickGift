@@ -46,7 +46,7 @@ export default function PaymentScreen({ route, navigation }) {
         'Order Successful!',
         `The gift for ${recipient.name} has been sent and will arrive shortly.`,
         [
-          { text: 'Send Another Gift', onPress: () => navigation.popToTop() },
+          { text: 'Send Another Gift', onPress: () => navigation.navigate('GiftsHome') },
           { text: 'Back to Home', onPress: () => navigation.popToTop() },
         ]
       );

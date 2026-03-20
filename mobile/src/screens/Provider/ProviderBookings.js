@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Platform, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Platform, ActivityIndicator, Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
@@ -11,29 +11,40 @@ export default function ProviderBookings({ navigation }) {
   const [activeTab, setActiveTab] = useState('Upcoming');
   const [allBookings, setAllBookings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [updatingId, setUpdatingId] = useState(null);
+
+  const fetchBookings = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await bookingsAPI.list();
+      const data = res.data || res;
+      setAllBookings(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.log('Failed to fetch bookings:', err);
+      setAllBookings([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
-      let cancelled = false;
-      const fetchBookings = async () => {
-        try {
-          setLoading(true);
-          const res = await bookingsAPI.list();
-          if (!cancelled) {
-            const data = res.data || res;
-            setAllBookings(Array.isArray(data) ? data : []);
-          }
-        } catch (err) {
-          console.log('Failed to fetch bookings:', err);
-          if (!cancelled) setAllBookings([]);
-        } finally {
-          if (!cancelled) setLoading(false);
-        }
-      };
       fetchBookings();
-      return () => { cancelled = true; };
-    }, [])
+    }, [fetchBookings])
   );
+
+  const handleUpdateStatus = async (bookingId, newStatus) => {
+    try {
+      setUpdatingId(bookingId);
+      await bookingsAPI.updateStatus(bookingId, newStatus);
+      await fetchBookings();
+    } catch (err) {
+      const message = err?.response?.data?.detail || err.message || 'Something went wrong.';
+      Alert.alert('Update Failed', message);
+    } finally {
+      setUpdatingId(null);
+    }
+  };
 
   const bookings = allBookings.filter((b) => {
     const status = (b.status || '').toLowerCase();
@@ -121,11 +132,27 @@ export default function ProviderBookings({ navigation }) {
                 </View>
                 {activeTab === 'Pending' && (
                   <View className="flex-row gap-2">
-                    <TouchableOpacity className="bg-teal px-3 py-1.5 rounded-2xl">
-                      <Text className="text-xs text-white font-bold">Accept</Text>
+                    <TouchableOpacity
+                      className="bg-teal px-3 py-1.5 rounded-2xl"
+                      disabled={updatingId === booking.id}
+                      onPress={() => handleUpdateStatus(booking.id, 'accepted')}
+                    >
+                      {updatingId === booking.id ? (
+                        <ActivityIndicator size="small" color="#fff" />
+                      ) : (
+                        <Text className="text-xs text-white font-bold">Accept</Text>
+                      )}
                     </TouchableOpacity>
-                    <TouchableOpacity className="bg-gray-200 px-3 py-1.5 rounded-2xl">
-                      <Text className="text-xs text-gray-600 font-bold">Decline</Text>
+                    <TouchableOpacity
+                      className="bg-gray-200 px-3 py-1.5 rounded-2xl"
+                      disabled={updatingId === booking.id}
+                      onPress={() => handleUpdateStatus(booking.id, 'declined')}
+                    >
+                      {updatingId === booking.id ? (
+                        <ActivityIndicator size="small" color="#6B7280" />
+                      ) : (
+                        <Text className="text-xs text-gray-600 font-bold">Decline</Text>
+                      )}
                     </TouchableOpacity>
                   </View>
                 )}

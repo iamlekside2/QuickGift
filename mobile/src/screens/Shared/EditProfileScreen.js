@@ -1,20 +1,40 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Platform, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, Platform, Alert, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 
 export default function EditProfileScreen({ navigation }) {
-  const { user } = useAuth();
+  const { user, updateProfile } = useAuth();
 
   const [fullName, setFullName] = useState(user?.full_name || '');
   const [phone, setPhone] = useState(user?.phone || '');
   const [email, setEmail] = useState(user?.email || '');
   const [city, setCity] = useState(user?.city || 'Lagos');
+  const [saving, setSaving] = useState(false);
 
-  const handleSave = () => {
-    Alert.alert('Profile Updated', 'Your profile has been saved successfully.');
-    navigation.goBack();
+  const handleSave = async () => {
+    if (!fullName.trim()) {
+      Alert.alert('Missing Fields', 'Please enter your full name.');
+      return;
+    }
+    try {
+      setSaving(true);
+      await updateProfile({
+        full_name: fullName.trim(),
+        phone: phone.trim(),
+        email: email.trim(),
+        city: city.trim(),
+      });
+      Alert.alert('Profile Updated', 'Your profile has been saved successfully.', [
+        { text: 'OK', onPress: () => navigation.goBack() },
+      ]);
+    } catch (err) {
+      const message = err?.response?.data?.detail || err.message || 'Something went wrong.';
+      Alert.alert('Update Failed', message);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -41,8 +61,12 @@ export default function EditProfileScreen({ navigation }) {
             </TouchableOpacity>
             <Text className="text-xl font-bold text-gray-800">Edit Profile</Text>
           </View>
-          <TouchableOpacity onPress={handleSave}>
-            <Text className="text-base text-teal font-semibold">Save</Text>
+          <TouchableOpacity onPress={handleSave} disabled={saving}>
+            {saving ? (
+              <ActivityIndicator size="small" color="#35615D" />
+            ) : (
+              <Text className="text-base text-teal font-semibold">Save</Text>
+            )}
           </TouchableOpacity>
         </View>
       </View>
@@ -110,7 +134,7 @@ export default function EditProfileScreen({ navigation }) {
         </View>
 
         <TouchableOpacity
-          className="bg-teal py-4 rounded-2xl items-center mb-10"
+          className={`py-4 rounded-2xl items-center mb-10 ${saving ? 'bg-teal/70' : 'bg-teal'}`}
           style={{
             shadowColor: '#35615D',
             shadowOffset: { width: 0, height: 4 },
@@ -119,8 +143,13 @@ export default function EditProfileScreen({ navigation }) {
             elevation: 4,
           }}
           onPress={handleSave}
+          disabled={saving}
         >
-          <Text className="text-base font-bold text-white">Save Changes</Text>
+          {saving ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Text className="text-base font-bold text-white">Save Changes</Text>
+          )}
         </TouchableOpacity>
 
         <View className="h-[40px]" />

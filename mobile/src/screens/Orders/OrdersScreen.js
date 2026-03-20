@@ -16,6 +16,12 @@ const STATUS_CONFIG = {
   cancelled: { label: 'Cancelled', color: '#EF4444', bg: 'bg-red-50', icon: 'close-circle-outline' },
 };
 
+const formatDate = (dateStr) => {
+  if (!dateStr) return 'N/A';
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' });
+};
+
 const TRACKING_STEPS = ['Confirmed', 'In Transit', 'Delivered'];
 
 function getTrackingIndex(status) {
@@ -196,7 +202,7 @@ export default function OrdersScreen() {
 
                 {/* Bottom row */}
                 <View className="flex-row items-center justify-between pt-3 border-t border-gray-50">
-                  <Text className="text-[11px] text-gray-400">{date}</Text>
+                  <Text className="text-[11px] text-gray-400">{formatDate(date)}</Text>
                   <View
                     className={`flex-row items-center gap-1 px-3 py-1.5 rounded-full ${config.bg}`}
                   >

@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Platform, Alert, Switch } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, Platform, Alert, Switch, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../../context/AuthContext';
+import { providersAPI } from '../../services/api';
 
 const DURATIONS = ['30 min', '1 hr', '1.5 hrs', '2 hrs', '3 hrs'];
 const CATEGORIES = ['Nails', 'Hair', 'Makeup', 'Barber', 'Waxing', 'Massage'];
 
 export default function ServiceForm({ route, navigation }) {
+  const { user } = useAuth();
   const mode = route.params?.mode || 'add';
   const existing = route.params?.service || {};
 
@@ -16,17 +19,39 @@ export default function ServiceForm({ route, navigation }) {
   const [price, setPrice] = useState(existing.price?.toString() || '');
   const [category, setCategory] = useState(existing.category || 'Nails');
   const [active, setActive] = useState(existing.active !== false);
+  const [saving, setSaving] = useState(false);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!name || !price) {
       Alert.alert('Missing Fields', 'Please fill in service name and price.');
       return;
     }
-    Alert.alert(
-      mode === 'add' ? 'Service Added' : 'Service Updated',
-      `"${name}" has been ${mode === 'add' ? 'added to' : 'updated in'} your services.`
-    );
-    navigation.goBack();
+    const providerId = user?.provider_id || user?.id;
+    if (!providerId) {
+      Alert.alert('Error', 'Provider profile not found. Please complete your business profile first.');
+      return;
+    }
+    try {
+      setSaving(true);
+      await providersAPI.addService(providerId, {
+        name: name.trim(),
+        description: description.trim(),
+        duration,
+        price: parseFloat(price),
+        category,
+        is_active: active,
+      });
+      Alert.alert(
+        mode === 'add' ? 'Service Added' : 'Service Updated',
+        `"${name}" has been ${mode === 'add' ? 'added to' : 'updated in'} your services.`,
+        [{ text: 'OK', onPress: () => navigation.goBack() }]
+      );
+    } catch (err) {
+      const message = err?.response?.data?.detail || err.message || 'Something went wrong.';
+      Alert.alert('Save Failed', message);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleDelete = () => {
@@ -198,7 +223,7 @@ export default function ServiceForm({ route, navigation }) {
 
         {/* Save Button */}
         <TouchableOpacity
-          className="bg-teal py-4 rounded-2xl items-center mb-3"
+          className={`py-4 rounded-2xl items-center mb-3 ${saving ? 'bg-teal/70' : 'bg-teal'}`}
           style={{
             shadowColor: '#35615D',
             shadowOffset: { width: 0, height: 4 },
@@ -207,10 +232,15 @@ export default function ServiceForm({ route, navigation }) {
             elevation: 4,
           }}
           onPress={handleSave}
+          disabled={saving}
         >
-          <Text className="text-base font-bold text-white">
-            {mode === 'add' ? 'Add Service' : 'Save Changes'}
-          </Text>
+          {saving ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Text className="text-base font-bold text-white">
+              {mode === 'add' ? 'Add Service' : 'Save Changes'}
+            </Text>
+          )}
         </TouchableOpacity>
 
         {/* Delete Button (edit mode only) */}

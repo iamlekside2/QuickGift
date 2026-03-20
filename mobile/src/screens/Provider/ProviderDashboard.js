@@ -45,13 +45,29 @@ export default function ProviderDashboard({ navigation }) {
     (b) => b.status === 'pending' || b.status === 'confirmed'
   ).slice(0, 5);
 
+  const totalEarnings = completedBookings.reduce(
+    (sum, b) => sum + (b.price || b.amount || 0), 0
+  );
+
+  const now = new Date();
+  const currentMonth = now.getMonth();
+  const currentYear = now.getFullYear();
+  const thisMonthEarnings = completedBookings
+    .filter((b) => {
+      const d = new Date(b.date || b.booking_date || b.completed_at || '');
+      return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+    })
+    .reduce((sum, b) => sum + (b.price || b.amount || 0), 0);
+
+  const rating = user?.rating || user?.provider_rating || 0;
+
   const stats = {
     todayBookings: todayBookings.length,
     pendingRequests: pendingBookings.length,
     completedJobs: completedBookings.length,
-    totalEarnings: 0,
-    thisMonthEarnings: 0,
-    rating: 0,
+    totalEarnings,
+    thisMonthEarnings,
+    rating,
   };
 
   return (
