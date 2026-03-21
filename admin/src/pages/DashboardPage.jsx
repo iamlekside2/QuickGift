@@ -5,7 +5,8 @@ import {
   CalendarCheck, TrendingUp, ArrowRight
 } from 'lucide-react'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts'
-import { useGetDashboardStatsQuery, useGetAdminOrdersQuery, useGetRevenueAnalyticsQuery } from '../services/api'
+import { useGetDashboardStatsQuery, useGetAdminOrdersQuery, useGetRevenueAnalyticsQuery, useGetExtendedAnalyticsQuery } from '../services/api'
+import { PieChart, Pie } from 'recharts'
 
 const STATUS_STYLES = {
   delivered: 'badge-green',
@@ -49,6 +50,7 @@ export default function DashboardPage() {
   const { data: stats, isLoading: statsLoading } = useGetDashboardStatsQuery()
   const { data: ordersData, isLoading: ordersLoading } = useGetAdminOrdersQuery({ per_page: 5 })
   const { data: revenueData } = useGetRevenueAnalyticsQuery()
+  const { data: extendedStats } = useGetExtendedAnalyticsQuery()
 
   const recentOrders = ordersData?.items || []
   const REVENUE_DATA = revenueData || [
@@ -261,6 +263,75 @@ export default function DashboardPage() {
           </ResponsiveContainer>
         </div>
       </div>
+
+      {/* Extended Analytics Row */}
+      {extendedStats && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Order Success/Cancel Pie */}
+          <div className="card p-6">
+            <h3 className="text-sm font-semibold text-gray-900">Order Status</h3>
+            <p className="text-xs text-gray-500 mt-0.5 mb-4">Success vs cancellation rate</p>
+            <div className="flex items-center justify-center">
+              <ResponsiveContainer width={200} height={200}>
+                <PieChart>
+                  <Pie
+                    data={[
+                      { name: 'Delivered', value: extendedStats.order_status_breakdown?.delivered || 0, fill: '#10B981' },
+                      { name: 'Cancelled', value: extendedStats.order_status_breakdown?.cancelled || 0, fill: '#EF4444' },
+                      { name: 'Pending', value: (extendedStats.order_status_breakdown?.pending || 0) + (extendedStats.order_status_breakdown?.confirmed || 0) + (extendedStats.order_status_breakdown?.in_transit || 0), fill: '#F59E0B' },
+                    ]}
+                    cx="50%" cy="50%" innerRadius={55} outerRadius={80} paddingAngle={3} dataKey="value"
+                  >
+                  </Pie>
+                  <Tooltip content={({ active, payload }) => active && payload?.[0] ? (
+                    <div className="bg-gray-900 text-white px-3 py-2 rounded-lg text-xs shadow-xl">{payload[0].name}: {payload[0].value}</div>
+                  ) : null} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="flex justify-center gap-4 mt-2 text-xs">
+              <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-emerald-500" /><span className="text-gray-500">{extendedStats.success_rate}% delivered</span></div>
+              <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-red-500" /><span className="text-gray-500">{extendedStats.cancel_rate}% cancelled</span></div>
+            </div>
+          </div>
+
+          {/* Platform Fee + Pending Withdrawals */}
+          <div className="space-y-4">
+            <div className="card p-5">
+              <p className="text-xs font-medium text-gray-500">Platform Fee Earned</p>
+              <p className="text-2xl font-bold text-emerald-600 mt-1">{formatAmount(extendedStats.platform_fee_earned)}</p>
+              <p className="text-[11px] text-gray-400 mt-1">Total commission from all transactions</p>
+            </div>
+            <div className="card p-5">
+              <p className="text-xs font-medium text-gray-500">Pending Withdrawals</p>
+              <p className="text-2xl font-bold text-amber-600 mt-1">{formatAmount(extendedStats.pending_withdrawals)}</p>
+              <p className="text-[11px] text-gray-400 mt-1">Awaiting processing to bank</p>
+            </div>
+          </div>
+
+          {/* Top Providers */}
+          <div className="card p-6">
+            <h3 className="text-sm font-semibold text-gray-900">Top Providers</h3>
+            <p className="text-xs text-gray-500 mt-0.5 mb-4">By revenue</p>
+            {(extendedStats.top_providers || []).length === 0 ? (
+              <p className="text-sm text-gray-400 text-center py-8">No provider data yet</p>
+            ) : (
+              <div className="space-y-3">
+                {extendedStats.top_providers.slice(0, 5).map((p, i) => (
+                  <div key={p.id} className="flex items-center gap-3">
+                    <div className="w-7 h-7 bg-teal-500/10 rounded-full flex items-center justify-center text-[11px] font-bold text-teal-600">{i + 1}</div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 truncate">{p.business_name}</p>
+                      <p className="text-[11px] text-gray-400">{p.orders} orders · ⭐ {p.rating}</p>
+                    </div>
+                    <p className="text-sm font-bold text-gray-900">{formatAmount(p.revenue)}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Recent Orders */}
       <div className="card overflow-hidden">

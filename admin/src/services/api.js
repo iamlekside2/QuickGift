@@ -184,6 +184,9 @@ export const api = createApi({
     getRevenueAnalytics: builder.query({
       query: () => '/admin/analytics/revenue',
     }),
+    getExtendedAnalytics: builder.query({
+      query: () => '/admin/analytics/extended',
+    }),
 
     // ── Payments (Admin) ────────────────────────────
     getAdminPayments: builder.query({
@@ -288,6 +291,7 @@ export const {
   useCancelPayoutMutation,
   useGetAdminSettingsQuery,
   useGetRevenueAnalyticsQuery,
+  useGetExtendedAnalyticsQuery,
   useGetAdminDisputesQuery,
   useResolveDisputeMutation,
 } = api

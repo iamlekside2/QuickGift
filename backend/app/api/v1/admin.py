@@ -658,3 +658,78 @@ async def fail_withdrawal(
     tx.status = "failed"
     await db.commit()
     return {"status": "failed", "transaction_id": transaction_id, "refunded": True}
+
+
+# ---------------------------------------------------------------------------
+# Extended Analytics (Admin)
+# ---------------------------------------------------------------------------
+
+@router.get("/analytics/extended")
+async def extended_analytics(
+    admin: dict = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Extended analytics: top providers, order status breakdown, pending withdrawals."""
+
+    # Order status breakdown (for pie chart)
+    status_counts = {}
+    for s in ["pending", "confirmed", "in_transit", "delivered", "cancelled"]:
+        count = (await db.execute(
+            select(func.count(Order.id)).where(Order.status == s)
+        )).scalar() or 0
+        status_counts[s] = count
+
+    total_orders = sum(status_counts.values())
+    success_rate = round((status_counts.get("delivered", 0) / max(total_orders, 1)) * 100, 1)
+    cancel_rate = round((status_counts.get("cancelled", 0) / max(total_orders, 1)) * 100, 1)
+
+    # Top 10 providers by revenue (from payouts)
+    top_providers_q = await db.execute(
+        select(
+            Payout.provider_id,
+            func.sum(Payout.amount).label("total_revenue"),
+            func.count(Payout.id).label("order_count"),
+        )
+        .where(Payout.status.in_(["held", "released", "paid"]))
+        .group_by(Payout.provider_id)
+        .order_by(func.sum(Payout.amount).desc())
+        .limit(10)
+    )
+    top_providers_raw = top_providers_q.all()
+
+    top_providers = []
+    for row in top_providers_raw:
+        prov = (await db.execute(select(Provider).where(Provider.id == row[0]))).scalars().first()
+        if prov:
+            top_providers.append({
+                "id": prov.id,
+                "business_name": prov.business_name,
+                "service_type": prov.service_type,
+                "revenue": row[1],
+                "orders": row[2],
+                "rating": prov.rating,
+            })
+
+    # Pending withdrawals total
+    pending_withdrawals = (await db.execute(
+        select(func.coalesce(func.sum(Transaction.amount), 0)).where(
+            Transaction.description.like("%Withdrawal%"),
+            Transaction.status == "pending",
+        )
+    )).scalar()
+
+    # Platform fee earned (commission total)
+    platform_fee = (await db.execute(
+        select(func.coalesce(func.sum(Payout.commission), 0)).where(
+            Payout.status.in_(["held", "released", "paid"])
+        )
+    )).scalar()
+
+    return {
+        "order_status_breakdown": status_counts,
+        "success_rate": success_rate,
+        "cancel_rate": cancel_rate,
+        "top_providers": top_providers,
+        "pending_withdrawals": pending_withdrawals,
+        "platform_fee_earned": platform_fee,
+    }
