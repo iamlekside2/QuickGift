@@ -447,33 +447,48 @@ async def seed_providers(session):
 # Main
 # ---------------------------------------------------------------------------
 
-async def main():
-    print("=" * 50)
-    print("  QuickGift Database Seed")
-    print("=" * 50)
+async def run_migrations(eng):
+    """Add missing columns to existing tables. Must run BEFORE any ORM queries."""
+    from sqlalchemy import text
 
-    # Create all tables if they don't exist
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    print("  Tables: ensured all tables exist.")
-
-    # Add new columns to existing tables (PostgreSQL won't auto-add with create_all)
-    is_pg = "postgresql" in str(engine.url) or "postgres" in str(engine.url)
+    is_pg = "postgresql" in str(eng.url) or "postgres" in str(eng.url)
     float_type = "DOUBLE PRECISION" if is_pg else "FLOAT"
+
     migrations = [
         ("users", "push_token", "VARCHAR(200)"),
         ("users", "lat", float_type),
         ("users", "lng", float_type),
         ("users", "updated_at", "TIMESTAMP"),
     ]
-    async with engine.begin() as conn:
+
+    async with eng.begin() as conn:
         for table, column, col_type in migrations:
             try:
-                from sqlalchemy import text
                 await conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {column} {col_type}"))
                 print(f"  Migration: added {table}.{column}")
-            except Exception:
-                print(f"  Migration: {table}.{column} already exists")
+            except Exception as e:
+                err_str = str(e).lower()
+                if "already exists" in err_str or "duplicate column" in err_str:
+                    print(f"  Migration: {table}.{column} already exists")
+                elif "does not exist" in err_str or "undefined table" in err_str:
+                    print(f"  Migration: {table} table not found yet (will be created)")
+                else:
+                    print(f"  Migration: {table}.{column} error: {e}")
+
+
+async def main():
+    print("=" * 50)
+    print("  QuickGift Database Seed")
+    print("=" * 50)
+
+    # Step 1: Add missing columns to existing tables FIRST
+    # This MUST run before create_all or any ORM queries
+    await run_migrations(engine)
+
+    # Step 2: Create any new tables that don't exist yet
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    print("  Tables: ensured all tables exist.")
     print()
 
     async with async_session() as session:
