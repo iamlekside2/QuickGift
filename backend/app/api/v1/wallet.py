@@ -116,12 +116,111 @@ async def list_transactions(
 
 # ── Fund ─────────────────────────────────────────────────
 
+@router.post("/fund/initialize")
+async def initialize_fund(
+    amount: float = Query(..., gt=0),
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Initialize a Paystack payment to fund the wallet."""
+    import uuid as _uuid
+    reference = f"WF-{_uuid.uuid4().hex[:12].upper()}"
+
+    if settings.PAYSTACK_SECRET_KEY:
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(
+                f"{settings.PAYSTACK_BASE_URL}/transaction/initialize",
+                json={
+                    "email": current_user.get("email") or f"{current_user['user_id']}@quickgift.ng",
+                    "amount": int(amount * 100),
+                    "reference": reference,
+                    "currency": "NGN",
+                    "metadata": {"type": "wallet_fund", "user_id": current_user["user_id"]},
+                },
+                headers={"Authorization": f"Bearer {settings.PAYSTACK_SECRET_KEY}"},
+            )
+            if resp.status_code == 200:
+                data = resp.json()
+                return {
+                    "reference": reference,
+                    "amount": amount,
+                    "authorization_url": data["data"]["authorization_url"],
+                    "access_code": data["data"]["access_code"],
+                }
+
+    # Dev mode fallback
+    return {"reference": reference, "amount": amount, "authorization_url": None, "message": "Dev mode"}
+
+
+@router.post("/fund/verify/{reference}")
+async def verify_fund(
+    reference: str,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Verify a Paystack payment and credit the wallet."""
+    # Check duplicate
+    existing = await db.execute(
+        select(Transaction).where(Transaction.reference == reference)
+    )
+    if existing.scalars().first():
+        raise HTTPException(status_code=400, detail="Already processed")
+
+    amount = 0
+    verified = False
+
+    if settings.PAYSTACK_SECRET_KEY:
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(
+                f"{settings.PAYSTACK_BASE_URL}/transaction/verify/{reference}",
+                headers={"Authorization": f"Bearer {settings.PAYSTACK_SECRET_KEY}"},
+            )
+            if resp.status_code == 200:
+                data = resp.json()["data"]
+                if data["status"] == "success":
+                    amount = data["amount"] / 100  # kobo to naira
+                    verified = True
+    else:
+        # Dev mode: auto-verify, extract amount from reference metadata
+        amount = 5000  # dev fallback
+        verified = True
+
+    if not verified:
+        raise HTTPException(status_code=400, detail="Payment not verified")
+
+    result = await db.execute(select(User).where(User.id == current_user["user_id"]))
+    user = result.scalars().first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user.wallet_balance += amount
+
+    transaction = Transaction(
+        user_id=current_user["user_id"],
+        type="credit",
+        amount=amount,
+        description="Wallet funding via Paystack",
+        reference=reference,
+        balance_after=user.wallet_balance,
+        status="completed",
+    )
+    db.add(transaction)
+    await db.commit()
+    await db.refresh(transaction)
+    return transaction
+
+
 @router.post("/fund", response_model=TransactionResponse)
-async def fund_wallet(
+async def fund_wallet_legacy(
     req: FundWalletRequest,
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    """Legacy fund endpoint — kept for backward compatibility but requires admin role or dev mode."""
+    # Only allow in dev mode or by admin
+    if settings.PAYSTACK_SECRET_KEY and current_user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Direct funding disabled. Use /fund/initialize instead.")
+
     if req.amount <= 0:
         raise HTTPException(status_code=400, detail="Amount must be greater than zero")
 

@@ -32,7 +32,6 @@ async def _create_payout_for_order(order: Order, db: AsyncSession):
     items = items_result.scalars().all()
 
     for item in items:
-        # Look up the product to find the provider
         product_result = await db.execute(
             select(Product).where(Product.id == item.product_id)
         )
@@ -40,21 +39,26 @@ async def _create_payout_for_order(order: Order, db: AsyncSession):
         if not product:
             continue
 
-        # Find provider by vendor_name (products are linked to vendors)
-        # For now, create a platform-level payout
         commission = item.total_price * (settings.GIFT_COMMISSION_PERCENT / 100)
         provider_amount = item.total_price - commission
 
-        payout = Payout(
-            provider_id=product.vendor_name,  # We'll use vendor_name as identifier for now
-            user_id=order.user_id,
-            order_id=order.id,
-            amount=provider_amount,
-            commission=commission,
-            status="held",
-            hold_until=datetime.utcnow() + timedelta(hours=settings.PAYOUT_HOLD_HOURS),
-        )
-        db.add(payout)
+        # Find the actual provider by vendor_id, or skip payout if no linked provider
+        if product.vendor_id:
+            provider_result = await db.execute(
+                select(Provider).where(Provider.id == product.vendor_id)
+            )
+            provider = provider_result.scalars().first()
+            if provider:
+                payout = Payout(
+                    provider_id=provider.id,
+                    user_id=provider.user_id,
+                    order_id=order.id,
+                    amount=provider_amount,
+                    commission=commission,
+                    status="held",
+                    hold_until=datetime.utcnow() + timedelta(hours=settings.PAYOUT_HOLD_HOURS),
+                )
+                db.add(payout)
 
 
 async def _create_payout_for_booking(booking: Booking, db: AsyncSession):

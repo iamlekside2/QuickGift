@@ -57,8 +57,8 @@ export default function BookingScreen({ navigation, route }) {
       const bookingRes = await bookingsAPI.create(bookingData);
       const booking = bookingRes.data;
 
-      // Initialize Paystack payment for the deposit
-      const depositAmount = servicePrice * 0.3;
+      // Collect full payment upfront
+      const depositAmount = servicePrice;
       const payRes = await paymentsAPI.initialize({
         booking_id: booking.id,
         amount: depositAmount,
@@ -307,8 +307,8 @@ export default function BookingScreen({ navigation, route }) {
         }}
       >
         <View>
-          <Text className="text-xs text-gray-400 font-medium">Deposit required</Text>
-          <Text className="text-2xl font-extrabold text-gray-800">{formatPrice(servicePrice * 0.3)}</Text>
+          <Text className="text-xs text-gray-400 font-medium">Total</Text>
+          <Text className="text-2xl font-extrabold text-gray-800">{formatPrice(servicePrice)}</Text>
         </View>
         <Button
           title={submitting ? 'Booking...' : 'Confirm Booking'}

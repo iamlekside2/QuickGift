@@ -45,7 +45,7 @@ async def create_booking(
     if not service:
         raise HTTPException(status_code=404, detail="Service not found")
 
-    deposit = service.price * 0.3  # 30% deposit
+    deposit = service.price  # Full payment collected upfront
     commission = service.price * (settings.BEAUTY_COMMISSION_PERCENT / 100)
 
     booking = Booking(
@@ -88,6 +88,7 @@ async def create_booking(
 @router.get("", response_model=List[BookingResponse])
 async def list_bookings(
     status: Optional[str] = None,
+    date: Optional[str] = None,
     page: int = 1,
     per_page: int = 20,
     current_user: dict = Depends(get_current_user),
@@ -107,6 +108,13 @@ async def list_bookings(
 
     if status:
         query = query.where(Booking.status == status)
+    if date:
+        # Filter by booking_date (date string like "2026-03-21")
+        from sqlalchemy import cast, Date
+        try:
+            query = query.where(cast(Booking.booking_date, Date) == date)
+        except Exception:
+            pass
 
     query = query.order_by(Booking.created_at.desc())
     query = query.offset((page - 1) * per_page).limit(per_page)

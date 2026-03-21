@@ -66,6 +66,7 @@ export default function EditBusinessProfile({ navigation }) {
         offers_home_service: serviceType === 'Home Service' || serviceType === 'Both',
         offers_salon_service: serviceType === 'Salon Visit' || serviceType === 'Both',
       };
+      // Note: service_type/category update needs a separate field on the PATCH endpoint
 
       await providersAPI.updateMe(updateData);
 

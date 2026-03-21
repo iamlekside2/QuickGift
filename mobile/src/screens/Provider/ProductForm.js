@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Platform, Alert, Switch } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Platform, Alert, Switch, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import AppInput from '../../components/common/AppInput';
+import { providersAPI } from '../../services/api';
 
 const CATEGORIES = ['Cakes', 'Flowers', 'Chocolates', 'Hampers', 'Balloons', 'Personalized'];
 const DELIVERY_OPTIONS = ['Same Day', 'Next Day', 'Both'];
@@ -18,16 +19,30 @@ export default function ProductForm({ route, navigation }) {
   const [inStock, setInStock] = useState(existing.inStock !== false);
   const [delivery, setDelivery] = useState(existing.delivery || 'Both');
 
-  const handleSave = () => {
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
     if (!name || !price) {
       Alert.alert('Missing Fields', 'Please fill in product name and price.');
       return;
     }
-    Alert.alert(
-      'Product Saved',
-      `"${name}" has been submitted for review. Our team will list it within 24 hours.`,
-      [{ text: 'OK', onPress: () => navigation.goBack() }]
-    );
+    setSaving(true);
+    try {
+      await providersAPI.addMyProduct({
+        name: name.trim(),
+        description: description.trim() || undefined,
+        price: parseFloat(price),
+        category_id: category, // Will need to be a real category ID
+        vendor_name: '', // Backend fills this from provider profile
+      });
+      Alert.alert('Product Added', `"${name}" has been listed.`, [
+        { text: 'OK', onPress: () => navigation.goBack() },
+      ]);
+    } catch (err) {
+      Alert.alert('Save Failed', err.response?.data?.detail || 'Could not save product.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleDelete = () => {

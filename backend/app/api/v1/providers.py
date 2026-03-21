@@ -168,6 +168,29 @@ async def get_my_provider(
     )
 
 
+@router.patch("/me", response_model=ProviderResponse)
+async def update_my_provider(
+    req: ProviderUpdate,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Update the current user's provider profile."""
+    result = await db.execute(
+        select(Provider).where(Provider.user_id == current_user["user_id"])
+    )
+    provider = result.scalars().first()
+    if not provider:
+        raise HTTPException(status_code=404, detail="Provider profile not found")
+
+    update_data = req.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(provider, field, value)
+
+    await db.commit()
+    await db.refresh(provider)
+    return provider
+
+
 @router.post("/me/services", response_model=ServiceResponse)
 async def add_my_service(
     req: ServiceCreate,

@@ -50,6 +50,17 @@ async def send_otp(req: SendOTPRequest, db: AsyncSession = Depends(get_db)):
             detail="Invalid phone number. Please use a valid Nigerian number (e.g. +2348012345678, 08012345678).",
         )
 
+    # Rate limit: max 5 OTPs per phone in 10 minutes
+    from sqlalchemy import func
+    recent_count = await db.scalar(
+        select(func.count(OTP.id)).where(
+            OTP.phone == req.phone,
+            OTP.created_at >= datetime.utcnow() - timedelta(minutes=10),
+        )
+    )
+    if (recent_count or 0) >= 5:
+        raise HTTPException(status_code=429, detail="Too many OTP requests. Please wait a few minutes.")
+
     code = generate_otp()
     otp = OTP(
         phone=req.phone,

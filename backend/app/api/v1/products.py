@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.security import get_current_user, require_admin
 from app.models.product import Product, Category, Occasion
+from app.models.provider import Provider
 from app.schemas.product import (
     ProductCreate, ProductUpdate, ProductResponse,
     ProductListResponse, CategoryCreate, CategoryResponse, OccasionResponse,
@@ -156,3 +157,56 @@ async def delete_product(
     await db.delete(product)
     await db.commit()
     return {"message": "Product deleted"}
+
+
+# --- Provider Product Management ---
+
+@router.get("/my-products", response_model=List[ProductResponse])
+async def list_my_products(
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """List products belonging to the current provider."""
+    provider_result = await db.execute(
+        select(Provider).where(Provider.user_id == current_user["user_id"])
+    )
+    provider = provider_result.scalars().first()
+    if not provider:
+        return []
+
+    result = await db.execute(
+        select(Product).where(Product.vendor_id == provider.id).order_by(Product.created_at.desc())
+    )
+    return result.scalars().all()
+
+
+@router.post("/my-products", response_model=ProductResponse)
+async def create_my_product(
+    req: ProductCreate,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Create a product as a provider/seller."""
+    provider_result = await db.execute(
+        select(Provider).where(Provider.user_id == current_user["user_id"])
+    )
+    provider = provider_result.scalars().first()
+    if not provider:
+        raise HTTPException(status_code=404, detail="Provider profile not found. Complete your business setup first.")
+
+    product = Product(
+        name=req.name,
+        description=req.description,
+        price=req.price,
+        compare_price=req.compare_price,
+        category_id=req.category_id,
+        vendor_name=provider.business_name,
+        vendor_id=provider.id,
+        image_url=req.image_url,
+        status="active",
+        city=provider.city,
+    )
+    db.add(product)
+    await db.commit()
+    await db.refresh(product)
+    return product

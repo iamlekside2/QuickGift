@@ -87,11 +87,13 @@ const realProvidersAPI = {
   list: (params = {}) => api.get('/providers', { params }),
   get: (id) => api.get(`/providers/${id}`),
   me: () => api.get('/providers/me'),
-  updateMe: (data) => api.get('/providers/me').then(res => api.patch(`/providers/${res.data?.id}`, data)),
+  updateMe: (data) => api.patch('/providers/me', data),
   services: (id) => api.get(`/providers/${id}/services`),
   register: (data) => api.post('/providers', data),
   addService: (providerId, data) => api.post(`/providers/${providerId}/services`, data),
   addMyService: (data) => api.post('/providers/me/services', data),
+  myProducts: () => api.get('/products/my-products'),
+  addMyProduct: (data) => api.post('/products/my-products', data),
 };
 
 const realOrdersAPI = {
@@ -145,6 +147,8 @@ const realWalletAPI = {
   getBalance: () => api.get('/wallet/balance'),
   getTransactions: (params = {}) => api.get('/wallet/transactions', { params }),
   fund: (amount, reference) => api.post('/wallet/fund', { amount, reference }),
+  fundInitialize: (amount) => api.post(`/wallet/fund/initialize?amount=${amount}`),
+  fundVerify: (reference) => api.post(`/wallet/fund/verify/${reference}`),
   transfer: (recipientPhone, amount) => api.post('/wallet/transfer', { recipient_phone: recipientPhone, amount }),
   // Bank accounts
   getBanks: () => api.get('/wallet/banks'),

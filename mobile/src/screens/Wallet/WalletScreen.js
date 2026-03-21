@@ -58,13 +58,37 @@ export default function WalletScreen({ navigation }) {
     }
     setProcessing(true);
     try {
-      const reference = `FND-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
-      await walletAPI.fund(amount, reference);
-      credit(amount);
+      // Initialize Paystack payment for wallet funding
+      const initRes = await walletAPI.fundInitialize(amount);
+      const data = initRes.data;
+
+      if (data.authorization_url) {
+        setShowFundModal(false);
+        setFundAmount('');
+        setProcessing(false);
+        // Navigate to Paystack WebView
+        navigation.navigate('PaystackWebView', {
+          authorization_url: data.authorization_url,
+          reference: data.reference,
+          successScreen: 'WalletMain',
+          onSuccess: async () => {
+            await walletAPI.fundVerify(data.reference);
+            credit(amount);
+            refreshBalance();
+          },
+        });
+        return;
+      }
+
+      // Dev mode — no Paystack key, auto-verify
+      if (data.reference) {
+        await walletAPI.fundVerify(data.reference);
+        credit(amount);
+        refreshBalance();
+      }
       Alert.alert('Success', `₦${amount.toLocaleString()} added to your wallet`);
       setShowFundModal(false);
       setFundAmount('');
-      refreshBalance();
     } catch (e) {
       Alert.alert('Error', e.response?.data?.detail || 'Failed to fund wallet');
     } finally {

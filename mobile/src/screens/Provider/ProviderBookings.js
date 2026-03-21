@@ -135,7 +135,7 @@ export default function ProviderBookings({ navigation }) {
                     <TouchableOpacity
                       className="bg-teal px-3 py-1.5 rounded-2xl"
                       disabled={updatingId === booking.id}
-                      onPress={() => handleUpdateStatus(booking.id, 'accepted')}
+                      onPress={() => handleUpdateStatus(booking.id, 'confirmed')}
                     >
                       {updatingId === booking.id ? (
                         <ActivityIndicator size="small" color="#fff" />

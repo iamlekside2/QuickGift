@@ -22,7 +22,7 @@ router = APIRouter(prefix="/orders", tags=["Orders"])
 
 
 def generate_order_number():
-    return "QG-" + "".join(random.choices(string.digits, k=4))
+    return "QG-" + "".join(random.choices(string.ascii_uppercase + string.digits, k=8))
 
 
 @router.post("", response_model=OrderResponse)

@@ -16,7 +16,7 @@ export default function PaymentScreen({ route, navigation }) {
   const [paying, setPaying] = useState(false);
 
   const price = gift.price || 0;
-  const deliveryFee = 1500;
+  const deliveryFee = 0; // Delivery fee calculated via Kwik at dispatch
   const total = price + deliveryFee;
 
   const insufficientWallet = selectedMethod === 'wallet' && walletBalance < total;
