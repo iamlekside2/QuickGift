@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Platform, Share, Alert } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -27,10 +28,10 @@ export default function ReferFriendScreen({ navigation }) {
     }
   };
 
-  const handleCopyCode = () => {
+  const handleCopyCode = async () => {
+    await Clipboard.setStringAsync(REFERRAL_CODE);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-    Alert.alert('Copied!', 'Referral code copied to clipboard.');
   };
 
   return (

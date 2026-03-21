@@ -18,8 +18,14 @@ export default function PaymentScreen({ route, navigation }) {
   const deliveryFee = 1500;
   const total = price + deliveryFee;
 
+  const insufficientWallet = selectedMethod === 'wallet' && walletBalance < total;
+
   const handlePay = async () => {
     if (paying) return;
+    if (insufficientWallet) {
+      Alert.alert('Insufficient Balance', `Your wallet balance (₦${walletBalance.toLocaleString()}) is less than the total (₦${total.toLocaleString()}). Please fund your wallet or pay with card.`);
+      return;
+    }
     setPaying(true);
     try {
       // Step 1: Create the order

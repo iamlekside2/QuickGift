@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity, TextInput,
-  KeyboardAvoidingView, Platform, ActivityIndicator,
+  KeyboardAvoidingView, Platform, ActivityIndicator, Alert,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
@@ -193,11 +193,11 @@ export default function ChatScreen({ navigation, route }) {
             </View>
           </View>
 
-          <TouchableOpacity className="w-10 h-10 rounded-2xl bg-white/15 items-center justify-center">
+          <TouchableOpacity
+            className="w-10 h-10 rounded-2xl bg-white/15 items-center justify-center"
+            onPress={() => Alert.alert('Call', 'Voice calls coming soon!')}
+          >
             <Ionicons name="call-outline" size={18} color="#fff" />
-          </TouchableOpacity>
-          <TouchableOpacity className="w-10 h-10 rounded-2xl bg-white/15 items-center justify-center">
-            <Ionicons name="ellipsis-vertical" size={18} color="#fff" />
           </TouchableOpacity>
         </View>
       </View>
@@ -245,7 +245,10 @@ export default function ChatScreen({ navigation, route }) {
             borderTopColor: '#F3F4F6',
           }}
         >
-          <TouchableOpacity className="w-11 h-11 rounded-2xl bg-gray-100 items-center justify-center mb-0.5">
+          <TouchableOpacity
+            className="w-11 h-11 rounded-2xl bg-gray-100 items-center justify-center mb-0.5"
+            onPress={() => Alert.alert('Attachments', 'File sharing coming soon!')}
+          >
             <Ionicons name="add" size={22} color="#6B7280" />
           </TouchableOpacity>
 

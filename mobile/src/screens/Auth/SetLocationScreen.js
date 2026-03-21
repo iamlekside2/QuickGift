@@ -36,7 +36,7 @@ const POPULAR_AREAS = [
 ];
 
 export default function SetLocationScreen() {
-  const { user, updateProfile, updateUser } = useAuth();
+  const { user, updateProfile, updateUser, logout } = useAuth();
   const { refreshLocation } = useLocation();
   const [area, setArea] = useState('');
   const [selectedCoords, setSelectedCoords] = useState(null);
@@ -231,6 +231,19 @@ export default function SetLocationScreen() {
           <Text className={`text-base font-bold ${isValid ? 'text-white' : 'text-gray-400'}`}>
             {loading ? 'Saving...' : 'Continue'}
           </Text>
+        </TouchableOpacity>
+
+        {/* Logout link */}
+        <TouchableOpacity
+          className="items-center mt-6 mb-4"
+          onPress={() => {
+            Alert.alert('Log Out', 'Are you sure?', [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Log Out', style: 'destructive', onPress: logout },
+            ]);
+          }}
+        >
+          <Text className="text-xs text-gray-400">Wrong account? <Text className="text-red-400 font-semibold">Log Out</Text></Text>
         </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>

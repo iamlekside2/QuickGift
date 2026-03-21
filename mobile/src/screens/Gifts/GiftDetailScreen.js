@@ -160,15 +160,8 @@ export default function GiftDetailScreen({ navigation, route }) {
 
             <TouchableOpacity
               className="flex-row items-center gap-4 bg-white rounded-2xl p-4"
-              style={{
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.05,
-                shadowRadius: 10,
-                elevation: 2,
-                borderWidth: 1,
-                borderColor: '#F3F4F6',
-              }}
+              style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2, borderWidth: 1, borderColor: '#F3F4F6' }}
+              onPress={() => Alert.alert('Coming Soon', 'Anonymous delivery will be available soon!')}
             >
               <View className="w-10 h-10 rounded-xl bg-teal-light items-center justify-center">
                 <Ionicons name="gift-outline" size={20} color="#35615D" />
@@ -177,20 +170,15 @@ export default function GiftDetailScreen({ navigation, route }) {
                 <Text className="text-[15px] font-semibold text-gray-800">Anonymous Delivery</Text>
                 <Text className="text-xs text-gray-400 mt-0.5">Hide your name from the recipient</Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color="#D1D5DB" />
+              <View className="bg-gray-100 px-2 py-0.5 rounded-full">
+                <Text className="text-[9px] text-gray-400 font-bold">SOON</Text>
+              </View>
             </TouchableOpacity>
 
             <TouchableOpacity
               className="flex-row items-center gap-4 bg-white rounded-2xl p-4"
-              style={{
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.05,
-                shadowRadius: 10,
-                elevation: 2,
-                borderWidth: 1,
-                borderColor: '#F3F4F6',
-              }}
+              style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2, borderWidth: 1, borderColor: '#F3F4F6' }}
+              onPress={() => Alert.alert('Coming Soon', 'Scheduled delivery will be available soon!')}
             >
               <View className="w-10 h-10 rounded-xl bg-orange-light items-center justify-center">
                 <Ionicons name="calendar-outline" size={20} color="#FD8950" />
@@ -199,20 +187,15 @@ export default function GiftDetailScreen({ navigation, route }) {
                 <Text className="text-[15px] font-semibold text-gray-800">Schedule Delivery</Text>
                 <Text className="text-xs text-gray-400 mt-0.5">Pick a date and time</Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color="#D1D5DB" />
+              <View className="bg-gray-100 px-2 py-0.5 rounded-full">
+                <Text className="text-[9px] text-gray-400 font-bold">SOON</Text>
+              </View>
             </TouchableOpacity>
 
             <TouchableOpacity
               className="flex-row items-center gap-4 bg-white rounded-2xl p-4"
-              style={{
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.05,
-                shadowRadius: 10,
-                elevation: 2,
-                borderWidth: 1,
-                borderColor: '#F3F4F6',
-              }}
+              style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2, borderWidth: 1, borderColor: '#F3F4F6' }}
+              onPress={() => Alert.alert('Coming Soon', 'Proof of Joy will be available soon!')}
             >
               <View className="w-10 h-10 rounded-xl bg-cream items-center justify-center">
                 <Ionicons name="camera-outline" size={20} color="#F59E0B" />
@@ -221,7 +204,9 @@ export default function GiftDetailScreen({ navigation, route }) {
                 <Text className="text-[15px] font-semibold text-gray-800">Proof of Joy</Text>
                 <Text className="text-xs text-gray-400 mt-0.5">Get a photo when gift is received</Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color="#D1D5DB" />
+              <View className="bg-gray-100 px-2 py-0.5 rounded-full">
+                <Text className="text-[9px] text-gray-400 font-bold">SOON</Text>
+              </View>
             </TouchableOpacity>
           </View>
         </View>

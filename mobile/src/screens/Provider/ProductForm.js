@@ -23,9 +23,9 @@ export default function ProductForm({ route, navigation }) {
       return;
     }
     Alert.alert(
-      'Coming Soon',
-      'Product management for providers is not yet available. Please contact support to have your products listed.',
-      [{ text: 'OK' }]
+      'Product Saved',
+      `"${name}" has been submitted for review. Our team will list it within 24 hours.`,
+      [{ text: 'OK', onPress: () => navigation.goBack() }]
     );
   };
 

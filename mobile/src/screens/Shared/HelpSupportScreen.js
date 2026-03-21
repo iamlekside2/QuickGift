@@ -6,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 const SUPPORT_OPTIONS = [
   { icon: 'call-outline', label: 'Call us', sub: '+234 810 123 4567', color: '#35615D', action: 'tel:+2348101234567' },
   { icon: 'mail-outline', label: 'Email us', sub: 'support@quickgift.co', color: '#3B82F6', action: 'mailto:support@quickgift.co' },
-  { icon: 'chatbubble-outline', label: 'Live Chat', sub: 'Chat with our support team', color: '#10B981' },
+  { icon: 'logo-whatsapp', label: 'WhatsApp', sub: 'Chat with our support team', color: '#25D366', action: 'https://wa.me/2348101234567' },
 ];
 
 const FAQS = [

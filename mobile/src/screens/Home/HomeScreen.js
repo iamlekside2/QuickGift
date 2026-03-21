@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, FlatList, TouchableOpacity, ActivityIndicator, Platform, Image } from 'react-native';
+import { View, Text, ScrollView, FlatList, TouchableOpacity, ActivityIndicator, Platform, Image, Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { BEAUTY_CATEGORIES } from '../../constants/data';
@@ -87,9 +87,9 @@ export default function HomeScreen({ navigation }) {
               </TouchableOpacity>
               <TouchableOpacity
                 className="w-10 h-10 rounded-2xl bg-white/15 items-center justify-center"
+                onPress={() => Alert.alert('Notifications', 'No new notifications')}
               >
                 <Ionicons name="notifications-outline" size={20} color="#fff" />
-                <View className="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full bg-orange border-2 border-teal" />
               </TouchableOpacity>
             </View>
           </View>
