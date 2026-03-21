@@ -140,6 +140,13 @@ const realWalletAPI = {
   transfer: (recipientPhone, amount) => api.post('/wallet/transfer', { recipient_phone: recipientPhone, amount }),
 };
 
+const realDeliveryAPI = {
+  getQuote: (data) => api.post('/delivery/quote', data),
+  create: (data) => api.post('/delivery/create', data),
+  track: (orderId) => api.get(`/delivery/track/${orderId}`),
+  cancel: (orderId) => api.post(`/delivery/cancel/${orderId}`),
+};
+
 // ─── Export based on per-service toggles ─────────────
 export const authAPI = USE_MOCK_AUTH ? mockAuthAPI : realAuthAPI;
 export const productsAPI = USE_MOCK_PRODUCTS ? mockProductsAPI : realProductsAPI;
@@ -152,5 +159,6 @@ export const chatsAPI = USE_MOCK_CHATS ? mockChatsAPI : realChatsAPI;
 export const notificationsAPI = realNotificationsAPI;
 export const walletAPI = realWalletAPI;
 export const uploadAPI = realUploadAPI;
+export const deliveryAPI = realDeliveryAPI;
 
 export default api;

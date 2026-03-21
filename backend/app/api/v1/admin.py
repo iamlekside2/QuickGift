@@ -16,6 +16,7 @@ from app.models.provider import Provider, Service
 from app.models.payment import Payment
 from app.models.transaction import Transaction
 from app.models.payout import Payout
+from app.models.delivery import Delivery
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
@@ -486,3 +487,27 @@ async def payout_stats(
         "total_commission": total_commission,
         "pending_count": pending_count,
     }
+
+
+# ---------------------------------------------------------------------------
+# Deliveries (Admin)
+# ---------------------------------------------------------------------------
+
+@router.get("/deliveries")
+async def admin_list_deliveries(
+    status: str = None,
+    page: int = Query(1, ge=1),
+    per_page: int = Query(20, ge=1, le=100),
+    admin: dict = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    query = select(Delivery)
+    if status:
+        query = query.where(Delivery.status == status)
+
+    total = (await db.execute(select(func.count()).select_from(query.subquery()))).scalar()
+    query = query.order_by(Delivery.created_at.desc()).offset((page - 1) * per_page).limit(per_page)
+    result = await db.execute(query)
+    deliveries = result.scalars().all()
+
+    return {"items": deliveries, "total": total, "page": page, "per_page": per_page}
