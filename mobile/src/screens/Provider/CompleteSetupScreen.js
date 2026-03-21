@@ -4,22 +4,12 @@ import {
   ScrollView, TouchableOpacity, Alert, Image,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { TextInput as PaperInput } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import { providersAPI } from '../../services/api';
+import AppInput from '../../components/common/AppInput';
 
 const logoSmall = require('../../../assets/images/logo-small.png');
-
-const paperTheme = {
-  colors: {
-    primary: '#35615D',
-    onSurfaceVariant: '#9CA3AF',
-    outline: '#E5E7EB',
-    background: '#F9FAFB',
-  },
-  roundness: 12,
-};
 
 const BUSINESS_TYPES = [
   { label: '🛍️ Seller', value: 'Seller', desc: 'I sell gift items (cakes, flowers, hampers, etc.)' },
@@ -133,36 +123,23 @@ export default function CompleteSetupScreen() {
             <Text className="text-lg font-bold text-gray-800 mb-1">Business Info</Text>
             <Text className="text-sm text-gray-400 mb-5">What's the name of your business?</Text>
 
-            <View className="mb-4">
-              <PaperInput
-                mode="outlined"
-                label="Business Name"
-                placeholder="e.g. GlowUp Studio"
-                value={businessName}
-                onChangeText={setBusinessName}
-                autoCapitalize="words"
-                left={<PaperInput.Icon icon="store-outline" color="#9CA3AF" />}
-                theme={paperTheme}
-                outlineStyle={{ borderRadius: 12 }}
-                style={{ backgroundColor: '#F9FAFB' }}
-              />
-            </View>
+            <AppInput
+              label="Business Name"
+              placeholder="e.g. GlowUp Studio"
+              value={businessName}
+              onChangeText={setBusinessName}
+              type="text"
+              icon="storefront-outline"
+            />
 
-            <View className="mb-6">
-              <PaperInput
-                mode="outlined"
-                label="Short Bio (optional)"
-                placeholder="Tell customers about yourself..."
-                value={bio}
-                onChangeText={setBio}
-                multiline
-                numberOfLines={3}
-                left={<PaperInput.Icon icon="text-box-outline" color="#9CA3AF" />}
-                theme={paperTheme}
-                outlineStyle={{ borderRadius: 12 }}
-                style={{ backgroundColor: '#F9FAFB' }}
-              />
-            </View>
+            <AppInput
+              label="Short Bio (optional)"
+              placeholder="Tell customers about yourself..."
+              value={bio}
+              onChangeText={setBio}
+              type="multiline"
+              icon="document-text-outline"
+            />
 
             <TouchableOpacity
               className={`py-4 rounded-2xl items-center ${isStep1Valid ? 'bg-teal' : 'bg-gray-200'}`}
@@ -250,36 +227,24 @@ export default function CompleteSetupScreen() {
             )}
 
             {/* City */}
-            <View className="mb-4">
-              <PaperInput
-                mode="outlined"
-                label="City"
-                placeholder="e.g. Lagos"
-                value={city}
-                onChangeText={setCity}
-                autoCapitalize="words"
-                left={<PaperInput.Icon icon="city-variant-outline" color="#9CA3AF" />}
-                theme={paperTheme}
-                outlineStyle={{ borderRadius: 12 }}
-                style={{ backgroundColor: '#F9FAFB' }}
-              />
-            </View>
+            <AppInput
+              label="City"
+              placeholder="e.g. Lagos"
+              value={city}
+              onChangeText={setCity}
+              type="text"
+              icon="business-outline"
+            />
 
             {/* Location / Area */}
-            <View className="mb-6">
-              <PaperInput
-                mode="outlined"
-                label="Area / Address (optional)"
-                placeholder="e.g. Lekki Phase 1, Lagos"
-                value={location}
-                onChangeText={setLocation}
-                autoCapitalize="words"
-                left={<PaperInput.Icon icon="map-marker-outline" color="#9CA3AF" />}
-                theme={paperTheme}
-                outlineStyle={{ borderRadius: 12 }}
-                style={{ backgroundColor: '#F9FAFB' }}
-              />
-            </View>
+            <AppInput
+              label="Area / Address (optional)"
+              placeholder="e.g. Lekki Phase 1, Lagos"
+              value={location}
+              onChangeText={setLocation}
+              type="text"
+              icon="location-outline"
+            />
 
             {/* Buttons */}
             <View className="flex-row gap-3">

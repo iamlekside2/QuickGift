@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Platform } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
+import AppInput from '../../components/common/AppInput';
 
 export default function RecipientDetailsScreen({ route, navigation }) {
   const gift = route.params?.gift || {};
@@ -80,52 +81,41 @@ export default function RecipientDetailsScreen({ route, navigation }) {
           }}
         >
           {/* Recipient Name */}
-          <Text className="text-[13px] font-bold text-gray-700 mb-2">Recipient Name</Text>
-          <TextInput
-            className="bg-white rounded-2xl px-4 py-4 text-sm text-gray-800 mb-4 border border-gray-100"
+          <AppInput
+            label="Recipient Name"
             value={name}
             onChangeText={setName}
             placeholder="e.g. Samuel Odion"
-            placeholderTextColor="#9CA3AF"
+            type="text"
+            icon="person-outline"
           />
 
           {/* Phone */}
-          <Text className="text-[13px] font-bold text-gray-700 mb-2">Phone Number</Text>
-          <View className="flex-row items-center bg-white rounded-2xl mb-4 overflow-hidden border border-gray-100">
-            <View className="px-3 py-4 bg-gray-50 flex-row items-center gap-1">
-              <Text className="text-sm text-gray-700">🇳🇬 +234</Text>
-            </View>
-            <TextInput
-              className="flex-1 px-3 py-4 text-sm text-gray-800"
-              value={phone}
-              onChangeText={setPhone}
-              placeholder="806 789 1234"
-              placeholderTextColor="#9CA3AF"
-              keyboardType="phone-pad"
-            />
-          </View>
+          <AppInput
+            label="Phone Number"
+            value={phone}
+            onChangeText={setPhone}
+            placeholder="806 789 1234"
+            type="phone"
+          />
 
           {/* Address */}
-          <Text className="text-[13px] font-bold text-gray-700 mb-2">Delivery Address</Text>
-          <TextInput
-            className="bg-white rounded-2xl px-4 py-4 text-sm text-gray-800 mb-4 border border-gray-100"
+          <AppInput
+            label="Delivery Address"
             value={address}
             onChangeText={setAddress}
             placeholder="15 Freedom Avenue, Lagos"
-            placeholderTextColor="#9CA3AF"
+            type="text"
+            icon="location-outline"
           />
 
           {/* Optional Note */}
-          <Text className="text-[13px] font-bold text-gray-700 mb-2">Personal Note (Optional)</Text>
-          <TextInput
-            className="bg-white rounded-2xl px-4 py-4 text-sm text-gray-800 border border-gray-100"
+          <AppInput
+            label="Personal Note (Optional)"
             value={note}
             onChangeText={setNote}
             placeholder="Happy Birthday! Wishing you the best..."
-            placeholderTextColor="#9CA3AF"
-            multiline
-            numberOfLines={3}
-            style={{ textAlignVertical: 'top', minHeight: 80 }}
+            type="multiline"
           />
         </View>
 

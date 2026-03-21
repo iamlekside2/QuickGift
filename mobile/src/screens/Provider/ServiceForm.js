@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Platform, Alert, Switch, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Platform, Alert, Switch, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import { providersAPI } from '../../services/api';
+import AppInput from '../../components/common/AppInput';
 
 const DURATIONS = ['30 min', '1 hr', '1.5 hrs', '2 hrs', '3 hrs'];
 const CATEGORIES = [
@@ -118,37 +119,30 @@ export default function ServiceForm({ route, navigation }) {
           }}
         >
           {/* Service Name */}
-          <Text className="text-[13px] font-bold text-gray-700 mb-2">Service Name</Text>
-          <TextInput
-            className="bg-white rounded-2xl px-4 py-4 text-sm text-gray-800 mb-4 border border-gray-100"
+          <AppInput
+            label="Service Name"
             value={name}
             onChangeText={setName}
             placeholder="e.g. Gel Nails - Full Set"
-            placeholderTextColor="#9CA3AF"
+            type="text"
           />
 
           {/* Description */}
-          <Text className="text-[13px] font-bold text-gray-700 mb-2">Description</Text>
-          <TextInput
-            className="bg-white rounded-2xl px-4 py-4 text-sm text-gray-800 mb-4 border border-gray-100"
+          <AppInput
+            label="Description"
             value={description}
             onChangeText={setDescription}
             placeholder="Describe what this service includes..."
-            placeholderTextColor="#9CA3AF"
-            multiline
-            numberOfLines={3}
-            style={{ textAlignVertical: 'top', minHeight: 80 }}
+            type="multiline"
           />
 
           {/* Price */}
-          <Text className="text-[13px] font-bold text-gray-700 mb-2">Price (₦)</Text>
-          <TextInput
-            className="bg-white rounded-2xl px-4 py-4 text-sm text-gray-800 border border-gray-100"
+          <AppInput
+            label="Price (₦)"
             value={price}
             onChangeText={setPrice}
             placeholder="e.g. 8000"
-            placeholderTextColor="#9CA3AF"
-            keyboardType="numeric"
+            type="number"
           />
         </View>
 

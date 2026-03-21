@@ -3,13 +3,14 @@ import { View, Text, ScrollView, TouchableOpacity, Platform, Alert, ActivityIndi
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
+import { useWallet } from '../../context/WalletContext';
 import { ordersAPI, paymentsAPI } from '../../services/api';
 
 export default function PaymentScreen({ route, navigation }) {
   const { user } = useAuth();
+  const { balance: walletBalance, debit, refreshBalance } = useWallet();
   const gift = route.params?.gift || {};
   const recipient = route.params?.recipient || {};
-  const walletBalance = user?.wallet_balance || 0;
 
   const [selectedMethod, setSelectedMethod] = useState('wallet');
   const [paying, setPaying] = useState(false);

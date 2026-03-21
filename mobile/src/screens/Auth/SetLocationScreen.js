@@ -4,20 +4,10 @@ import {
   ScrollView, TouchableOpacity, Alert, ActivityIndicator,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { TextInput as PaperInput } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import { useLocation } from '../../context/LocationContext';
-
-const paperTheme = {
-  colors: {
-    primary: '#35615D',
-    onSurfaceVariant: '#9CA3AF',
-    outline: '#E5E7EB',
-    background: '#F9FAFB',
-  },
-  roundness: 12,
-};
+import AppInput from '../../components/common/AppInput';
 
 // Each area mapped to approximate center coordinates
 const POPULAR_AREAS = [
@@ -197,8 +187,7 @@ export default function SetLocationScreen() {
 
         {/* Or type it */}
         <View className="mb-8">
-          <PaperInput
-            mode="outlined"
+          <AppInput
             label="Or type your area"
             placeholder="e.g. Ikoyi, Lagos"
             value={area}
@@ -206,11 +195,8 @@ export default function SetLocationScreen() {
               setArea(text);
               setSelectedCoords(null); // Clear coords when typing custom
             }}
-            autoCapitalize="words"
-            left={<PaperInput.Icon icon="map-marker-outline" color="#9CA3AF" />}
-            theme={paperTheme}
-            outlineStyle={{ borderRadius: 12 }}
-            style={{ backgroundColor: '#F9FAFB' }}
+            type="text"
+            icon="location-outline"
           />
         </View>
 

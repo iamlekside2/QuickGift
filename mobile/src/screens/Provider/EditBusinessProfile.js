@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Platform, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Platform, Alert, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import { authAPI } from '../../services/api';
+import AppInput from '../../components/common/AppInput';
 
 const CATEGORIES = ['Nails', 'Hair Styling', 'Makeup', 'Barber', 'Waxing', 'Massage'];
 const SERVICE_TYPES = ['Home Service', 'Salon Visit', 'Both'];
@@ -81,26 +82,21 @@ export default function EditBusinessProfile({ navigation }) {
           }}
         >
           {/* Business Name */}
-          <Text className="text-[13px] font-bold text-gray-700 mb-2">Business Name</Text>
-          <TextInput
-            className="bg-white rounded-2xl px-4 py-4 text-sm text-gray-800 mb-4 border border-gray-100"
+          <AppInput
+            label="Business Name"
             value={name}
             onChangeText={setName}
             placeholder="Your business name"
-            placeholderTextColor="#9CA3AF"
+            type="text"
           />
 
           {/* Bio */}
-          <Text className="text-[13px] font-bold text-gray-700 mb-2">Bio</Text>
-          <TextInput
-            className="bg-white rounded-2xl px-4 py-4 text-sm text-gray-800 mb-4 border border-gray-100"
+          <AppInput
+            label="Bio"
             value={bio}
             onChangeText={setBio}
             placeholder="Describe your business..."
-            placeholderTextColor="#9CA3AF"
-            multiline
-            numberOfLines={4}
-            style={{ textAlignVertical: 'top', minHeight: 100 }}
+            type="multiline"
           />
 
           {/* Category */}
@@ -141,36 +137,31 @@ export default function EditBusinessProfile({ navigation }) {
           }}
         >
           {/* Phone */}
-          <Text className="text-[13px] font-bold text-gray-700 mb-2">Phone</Text>
-          <TextInput
-            className="bg-white rounded-2xl px-4 py-4 text-sm text-gray-800 mb-4 border border-gray-100"
+          <AppInput
+            label="Phone"
             value={phone}
             onChangeText={setPhone}
             placeholder="Your phone number"
-            keyboardType="phone-pad"
-            placeholderTextColor="#9CA3AF"
+            type="phone"
           />
 
           {/* Email */}
-          <Text className="text-[13px] font-bold text-gray-700 mb-2">Email</Text>
-          <TextInput
-            className="bg-white rounded-2xl px-4 py-4 text-sm text-gray-800 mb-4 border border-gray-100"
+          <AppInput
+            label="Email"
             value={email}
             onChangeText={setEmail}
             placeholder="Your email address"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            placeholderTextColor="#9CA3AF"
+            type="email"
           />
 
           {/* Address */}
-          <Text className="text-[13px] font-bold text-gray-700 mb-2">Address</Text>
-          <TextInput
-            className="bg-white rounded-2xl px-4 py-4 text-sm text-gray-800 border border-gray-100"
+          <AppInput
+            label="Address"
             value={address}
             onChangeText={setAddress}
             placeholder="Your business address"
-            placeholderTextColor="#9CA3AF"
+            type="text"
+            icon="location-outline"
           />
         </View>
 

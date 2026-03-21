@@ -5,6 +5,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { AuthProvider } from './src/context/AuthContext';
 import { LocationProvider } from './src/context/LocationContext';
 import { CartProvider } from './src/context/CartContext';
+import { WalletProvider } from './src/context/WalletContext';
 import RootNavigator from './src/navigation/RootNavigator';
 
 // Keep native splash visible until app is ready
@@ -14,12 +15,14 @@ export default function App() {
   return (
     <AuthProvider>
       <LocationProvider>
+      <WalletProvider>
       <CartProvider>
         <NavigationContainer onReady={() => SplashScreen.hideAsync()}>
           <StatusBar style="dark" />
           <RootNavigator />
         </NavigationContainer>
       </CartProvider>
+      </WalletProvider>
       </LocationProvider>
     </AuthProvider>
   );

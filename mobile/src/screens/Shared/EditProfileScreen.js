@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Platform, Alert, ActivityIndicator, Image } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Platform, Alert, ActivityIndicator, Image } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../../context/AuthContext';
 import { uploadAPI } from '../../services/api';
+import AppInput from '../../components/common/AppInput';
 
 export default function EditProfileScreen({ navigation }) {
   const { user, updateProfile } = useAuth();
@@ -143,43 +144,37 @@ export default function EditProfileScreen({ navigation }) {
             elevation: 2,
           }}
         >
-          <Text className="text-[13px] font-bold text-gray-700 mb-2">Full Name</Text>
-          <TextInput
-            className="bg-white rounded-2xl px-4 py-4 text-sm text-gray-800 mb-4 border border-gray-100"
+          <AppInput
+            label="Full Name"
             value={fullName}
             onChangeText={setFullName}
             placeholder="Your full name"
-            placeholderTextColor="#9CA3AF"
+            type="text"
           />
 
-          <Text className="text-[13px] font-bold text-gray-700 mb-2">Phone Number</Text>
-          <TextInput
-            className="bg-white rounded-2xl px-4 py-4 text-sm text-gray-800 mb-4 border border-gray-100"
+          <AppInput
+            label="Phone Number"
             value={phone}
             onChangeText={setPhone}
-            keyboardType="phone-pad"
             placeholder="+234..."
-            placeholderTextColor="#9CA3AF"
+            type="phone"
           />
 
-          <Text className="text-[13px] font-bold text-gray-700 mb-2">Email</Text>
-          <TextInput
-            className="bg-white rounded-2xl px-4 py-4 text-sm text-gray-800 mb-4 border border-gray-100"
+          <AppInput
+            label="Email"
             value={email}
             onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
             placeholder="your@email.com"
-            placeholderTextColor="#9CA3AF"
+            type="email"
           />
 
-          <Text className="text-[13px] font-bold text-gray-700 mb-2">City</Text>
-          <TextInput
-            className="bg-white rounded-2xl px-4 py-4 text-sm text-gray-800 border border-gray-100"
+          <AppInput
+            label="City"
             value={city}
             onChangeText={setCity}
             placeholder="Lagos"
-            placeholderTextColor="#9CA3AF"
+            type="text"
+            icon="location-outline"
           />
         </View>
 

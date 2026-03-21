@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Platform, Alert, Switch } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Platform, Alert, Switch } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
+import AppInput from '../../components/common/AppInput';
 
 const CATEGORIES = ['Cakes', 'Flowers', 'Chocolates', 'Hampers', 'Balloons', 'Personalized'];
 const DELIVERY_OPTIONS = ['Same Day', 'Next Day', 'Both'];
@@ -77,37 +78,30 @@ export default function ProductForm({ route, navigation }) {
           }}
         >
           {/* Product Name */}
-          <Text className="text-[13px] font-bold text-gray-700 mb-2">Product Name</Text>
-          <TextInput
-            className="bg-white rounded-2xl px-4 py-4 text-sm text-gray-800 mb-4 border border-gray-100"
+          <AppInput
+            label="Product Name"
             value={name}
             onChangeText={setName}
             placeholder="e.g. Birthday Gift Box"
-            placeholderTextColor="#9CA3AF"
+            type="text"
           />
 
           {/* Description */}
-          <Text className="text-[13px] font-bold text-gray-700 mb-2">Description</Text>
-          <TextInput
-            className="bg-white rounded-2xl px-4 py-4 text-sm text-gray-800 mb-4 border border-gray-100"
+          <AppInput
+            label="Description"
             value={description}
             onChangeText={setDescription}
             placeholder="Describe your product..."
-            placeholderTextColor="#9CA3AF"
-            multiline
-            numberOfLines={3}
-            style={{ textAlignVertical: 'top', minHeight: 80 }}
+            type="multiline"
           />
 
           {/* Price */}
-          <Text className="text-[13px] font-bold text-gray-700 mb-2">Price (₦)</Text>
-          <TextInput
-            className="bg-white rounded-2xl px-4 py-4 text-sm text-gray-800 border border-gray-100"
+          <AppInput
+            label="Price (₦)"
             value={price}
             onChangeText={setPrice}
             placeholder="e.g. 15000"
-            placeholderTextColor="#9CA3AF"
-            keyboardType="numeric"
+            type="number"
           />
         </View>
 

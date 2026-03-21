@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Platform, TextInput, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Platform, Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
+import AppInput from '../../components/common/AppInput';
 
 
 export default function AddressesScreen({ navigation }) {
@@ -96,61 +97,46 @@ export default function AddressesScreen({ navigation }) {
           >
             <Text className="text-base font-bold text-gray-800 mb-4">New Address</Text>
             <View className="gap-3">
-              <View>
-                <Text className="text-[13px] font-bold text-gray-500 mb-1.5">Label</Text>
-                <TextInput
-                  className="bg-gray-50 rounded-2xl px-4 py-3.5 text-sm text-gray-800"
-                  style={{ borderWidth: 1, borderColor: '#F3F4F6' }}
-                  placeholder="e.g. Home, Office, Mom's"
-                  placeholderTextColor="#9CA3AF"
-                  value={newAddress.label}
-                  onChangeText={(t) => setNewAddress({ ...newAddress, label: t })}
-                />
-              </View>
-              <View>
-                <Text className="text-[13px] font-bold text-gray-500 mb-1.5">Recipient Name</Text>
-                <TextInput
-                  className="bg-gray-50 rounded-2xl px-4 py-3.5 text-sm text-gray-800"
-                  style={{ borderWidth: 1, borderColor: '#F3F4F6' }}
-                  placeholder="Full name"
-                  placeholderTextColor="#9CA3AF"
-                  value={newAddress.name}
-                  onChangeText={(t) => setNewAddress({ ...newAddress, name: t })}
-                />
-              </View>
-              <View>
-                <Text className="text-[13px] font-bold text-gray-500 mb-1.5">Address</Text>
-                <TextInput
-                  className="bg-gray-50 rounded-2xl px-4 py-3.5 text-sm text-gray-800"
-                  style={{ borderWidth: 1, borderColor: '#F3F4F6' }}
-                  placeholder="Street address"
-                  placeholderTextColor="#9CA3AF"
-                  value={newAddress.address}
-                  onChangeText={(t) => setNewAddress({ ...newAddress, address: t })}
-                />
-              </View>
+              <AppInput
+                label="Label"
+                placeholder="e.g. Home, Office, Mom's"
+                value={newAddress.label}
+                onChangeText={(t) => setNewAddress({ ...newAddress, label: t })}
+                type="text"
+              />
+              <AppInput
+                label="Recipient Name"
+                placeholder="Full name"
+                value={newAddress.name}
+                onChangeText={(t) => setNewAddress({ ...newAddress, name: t })}
+                type="text"
+                icon="person-outline"
+              />
+              <AppInput
+                label="Address"
+                placeholder="Street address"
+                value={newAddress.address}
+                onChangeText={(t) => setNewAddress({ ...newAddress, address: t })}
+                type="text"
+                icon="location-outline"
+              />
               <View className="flex-row gap-3">
                 <View className="flex-1">
-                  <Text className="text-[13px] font-bold text-gray-500 mb-1.5">City</Text>
-                  <TextInput
-                    className="bg-gray-50 rounded-2xl px-4 py-3.5 text-sm text-gray-800"
-                    style={{ borderWidth: 1, borderColor: '#F3F4F6' }}
+                  <AppInput
+                    label="City"
                     placeholder="City"
-                    placeholderTextColor="#9CA3AF"
                     value={newAddress.city}
                     onChangeText={(t) => setNewAddress({ ...newAddress, city: t })}
+                    type="text"
                   />
                 </View>
                 <View className="flex-1">
-                  <Text className="text-[13px] font-bold text-gray-500 mb-1.5">Phone</Text>
-                  <TextInput
-                    className="bg-gray-50 rounded-2xl px-4 py-3.5 text-sm text-gray-800"
-                    style={{ borderWidth: 1, borderColor: '#F3F4F6' }}
+                  <AppInput
+                    label="Phone"
                     placeholder="Phone number"
-                    placeholderTextColor="#9CA3AF"
                     value={newAddress.phone}
                     onChangeText={(t) => setNewAddress({ ...newAddress, phone: t })}
-                    keyboardType="phone-pad"
+                    type="phone"
                   />
                 </View>
               </View>

@@ -4,21 +4,11 @@ import {
   Platform, ScrollView, TouchableOpacity, Image, Alert,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { TextInput as PaperInput } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
+import AppInput from '../../components/common/AppInput';
 
 const logoSmall = require('../../../assets/images/logo-small.png');
-
-const paperTheme = {
-  colors: {
-    primary: '#35615D',
-    onSurfaceVariant: '#9CA3AF',
-    outline: '#E5E7EB',
-    background: '#F9FAFB',
-  },
-  roundness: 12,
-};
 
 export default function SignupScreen({ navigation }) {
   const [fullName, setFullName] = useState('');
@@ -175,36 +165,23 @@ export default function SignupScreen({ navigation }) {
         </View>
 
         {/* Full Name */}
-        <View className="mb-4">
-          <PaperInput
-            mode="outlined"
-            label="Full Name"
-            placeholder="John Doe"
-            value={fullName}
-            onChangeText={setFullName}
-            autoCapitalize="words"
-            left={<PaperInput.Icon icon="account-outline" color="#9CA3AF" />}
-            theme={paperTheme}
-            outlineStyle={{ borderRadius: 12 }}
-            style={{ backgroundColor: '#F9FAFB' }}
-          />
-        </View>
+        <AppInput
+          label="Full Name"
+          placeholder="John Doe"
+          value={fullName}
+          onChangeText={setFullName}
+          type="text"
+          icon="person-outline"
+        />
 
         {/* Phone Number */}
-        <View className="mb-6">
-          <PaperInput
-            mode="outlined"
-            label="Phone Number"
-            placeholder="801 234 5678"
-            value={phone}
-            onChangeText={setPhone}
-            keyboardType="phone-pad"
-            left={<PaperInput.Affix text="+234" textStyle={{ color: '#374151', fontWeight: '600' }} />}
-            theme={paperTheme}
-            outlineStyle={{ borderRadius: 12 }}
-            style={{ backgroundColor: '#F9FAFB' }}
-          />
-        </View>
+        <AppInput
+          label="Phone Number"
+          placeholder="801 234 5678"
+          value={phone}
+          onChangeText={setPhone}
+          type="phone"
+        />
 
         {/* Continue Button */}
         <TouchableOpacity

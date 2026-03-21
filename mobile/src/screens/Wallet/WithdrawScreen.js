@@ -7,15 +7,17 @@ import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { walletAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import { useWallet } from '../../context/WalletContext';
+import AppInput from '../../components/common/AppInput';
 
 const QUICK_AMOUNTS = [5000, 10000, 20000, 50000];
 
 export default function WithdrawScreen({ navigation }) {
   const { user } = useAuth();
+  const { balance, debit, refreshBalance } = useWallet();
   const [amount, setAmount] = useState('');
   const [bankAccounts, setBankAccounts] = useState([]);
   const [selectedAccount, setSelectedAccount] = useState(null);
-  const [balance, setBalance] = useState(user?.wallet_balance || 0);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
@@ -33,12 +35,10 @@ export default function WithdrawScreen({ navigation }) {
 
   const loadData = async () => {
     try {
-      const [balRes, bankRes] = await Promise.all([
-        walletAPI.getBalance(),
+      await refreshBalance();
+      const [bankRes] = await Promise.all([
         walletAPI.getBankAccounts(),
       ]);
-      const bal = balRes.data?.balance || 0;
-      setBalance(bal);
       const accounts = bankRes.data || [];
       setBankAccounts(accounts);
       // Auto-select default or first
@@ -68,6 +68,7 @@ export default function WithdrawScreen({ navigation }) {
             setSubmitting(true);
             try {
               await walletAPI.withdraw(numAmount, selectedAccount.id);
+              debit(numAmount);
               Alert.alert(
                 'Withdrawal Requested',
                 `₦${numAmount.toLocaleString()} is being sent to your ${selectedAccount.bank_name} account. This may take a few minutes.`,
@@ -123,17 +124,15 @@ export default function WithdrawScreen({ navigation }) {
         {/* Amount Input */}
         <View className="px-6 mt-6">
           <Text className="text-sm font-bold text-gray-700 mb-2">Amount to withdraw</Text>
-          <View className="flex-row items-center bg-gray-50 rounded-2xl px-5 py-4 border border-gray-200">
-            <Text className="text-2xl font-bold text-gray-400 mr-1">₦</Text>
-            <TextInput
-              className="flex-1 text-2xl font-bold text-gray-900"
-              value={amount}
-              onChangeText={setAmount}
-              keyboardType="numeric"
-              placeholder="0"
-              placeholderTextColor="#D1D5DB"
-            />
-          </View>
+          <AppInput
+            label="Amount"
+            value={amount}
+            onChangeText={setAmount}
+            type="number"
+            placeholder="0"
+            icon="cash-outline"
+            error={numAmount > 0 && numAmount < 500 ? 'Minimum withdrawal is ₦500' : numAmount > balance ? 'Insufficient balance' : ''}
+          />
           {numAmount > 0 && numAmount < 500 && (
             <Text className="text-xs text-red-500 mt-2 ml-1">Minimum withdrawal is ₦500</Text>
           )}

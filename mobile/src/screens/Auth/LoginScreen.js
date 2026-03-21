@@ -4,20 +4,10 @@ import {
   Platform, ScrollView, Image, Alert,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { TextInput as PaperInput } from 'react-native-paper';
 import { useAuth } from '../../context/AuthContext';
+import AppInput from '../../components/common/AppInput';
 
 const logoSmall = require('../../../assets/images/logo-small.png');
-
-const paperTheme = {
-  colors: {
-    primary: '#35615D',
-    onSurfaceVariant: '#9CA3AF',
-    outline: '#E5E7EB',
-    background: '#F9FAFB',
-  },
-  roundness: 12,
-};
 
 export default function LoginScreen({ navigation }) {
   const { sendOTP, guestLogin } = useAuth();
@@ -92,22 +82,15 @@ export default function LoginScreen({ navigation }) {
           </Text>
         </View>
 
-        {/* Phone Input — Material Outlined with +234 prefix */}
-        <View className="mb-6">
-          <PaperInput
-            mode="outlined"
-            label="Phone Number"
-            placeholder="801 234 5678"
-            value={phone}
-            onChangeText={setPhone}
-            keyboardType="phone-pad"
-            left={<PaperInput.Affix text="+234" textStyle={{ color: '#374151', fontWeight: '600' }} />}
-            theme={paperTheme}
-            outlineStyle={{ borderRadius: 12 }}
-            style={{ backgroundColor: '#F9FAFB' }}
-            autoFocus
-          />
-        </View>
+        {/* Phone Input */}
+        <AppInput
+          label="Phone Number"
+          placeholder="801 234 5678"
+          value={phone}
+          onChangeText={setPhone}
+          type="phone"
+          autoFocus
+        />
 
         {/* Continue Button */}
         <TouchableOpacity

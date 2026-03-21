@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Platform, Alert, TextInput, Modal } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Platform, Alert, Modal } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { ordersAPI, paymentsAPI } from '../../services/api';
+import AppInput from '../../components/common/AppInput';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 
@@ -225,60 +226,36 @@ export default function CartScreen({ navigation }) {
           <ScrollView className="flex-1 px-5 pt-5" keyboardShouldPersistTaps="handled">
             <Text className="text-sm text-gray-500 mb-5">Who is this gift for?</Text>
 
-            <Text className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Recipient Name *</Text>
-            <View className="flex-row items-center bg-gray-50 rounded-2xl h-14 px-4 border border-gray-200 mb-4">
-              <Ionicons name="person-outline" size={18} color="#6B7280" />
-              <TextInput
-                className="flex-1 ml-3 text-sm text-gray-900"
-                value={recipientName}
-                onChangeText={setRecipientName}
-                placeholder="Enter recipient's name"
-                placeholderTextColor="#D1D5DB"
-              />
-            </View>
-
-            <Text className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Phone Number *</Text>
-            <View className="flex-row items-center bg-gray-50 rounded-2xl h-14 px-4 border border-gray-200 mb-4">
-              <Ionicons name="call-outline" size={18} color="#6B7280" />
-              <TextInput
-                className="flex-1 ml-3 text-sm text-gray-900"
-                value={recipientPhone}
-                onChangeText={setRecipientPhone}
-                placeholder="e.g. 08012345678"
-                placeholderTextColor="#D1D5DB"
-                keyboardType="phone-pad"
-              />
-            </View>
-
-            <Text className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Delivery Address *</Text>
-            <View className="flex-row items-start bg-gray-50 rounded-2xl px-4 py-3 border border-gray-200 mb-4">
-              <Ionicons name="location-outline" size={18} color="#6B7280" style={{ marginTop: 2 }} />
-              <TextInput
-                className="flex-1 ml-3 text-sm text-gray-900"
-                value={deliveryAddress}
-                onChangeText={setDeliveryAddress}
-                placeholder="Full delivery address"
-                placeholderTextColor="#D1D5DB"
-                multiline
-                numberOfLines={2}
-                style={{ minHeight: 50, textAlignVertical: 'top' }}
-              />
-            </View>
-
-            <Text className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Personal Message (optional)</Text>
-            <View className="flex-row items-start bg-gray-50 rounded-2xl px-4 py-3 border border-gray-200 mb-6">
-              <Ionicons name="chatbubble-outline" size={18} color="#6B7280" style={{ marginTop: 2 }} />
-              <TextInput
-                className="flex-1 ml-3 text-sm text-gray-900"
-                value={personalMessage}
-                onChangeText={setPersonalMessage}
-                placeholder="Add a note for the recipient..."
-                placeholderTextColor="#D1D5DB"
-                multiline
-                numberOfLines={3}
-                style={{ minHeight: 60, textAlignVertical: 'top' }}
-              />
-            </View>
+            <AppInput
+              label="Recipient Name"
+              value={recipientName}
+              onChangeText={setRecipientName}
+              placeholder="Enter recipient's name"
+              icon="person-outline"
+            />
+            <AppInput
+              label="Phone Number"
+              value={recipientPhone}
+              onChangeText={setRecipientPhone}
+              placeholder="801 234 5678"
+              type="phone"
+            />
+            <AppInput
+              label="Delivery Address"
+              value={deliveryAddress}
+              onChangeText={setDeliveryAddress}
+              placeholder="Full delivery address"
+              type="multiline"
+              icon="location-outline"
+            />
+            <AppInput
+              label="Personal Message (optional)"
+              value={personalMessage}
+              onChangeText={setPersonalMessage}
+              placeholder="Add a note for the recipient..."
+              type="multiline"
+              icon="chatbubble-outline"
+            />
           </ScrollView>
 
           <View className="px-5 pb-8 pt-4 border-t border-gray-100">

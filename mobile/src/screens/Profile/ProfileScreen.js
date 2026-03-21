@@ -3,6 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity, Alert, Platform, Image } from
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
+import { useWallet } from '../../context/WalletContext';
 import { ordersAPI, bookingsAPI, providersAPI } from '../../services/api';
 
 const logoSmall = require('../../../assets/images/logo-small.png');
@@ -80,7 +81,7 @@ export default function ProfileScreen({ navigation }) {
   const displayName = isGuest ? 'Guest User' : (user?.full_name || 'User');
   const displayPhone = isGuest ? '' : (user?.phone || '');
   const initials = displayName.charAt(0).toUpperCase();
-  const walletBalance = user?.wallet_balance || 0;
+  const { balance: walletBalance } = useWallet();
 
   return (
     <View className="flex-1 bg-gray-50">

@@ -1,16 +1,18 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Platform, Alert, ActivityIndicator, RefreshControl, Modal, TextInput } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Platform, Alert, ActivityIndicator, RefreshControl, Modal } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../../context/AuthContext';
+import { useWallet } from '../../context/WalletContext';
 import { walletAPI } from '../../services/api';
+import AppInput from '../../components/common/AppInput';
 
 export default function WalletScreen({ navigation }) {
   const { user } = useAuth();
+  const { balance, refreshBalance, credit, debit } = useWallet();
   const isProvider = user?.role === 'provider';
 
-  const [balance, setBalance] = useState(user?.wallet_balance || 0);
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -25,11 +27,8 @@ export default function WalletScreen({ navigation }) {
 
   const fetchData = useCallback(async () => {
     try {
-      const [balRes, txRes] = await Promise.all([
-        walletAPI.getBalance(),
-        walletAPI.getTransactions({ page: 1, per_page: 20 }),
-      ]);
-      setBalance(balRes.data?.balance ?? 0);
+      await refreshBalance();
+      const txRes = await walletAPI.getTransactions({ page: 1, per_page: 20 });
       setTransactions(txRes.data || []);
     } catch (e) {
       // Silently fail — keep existing data
@@ -37,7 +36,7 @@ export default function WalletScreen({ navigation }) {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [refreshBalance]);
 
   useFocusEffect(
     useCallback(() => {
@@ -61,10 +60,11 @@ export default function WalletScreen({ navigation }) {
     try {
       const reference = `FND-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
       await walletAPI.fund(amount, reference);
+      credit(amount);
       Alert.alert('Success', `₦${amount.toLocaleString()} added to your wallet`);
       setShowFundModal(false);
       setFundAmount('');
-      fetchData();
+      refreshBalance();
     } catch (e) {
       Alert.alert('Error', e.response?.data?.detail || 'Failed to fund wallet');
     } finally {
@@ -85,11 +85,12 @@ export default function WalletScreen({ navigation }) {
     setProcessing(true);
     try {
       await walletAPI.transfer(transferPhone, amount);
+      debit(amount);
       Alert.alert('Success', `₦${amount.toLocaleString()} sent to ${transferPhone}`);
       setShowTransferModal(false);
       setTransferPhone('');
       setTransferAmount('');
-      fetchData();
+      refreshBalance();
     } catch (e) {
       Alert.alert('Error', e.response?.data?.detail || 'Transfer failed');
     } finally {
@@ -213,18 +214,15 @@ export default function WalletScreen({ navigation }) {
           <View className="bg-white rounded-3xl p-6 w-full max-w-[360px]">
             <Text className="text-lg font-bold text-gray-800 mb-1">Fund Wallet</Text>
             <Text className="text-sm text-gray-400 mb-5">Enter amount to add</Text>
-            <View className="flex-row items-center bg-gray-50 rounded-2xl h-14 px-4 border border-gray-200 mb-5">
-              <Text className="text-lg font-bold text-gray-400 mr-1">₦</Text>
-              <TextInput
-                className="flex-1 text-lg font-bold text-gray-900"
-                value={fundAmount}
-                onChangeText={setFundAmount}
-                keyboardType="numeric"
-                placeholder="0"
-                placeholderTextColor="#D1D5DB"
-                autoFocus
-              />
-            </View>
+            <AppInput
+              label="Amount"
+              value={fundAmount}
+              onChangeText={setFundAmount}
+              type="number"
+              placeholder="0"
+              icon="cash-outline"
+              autoFocus
+            />
             <View className="flex-row gap-3">
               <TouchableOpacity
                 className="flex-1 h-12 rounded-2xl items-center justify-center bg-gray-100"
@@ -250,31 +248,22 @@ export default function WalletScreen({ navigation }) {
           <View className="bg-white rounded-3xl p-6 w-full max-w-[360px]">
             <Text className="text-lg font-bold text-gray-800 mb-1">Transfer</Text>
             <Text className="text-sm text-gray-400 mb-5">Send money to another user</Text>
-            <Text className="text-xs font-bold text-gray-500 uppercase mb-1.5">Phone Number</Text>
-            <View className="flex-row items-center bg-gray-50 rounded-2xl h-14 px-4 border border-gray-200 mb-4">
-              <Ionicons name="call-outline" size={18} color="#6B7280" />
-              <TextInput
-                className="flex-1 ml-3 text-sm text-gray-900 font-semibold"
-                value={transferPhone}
-                onChangeText={setTransferPhone}
-                keyboardType="phone-pad"
-                placeholder="08012345678"
-                placeholderTextColor="#D1D5DB"
-                autoFocus
-              />
-            </View>
-            <Text className="text-xs font-bold text-gray-500 uppercase mb-1.5">Amount</Text>
-            <View className="flex-row items-center bg-gray-50 rounded-2xl h-14 px-4 border border-gray-200 mb-5">
-              <Text className="text-lg font-bold text-gray-400 mr-1">₦</Text>
-              <TextInput
-                className="flex-1 text-lg font-bold text-gray-900"
-                value={transferAmount}
-                onChangeText={setTransferAmount}
-                keyboardType="numeric"
-                placeholder="0"
-                placeholderTextColor="#D1D5DB"
-              />
-            </View>
+            <AppInput
+              label="Phone Number"
+              value={transferPhone}
+              onChangeText={setTransferPhone}
+              type="phone"
+              placeholder="801 234 5678"
+              autoFocus
+            />
+            <AppInput
+              label="Amount"
+              value={transferAmount}
+              onChangeText={setTransferAmount}
+              type="number"
+              placeholder="0"
+              icon="cash-outline"
+            />
             <View className="flex-row gap-3">
               <TouchableOpacity
                 className="flex-1 h-12 rounded-2xl items-center justify-center bg-gray-100"

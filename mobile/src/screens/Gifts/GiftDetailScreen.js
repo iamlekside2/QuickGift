@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Alert, Platform } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Alert, Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import Button from '../../components/common/Button';
 import { useCart } from '../../context/CartContext';
+import AppInput from '../../components/common/AppInput';
 
 export default function GiftDetailScreen({ navigation, route }) {
   const { gift } = route.params || {};
@@ -133,24 +134,12 @@ export default function GiftDetailScreen({ navigation, route }) {
           {/* Personal Message Section */}
           <View className="mt-6 gap-3">
             <Text className="text-base font-bold text-gray-800">Add a Personal Message</Text>
-            <TextInput
-              className="bg-gray-50 rounded-2xl p-4 text-[15px] text-gray-800 min-h-[90px]"
-              style={{
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.03,
-                shadowRadius: 8,
-                elevation: 1,
-                borderWidth: 1,
-                borderColor: '#F3F4F6',
-              }}
+            <AppInput
+              label="Personal Message"
               placeholder="Write a heartfelt message..."
-              placeholderTextColor="#9CA3AF"
-              multiline
-              numberOfLines={3}
               value={message}
               onChangeText={setMessage}
-              textAlignVertical="top"
+              type="multiline"
             />
           </View>
 
