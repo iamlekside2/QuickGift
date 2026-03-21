@@ -56,14 +56,17 @@ export const CartProvider = ({ children }) => {
     setItems((prev) => prev.filter((item) => item.id !== productId));
   };
 
+  const MAX_QUANTITY = 20;
+
   const updateQuantity = (productId, quantity) => {
     if (quantity <= 0) {
       removeItem(productId);
       return;
     }
+    if (quantity > MAX_QUANTITY) return; // Cap at 20
     setItems((prev) =>
       prev.map((item) =>
-        item.id === productId ? { ...item, quantity } : item
+        item.id === productId ? { ...item, quantity: Math.min(quantity, MAX_QUANTITY) } : item
       )
     );
   };

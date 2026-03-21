@@ -1,30 +1,45 @@
-import { useState } from 'react'
-import { Save, Globe, Truck, Bell, Percent, CheckCircle2, Shield } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Save, Globe, Truck, Bell, Percent, CheckCircle2, Shield, Loader2 } from 'lucide-react'
+import { useGetAdminSettingsQuery } from '../services/api'
 
 export default function SettingsPage() {
+  const { data: serverSettings, isLoading } = useGetAdminSettingsQuery()
   const [saved, setSaved] = useState(false)
   const [settings, setSettings] = useState({
     platformName: 'QuickGift',
     supportEmail: 'support@quickgift.ng',
     supportPhone: '+234 800 GIFT',
-    giftCommission: 25,
-    beautyCommission: 20,
-    deliveryFeeBase: 1000,
-    deliveryFeePerKm: 200,
-    expressMultiplier: 2.5,
-    minOrderAmount: 3000,
-    groupGiftFee: 3,
+    giftCommission: 10,
+    beautyCommission: 10,
+    deliveryFeeBase: 0,
+    deliveryFeePerKm: 0,
+    expressMultiplier: 1,
+    minOrderAmount: 1000,
+    groupGiftFee: 0,
     enableWhatsApp: true,
     enablePush: true,
     enableSMS: false,
     maintenanceMode: false,
   })
 
+  // Sync with server settings
+  useEffect(() => {
+    if (serverSettings) {
+      setSettings(prev => ({
+        ...prev,
+        giftCommission: serverSettings.gift_commission ?? prev.giftCommission,
+        beautyCommission: serverSettings.beauty_commission ?? prev.beautyCommission,
+      }))
+    }
+  }, [serverSettings])
+
   const updateSetting = (key, value) => {
     setSettings(prev => ({ ...prev, [key]: value }))
   }
 
   const handleSave = () => {
+    // Settings are configured via environment variables on Render
+    // This UI shows current values for reference
     setSaved(true)
     setTimeout(() => setSaved(false), 3000)
   }

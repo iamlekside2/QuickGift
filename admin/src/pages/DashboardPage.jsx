@@ -5,26 +5,7 @@ import {
   CalendarCheck, TrendingUp, ArrowRight
 } from 'lucide-react'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts'
-import { useGetDashboardStatsQuery, useGetAdminOrdersQuery } from '../services/api'
-
-const REVENUE_DATA = [
-  { name: 'Mon', gifts: 180000, beauty: 95000 },
-  { name: 'Tue', gifts: 220000, beauty: 120000 },
-  { name: 'Wed', gifts: 195000, beauty: 145000 },
-  { name: 'Thu', gifts: 310000, beauty: 160000 },
-  { name: 'Fri', gifts: 280000, beauty: 200000 },
-  { name: 'Sat', gifts: 420000, beauty: 280000 },
-  { name: 'Sun', gifts: 350000, beauty: 190000 },
-]
-
-const CATEGORY_DATA = [
-  { name: 'Cakes', orders: 145, fill: '#35615D' },
-  { name: 'Flowers', orders: 98, fill: '#51a399' },
-  { name: 'Hampers', orders: 76, fill: '#7dbab3' },
-  { name: 'Nails', orders: 120, fill: '#FD8950' },
-  { name: 'Hair', orders: 89, fill: '#fdac72' },
-  { name: 'Makeup', orders: 65, fill: '#ffc9a3' },
-]
+import { useGetDashboardStatsQuery, useGetAdminOrdersQuery, useGetRevenueAnalyticsQuery } from '../services/api'
 
 const STATUS_STYLES = {
   delivered: 'badge-green',
@@ -67,8 +48,21 @@ const CustomTooltip = ({ active, payload, label }) => {
 export default function DashboardPage() {
   const { data: stats, isLoading: statsLoading } = useGetDashboardStatsQuery()
   const { data: ordersData, isLoading: ordersLoading } = useGetAdminOrdersQuery({ per_page: 5 })
+  const { data: revenueData } = useGetRevenueAnalyticsQuery()
 
   const recentOrders = ordersData?.items || []
+  const REVENUE_DATA = revenueData || [
+    { name: 'Mon', gifts: 0, beauty: 0 }, { name: 'Tue', gifts: 0, beauty: 0 },
+    { name: 'Wed', gifts: 0, beauty: 0 }, { name: 'Thu', gifts: 0, beauty: 0 },
+    { name: 'Fri', gifts: 0, beauty: 0 }, { name: 'Sat', gifts: 0, beauty: 0 },
+    { name: 'Sun', gifts: 0, beauty: 0 },
+  ]
+  const CATEGORY_DATA = [
+    { name: 'Gifts', orders: stats?.counts?.orders || 0, fill: '#35615D' },
+    { name: 'Bookings', orders: stats?.counts?.bookings || 0, fill: '#FD8950' },
+    { name: 'Providers', orders: stats?.counts?.providers || 0, fill: '#3B82F6' },
+    { name: 'Users', orders: stats?.counts?.users || 0, fill: '#8B5CF6' },
+  ]
 
   const STATS = [
     {

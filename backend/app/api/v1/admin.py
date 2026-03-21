@@ -511,3 +511,57 @@ async def admin_list_deliveries(
     deliveries = result.scalars().all()
 
     return {"items": deliveries, "total": total, "page": page, "per_page": per_page}
+
+
+# ---------------------------------------------------------------------------
+# Settings (Admin)
+# ---------------------------------------------------------------------------
+
+@router.get("/settings")
+async def get_settings(admin: dict = Depends(require_admin)):
+    """Get current platform settings from env/config."""
+    return {
+        "gift_commission": settings.GIFT_COMMISSION_PERCENT,
+        "beauty_commission": settings.BEAUTY_COMMISSION_PERCENT,
+        "paystack_live": settings.PAYSTACK_LIVE,
+        "kwik_env": getattr(settings, 'KWIK_ENV', 'test'),
+        "payout_hold_hours": settings.PAYOUT_HOLD_HOURS,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Revenue analytics (Admin)
+# ---------------------------------------------------------------------------
+
+@router.get("/analytics/revenue")
+async def revenue_analytics(
+    admin: dict = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get revenue data grouped by day for the last 7 days."""
+    from sqlalchemy import text
+    rows = []
+    for i in range(6, -1, -1):
+        day_label = (datetime.utcnow() - __import__('datetime').timedelta(days=i)).strftime('%a')
+        day_start = (datetime.utcnow() - __import__('datetime').timedelta(days=i)).replace(hour=0, minute=0, second=0)
+        day_end = day_start + __import__('datetime').timedelta(days=1)
+
+        gift_rev = (await db.execute(
+            select(func.coalesce(func.sum(Order.total), 0)).where(
+                Order.payment_status == "paid",
+                Order.created_at >= day_start,
+                Order.created_at < day_end,
+            )
+        )).scalar()
+
+        beauty_rev = (await db.execute(
+            select(func.coalesce(func.sum(Booking.price), 0)).where(
+                Booking.payment_status == "paid",
+                Booking.created_at >= day_start,
+                Booking.created_at < day_end,
+            )
+        )).scalar()
+
+        rows.append({"name": day_label, "gifts": gift_rev, "beauty": beauty_rev})
+
+    return rows

@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, Platform, TextInput } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { productsAPI } from '../../services/api';
 
 export default function GiftsListScreen({ navigation, route }) {
-  const { category, title } = route.params || {};
+  const { category, title, search: showSearch } = route.params || {};
   const [sortBy, setSortBy] = useState('popular');
+  const [searchQuery, setSearchQuery] = useState('');
   const [gifts, setGifts] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -14,11 +15,20 @@ export default function GiftsListScreen({ navigation, route }) {
     loadGifts();
   }, [sortBy]);
 
+  // Debounced search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchQuery.length >= 2 || searchQuery.length === 0) loadGifts();
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   const loadGifts = async () => {
     setLoading(true);
     try {
       const params = { sort: sortBy, per_page: 50 };
       if (category) params.category_id = category;
+      if (searchQuery.trim()) params.search = searchQuery.trim();
 
       const res = await productsAPI.list(params);
       setGifts(res.data.items || []);
@@ -88,6 +98,26 @@ export default function GiftsListScreen({ navigation, route }) {
         <TouchableOpacity className="w-11 h-11 rounded-2xl bg-gray-100 items-center justify-center">
           <Ionicons name="options-outline" size={20} color="#1F2937" />
         </TouchableOpacity>
+      </View>
+
+      {/* Search Bar */}
+      <View className="px-5 mb-3">
+        <View className="flex-row items-center bg-gray-100 rounded-2xl px-4 h-11">
+          <Ionicons name="search" size={18} color="#9CA3AF" />
+          <TextInput
+            className="flex-1 ml-2.5 text-sm text-gray-900"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholder="Search gifts..."
+            placeholderTextColor="#9CA3AF"
+            autoFocus={!!showSearch}
+          />
+          {searchQuery ? (
+            <TouchableOpacity onPress={() => setSearchQuery('')}>
+              <Ionicons name="close-circle" size={18} color="#9CA3AF" />
+            </TouchableOpacity>
+          ) : null}
+        </View>
       </View>
 
       {/* Sort Chips */}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, FlatList, TouchableOpacity, ActivityIndicator, Platform, Image, Alert } from 'react-native';
+import { View, Text, ScrollView, FlatList, TouchableOpacity, ActivityIndicator, Platform, Image, Alert, RefreshControl } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { BEAUTY_CATEGORIES } from '../../constants/data';
@@ -99,7 +99,13 @@ export default function HomeScreen({ navigation }) {
         <View className="bg-gray-50 h-5" style={{ borderTopLeftRadius: 24, borderTopRightRadius: 24 }} />
       </View>
 
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+      <ScrollView
+        className="flex-1"
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={loading} onRefresh={loadData} tintColor="#35615D" />
+        }
+      >
         {/* Search Bar - elevated, frosted look */}
         <View className="px-5 -mt-1 mb-5">
           <TouchableOpacity

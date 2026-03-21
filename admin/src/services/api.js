@@ -175,6 +175,16 @@ export const api = createApi({
       query: ({ targetType, targetId }) => `/reviews/${targetType}/${targetId}`,
     }),
 
+    // ── Settings (Admin) ────────────────────────────
+    getAdminSettings: builder.query({
+      query: () => '/admin/settings',
+    }),
+
+    // ── Analytics (Admin) ───────────────────────────
+    getRevenueAnalytics: builder.query({
+      query: () => '/admin/analytics/revenue',
+    }),
+
     // ── Payments (Admin) ────────────────────────────
     getAdminPayments: builder.query({
       query: ({ status, page = 1, per_page = 20 } = {}) => {
@@ -256,4 +266,6 @@ export const {
   useGetPayoutStatsQuery,
   useReleasePayoutMutation,
   useCancelPayoutMutation,
+  useGetAdminSettingsQuery,
+  useGetRevenueAnalyticsQuery,
 } = api
