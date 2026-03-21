@@ -6,7 +6,11 @@ import { useAuth } from '../../context/AuthContext';
 import { providersAPI } from '../../services/api';
 
 const DURATIONS = ['30 min', '1 hr', '1.5 hrs', '2 hrs', '3 hrs'];
-const CATEGORIES = ['Nails', 'Hair', 'Makeup', 'Barber', 'Waxing', 'Massage'];
+const CATEGORIES = [
+  'Nails', 'Hair', 'Makeup', 'Barber', 'Waxing', 'Massage',
+  'Skincare', 'Lashes', 'Tattoo', 'Piercing', 'Spa', 'Fitness',
+  'Photography', 'Catering', 'Cleaning', 'Tailoring', 'Other',
+];
 
 export default function ServiceForm({ route, navigation }) {
   const { user } = useAuth();

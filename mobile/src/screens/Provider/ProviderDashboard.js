@@ -1,13 +1,16 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Platform, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Platform, ActivityIndicator, Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../../context/AuthContext';
-import { bookingsAPI, providersAPI } from '../../services/api';
+import { useLocation } from '../../context/LocationContext';
+import { bookingsAPI, providersAPI, uploadAPI } from '../../services/api';
+import * as ImagePicker from 'expo-image-picker';
 
 export default function ProviderDashboard({ navigation }) {
-  const { user } = useAuth();
+  const { user, updateProfile, updateUser } = useAuth();
+  const { refreshLocation, coords } = useLocation();
   const firstName = user?.full_name?.split(' ')[0] || 'Provider';
 
   const [bookings, setBookings] = useState([]);
@@ -75,8 +78,60 @@ export default function ProviderDashboard({ navigation }) {
   const hasServices = services.length > 0;
   const hasBookings = bookings.length > 0;
   const hasAvatar = !!user?.avatar_url;
-  const hasLocation = !!(user?.lat && user?.lng);
+  const hasLocation = !!(user?.lat && user?.lng) || !!(coords?.lat && coords?.lng);
   const isNewProvider = !hasServices && !hasBookings && !setupDismissed;
+
+  const [locationLoading, setLocationLoading] = useState(false);
+  const [avatarLoading, setAvatarLoading] = useState(false);
+
+  const handleSetLocation = async () => {
+    setLocationLoading(true);
+    try {
+      const result = await refreshLocation();
+      if (result) {
+        await updateProfile({ lat: result.lat, lng: result.lng, city: result.areaName || user?.city });
+        updateUser({ lat: result.lat, lng: result.lng });
+        Alert.alert('Location Set', `Your location has been set to ${result.areaName || 'your current position'}`);
+      } else {
+        Alert.alert('Permission Needed', 'Please enable location access in your device settings.');
+      }
+    } catch (e) {
+      Alert.alert('Error', 'Could not get your location. Please try again.');
+    } finally {
+      setLocationLoading(false);
+    }
+  };
+
+  const handleUploadAvatar = async () => {
+    try {
+      const permResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permResult.granted) {
+        Alert.alert('Permission Needed', 'Please allow access to your photos.');
+        return;
+      }
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+      if (result.canceled) return;
+
+      setAvatarLoading(true);
+      const uri = result.assets[0].uri;
+      const uploadRes = await uploadAPI.image(uri);
+      const avatarUrl = uploadRes.data?.url || uploadRes.data?.secure_url;
+      if (avatarUrl) {
+        await updateProfile({ avatar_url: avatarUrl });
+        updateUser({ avatar_url: avatarUrl });
+        Alert.alert('Photo Updated', 'Your profile photo has been uploaded!');
+      }
+    } catch (e) {
+      Alert.alert('Upload Failed', 'Could not upload your photo. Please try again.');
+    } finally {
+      setAvatarLoading(false);
+    }
+  };
 
   const setupSteps = [
     {
@@ -85,8 +140,7 @@ export default function ProviderDashboard({ navigation }) {
       description: 'Tell clients what you offer and set your prices',
       icon: 'pricetag-outline',
       done: hasServices,
-      screen: 'ServiceForm',
-      params: { mode: 'add' },
+      action: () => navigation.navigate('ServiceForm', { mode: 'add' }),
     },
     {
       id: 'avatar',
@@ -94,7 +148,8 @@ export default function ProviderDashboard({ navigation }) {
       description: 'Help clients recognize your brand',
       icon: 'camera-outline',
       done: hasAvatar,
-      screen: 'EditBusinessProfile',
+      loading: avatarLoading,
+      action: handleUploadAvatar,
     },
     {
       id: 'location',
@@ -102,7 +157,8 @@ export default function ProviderDashboard({ navigation }) {
       description: 'So nearby clients can find you easily',
       icon: 'location-outline',
       done: hasLocation,
-      screen: 'EditBusinessProfile',
+      loading: locationLoading,
+      action: handleSetLocation,
     },
   ];
   const completedSteps = setupSteps.filter(s => s.done).length;
@@ -197,14 +253,17 @@ export default function ProviderDashboard({ navigation }) {
                     step.done ? 'bg-green-50/80' : 'bg-gray-50'
                   }`}
                   onPress={() => {
-                    if (!step.done) navigation.navigate(step.screen, step.params || {});
+                    if (!step.done && !step.loading && step.action) step.action();
                   }}
                   activeOpacity={step.done ? 1 : 0.7}
+                  disabled={step.loading}
                 >
                   <View className={`w-10 h-10 rounded-xl items-center justify-center ${
                     step.done ? 'bg-green-100' : 'bg-teal-light'
                   }`}>
-                    {step.done ? (
+                    {step.loading ? (
+                      <ActivityIndicator size="small" color="#35615D" />
+                    ) : step.done ? (
                       <Ionicons name="checkmark-circle" size={22} color="#10B981" />
                     ) : (
                       <Ionicons name={step.icon} size={20} color="#35615D" />
@@ -219,10 +278,10 @@ export default function ProviderDashboard({ navigation }) {
                     <Text className={`text-[11px] mt-0.5 ${
                       step.done ? 'text-green-500' : 'text-gray-400'
                     }`}>
-                      {step.done ? 'Completed' : step.description}
+                      {step.loading ? 'Please wait...' : step.done ? 'Completed' : step.description}
                     </Text>
                   </View>
-                  {!step.done && (
+                  {!step.done && !step.loading && (
                     <View className="w-7 h-7 rounded-full bg-teal items-center justify-center">
                       <Ionicons name="arrow-forward" size={14} color="#fff" />
                     </View>
