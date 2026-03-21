@@ -25,6 +25,8 @@ import EditProfileScreen from '../screens/Shared/EditProfileScreen';
 
 import ChatListScreen from '../screens/Chat/ChatListScreen';
 import ChatScreen from '../screens/Chat/ChatScreen';
+import WithdrawScreen from '../screens/Wallet/WithdrawScreen';
+import AddBankAccountScreen from '../screens/Wallet/AddBankAccountScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -46,6 +48,8 @@ const PROVIDER_SCREENS = [
   { name: 'Settings', component: SettingsScreen },
   { name: 'EditProfile', component: EditProfileScreen },
   { name: 'ChatScreen', component: ChatScreen },
+  { name: 'WithdrawScreen', component: WithdrawScreen },
+  { name: 'AddBankAccount', component: AddBankAccountScreen },
 ];
 
 function DashboardStack() {

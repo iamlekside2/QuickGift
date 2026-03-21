@@ -147,10 +147,10 @@ export default function WalletScreen() {
             </Text>
             <View className="flex-row gap-3 mt-6 w-full">
               <TouchableOpacity
-                onPress={handleFund}
+                onPress={isProvider ? () => navigation.navigate('WithdrawScreen') : handleFund}
                 className="flex-1 flex-row items-center justify-center bg-white/20 py-3.5 rounded-2xl gap-2"
               >
-                <Ionicons name="add-circle-outline" size={20} color="#fff" />
+                <Ionicons name={isProvider ? 'arrow-down-circle-outline' : 'add-circle-outline'} size={20} color="#fff" />
                 <Text className="text-white text-sm font-bold">
                   {isProvider ? 'Withdraw' : 'Fund'}
                 </Text>

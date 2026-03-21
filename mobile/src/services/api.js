@@ -138,6 +138,14 @@ const realWalletAPI = {
   getTransactions: (params = {}) => api.get('/wallet/transactions', { params }),
   fund: (amount, reference) => api.post('/wallet/fund', { amount, reference }),
   transfer: (recipientPhone, amount) => api.post('/wallet/transfer', { recipient_phone: recipientPhone, amount }),
+  // Bank accounts
+  getBanks: () => api.get('/wallet/banks'),
+  getBankAccounts: () => api.get('/wallet/bank-accounts'),
+  addBankAccount: (data) => api.post('/wallet/bank-accounts', data),
+  deleteBankAccount: (id) => api.delete(`/wallet/bank-accounts/${id}`),
+  setDefaultBank: (id) => api.patch(`/wallet/bank-accounts/${id}/default`),
+  // Withdraw
+  withdraw: (amount, bankAccountId) => api.post('/wallet/withdraw', { amount, bank_account_id: bankAccountId }),
 };
 
 const realDeliveryAPI = {

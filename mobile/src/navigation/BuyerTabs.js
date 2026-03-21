@@ -30,6 +30,8 @@ import BookingScreen from '../screens/Beauty/BookingScreen';
 import ChatListScreen from '../screens/Chat/ChatListScreen';
 import ChatScreen from '../screens/Chat/ChatScreen';
 import PaystackWebView from '../screens/Shared/PaystackWebView';
+import WithdrawScreen from '../screens/Wallet/WithdrawScreen';
+import AddBankAccountScreen from '../screens/Wallet/AddBankAccountScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -59,6 +61,8 @@ function ProfileStack() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="ProfileMain" component={ProfileScreen} />
       <Stack.Screen name="WalletScreen" component={WalletScreen} />
+      <Stack.Screen name="WithdrawScreen" component={WithdrawScreen} />
+      <Stack.Screen name="AddBankAccount" component={AddBankAccountScreen} />
       <Stack.Screen name="HelpSupport" component={HelpSupportScreen} />
       <Stack.Screen name="Settings" component={SettingsScreen} />
       <Stack.Screen name="EditProfile" component={EditProfileScreen} />

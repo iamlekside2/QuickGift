@@ -188,6 +188,7 @@ export default function ProfileScreen({ navigation }) {
                 shadowRadius: 4,
                 elevation: 3,
               }}
+              onPress={() => navigation.navigate(isProvider ? 'WithdrawScreen' : 'WalletScreen')}
             >
               <Text className="text-xs text-white font-bold">{isProvider ? 'Withdraw' : 'Top Up'}</Text>
             </TouchableOpacity>
