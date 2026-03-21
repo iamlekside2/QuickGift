@@ -39,15 +39,15 @@ class Product(Base):
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     price: Mapped[float] = mapped_column(Float)
     compare_price: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
-    category_id: Mapped[str] = mapped_column(String, ForeignKey("categories.id"))
+    category_id: Mapped[str] = mapped_column(String, ForeignKey("categories.id"), index=True)
     vendor_name: Mapped[str] = mapped_column(String(200))
-    vendor_id: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    vendor_id: Mapped[Optional[str]] = mapped_column(String, nullable=True, index=True)
     image_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     images: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # JSON array of URLs
     rating: Mapped[float] = mapped_column(Float, default=0.0)
     review_count: Mapped[int] = mapped_column(Integer, default=0)
     order_count: Mapped[int] = mapped_column(Integer, default=0)
-    status: Mapped[str] = mapped_column(String(20), default="active")  # active, draft, inactive
+    status: Mapped[str] = mapped_column(String(20), default="active", index=True)  # active, draft, inactive
     is_featured: Mapped[bool] = mapped_column(Boolean, default=False)
     tags: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # JSON array
     city: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)

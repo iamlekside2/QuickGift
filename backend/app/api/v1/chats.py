@@ -21,6 +21,8 @@ router = APIRouter(prefix="/chats", tags=["Chats"])
 
 @router.get("", response_model=List[ConversationResponse])
 async def list_conversations(
+    page: int = 1,
+    per_page: int = 30,
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -34,6 +36,7 @@ async def list_conversations(
             )
         )
         .order_by(Conversation.last_message_at.desc().nullslast(), Conversation.created_at.desc())
+        .offset((page - 1) * per_page).limit(per_page)
     )
     result = await db.execute(query)
     return result.scalars().all()
@@ -63,9 +66,12 @@ async def get_messages(
     result = await db.execute(
         select(Message)
         .where(Message.conversation_id == conversation_id)
-        .order_by(Message.created_at.asc())
+        .order_by(Message.created_at.desc())
+        .limit(100)  # Last 100 messages
     )
-    return result.scalars().all()
+    messages = result.scalars().all()
+    messages.reverse()  # Return in chronological order
+    return messages
 
 
 @router.post("/{conversation_id}/messages", response_model=MessageResponse)

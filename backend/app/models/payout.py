@@ -18,7 +18,7 @@ class Payout(Base):
     booking_id: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     amount: Mapped[float] = mapped_column(Float)  # amount due to provider (total - commission)
     commission: Mapped[float] = mapped_column(Float)  # QuickGift's commission
-    status: Mapped[str] = mapped_column(String(20), default="pending")
+    status: Mapped[str] = mapped_column(String(20), default="pending", index=True)
     # pending → held → released → paid | cancelled
     # pending: order placed but not paid
     # held: paid, waiting hold period (24h after delivery)

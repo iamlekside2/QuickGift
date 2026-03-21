@@ -34,9 +34,15 @@ async def create_order(
     subtotal = 0.0
     items_data = []
 
+    # Batch-fetch all products in one query (fixes N+1)
+    product_ids = [item.product_id for item in req.items]
+    products_result = await db.execute(
+        select(Product).where(Product.id.in_(product_ids))
+    )
+    products_map = {p.id: p for p in products_result.scalars().all()}
+
     for item in req.items:
-        product_result = await db.execute(select(Product).where(Product.id == item.product_id))
-        product = product_result.scalars().first()
+        product = products_map.get(item.product_id)
         if not product:
             raise HTTPException(status_code=404, detail=f"Product {item.product_id} not found")
         if product.status != "active":
@@ -94,6 +100,8 @@ async def create_order(
 async def list_orders(
     status: Optional[str] = None,
     order_type: Optional[str] = None,
+    page: int = 1,
+    per_page: int = 20,
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -104,7 +112,7 @@ async def list_orders(
     if order_type:
         query = query.where(Order.order_type == order_type)
 
-    query = query.order_by(Order.created_at.desc())
+    query = query.order_by(Order.created_at.desc()).offset((page - 1) * per_page).limit(per_page)
     result = await db.execute(query)
     return result.scalars().all()
 

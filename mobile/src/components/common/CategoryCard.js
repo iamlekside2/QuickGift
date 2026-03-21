@@ -1,7 +1,7 @@
 import React from 'react';
 import { TouchableOpacity, Text, View } from 'react-native';
 
-export default function CategoryCard({ label, icon, color, onPress, size = 'md' }) {
+export default React.memo(function CategoryCard({ label, icon, color, onPress, size = 'md' }) {
   const isSm = size === 'sm';
 
   return (
@@ -31,4 +31,4 @@ export default function CategoryCard({ label, icon, color, onPress, size = 'md' 
       </Text>
     </TouchableOpacity>
   );
-}
+})

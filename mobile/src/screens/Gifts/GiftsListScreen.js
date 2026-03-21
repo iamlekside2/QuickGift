@@ -11,17 +11,13 @@ export default function GiftsListScreen({ navigation, route }) {
   const [gifts, setGifts] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadGifts();
-  }, [sortBy]);
-
-  // Debounced search
+  // Debounced search + sort change
   useEffect(() => {
     const timer = setTimeout(() => {
       if (searchQuery.length >= 2 || searchQuery.length === 0) loadGifts();
     }, 400);
     return () => clearTimeout(timer);
-  }, [searchQuery]);
+  }, [sortBy, searchQuery]);
 
   const loadGifts = async () => {
     setLoading(true);

@@ -280,7 +280,13 @@ async def admin_list_users(
     result = await db.execute(query)
     users = result.scalars().all()
 
-    return {"items": users, "total": total, "page": page, "per_page": per_page}
+    # Strip password_hash from response
+    safe_users = []
+    for u in users:
+        d = {c.name: getattr(u, c.name) for c in u.__table__.columns if c.name != 'password_hash'}
+        safe_users.append(d)
+
+    return {"items": safe_users, "total": total, "page": page, "per_page": per_page}
 
 
 @router.get("/providers")

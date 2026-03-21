@@ -15,7 +15,7 @@ function getEmoji(category) {
   return EMOJI_MAP.default;
 }
 
-export default function GiftCard({ item, onPress }) {
+export default React.memo(function GiftCard({ item, onPress }) {
   const price = '₦' + (item.price || 0).toLocaleString();
   const emoji = getEmoji(item.category || item.category_name);
 
@@ -61,4 +61,4 @@ export default function GiftCard({ item, onPress }) {
       </View>
     </TouchableOpacity>
   );
-}
+})

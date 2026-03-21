@@ -36,7 +36,7 @@ export default function ChatScreen({ navigation, route }) {
         } catch (err) {
           // Silently ignore polling errors
         }
-      }, 5000);
+      }, 10000);
       return () => clearInterval(interval);
     }, [conversationId])
   );

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Platform, Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
@@ -86,13 +86,13 @@ export default function OrdersScreen() {
     ]);
   };
 
-  const allItems = [...orders, ...bookings].sort((a, b) =>
+  const allItems = useMemo(() => [...orders, ...bookings].sort((a, b) =>
     new Date(b.created_at || b.date || 0) - new Date(a.created_at || a.date || 0)
-  );
+  ), [orders, bookings]);
 
-  const filtered = activeTab === 'All' ? allItems
+  const filtered = useMemo(() => activeTab === 'All' ? allItems
     : activeTab === 'Gifts' ? allItems.filter(i => i.type === 'gift')
-    : allItems.filter(i => i.type === 'beauty');
+    : allItems.filter(i => i.type === 'beauty'), [allItems, activeTab]);
 
   return (
     <View className="flex-1 bg-gray-50">

@@ -2,7 +2,7 @@ import React from 'react';
 import { TouchableOpacity, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-export default function ProviderCard({ item, onPress }) {
+export default React.memo(function ProviderCard({ item, onPress }) {
   const name = item.business_name || item.name || 'Provider';
   const service = item.service_type || item.service || '';
   const reviews = item.review_count ?? item.reviews ?? 0;
@@ -71,4 +71,4 @@ export default function ProviderCard({ item, onPress }) {
       )}
     </TouchableOpacity>
   );
-}
+})

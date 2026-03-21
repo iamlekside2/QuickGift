@@ -13,9 +13,9 @@ class Order(Base):
 
     id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     order_number: Mapped[str] = mapped_column(String(20), unique=True, index=True)
-    user_id: Mapped[str] = mapped_column(String, ForeignKey("users.id"))
+    user_id: Mapped[str] = mapped_column(String, ForeignKey("users.id"), index=True)
     order_type: Mapped[str] = mapped_column(String(20))  # gift, beauty
-    status: Mapped[str] = mapped_column(String(20), default="pending")  # pending, confirmed, in_transit, delivered, cancelled
+    status: Mapped[str] = mapped_column(String(20), default="pending", index=True)  # pending, confirmed, in_transit, delivered, cancelled
     subtotal: Mapped[float] = mapped_column(Float)
     delivery_fee: Mapped[float] = mapped_column(Float, default=0.0)
     commission: Mapped[float] = mapped_column(Float, default=0.0)
@@ -29,7 +29,7 @@ class Order(Base):
     is_express: Mapped[bool] = mapped_column(Boolean, default=False)
     scheduled_date: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     payment_ref: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
-    payment_status: Mapped[str] = mapped_column(String(20), default="pending")  # pending, paid, refunded
+    payment_status: Mapped[str] = mapped_column(String(20), default="pending", index=True)  # pending, paid, refunded
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -38,8 +38,8 @@ class OrderItem(Base):
     __tablename__ = "order_items"
 
     id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    order_id: Mapped[str] = mapped_column(String, ForeignKey("orders.id"))
-    product_id: Mapped[str] = mapped_column(String, ForeignKey("products.id"))
+    order_id: Mapped[str] = mapped_column(String, ForeignKey("orders.id"), index=True)
+    product_id: Mapped[str] = mapped_column(String, ForeignKey("products.id"), index=True)
     product_name: Mapped[str] = mapped_column(String(200))
     vendor_name: Mapped[str] = mapped_column(String(200))
     quantity: Mapped[int] = mapped_column(Integer, default=1)

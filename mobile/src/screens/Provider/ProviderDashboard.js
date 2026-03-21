@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Platform, ActivityIndicator, Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
@@ -58,29 +58,40 @@ export default function ProviderDashboard({ navigation }) {
     }, [fetchData])
   );
 
-  const todayBookings = bookings.filter((b) => {
-    const bDate = b.date || b.booking_date || '';
-    return bDate.startsWith(todayStr);
-  });
-  const pendingBookings = bookings.filter((b) => b.status === 'pending');
-  const completedBookings = bookings.filter((b) => b.status === 'completed');
-  const upcomingBookings = bookings.filter(
-    (b) => b.status === 'pending' || b.status === 'confirmed'
-  ).slice(0, 5);
+  const { todayBookings, pendingBookings, completedBookings, upcomingBookings, totalEarnings, thisMonthEarnings } = useMemo(() => {
+    const today = bookings.filter((b) => {
+      const bDate = b.date || b.booking_date || '';
+      return bDate.startsWith(todayStr);
+    });
+    const pending = bookings.filter((b) => b.status === 'pending');
+    const completed = bookings.filter((b) => b.status === 'completed');
+    const upcoming = bookings.filter(
+      (b) => b.status === 'pending' || b.status === 'confirmed'
+    ).slice(0, 5);
 
-  const totalEarnings = completedBookings.reduce(
-    (sum, b) => sum + (b.price || b.amount || 0), 0
-  );
+    const totalEarn = completed.reduce(
+      (sum, b) => sum + (b.price || b.amount || 0), 0
+    );
 
-  const now = new Date();
-  const currentMonth = now.getMonth();
-  const currentYear = now.getFullYear();
-  const thisMonthEarnings = completedBookings
-    .filter((b) => {
-      const d = new Date(b.date || b.booking_date || b.completed_at || '');
-      return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-    })
-    .reduce((sum, b) => sum + (b.price || b.amount || 0), 0);
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+    const thisMonthEarn = completed
+      .filter((b) => {
+        const d = new Date(b.date || b.booking_date || b.completed_at || '');
+        return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+      })
+      .reduce((sum, b) => sum + (b.price || b.amount || 0), 0);
+
+    return {
+      todayBookings: today,
+      pendingBookings: pending,
+      completedBookings: completed,
+      upcomingBookings: upcoming,
+      totalEarnings: totalEarn,
+      thisMonthEarnings: thisMonthEarn,
+    };
+  }, [bookings]);
 
   const rating = user?.rating || user?.provider_rating || 0;
 

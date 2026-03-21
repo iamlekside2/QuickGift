@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Platform, Alert, ActivityIndicator, RefreshControl, Modal } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
@@ -24,6 +24,7 @@ export default function WalletScreen({ navigation }) {
   const [transferPhone, setTransferPhone] = useState('');
   const [transferAmount, setTransferAmount] = useState('');
   const [processing, setProcessing] = useState(false);
+  const lastFetchRef = useRef(0);
 
   const fetchData = useCallback(async () => {
     try {
@@ -40,8 +41,12 @@ export default function WalletScreen({ navigation }) {
 
   useFocusEffect(
     useCallback(() => {
-      setLoading(true);
-      fetchData();
+      if (Date.now() - lastFetchRef.current > 30000) {
+        setLoading(true);
+        fetchData().then(() => {
+          lastFetchRef.current = Date.now();
+        });
+      }
     }, [fetchData])
   );
 

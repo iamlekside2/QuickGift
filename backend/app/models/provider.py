@@ -12,7 +12,7 @@ class Provider(Base):
     __tablename__ = "providers"
 
     id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    user_id: Mapped[str] = mapped_column(String, ForeignKey("users.id"))
+    user_id: Mapped[str] = mapped_column(String, ForeignKey("users.id"), index=True)
     business_name: Mapped[str] = mapped_column(String(200))
     service_type: Mapped[str] = mapped_column(String(100))  # Nail Tech, Hair Stylist, MUA, Barber, etc.
     bio: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
@@ -25,7 +25,7 @@ class Provider(Base):
     booking_count: Mapped[int] = mapped_column(Integer, default=0)
     total_revenue: Mapped[float] = mapped_column(Float, default=0.0)
     experience_years: Mapped[int] = mapped_column(Integer, default=0)
-    status: Mapped[str] = mapped_column(String(20), default="pending")  # pending, verified, suspended, rejected
+    status: Mapped[str] = mapped_column(String(20), default="pending", index=True)  # pending, verified, suspended, rejected
     status_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # reason for suspension/rejection
     plan: Mapped[str] = mapped_column(String(20), default="Free")  # Free, Pro, Elite
     is_available: Mapped[bool] = mapped_column(Boolean, default=True)
@@ -40,7 +40,7 @@ class Service(Base):
     __tablename__ = "services"
 
     id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    provider_id: Mapped[str] = mapped_column(String, ForeignKey("providers.id"))
+    provider_id: Mapped[str] = mapped_column(String, ForeignKey("providers.id"), index=True)
     name: Mapped[str] = mapped_column(String(200))
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     price: Mapped[float] = mapped_column(Float)
