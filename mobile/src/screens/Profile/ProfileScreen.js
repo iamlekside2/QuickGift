@@ -32,7 +32,8 @@ const PROVIDER_MENU = [
 export default function ProfileScreen({ navigation }) {
   const { user, isGuest, isAuthenticated, logout } = useAuth();
   const [stats, setStats] = useState({ orders: 0, gifts: 0, bookings: 0 });
-  const [providerStatus, setProviderStatus] = useState(null); // 'pending', 'verified', 'suspended'
+  const [providerStatus, setProviderStatus] = useState(null);
+  const [providerProfile, setProviderProfile] = useState(null);
 
   const isProvider = user?.role === 'provider';
   const menuItems = isProvider ? PROVIDER_MENU : BUYER_MENU;
@@ -61,7 +62,9 @@ export default function ProfileScreen({ navigation }) {
   const loadProviderStatus = async () => {
     try {
       const res = await providersAPI.me();
-      setProviderStatus(res.data?.status || 'pending');
+      const p = res.data;
+      setProviderStatus(p?.status || 'pending');
+      setProviderProfile(p);
     } catch {
       setProviderStatus('pending');
     }
@@ -78,8 +81,17 @@ export default function ProfileScreen({ navigation }) {
     if (item.screen) navigation.navigate(item.screen);
   };
 
-  const displayName = isGuest ? 'Guest User' : (user?.full_name || 'User');
-  const displayPhone = isGuest ? '' : (user?.phone || '');
+  // Providers see business name; buyers see personal name
+  const displayName = isGuest
+    ? 'Guest User'
+    : isProvider
+      ? (providerProfile?.business_name || user?.full_name || 'My Business')
+      : (user?.full_name || 'User');
+  const displaySub = isGuest
+    ? ''
+    : isProvider
+      ? (providerProfile?.service_type || user?.phone || '')
+      : (user?.phone || '');
   const initials = displayName.charAt(0).toUpperCase();
   const { balance: walletBalance } = useWallet();
 
@@ -104,8 +116,8 @@ export default function ProfileScreen({ navigation }) {
             </View>
             <View className="flex-1">
               <Text className="text-lg font-bold text-white">{displayName}</Text>
-              {displayPhone ? (
-                <Text className="text-sm text-white/60 mt-0.5">{displayPhone}</Text>
+              {displaySub ? (
+                <Text className="text-sm text-white/60 mt-0.5">{displaySub}</Text>
               ) : null}
               {isProvider && providerStatus === 'verified' && (
                 <View className="flex-row items-center mt-1.5 bg-white/15 self-start px-2.5 py-1 rounded-full gap-1">
