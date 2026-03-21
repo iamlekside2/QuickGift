@@ -41,16 +41,18 @@ async def init_db():
         ("users", "updated_at", "TIMESTAMP"),
     ]
 
-    async with engine.begin() as conn:
-        for table, column, col_type in migrations:
-            try:
+    # Each migration in its OWN transaction — PostgreSQL aborts
+    # the entire transaction on any error (e.g. "column already exists")
+    for table, column, col_type in migrations:
+        try:
+            async with engine.begin() as conn:
                 await conn.execute(
                     sqlalchemy.text(
                         f"ALTER TABLE {table} ADD COLUMN {column} {col_type}"
                     )
                 )
-            except Exception:
-                pass  # Column already exists
+        except Exception:
+            pass  # Column already exists
 
     # Create any new tables (bank_accounts, deliveries, payouts, etc.)
     async with engine.begin() as conn:

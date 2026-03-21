@@ -461,19 +461,23 @@ async def run_migrations(eng):
         ("users", "updated_at", "TIMESTAMP"),
     ]
 
-    async with eng.begin() as conn:
-        for table, column, col_type in migrations:
-            try:
+    # IMPORTANT: Each migration in its OWN transaction.
+    # PostgreSQL aborts the entire transaction on any error,
+    # so if one ALTER TABLE fails, subsequent ones in the same
+    # transaction are silently skipped.
+    for table, column, col_type in migrations:
+        try:
+            async with eng.begin() as conn:
                 await conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {column} {col_type}"))
-                print(f"  Migration: added {table}.{column}")
-            except Exception as e:
-                err_str = str(e).lower()
-                if "already exists" in err_str or "duplicate column" in err_str:
-                    print(f"  Migration: {table}.{column} already exists")
-                elif "does not exist" in err_str or "undefined table" in err_str:
-                    print(f"  Migration: {table} table not found yet (will be created)")
-                else:
-                    print(f"  Migration: {table}.{column} error: {e}")
+            print(f"  Migration: added {table}.{column}")
+        except Exception as e:
+            err_str = str(e).lower()
+            if "already exists" in err_str or "duplicate column" in err_str:
+                print(f"  Migration: {table}.{column} already exists")
+            elif "does not exist" in err_str or "undefined table" in err_str:
+                print(f"  Migration: {table} table not found yet (will be created)")
+            else:
+                print(f"  Migration: {table}.{column} error: {e}")
 
 
 async def main():
