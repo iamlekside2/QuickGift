@@ -9,20 +9,26 @@ import { useAuth } from '../../context/AuthContext';
 import { useLocation } from '../../context/LocationContext';
 import AppInput from '../../components/common/AppInput';
 
-// Each area mapped to approximate center coordinates
+// Precise neighbourhood-level areas (not broad city/LGA names)
 const POPULAR_AREAS = [
-  { name: 'Lekki, Lagos', lat: 6.4478, lng: 3.4723 },
-  { name: 'Ikeja, Lagos', lat: 6.6018, lng: 3.3515 },
-  { name: 'Victoria Island, Lagos', lat: 6.4281, lng: 3.4219 },
-  { name: 'Surulere, Lagos', lat: 6.4969, lng: 3.3488 },
-  { name: 'Ajah, Lagos', lat: 6.4698, lng: 3.5852 },
-  { name: 'Yaba, Lagos', lat: 6.5158, lng: 3.3752 },
-  { name: 'Wuse, Abuja', lat: 9.0579, lng: 7.4951 },
-  { name: 'Garki, Abuja', lat: 9.0380, lng: 7.4891 },
-  { name: 'Maitama, Abuja', lat: 9.0831, lng: 7.5009 },
+  // Lagos — specific areas
+  { name: 'Lekki Phase 1', lat: 6.4412, lng: 3.4738 },
+  { name: 'Ajah', lat: 6.4698, lng: 3.5852 },
+  { name: 'Sangotedo', lat: 6.4659, lng: 3.5415 },
+  { name: 'Bogije', lat: 6.5027, lng: 3.6651 },
+  { name: 'Ikeja GRA', lat: 6.5850, lng: 3.3441 },
+  { name: 'Victoria Island', lat: 6.4281, lng: 3.4219 },
+  { name: 'Surulere', lat: 6.4969, lng: 3.3488 },
+  { name: 'Yaba', lat: 6.5158, lng: 3.3752 },
+  { name: 'Ikoyi', lat: 6.4490, lng: 3.4345 },
+  { name: 'Gbagada', lat: 6.5568, lng: 3.3870 },
+  // Abuja
+  { name: 'Wuse 2', lat: 9.0685, lng: 7.4868 },
+  { name: 'Maitama', lat: 9.0831, lng: 7.5009 },
+  { name: 'Gwarinpa', lat: 9.1048, lng: 7.4033 },
+  // Other cities
   { name: 'GRA, Port Harcourt', lat: 4.8156, lng: 7.0498 },
   { name: 'Bodija, Ibadan', lat: 7.4224, lng: 3.9003 },
-  { name: 'Enugu South', lat: 6.4200, lng: 7.5100 },
 ];
 
 export default function SetLocationScreen() {
