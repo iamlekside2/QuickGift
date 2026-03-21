@@ -3,7 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity, Alert, Platform, Image } from
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
-import { ordersAPI, bookingsAPI } from '../../services/api';
+import { ordersAPI, bookingsAPI, providersAPI } from '../../services/api';
 
 const logoSmall = require('../../../assets/images/logo-small.png');
 
@@ -31,12 +31,16 @@ const PROVIDER_MENU = [
 export default function ProfileScreen({ navigation }) {
   const { user, isGuest, isAuthenticated, logout } = useAuth();
   const [stats, setStats] = useState({ orders: 0, gifts: 0, bookings: 0 });
+  const [providerStatus, setProviderStatus] = useState(null); // 'pending', 'verified', 'suspended'
 
   const isProvider = user?.role === 'provider';
   const menuItems = isProvider ? PROVIDER_MENU : BUYER_MENU;
 
   useEffect(() => {
-    if (isAuthenticated && !isGuest) loadStats();
+    if (isAuthenticated && !isGuest) {
+      loadStats();
+      if (isProvider) loadProviderStatus();
+    }
   }, [isAuthenticated]);
 
   const loadStats = async () => {
@@ -51,6 +55,15 @@ export default function ProfileScreen({ navigation }) {
         ? (bookingsRes.value.data?.items?.length || bookingsRes.value.data?.length || 0) : 0;
       setStats({ orders: orderCount + bookingCount, gifts: orderCount, bookings: bookingCount });
     } catch {}
+  };
+
+  const loadProviderStatus = async () => {
+    try {
+      const res = await providersAPI.me();
+      setProviderStatus(res.data?.status || 'pending');
+    } catch {
+      setProviderStatus('pending');
+    }
   };
 
   const handleLogout = () => {
@@ -93,10 +106,22 @@ export default function ProfileScreen({ navigation }) {
               {displayPhone ? (
                 <Text className="text-sm text-white/60 mt-0.5">{displayPhone}</Text>
               ) : null}
-              {isProvider && (
+              {isProvider && providerStatus === 'verified' && (
                 <View className="flex-row items-center mt-1.5 bg-white/15 self-start px-2.5 py-1 rounded-full gap-1">
-                  <Ionicons name="checkmark-circle" size={12} color="#fff" />
-                  <Text className="text-[10px] text-white font-semibold">Verified Provider</Text>
+                  <Ionicons name="checkmark-circle" size={12} color="#4ADE80" />
+                  <Text className="text-[10px] text-white font-semibold">Verified</Text>
+                </View>
+              )}
+              {isProvider && providerStatus === 'pending' && (
+                <View className="flex-row items-center mt-1.5 bg-amber-400/20 self-start px-2.5 py-1 rounded-full gap-1">
+                  <Ionicons name="hourglass-outline" size={12} color="#FBBF24" />
+                  <Text className="text-[10px] text-amber-200 font-semibold">Pending Approval</Text>
+                </View>
+              )}
+              {isProvider && providerStatus === 'suspended' && (
+                <View className="flex-row items-center mt-1.5 bg-red-400/20 self-start px-2.5 py-1 rounded-full gap-1">
+                  <Ionicons name="close-circle" size={12} color="#F87171" />
+                  <Text className="text-[10px] text-red-300 font-semibold">Suspended</Text>
                 </View>
               )}
               {isGuest && (

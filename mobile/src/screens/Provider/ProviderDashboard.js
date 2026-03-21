@@ -15,6 +15,7 @@ export default function ProviderDashboard({ navigation }) {
 
   const [bookings, setBookings] = useState([]);
   const [services, setServices] = useState([]);
+  const [providerData, setProviderData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [setupDismissed, setSetupDismissed] = useState(false);
 
@@ -23,16 +24,18 @@ export default function ProviderDashboard({ navigation }) {
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const [bookingsRes, servicesRes] = await Promise.all([
+      const [bookingsRes, providerRes] = await Promise.all([
         bookingsAPI.list().catch(() => ({ data: [] })),
-        user?.provider_id
-          ? providersAPI.services(user.provider_id).catch(() => ({ data: [] }))
-          : Promise.resolve({ data: [] }),
+        providersAPI.me().catch(() => ({ data: null })),
       ]);
       const all = bookingsRes.data?.bookings || bookingsRes.data || [];
       setBookings(Array.isArray(all) ? all : []);
-      const svcList = servicesRes.data || [];
-      setServices(Array.isArray(svcList) ? svcList : []);
+
+      const prov = providerRes.data;
+      if (prov) {
+        setProviderData(prov);
+        setServices(prov.services || []);
+      }
     } catch (e) {
       console.log('Error fetching data:', e);
       setBookings([]);
@@ -74,11 +77,11 @@ export default function ProviderDashboard({ navigation }) {
 
   const rating = user?.rating || user?.provider_rating || 0;
 
-  // Determine business type from service_type or provider data
-  const providerServiceType = user?.service_type || '';
+  // Determine business type from provider data
+  const providerServiceType = providerData?.service_type || '';
   const isSeller = providerServiceType === 'Seller' || providerServiceType === 'Both';
-  const isServiceProv = providerServiceType !== 'Seller'; // Service Provider or Both or specific type
-  const providerStatus = user?.provider_status || user?.status || 'pending';
+  const isServiceProv = providerServiceType !== 'Seller';
+  const providerStatus = providerData?.status || 'pending';
   const isPendingApproval = providerStatus === 'pending';
 
   // Setup checklist — show when provider is new
