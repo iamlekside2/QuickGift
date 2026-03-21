@@ -75,8 +75,8 @@ async def send_otp(req: SendOTPRequest, db: AsyncSession = Depends(get_db)):
 
     response = {"message": "OTP sent successfully"}
 
-    # In debug mode or if SMS fails, return OTP in response for testing
-    if settings.DEBUG or not sms_sent:
+    # Only expose OTP in DEBUG mode — never in production even if SMS fails
+    if settings.DEBUG:
         response["otp_dev"] = code
 
     return response
@@ -100,6 +100,9 @@ async def verify_otp(req: VerifyOTPRequest, db: AsyncSession = Depends(get_db)):
     user_result = await db.execute(select(User).where(User.phone == req.phone))
     user = user_result.scalars().first()
     is_new = False
+
+    if user and not user.is_active:
+        raise HTTPException(status_code=403, detail="Your account has been deactivated. Please contact support.")
 
     if not user:
         # Auto-create a basic user account for OTP login

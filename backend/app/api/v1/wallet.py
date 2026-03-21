@@ -284,7 +284,17 @@ async def transfer(
 
     ref = f"TRF-{uuid.uuid4().hex[:12].upper()}"
 
-    sender.wallet_balance -= req.amount
+    # Atomic balance update to prevent race conditions
+    from sqlalchemy import update
+    result = await db.execute(
+        update(User)
+        .where(User.id == sender.id, User.wallet_balance >= req.amount)
+        .values(wallet_balance=User.wallet_balance - req.amount)
+    )
+    if result.rowcount == 0:
+        raise HTTPException(status_code=400, detail="Insufficient balance (concurrent update)")
+    await db.refresh(sender)
+
     debit_tx = Transaction(
         user_id=sender.id,
         type="debit",
@@ -296,7 +306,12 @@ async def transfer(
     )
     db.add(debit_tx)
 
-    recipient.wallet_balance += req.amount
+    await db.execute(
+        update(User).where(User.id == recipient.id)
+        .values(wallet_balance=User.wallet_balance + req.amount)
+    )
+    await db.refresh(recipient)
+
     credit_tx = Transaction(
         user_id=recipient.id,
         type="credit",

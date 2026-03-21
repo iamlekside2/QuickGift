@@ -16,8 +16,8 @@ class Settings(BaseModel):
         "sqlite+aiosqlite:///./quickgift.db"
     )
 
-    # JWT
-    SECRET_KEY: str = os.getenv("SECRET_KEY", "quickgift-dev-secret-change-in-production")
+    # JWT — SECRET_KEY MUST be set via env var in production
+    SECRET_KEY: str = os.getenv("SECRET_KEY", "dev-only-" + os.getenv("HOSTNAME", "local") + "-not-for-production")
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
 

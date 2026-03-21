@@ -154,7 +154,9 @@ async def delete_product(
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
 
-    await db.delete(product)
+    # Soft-delete: set status to 'deleted' instead of removing from DB
+    # This preserves OrderItem references to the product
+    product.status = "deleted"
     await db.commit()
     return {"message": "Product deleted"}
 

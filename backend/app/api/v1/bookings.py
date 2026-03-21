@@ -20,7 +20,7 @@ router = APIRouter(prefix="/bookings", tags=["Beauty Bookings"])
 
 
 def generate_booking_number():
-    return "QB-" + "".join(random.choices(string.digits, k=4))
+    return "QB-" + "".join(random.choices(string.ascii_uppercase + string.digits, k=8))
 
 
 @router.post("", response_model=BookingResponse)

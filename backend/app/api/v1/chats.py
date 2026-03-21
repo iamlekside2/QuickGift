@@ -99,9 +99,12 @@ async def send_message(
 
     from datetime import datetime
 
+    # Derive sender_role from user's relationship to the conversation (prevent spoofing)
+    actual_role = "buyer" if user_id == conversation.buyer_id else "provider"
+
     message = Message(
         conversation_id=conversation_id,
-        sender_role=req.sender_role,
+        sender_role=actual_role,
         text=req.text,
     )
     db.add(message)

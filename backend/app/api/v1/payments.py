@@ -294,6 +294,10 @@ async def verify_payment(
     if not payment:
         raise HTTPException(status_code=404, detail="Payment not found")
 
+    # Check ownership
+    if payment.user_id != current_user["user_id"] and current_user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Not authorized to verify this payment")
+
     # Already processed (e.g. wallet payment)
     if payment.status == "success":
         return {"status": "success", "reference": reference}
@@ -317,8 +321,9 @@ async def verify_payment(
                 await db.refresh(payment)
                 return {"status": payment.status, "reference": reference}
 
-    # Dev mode: auto-succeed
-    payment.status = "success"
+    # Dev mode: auto-succeed (only when no Paystack key configured)
+    if not settings.PAYSTACK_SECRET_KEY:
+        payment.status = "success"
     await _process_successful_payment(payment, db)
     await db.commit()
     return {"status": "success", "reference": reference, "message": "Dev mode auto-verified"}

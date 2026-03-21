@@ -95,7 +95,9 @@ async def seed_database(
     secret: str = "",
     db: AsyncSession = Depends(get_db),
 ):
-    """Seed database with initial data. Protected by SECRET_KEY."""
+    """Seed database with initial data. Only works when SECRET_KEY matches."""
+    if not secret:
+        raise HTTPException(status_code=403, detail="Secret required")
     if secret != settings.SECRET_KEY:
         raise HTTPException(status_code=403, detail="Invalid secret")
 
@@ -411,7 +413,7 @@ async def release_payout(
     if not payout:
         raise HTTPException(status_code=404, detail="Payout not found")
 
-    if payout.status not in ("held", "released"):
+    if payout.status != "held":
         raise HTTPException(status_code=400, detail=f"Cannot release payout in '{payout.status}' status")
 
     # Credit provider's wallet
