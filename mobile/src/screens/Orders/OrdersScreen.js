@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Platform, Alert, RefreshControl } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../context/AuthContext';
 import { ordersAPI, bookingsAPI } from '../../services/api';
 
@@ -32,6 +33,7 @@ function getTrackingIndex(status) {
 }
 
 export default function OrdersScreen() {
+  const navigation = useNavigation();
   const { isGuest } = useAuth();
   const [activeTab, setActiveTab] = useState('All');
   const [orders, setOrders] = useState([]);
@@ -246,6 +248,23 @@ export default function OrdersScreen() {
                     onPress={() => handleCancelOrder(item)}
                   >
                     <Text className="text-xs font-bold text-red-500">Cancel Order</Text>
+                  </TouchableOpacity>
+                )}
+
+                {/* Leave Review for delivered gift orders */}
+                {status === 'delivered' && isGift && (
+                  <TouchableOpacity
+                    className="mt-2 bg-teal/10 py-2 px-3 rounded-xl self-start"
+                    onPress={() => navigation.navigate('Home', {
+                      screen: 'WriteReview',
+                      params: {
+                        targetType: 'product',
+                        targetId: item.product_id || item.id,
+                        targetName: name,
+                      },
+                    })}
+                  >
+                    <Text className="text-xs font-bold text-teal">Leave Review</Text>
                   </TouchableOpacity>
                 )}
               </TouchableOpacity>

@@ -486,14 +486,38 @@ export default function ProviderDashboard({ navigation }) {
           </View>
           <View className="flex-row gap-3">
             {[
+              { icon: 'gift-outline', label: 'Gift Orders', screen: 'ProviderOrders' },
               { icon: 'star-outline', label: 'Reviews', screen: 'ProviderReviews' },
               { icon: 'time-outline', label: 'Availability', screen: 'AvailabilityScreen' },
+            ].map((action, i) => (
+              <TouchableOpacity
+                key={i}
+                className="flex-1 bg-white rounded-2xl py-4 items-center gap-2"
+                style={{
+                  shadowColor: '#1F2937',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.04,
+                  shadowRadius: 8,
+                  elevation: 2,
+                }}
+                onPress={() => navigation.navigate(action.screen)}
+              >
+                <View className="w-10 h-10 rounded-xl bg-teal-light items-center justify-center">
+                  <Ionicons name={action.icon} size={20} color="#35615D" />
+                </View>
+                <Text className="text-[11px] font-semibold text-gray-600">{action.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          <View className="flex-row gap-3 mt-3">
+            {[
               { icon: 'cash-outline', label: 'Earnings', screen: 'WalletScreen' },
             ].map((action, i) => (
               <TouchableOpacity
                 key={i}
                 className="flex-1 bg-white rounded-2xl py-4 items-center gap-2"
                 style={{
+                  maxWidth: '33%',
                   shadowColor: '#1F2937',
                   shadowOffset: { width: 0, height: 2 },
                   shadowOpacity: 0.04,

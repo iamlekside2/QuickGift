@@ -23,6 +23,8 @@ import HelpSupportScreen from '../screens/Shared/HelpSupportScreen';
 import SettingsScreen from '../screens/Shared/SettingsScreen';
 import EditProfileScreen from '../screens/Shared/EditProfileScreen';
 
+import ProviderOrdersScreen from '../screens/Provider/ProviderOrdersScreen';
+
 import ChatListScreen from '../screens/Chat/ChatListScreen';
 import ChatScreen from '../screens/Chat/ChatScreen';
 import WithdrawScreen from '../screens/Wallet/WithdrawScreen';
@@ -50,6 +52,7 @@ const PROVIDER_SCREENS = [
   { name: 'ChatScreen', component: ChatScreen },
   { name: 'WithdrawScreen', component: WithdrawScreen },
   { name: 'AddBankAccount', component: AddBankAccountScreen },
+  { name: 'ProviderOrders', component: ProviderOrdersScreen },
 ];
 
 function DashboardStack() {

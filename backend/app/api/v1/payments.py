@@ -137,8 +137,30 @@ async def _notify_vendors_of_order(order, db: AsyncSession):
                 pass
 
 
+async def _create_pending_delivery(order, db: AsyncSession):
+    """Create a pending delivery record for a gift order."""
+    from app.models.delivery import Delivery
+
+    # Check if delivery already exists
+    existing = await db.execute(
+        select(Delivery).where(Delivery.order_id == order.id)
+    )
+    if existing.scalars().first():
+        return
+
+    delivery = Delivery(
+        order_id=order.id,
+        user_id=order.user_id,
+        status="pending",
+        delivery_address=order.delivery_address,
+        delivery_name=order.recipient_name,
+        delivery_phone=order.recipient_phone,
+    )
+    db.add(delivery)
+
+
 async def _process_successful_payment(payment: Payment, db: AsyncSession):
-    """Handle post-payment: update order/booking, create payouts, notify providers."""
+    """Handle post-payment: update order/booking, create payouts, notify providers, create delivery."""
     if payment.order_id:
         order_result = await db.execute(select(Order).where(Order.id == payment.order_id))
         order = order_result.scalars().first()
@@ -148,6 +170,7 @@ async def _process_successful_payment(payment: Payment, db: AsyncSession):
             order.status = "confirmed"
             await _create_payout_for_order(order, db)
             await _notify_vendors_of_order(order, db)
+            await _create_pending_delivery(order, db)
 
     if payment.booking_id:
         booking_result = await db.execute(select(Booking).where(Booking.id == payment.booking_id))
