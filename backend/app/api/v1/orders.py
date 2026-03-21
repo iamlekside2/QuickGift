@@ -138,6 +138,110 @@ async def cancel_order(
     return {"status": "cancelled", "order_id": order_id}
 
 
+@router.get("/my-vendor-orders")
+async def list_vendor_orders(
+    status: Optional[str] = None,
+    page: int = 1,
+    per_page: int = 20,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """List orders containing the current provider's products."""
+    from app.models.provider import Provider
+
+    # Find provider
+    prov_result = await db.execute(
+        select(Provider).where(Provider.user_id == current_user["user_id"])
+    )
+    provider = prov_result.scalars().first()
+    if not provider:
+        return []
+
+    # Find order IDs that contain this provider's products
+    from app.models.product import Product
+    order_ids_query = (
+        select(OrderItem.order_id)
+        .join(Product, OrderItem.product_id == Product.id)
+        .where(Product.vendor_id == provider.id)
+        .distinct()
+    )
+    order_ids_result = await db.execute(order_ids_query)
+    order_ids = [row[0] for row in order_ids_result.all()]
+
+    if not order_ids:
+        return []
+
+    query = select(Order).where(Order.id.in_(order_ids))
+    if status:
+        query = query.where(Order.status == status)
+    query = query.order_by(Order.created_at.desc()).offset((page - 1) * per_page).limit(per_page)
+    result = await db.execute(query)
+    return result.scalars().all()
+
+
+@router.patch("/{order_id}/provider-status")
+async def provider_update_order_status(
+    order_id: str,
+    req: OrderStatusUpdate,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Provider updates order status (confirmed -> in_transit, in_transit -> delivered)."""
+    from app.models.provider import Provider
+    from app.models.product import Product
+
+    # Verify this provider owns products in this order
+    prov_result = await db.execute(
+        select(Provider).where(Provider.user_id == current_user["user_id"])
+    )
+    provider = prov_result.scalars().first()
+    if not provider:
+        raise HTTPException(status_code=403, detail="Not a provider")
+
+    # Check order has their products
+    has_items = await db.execute(
+        select(OrderItem.id)
+        .join(Product, OrderItem.product_id == Product.id)
+        .where(OrderItem.order_id == order_id, Product.vendor_id == provider.id)
+    )
+    if not has_items.scalars().first():
+        raise HTTPException(status_code=403, detail="This order doesn't contain your products")
+
+    result = await db.execute(select(Order).where(Order.id == order_id))
+    order = result.scalars().first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    provider_transitions = {
+        "confirmed": ["in_transit"],
+        "in_transit": ["delivered"],
+    }
+
+    if req.status not in provider_transitions.get(order.status, []):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Cannot transition from {order.status} to {req.status}",
+        )
+
+    order.status = req.status
+    await db.commit()
+    await db.refresh(order)
+
+    # Notify buyer
+    buyer_result = await db.execute(select(User).where(User.id == order.user_id))
+    buyer = buyer_result.scalars().first()
+    if buyer and buyer.push_token:
+        status_label = req.status.replace("_", " ").title()
+        await send_push(
+            buyer.push_token,
+            f"Order {status_label}",
+            f"Your order {order.order_number} is now {status_label.lower()}",
+            {"type": "order_status", "order_id": order.id, "status": req.status},
+        )
+
+    return order
+
+
 @router.get("/{order_id}", response_model=OrderDetailResponse)
 async def get_order(
     order_id: str,

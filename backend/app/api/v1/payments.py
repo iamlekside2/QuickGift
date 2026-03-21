@@ -87,8 +87,58 @@ async def _create_payout_for_booking(booking: Booking, db: AsyncSession):
     db.add(payout)
 
 
+async def _notify_vendors_of_order(order, db: AsyncSession):
+    """Notify all vendors in an order that they have a new order."""
+    from app.models.notification import Notification
+    from app.core.push import send_push
+
+    items_result = await db.execute(
+        select(OrderItem).where(OrderItem.order_id == order.id)
+    )
+    items = items_result.scalars().all()
+
+    notified_vendors = set()
+    for item in items:
+        product_result = await db.execute(select(Product).where(Product.id == item.product_id))
+        product = product_result.scalars().first()
+        if not product or not product.vendor_id or product.vendor_id in notified_vendors:
+            continue
+
+        notified_vendors.add(product.vendor_id)
+        provider_result = await db.execute(select(Provider).where(Provider.id == product.vendor_id))
+        provider = provider_result.scalars().first()
+        if not provider:
+            continue
+
+        from app.models.user import User
+        user_result = await db.execute(select(User).where(User.id == provider.user_id))
+        vendor_user = user_result.scalars().first()
+        if not vendor_user:
+            continue
+
+        # In-app notification
+        db.add(Notification(
+            user_id=vendor_user.id,
+            title="New Order!",
+            description=f"Order {order.order_number}: {item.product_name} x{item.quantity}",
+            type="system",
+        ))
+
+        # Push notification
+        if vendor_user.push_token:
+            try:
+                await send_push(
+                    vendor_user.push_token,
+                    "New Order Received!",
+                    f"You have a new order for {item.product_name}. Tap to view.",
+                    {"type": "new_order", "order_id": order.id},
+                )
+            except Exception:
+                pass
+
+
 async def _process_successful_payment(payment: Payment, db: AsyncSession):
-    """Handle post-payment: update order/booking, create payouts."""
+    """Handle post-payment: update order/booking, create payouts, notify providers."""
     if payment.order_id:
         order_result = await db.execute(select(Order).where(Order.id == payment.order_id))
         order = order_result.scalars().first()
@@ -97,6 +147,7 @@ async def _process_successful_payment(payment: Payment, db: AsyncSession):
             order.payment_ref = payment.reference
             order.status = "confirmed"
             await _create_payout_for_order(order, db)
+            await _notify_vendors_of_order(order, db)
 
     if payment.booking_id:
         booking_result = await db.execute(select(Booking).where(Booking.id == payment.booking_id))

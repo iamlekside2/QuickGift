@@ -103,6 +103,8 @@ const realOrdersAPI = {
   list: (params = {}) => api.get('/orders', { params }),
   get: (id) => api.get(`/orders/${id}`),
   cancel: (id) => api.post(`/orders/${id}/cancel`),
+  vendorOrders: (params = {}) => api.get('/orders/my-vendor-orders', { params }),
+  providerUpdateStatus: (id, status) => api.patch(`/orders/${id}/provider-status`, { status }),
 };
 
 const realBookingsAPI = {

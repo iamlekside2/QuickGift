@@ -6,11 +6,14 @@ import { ordersAPI, paymentsAPI } from '../../services/api';
 import AppInput from '../../components/common/AppInput';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
+import { useWallet } from '../../context/WalletContext';
 
 export default function CartScreen({ navigation }) {
   const { items, removeItem, updateQuantity, clearCart, subtotal, itemCount } = useCart();
   const { user, isAuthenticated, isGuest } = useAuth();
+  const { balance: walletBalance } = useWallet();
   const [submitting, setSubmitting] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState('card');
 
   // Recipient details state
   const [showRecipient, setShowRecipient] = useState(false);
@@ -54,13 +57,25 @@ export default function CartScreen({ navigation }) {
       const res = await ordersAPI.create(orderData);
       const order = res.data;
 
-      // Initialize payment
+      // Initialize payment with method
       const payRes = await paymentsAPI.initialize({
         order_id: order.id,
         amount: order.total,
         email: user?.email || `${user?.phone}@quickgift.ng`,
+        method: paymentMethod,
       });
       const payData = payRes.data;
+
+      if (payData.status === 'success' && paymentMethod === 'wallet') {
+        // Wallet payment succeeded
+        clearCart();
+        Alert.alert(
+          'Order Placed!',
+          `Order ${order.order_number} paid from wallet.\nTotal: ${formatPrice(order.total)}`,
+          [{ text: 'Done', onPress: () => navigation.goBack() }]
+        );
+        return;
+      }
 
       if (payData.authorization_url) {
         clearCart();
@@ -72,7 +87,7 @@ export default function CartScreen({ navigation }) {
         return;
       }
 
-      // Dev mode / wallet fallback
+      // Dev mode fallback
       clearCart();
       Alert.alert(
         'Order Placed!',
@@ -256,6 +271,31 @@ export default function CartScreen({ navigation }) {
               type="multiline"
               icon="chatbubble-outline"
             />
+            {/* Payment Method */}
+            <Text className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 mt-2">Payment Method</Text>
+            <View className="flex-row gap-3 mb-4">
+              <TouchableOpacity
+                className={`flex-1 flex-row items-center justify-center gap-2 p-3.5 rounded-2xl border-2 ${
+                  paymentMethod === 'card' ? 'border-teal bg-teal-light/30' : 'border-gray-200 bg-gray-50'
+                }`}
+                onPress={() => setPaymentMethod('card')}
+              >
+                <Ionicons name="card-outline" size={18} color={paymentMethod === 'card' ? '#35615D' : '#9CA3AF'} />
+                <Text className={`text-sm font-bold ${paymentMethod === 'card' ? 'text-teal' : 'text-gray-400'}`}>Card</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                className={`flex-1 flex-row items-center justify-center gap-2 p-3.5 rounded-2xl border-2 ${
+                  paymentMethod === 'wallet' ? 'border-teal bg-teal-light/30' : 'border-gray-200 bg-gray-50'
+                }`}
+                onPress={() => setPaymentMethod('wallet')}
+              >
+                <Ionicons name="wallet-outline" size={18} color={paymentMethod === 'wallet' ? '#35615D' : '#9CA3AF'} />
+                <View>
+                  <Text className={`text-sm font-bold ${paymentMethod === 'wallet' ? 'text-teal' : 'text-gray-400'}`}>Wallet</Text>
+                  <Text className="text-[10px] text-gray-400">₦{walletBalance.toLocaleString()}</Text>
+                </View>
+              </TouchableOpacity>
+            </View>
           </ScrollView>
 
           <View className="px-5 pb-8 pt-4 border-t border-gray-100">

@@ -252,7 +252,7 @@ export default function GiftDetailScreen({ navigation, route }) {
         <Button
           title="Add to Cart"
           onPress={() => {
-            addItem(gift, quantity);
+            addItem({ ...gift, personal_message: message || undefined }, quantity);
             Alert.alert('Added!', `${gift.name} added to cart`, [
               { text: 'Continue Shopping', style: 'cancel' },
               { text: 'View Cart', onPress: () => navigation.navigate('Cart') },
