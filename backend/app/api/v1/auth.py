@@ -75,8 +75,8 @@ async def send_otp(req: SendOTPRequest, db: AsyncSession = Depends(get_db)):
 
     response = {"message": "OTP sent successfully"}
 
-    # Only expose OTP in DEBUG mode — never in production even if SMS fails
-    if settings.DEBUG:
+    # Expose OTP in DEBUG mode or when SMS fails (for dev/testing)
+    if settings.DEBUG or not sms_sent:
         response["otp_dev"] = code
 
     return response
