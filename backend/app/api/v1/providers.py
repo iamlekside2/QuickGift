@@ -34,18 +34,12 @@ async def list_providers(
 ):
     query = select(Provider).where(Provider.status == "verified")
 
-    # When user provides coordinates, use bounding-box pre-filter instead of city text
-    if lat is not None and lng is not None:
-        delta_lat = radius_km / 111.0
-        delta_lng = radius_km / (111.0 * max(math.cos(math.radians(lat)), 0.01))
-        query = query.where(
-            Provider.lat.isnot(None),
-            Provider.lng.isnot(None),
-            Provider.lat.between(lat - delta_lat, lat + delta_lat),
-            Provider.lng.between(lng - delta_lng, lng + delta_lng),
-        )
-    elif city:
-        query = query.where(Provider.city == city)
+    # When user provides coordinates, don't apply SQL-level bounding box
+    # (Python-side distance calc handles filtering + includes null-coord providers)
+    # Only apply city filter when no coordinates provided
+    if lat is None or lng is None:
+        if city:
+            query = query.where(Provider.city == city)
 
     if service_type:
         query = query.where(Provider.service_type == service_type)
@@ -61,20 +55,25 @@ async def list_providers(
         result = await db.execute(query)
         providers = result.scalars().all()
 
-        # Compute distance and filter by radius
+        # Compute distance for providers WITH coordinates
         with_distance = []
+        without_coords = []
         for p in providers:
             if p.lat is not None and p.lng is not None:
                 dist = haversine_km(lat, lng, p.lat, p.lng)
                 if dist <= radius_km:
                     with_distance.append((p, round(dist, 1)))
+            else:
+                # Providers without coords: include but deprioritize (show at end)
+                without_coords.append((p, None))
 
-        # Sort by distance ascending
+        # Sort by distance ascending, then append no-coord providers
         with_distance.sort(key=lambda x: x[1])
+        all_results = with_distance + without_coords
 
         # Paginate
         start = (page - 1) * per_page
-        page_items = with_distance[start : start + per_page]
+        page_items = all_results[start : start + per_page]
 
         # Build response with distance_km
         results = []
@@ -85,48 +84,8 @@ async def list_providers(
         return results
 
     # Also include providers WITHOUT coordinates (when doing geo query)
-    # They go in a separate query and are appended at the end
-    if lat is not None and lng is not None:
-        # We already filtered for providers WITH coords above.
-        # Also fetch providers without coords (same filters minus geo)
-        no_geo_query = select(Provider).where(
-            Provider.status == "verified",
-            (Provider.lat.is_(None)) | (Provider.lng.is_(None)),
-        )
-        if service_type:
-            no_geo_query = no_geo_query.where(Provider.service_type == service_type)
-        if available is not None:
-            no_geo_query = no_geo_query.where(Provider.is_available == available)
-        if search:
-            no_geo_query = no_geo_query.where(Provider.business_name.ilike(f"%{search}%"))
-
-        # Get geo results with distance
-        geo_result = await db.execute(query)
-        geo_providers = geo_result.scalars().all()
-        with_distance = []
-        for p in geo_providers:
-            dist = haversine_km(lat, lng, p.lat, p.lng)
-            if dist <= radius_km:
-                with_distance.append((p, round(dist, 1)))
-        with_distance.sort(key=lambda x: x[1])
-
-        # Get non-geo results
-        no_geo_result = await db.execute(no_geo_query.order_by(Provider.rating.desc()))
-        no_geo_providers = no_geo_result.scalars().all()
-
-        # Combine: geo-sorted first, then non-geo
-        all_items = [(p, d) for p, d in with_distance] + [(p, None) for p in no_geo_providers]
-
-        # Paginate
-        start = (page - 1) * per_page
-        page_items = all_items[start : start + per_page]
-
-        results = []
-        for provider, dist in page_items:
-            data = {c.name: getattr(provider, c.name) for c in provider.__table__.columns}
-            data["distance_km"] = dist
-            results.append(ProviderResponse(**data))
-        return results
+    # This path handles non-distance sorts when coords are provided
+    # (the distance sort path above already handles that case and returns early)
 
     # Standard non-geo sorting
     if sort == "rating" or (sort == "distance" and lat is None):

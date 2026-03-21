@@ -55,9 +55,11 @@ export default function BeautyHomeScreen({ navigation }) {
       if (userLat && userLng) {
         params.lat = userLat;
         params.lng = userLng;
-        params.radius_km = 15;
+        params.radius_km = 20; // Generous radius for Nigerian cities
         params.sort = 'distance';
       } else {
+        // No GPS — fall back to city-based filtering
+        if (user?.city) params.city = user.city;
         params.sort = 'rating';
       }
       const res = await providersAPI.list(params);
