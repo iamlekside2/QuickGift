@@ -136,6 +136,32 @@ export default function PaystackWebView({ route, navigation }) {
         ref={webViewRef}
         source={{ uri: authorization_url }}
         onNavigationStateChange={handleNavigationChange}
+        onShouldStartLoadWithRequest={(request) => {
+          // Intercept callback URL before WebView tries to load it
+          const isCallback = CALLBACK_KEYWORDS.some((k) => request.url.toLowerCase().includes(k));
+          if (isCallback && !hasHandledRedirect.current) {
+            hasHandledRedirect.current = true;
+            let payRef = reference;
+            try {
+              const urlObj = new URL(request.url);
+              payRef = urlObj.searchParams.get('trxref') || urlObj.searchParams.get('reference') || reference;
+            } catch {}
+            verifyPayment(payRef);
+            return false; // Block the navigation — don't load the callback URL
+          }
+          return true;
+        }}
+        onError={(syntheticEvent) => {
+          // If WebView fails to load (DNS error on callback URL), verify anyway
+          const { nativeEvent } = syntheticEvent;
+          if (!hasHandledRedirect.current && nativeEvent.url) {
+            const isCallback = CALLBACK_KEYWORDS.some((k) => nativeEvent.url.toLowerCase().includes(k));
+            if (isCallback) {
+              hasHandledRedirect.current = true;
+              verifyPayment(reference);
+            }
+          }
+        }}
         onLoadStart={() => setLoading(true)}
         onLoadEnd={() => setLoading(false)}
         javaScriptEnabled
