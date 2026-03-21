@@ -87,6 +87,7 @@ const realProvidersAPI = {
   list: (params = {}) => api.get('/providers', { params }),
   get: (id) => api.get(`/providers/${id}`),
   me: () => api.get('/providers/me'),
+  updateMe: (data) => api.get('/providers/me').then(res => api.patch(`/providers/${res.data?.id}`, data)),
   services: (id) => api.get(`/providers/${id}/services`),
   register: (data) => api.post('/providers', data),
   addService: (providerId, data) => api.post(`/providers/${providerId}/services`, data),

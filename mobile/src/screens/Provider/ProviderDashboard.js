@@ -11,7 +11,8 @@ import * as ImagePicker from 'expo-image-picker';
 export default function ProviderDashboard({ navigation }) {
   const { user, updateProfile, updateUser } = useAuth();
   const { refreshLocation, coords } = useLocation();
-  const firstName = user?.full_name?.split(' ')[0] || 'Provider';
+  // Use business name on provider screens, personal name only as last fallback
+  const displayName = providerData?.business_name || user?.full_name?.split(' ')[0] || 'Provider';
 
   const [bookings, setBookings] = useState([]);
   const [services, setServices] = useState([]);
@@ -208,7 +209,7 @@ export default function ProviderDashboard({ navigation }) {
       >
         <View className="flex-row justify-between items-center">
           <View>
-            <Text className="text-2xl font-extrabold text-gray-800">Hi {firstName}</Text>
+            <Text className="text-2xl font-extrabold text-gray-800">Hi {displayName}</Text>
             <Text className="text-sm text-gray-400 mt-0.5">Here's your business overview</Text>
           </View>
           <TouchableOpacity
