@@ -135,8 +135,24 @@ export const api = createApi({
       invalidatesTags: ['Providers', 'Dashboard'],
     }),
     rejectProvider: builder.mutation({
-      query: (id) => ({
+      query: ({ id, reason }) => ({
         url: `/providers/${id}/reject`,
+        method: 'PATCH',
+        body: { reason },
+      }),
+      invalidatesTags: ['Providers', 'Dashboard'],
+    }),
+    suspendProvider: builder.mutation({
+      query: ({ id, reason }) => ({
+        url: `/providers/${id}/suspend`,
+        method: 'PATCH',
+        body: { reason },
+      }),
+      invalidatesTags: ['Providers', 'Dashboard'],
+    }),
+    reactivateProvider: builder.mutation({
+      query: (id) => ({
+        url: `/providers/${id}/reactivate`,
         method: 'PATCH',
       }),
       invalidatesTags: ['Providers', 'Dashboard'],
@@ -230,6 +246,8 @@ export const {
   useGetAdminProvidersQuery,
   useApproveProviderMutation,
   useRejectProviderMutation,
+  useSuspendProviderMutation,
+  useReactivateProviderMutation,
   useGetAdminUsersQuery,
   useGetReviewsQuery,
   useGetAdminPaymentsQuery,

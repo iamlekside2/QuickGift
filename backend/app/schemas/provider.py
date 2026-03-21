@@ -38,6 +38,7 @@ class ProviderResponse(BaseModel):
     booking_count: int
     experience_years: int
     status: str
+    status_reason: Optional[str] = None
     plan: str
     is_available: bool
     offers_home_service: bool

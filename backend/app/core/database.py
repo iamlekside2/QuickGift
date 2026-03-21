@@ -39,6 +39,7 @@ async def init_db():
         ("users", "lat", float_type),
         ("users", "lng", float_type),
         ("users", "updated_at", "TIMESTAMP"),
+        ("providers", "status_reason", "TEXT"),
     ]
 
     # Each migration in its OWN transaction — PostgreSQL aborts

@@ -89,7 +89,11 @@ export default function ProviderDashboard({ navigation }) {
   const isSeller = providerServiceType === 'Seller' || providerServiceType === 'Both';
   const isServiceProv = providerServiceType !== 'Seller';
   const providerStatus = providerData?.status || 'pending';
+  const statusReason = providerData?.status_reason || '';
   const isPendingApproval = providerStatus === 'pending';
+  const isSuspended = providerStatus === 'suspended';
+  const isRejected = providerStatus === 'rejected';
+  const isActive = providerStatus === 'verified';
 
   // Setup checklist — derived from actual completion state
   const hasServices = services.length > 0;
@@ -236,19 +240,51 @@ export default function ProviderDashboard({ navigation }) {
       </View>
 
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        {/* Pending Approval Banner */}
+        {/* Status Banners — react to admin status changes */}
         {isPendingApproval && (
-          <View
-            className="mx-5 mt-4 bg-amber-50 rounded-2xl p-4 flex-row items-center gap-3 border border-amber-200"
-          >
+          <View className="mx-5 mt-4 bg-amber-50 rounded-2xl p-4 flex-row items-center gap-3 border border-amber-200">
             <View className="w-10 h-10 rounded-xl bg-amber-100 items-center justify-center">
               <Ionicons name="hourglass-outline" size={22} color="#D97706" />
             </View>
             <View className="flex-1">
               <Text className="text-sm font-bold text-amber-800">Pending Approval</Text>
               <Text className="text-[11px] text-amber-600 mt-0.5 leading-4">
-                Your store is under review. Once approved by our team, customers will be able to find you. Complete your setup below in the meantime!
+                Your account is under review. We will notify you once approved.
               </Text>
+            </View>
+          </View>
+        )}
+
+        {isSuspended && (
+          <View className="mx-5 mt-4 bg-red-50 rounded-2xl p-4 flex-row items-start gap-3 border border-red-200">
+            <View className="w-10 h-10 rounded-xl bg-red-100 items-center justify-center">
+              <Ionicons name="ban-outline" size={22} color="#DC2626" />
+            </View>
+            <View className="flex-1">
+              <Text className="text-sm font-bold text-red-800">Account Suspended</Text>
+              <Text className="text-[11px] text-red-600 mt-0.5 leading-4">
+                Your account has been suspended.{statusReason ? ` Reason: ${statusReason}` : ''} Please contact support.
+              </Text>
+              <TouchableOpacity className="mt-2 self-start bg-red-100 px-3 py-1.5 rounded-lg">
+                <Text className="text-[11px] font-bold text-red-700">Contact Support</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
+        {isRejected && (
+          <View className="mx-5 mt-4 bg-red-50 rounded-2xl p-4 flex-row items-start gap-3 border border-red-200">
+            <View className="w-10 h-10 rounded-xl bg-red-100 items-center justify-center">
+              <Ionicons name="close-circle-outline" size={22} color="#DC2626" />
+            </View>
+            <View className="flex-1">
+              <Text className="text-sm font-bold text-red-800">Application Rejected</Text>
+              <Text className="text-[11px] text-red-600 mt-0.5 leading-4">
+                Your application was rejected.{statusReason ? ` Reason: ${statusReason}` : ''} Please contact support to appeal.
+              </Text>
+              <TouchableOpacity className="mt-2 self-start bg-red-100 px-3 py-1.5 rounded-lg">
+                <Text className="text-[11px] font-bold text-red-700">Contact Support</Text>
+              </TouchableOpacity>
             </View>
           </View>
         )}

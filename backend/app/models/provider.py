@@ -25,7 +25,8 @@ class Provider(Base):
     booking_count: Mapped[int] = mapped_column(Integer, default=0)
     total_revenue: Mapped[float] = mapped_column(Float, default=0.0)
     experience_years: Mapped[int] = mapped_column(Integer, default=0)
-    status: Mapped[str] = mapped_column(String(20), default="pending")  # pending, verified, suspended
+    status: Mapped[str] = mapped_column(String(20), default="pending")  # pending, verified, suspended, rejected
+    status_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # reason for suspension/rejection
     plan: Mapped[str] = mapped_column(String(20), default="Free")  # Free, Pro, Elite
     is_available: Mapped[bool] = mapped_column(Boolean, default=True)
     offers_home_service: Mapped[bool] = mapped_column(Boolean, default=True)

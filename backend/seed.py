@@ -459,6 +459,7 @@ async def run_migrations(eng):
         ("users", "lat", float_type),
         ("users", "lng", float_type),
         ("users", "updated_at", "TIMESTAMP"),
+        ("providers", "status_reason", "TEXT"),
     ]
 
     # IMPORTANT: Each migration in its OWN transaction.

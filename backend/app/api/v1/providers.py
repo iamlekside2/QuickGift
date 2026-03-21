@@ -282,7 +282,43 @@ async def add_service(
     return service
 
 
-# --- Admin ---
+# --- Admin Status Actions ---
+
+from pydantic import BaseModel as _BaseModel
+from app.models.user import User
+from app.models.notification import Notification
+from app.core.push import send_push
+
+
+class StatusReasonRequest(_BaseModel):
+    reason: str = ""
+
+
+async def _notify_provider(provider_id: str, title: str, body: str, db):
+    """Send push + in-app notification to a provider."""
+    # Find provider's user
+    prov = await db.execute(select(Provider).where(Provider.id == provider_id))
+    provider = prov.scalars().first()
+    if not provider:
+        return
+    user_result = await db.execute(select(User).where(User.id == provider.user_id))
+    user = user_result.scalars().first()
+    if not user:
+        return
+
+    # In-app notification
+    notif = Notification(
+        user_id=user.id, title=title, description=body, type="system"
+    )
+    db.add(notif)
+
+    # Push notification
+    if user.push_token:
+        try:
+            await send_push(user.push_token, title, body, {"type": "status_change"})
+        except Exception:
+            pass
+
 
 @router.patch("/{provider_id}/approve")
 async def approve_provider(
@@ -296,13 +332,45 @@ async def approve_provider(
         raise HTTPException(status_code=404, detail="Provider not found")
 
     provider.status = "verified"
+    provider.status_reason = None
+    await _notify_provider(
+        provider_id,
+        "Account Approved!",
+        "Congratulations! Your account has been approved. You can now start receiving orders.",
+        db,
+    )
     await db.commit()
-    return {"message": "Provider approved"}
+    return {"message": "Provider approved", "status": "verified"}
 
 
 @router.patch("/{provider_id}/reject")
 async def reject_provider(
     provider_id: str,
+    req: StatusReasonRequest = StatusReasonRequest(),
+    admin: dict = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(select(Provider).where(Provider.id == provider_id))
+    provider = result.scalars().first()
+    if not provider:
+        raise HTTPException(status_code=404, detail="Provider not found")
+
+    provider.status = "rejected"
+    provider.status_reason = req.reason or None
+    await _notify_provider(
+        provider_id,
+        "Application Rejected",
+        f"Your application has been rejected.{(' Reason: ' + req.reason) if req.reason else ''} Please contact support.",
+        db,
+    )
+    await db.commit()
+    return {"message": "Provider rejected", "status": "rejected"}
+
+
+@router.patch("/{provider_id}/suspend")
+async def suspend_provider(
+    provider_id: str,
+    req: StatusReasonRequest = StatusReasonRequest(),
     admin: dict = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
@@ -312,5 +380,35 @@ async def reject_provider(
         raise HTTPException(status_code=404, detail="Provider not found")
 
     provider.status = "suspended"
+    provider.status_reason = req.reason or None
+    await _notify_provider(
+        provider_id,
+        "Account Suspended",
+        f"Your account has been suspended.{(' Reason: ' + req.reason) if req.reason else ''} Please contact support.",
+        db,
+    )
     await db.commit()
-    return {"message": "Provider rejected"}
+    return {"message": "Provider suspended", "status": "suspended"}
+
+
+@router.patch("/{provider_id}/reactivate")
+async def reactivate_provider(
+    provider_id: str,
+    admin: dict = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(select(Provider).where(Provider.id == provider_id))
+    provider = result.scalars().first()
+    if not provider:
+        raise HTTPException(status_code=404, detail="Provider not found")
+
+    provider.status = "verified"
+    provider.status_reason = None
+    await _notify_provider(
+        provider_id,
+        "Account Reactivated!",
+        "Great news! Your account has been reactivated. You can now start receiving orders again.",
+        db,
+    )
+    await db.commit()
+    return {"message": "Provider reactivated", "status": "verified"}
