@@ -51,12 +51,8 @@ export default function PaystackWebView({ route, navigation }) {
           {
             text: 'OK',
             onPress: () => {
-              if (successScreen) {
-                // Pop back to the stack root then navigate
-                navigation.popToTop();
-              } else {
-                navigation.goBack();
-              }
+              // Go back to wherever we came from
+              navigation.goBack();
             },
           },
         ]);
