@@ -13,6 +13,7 @@ import CompleteSetupScreen from '../screens/Provider/CompleteSetupScreen';
 import BuyerTabs from './BuyerTabs';
 import ProviderTabs from './ProviderTabs';
 import CartScreen from '../screens/Shared/CartScreen';
+import PaystackWebView from '../screens/Shared/PaystackWebView';
 
 const Stack = createNativeStackNavigator();
 
@@ -53,6 +54,7 @@ export default function RootNavigator() {
         />
       )}
       <Stack.Screen name="Cart" component={CartScreen} options={{ presentation: 'modal' }} />
+      <Stack.Screen name="PaystackWebView" component={PaystackWebView} />
     </Stack.Navigator>
   );
 }
