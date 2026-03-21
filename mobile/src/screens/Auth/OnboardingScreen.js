@@ -5,7 +5,10 @@ import {
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ONBOARDING_SLIDES } from '../../constants/data';
+
+const ONBOARDING_SEEN_KEY = '@quickgift_onboarding_seen';
 
 const { width, height } = Dimensions.get('window');
 
@@ -68,15 +71,21 @@ export default function OnboardingScreen({ navigation }) {
     }
   }).current;
 
+  const markSeen = async () => {
+    try { await AsyncStorage.setItem(ONBOARDING_SEEN_KEY, 'true'); } catch {}
+  };
+
   const handleNext = () => {
     if (currentIndex < ONBOARDING_SLIDES.length - 1) {
       flatListRef.current?.scrollToIndex({ index: currentIndex + 1 });
     } else {
+      markSeen();
       navigation.replace('Login');
     }
   };
 
   const handleSkip = () => {
+    markSeen();
     navigation.replace('Login');
   };
 
