@@ -442,6 +442,19 @@ async def release_payout(
 
     payout.status = "paid"
     payout.paid_at = datetime.utcnow()
+
+    # Notify provider about payout
+    from app.core.notify import notify_user
+    if provider:
+        await notify_user(
+            provider.user_id,
+            "Payment Received!",
+            f"₦{payout.amount:,.0f} has been credited to your wallet.",
+            "payment",
+            {"type": "payout_received", "payout_id": payout_id},
+            db,
+        )
+
     await db.commit()
 
     return {"status": "ok", "payout_id": payout_id, "amount": payout.amount}

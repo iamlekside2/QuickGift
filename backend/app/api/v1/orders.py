@@ -10,6 +10,7 @@ from app.core.database import get_db
 from app.core.security import get_current_user, require_admin
 from app.core.config import settings
 from app.core.push import send_push
+from app.core.notify import notify_user
 from app.models.order import Order, OrderItem
 from app.models.product import Product
 from app.models.user import User
@@ -178,6 +179,30 @@ async def cancel_order(
             if payment:
                 payment.status = "refunded"
 
+    # Notify buyer of cancellation/refund
+    if refunded:
+        await notify_user(order.user_id, "Order Cancelled & Refunded",
+            f"Order {order.order_number} has been cancelled. ₦{order.total:,.0f} refunded to your wallet.",
+            "payment", {"type": "order_cancelled", "order_id": order_id}, db)
+    else:
+        await notify_user(order.user_id, "Order Cancelled",
+            f"Order {order.order_number} has been cancelled.",
+            "system", {"type": "order_cancelled", "order_id": order_id}, db)
+
+    # Notify vendor(s) of cancellation
+    items_result = await db.execute(select(OrderItem).where(OrderItem.order_id == order_id))
+    notified = set()
+    for item in items_result.scalars().all():
+        prod = (await db.execute(select(Product).where(Product.id == item.product_id))).scalars().first()
+        if prod and prod.vendor_id and prod.vendor_id not in notified:
+            from app.models.provider import Provider
+            prov = (await db.execute(select(Provider).where(Provider.id == prod.vendor_id))).scalars().first()
+            if prov:
+                await notify_user(prov.user_id, "Order Cancelled",
+                    f"Order {order.order_number} for {item.product_name} has been cancelled by the buyer.",
+                    "system", {"type": "order_cancelled", "order_id": order_id}, db)
+                notified.add(prod.vendor_id)
+
     await db.commit()
     return {
         "status": "cancelled",
@@ -345,16 +370,16 @@ async def update_order_status(
     await db.commit()
     await db.refresh(order)
 
-    # Push notification to buyer about order status change
-    buyer_result = await db.execute(select(User).where(User.id == order.user_id))
-    buyer = buyer_result.scalars().first()
-    if buyer and buyer.push_token:
-        status_label = req.status.replace("_", " ").title()
-        await send_push(
-            buyer.push_token,
-            f"Order {status_label}",
-            f"Your order {order.order_number} is now {status_label.lower()}",
-            {"type": "order_status", "order_id": order.id, "status": req.status},
-        )
+    # Notify buyer about order status change (push + in-app)
+    status_label = req.status.replace("_", " ").title()
+    await notify_user(
+        order.user_id,
+        f"Order {status_label}",
+        f"Your order {order.order_number} is now {status_label.lower()}",
+        "system",
+        {"type": "order_status", "order_id": order.id, "status": req.status},
+        db,
+    )
+    await db.commit()
 
     return order

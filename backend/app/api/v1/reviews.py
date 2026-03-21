@@ -6,6 +6,7 @@ from typing import Optional
 
 from app.core.database import get_db
 from app.core.security import get_current_user, require_admin
+from app.core.notify import notify_user
 from app.models.review import Review
 from app.models.user import User
 from app.models.product import Product
@@ -117,6 +118,32 @@ async def create_review(
         if provider:
             provider.rating = round(avg or req.rating, 1)
             provider.review_count = count or 1
+
+    # Notify the provider/product owner about the new review
+    reviewer_name = user.full_name if user else "A customer"
+    star_text = "⭐" * int(req.rating)
+    if req.target_type == "provider" and provider:
+        await notify_user(
+            provider.user_id,
+            "New Review!",
+            f"{reviewer_name} left a {star_text} review" + (f": \"{req.comment[:50]}\"" if req.comment else ""),
+            "review",
+            {"type": "new_review", "review_id": review.id},
+            db,
+        )
+    elif req.target_type == "product" and product:
+        # Notify product vendor if they have a vendor_id
+        if product.vendor_id:
+            vendor_prov = (await db.execute(select(Provider).where(Provider.id == product.vendor_id))).scalars().first()
+            if vendor_prov:
+                await notify_user(
+                    vendor_prov.user_id,
+                    "New Product Review!",
+                    f"{reviewer_name} reviewed {product.name} {star_text}",
+                    "review",
+                    {"type": "new_review", "review_id": review.id},
+                    db,
+                )
 
     await db.commit()
     await db.refresh(review)
