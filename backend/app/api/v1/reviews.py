@@ -3,6 +3,7 @@ from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
 from typing import Optional
+from datetime import datetime
 
 from app.core.database import get_db
 from app.core.security import get_current_user, require_admin
@@ -34,7 +35,7 @@ class ReviewResponse(BaseModel):
     booking_id: Optional[str] = None
     rating: float
     comment: Optional[str]
-    created_at: str
+    created_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
