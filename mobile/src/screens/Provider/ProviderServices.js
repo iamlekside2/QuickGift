@@ -14,21 +14,16 @@ export default function ProviderServices({ navigation }) {
   const fetchServices = useCallback(async () => {
     try {
       setLoading(true);
-      const providerId = user?.id || user?._id;
-      if (providerId) {
-        const res = await providersAPI.services(providerId);
-        const data = res.data?.services || res.data || [];
-        setServices(Array.isArray(data) ? data : []);
-      } else {
-        setServices([]);
-      }
+      const res = await providersAPI.me();
+      const data = res.data?.services || [];
+      setServices(Array.isArray(data) ? data : []);
     } catch (e) {
       console.log('Error fetching services:', e);
       setServices([]);
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, []);
 
   useFocusEffect(
     useCallback(() => {

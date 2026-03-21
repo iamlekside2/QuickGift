@@ -14,10 +14,9 @@ export default function BusinessProfile({ navigation }) {
   const fetchProfile = useCallback(async () => {
     try {
       setLoading(true);
-      const providerId = user?.id || user?._id;
-      if (providerId) {
-        const res = await providersAPI.get(providerId);
-        setProfile(res.data?.provider || res.data || null);
+      const res = await providersAPI.me();
+      if (res.data) {
+        setProfile(res.data);
       }
     } catch (e) {
       console.log('Error fetching provider profile:', e);

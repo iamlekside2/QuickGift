@@ -30,6 +30,8 @@ export default function BookingScreen({ navigation, route }) {
 
   const formatPrice = (price) => '₦' + (price || 0).toLocaleString();
 
+  const servicePrice = selectedService?.price || provider?.price || 5000;
+
   const handleConfirmBooking = async () => {
     if (!selectedTime) return;
     setSubmitting(true);
@@ -47,6 +49,7 @@ export default function BookingScreen({ navigation, route }) {
         service_id: selectedService?.id,
         service_name: selectedService?.name || provider?.service || 'Beauty Service',
         booking_date: bookingDate.toISOString(),
+        booking_time: selectedTime,
         service_type: serviceType,
         notes: `${serviceType === 'home' ? 'Home Service' : 'Salon Visit'}`,
       };
@@ -69,7 +72,7 @@ export default function BookingScreen({ navigation, route }) {
         navigation.navigate('PaystackWebView', {
           authorization_url: payData.authorization_url,
           reference: payData.reference,
-          successScreen: 'Orders',
+          successScreen: 'HomeMain',
         });
         return;
       }
@@ -78,7 +81,7 @@ export default function BookingScreen({ navigation, route }) {
       Alert.alert(
         'Booking Confirmed!',
         payData.message || `Your appointment with ${provider?.business_name || provider?.name} has been booked for ${dates[selectedDate].day} ${dates[selectedDate].date} ${dates[selectedDate].month} at ${selectedTime}.`,
-        [{ text: 'View Orders', onPress: () => navigation.navigate('Orders') }]
+        [{ text: 'View Orders', onPress: () => navigation.getParent()?.navigate('Orders') }]
       );
     } catch (err) {
       Alert.alert('Booking Failed', err.response?.data?.detail || 'Something went wrong. Please try again.');
@@ -86,8 +89,6 @@ export default function BookingScreen({ navigation, route }) {
       setSubmitting(false);
     }
   };
-
-  const servicePrice = selectedService?.price || provider?.price || 5000;
 
   return (
     <View className="flex-1 bg-white">

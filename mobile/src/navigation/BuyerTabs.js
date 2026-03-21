@@ -83,6 +83,16 @@ function MessagesStack() {
   );
 }
 
+function WalletStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="WalletMain" component={WalletScreen} />
+      <Stack.Screen name="WithdrawScreen" component={WithdrawScreen} />
+      <Stack.Screen name="AddBankAccount" component={AddBankAccountScreen} />
+    </Stack.Navigator>
+  );
+}
+
 function TabIcon({ name, focused, color }) {
   return (
     <View style={{ alignItems: 'center', justifyContent: 'center' }}>
@@ -140,7 +150,7 @@ export default function BuyerTabs() {
       <Tab.Screen name="Home" component={HomeStack} />
       <Tab.Screen name="Messages" component={MessagesStack} />
       <Tab.Screen name="Orders" component={OrdersScreen} />
-      <Tab.Screen name="Wallet" component={WalletScreen} />
+      <Tab.Screen name="Wallet" component={WalletStack} />
       <Tab.Screen name="Profile" component={ProfileStack} />
     </Tab.Navigator>
   );

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Platform, Alert, Switch, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Platform, Alert, Switch, ActivityIndicator, Modal, TextInput } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -140,18 +140,20 @@ export default function AvailabilityScreen({ navigation }) {
           className="flex-row items-center bg-white rounded-2xl p-4 mb-2 gap-3"
           style={{ shadowColor: '#1F2937', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
           onPress={() => {
-            Alert.prompt(
+            Alert.alert(
               'Add Blocked Date',
-              'Enter a label (e.g. "Easter Holiday")',
-              (label) => {
-                if (label && label.trim()) {
-                  const today = new Date();
-                  const dateStr = today.toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' });
-                  setBlockedDates((prev) => [...prev, { name: label.trim(), dates: dateStr }]);
-                }
-              },
-              'plain-text',
-              '',
+              'Enter a label for the blocked date',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                  text: 'Add',
+                  onPress: () => {
+                    const today = new Date();
+                    const dateStr = today.toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' });
+                    setBlockedDates((prev) => [...prev, { name: 'Blocked Date', dates: dateStr }]);
+                  },
+                },
+              ],
               'default'
             );
           }}

@@ -42,12 +42,17 @@ api.interceptors.request.use(async (config) => {
   return config;
 });
 
+// Logout callback — set by AuthContext to sync React state on 401
+let _onUnauthorized = null;
+export const setOnUnauthorized = (callback) => { _onUnauthorized = callback; };
+
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
       AsyncStorage.removeItem('token');
       AsyncStorage.removeItem('user');
+      if (_onUnauthorized) _onUnauthorized();
     }
     return Promise.reject(error);
   }

@@ -1,6 +1,6 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { authAPI } from '../services/api';
+import { authAPI, setOnUnauthorized } from '../services/api';
 import { registerForPushNotifications } from '../utils/notifications';
 
 const AuthContext = createContext({});
@@ -12,6 +12,11 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     loadStoredAuth();
+    // Register 401 handler to sync React state when token is invalid
+    setOnUnauthorized(() => {
+      setToken(null);
+      setUser(null);
+    });
   }, []);
 
   const loadStoredAuth = async () => {

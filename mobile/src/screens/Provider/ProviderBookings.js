@@ -17,7 +17,7 @@ export default function ProviderBookings({ navigation }) {
     try {
       setLoading(true);
       const res = await bookingsAPI.list();
-      const data = res.data || res;
+      const data = res.data?.items || res.data?.bookings || res.data || [];
       setAllBookings(Array.isArray(data) ? data : []);
     } catch (err) {
       console.log('Failed to fetch bookings:', err);

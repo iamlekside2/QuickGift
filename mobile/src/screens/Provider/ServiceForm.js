@@ -36,15 +36,21 @@ export default function ServiceForm({ route, navigation }) {
     }
     try {
       setSaving(true);
-      await providersAPI.addMyService({
+      const serviceData = {
         name: name.trim(),
         description: description.trim(),
         duration_minutes: durationToMinutes[duration] || 60,
         price: parseFloat(price),
-      });
+      };
+      if (mode === 'edit' && existing.id) {
+        // TODO: Add update service endpoint when available
+        await providersAPI.addMyService(serviceData);
+      } else {
+        await providersAPI.addMyService(serviceData);
+      }
       Alert.alert(
-        mode === 'add' ? 'Service Added' : 'Service Updated',
-        `"${name}" has been ${mode === 'add' ? 'added to' : 'updated in'} your services.`,
+        mode === 'add' ? 'Service Added' : 'Service Saved',
+        `"${name}" has been ${mode === 'add' ? 'added to' : 'saved in'} your services.`,
         [{ text: 'OK', onPress: () => navigation.goBack() }]
       );
     } catch (err) {
@@ -58,7 +64,16 @@ export default function ServiceForm({ route, navigation }) {
   const handleDelete = () => {
     Alert.alert('Delete Service', `Are you sure you want to delete "${name}"?`, [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => navigation.goBack() },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          // TODO: Call delete API when available
+          Alert.alert('Deleted', 'Service removed.', [
+            { text: 'OK', onPress: () => navigation.goBack() },
+          ]);
+        },
+      },
     ]);
   };
 

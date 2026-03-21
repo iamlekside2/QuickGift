@@ -4,7 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../../context/AuthContext';
-import { reviewsAPI } from '../../services/api';
+import { reviewsAPI, providersAPI } from '../../services/api';
 
 export default function ProviderReviews({ navigation }) {
   const { user } = useAuth();
@@ -14,7 +14,9 @@ export default function ProviderReviews({ navigation }) {
   const fetchReviews = useCallback(async () => {
     try {
       setLoading(true);
-      const providerId = user?.id || user?._id;
+      // First get the provider ID via /providers/me
+      const meRes = await providersAPI.me();
+      const providerId = meRes.data?.id;
       if (providerId) {
         const res = await reviewsAPI.list('provider', providerId);
         const data = res.data?.reviews || res.data || [];
