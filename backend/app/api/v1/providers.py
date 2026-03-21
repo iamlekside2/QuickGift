@@ -1,3 +1,4 @@
+import math
 from typing import Optional, List
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -7,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.security import get_current_user, require_admin
 from app.models.provider import Provider, Service, Portfolio
+from app.utils.geo import haversine_km
 from app.schemas.provider import (
     ProviderCreate, ProviderUpdate, ProviderResponse,
     ProviderDetailResponse, ServiceCreate, ServiceResponse,
@@ -21,15 +23,29 @@ async def list_providers(
     service_type: Optional[str] = None,
     available: Optional[bool] = None,
     search: Optional[str] = None,
-    sort: str = Query("rating", pattern="^(rating|bookings|newest)$"),
-    page: int = 1,
-    per_page: int = 20,
+    sort: str = Query("rating", pattern="^(rating|bookings|newest|distance)$"),
+    page: int = Query(1, ge=1),
+    per_page: int = Query(20, ge=1, le=50),
+    lat: Optional[float] = Query(None, ge=-90, le=90),
+    lng: Optional[float] = Query(None, ge=-180, le=180),
+    radius_km: float = Query(15.0, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
 ):
     query = select(Provider).where(Provider.status == "verified")
 
-    if city:
+    # When user provides coordinates, use bounding-box pre-filter instead of city text
+    if lat is not None and lng is not None:
+        delta_lat = radius_km / 111.0
+        delta_lng = radius_km / (111.0 * max(math.cos(math.radians(lat)), 0.01))
+        query = query.where(
+            Provider.lat.isnot(None),
+            Provider.lng.isnot(None),
+            Provider.lat.between(lat - delta_lat, lat + delta_lat),
+            Provider.lng.between(lng - delta_lng, lng + delta_lng),
+        )
+    elif city:
         query = query.where(Provider.city == city)
+
     if service_type:
         query = query.where(Provider.service_type == service_type)
     if available is not None:
@@ -37,7 +53,80 @@ async def list_providers(
     if search:
         query = query.where(Provider.business_name.ilike(f"%{search}%"))
 
-    if sort == "rating":
+    # For distance sort, fetch all matching and sort in Python
+    if sort == "distance" and lat is not None and lng is not None:
+        result = await db.execute(query)
+        providers = result.scalars().all()
+
+        # Compute distance and filter by radius
+        with_distance = []
+        for p in providers:
+            if p.lat is not None and p.lng is not None:
+                dist = haversine_km(lat, lng, p.lat, p.lng)
+                if dist <= radius_km:
+                    with_distance.append((p, round(dist, 1)))
+
+        # Sort by distance ascending
+        with_distance.sort(key=lambda x: x[1])
+
+        # Paginate
+        start = (page - 1) * per_page
+        page_items = with_distance[start : start + per_page]
+
+        # Build response with distance_km
+        results = []
+        for provider, dist in page_items:
+            data = {c.name: getattr(provider, c.name) for c in provider.__table__.columns}
+            data["distance_km"] = dist
+            results.append(ProviderResponse(**data))
+        return results
+
+    # Also include providers WITHOUT coordinates (when doing geo query)
+    # They go in a separate query and are appended at the end
+    if lat is not None and lng is not None:
+        # We already filtered for providers WITH coords above.
+        # Also fetch providers without coords (same filters minus geo)
+        no_geo_query = select(Provider).where(
+            Provider.status == "verified",
+            (Provider.lat.is_(None)) | (Provider.lng.is_(None)),
+        )
+        if service_type:
+            no_geo_query = no_geo_query.where(Provider.service_type == service_type)
+        if available is not None:
+            no_geo_query = no_geo_query.where(Provider.is_available == available)
+        if search:
+            no_geo_query = no_geo_query.where(Provider.business_name.ilike(f"%{search}%"))
+
+        # Get geo results with distance
+        geo_result = await db.execute(query)
+        geo_providers = geo_result.scalars().all()
+        with_distance = []
+        for p in geo_providers:
+            dist = haversine_km(lat, lng, p.lat, p.lng)
+            if dist <= radius_km:
+                with_distance.append((p, round(dist, 1)))
+        with_distance.sort(key=lambda x: x[1])
+
+        # Get non-geo results
+        no_geo_result = await db.execute(no_geo_query.order_by(Provider.rating.desc()))
+        no_geo_providers = no_geo_result.scalars().all()
+
+        # Combine: geo-sorted first, then non-geo
+        all_items = [(p, d) for p, d in with_distance] + [(p, None) for p in no_geo_providers]
+
+        # Paginate
+        start = (page - 1) * per_page
+        page_items = all_items[start : start + per_page]
+
+        results = []
+        for provider, dist in page_items:
+            data = {c.name: getattr(provider, c.name) for c in provider.__table__.columns}
+            data["distance_km"] = dist
+            results.append(ProviderResponse(**data))
+        return results
+
+    # Standard non-geo sorting
+    if sort == "rating" or (sort == "distance" and lat is None):
         query = query.order_by(Provider.rating.desc())
     elif sort == "bookings":
         query = query.order_by(Provider.booking_count.desc())

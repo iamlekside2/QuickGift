@@ -31,6 +31,8 @@ class ProviderResponse(BaseModel):
     bio: Optional[str]
     location: str
     city: str
+    lat: Optional[float] = None
+    lng: Optional[float] = None
     rating: float
     review_count: int
     booking_count: int
@@ -41,6 +43,7 @@ class ProviderResponse(BaseModel):
     offers_home_service: bool
     offers_salon_service: bool
     avatar_url: Optional[str]
+    distance_km: Optional[float] = None
     created_at: datetime
 
     class Config:

@@ -19,6 +19,8 @@ class User(Base):
     avatar_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     city: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     address: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    lat: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    lng: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     role: Mapped[str] = mapped_column(String(20), default="user")  # user, provider, admin
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     wallet_balance: Mapped[float] = mapped_column(Float, default=0.0)

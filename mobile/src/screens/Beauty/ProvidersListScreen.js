@@ -3,6 +3,8 @@ import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, Platform } f
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { providersAPI } from '../../services/api';
+import { useLocation } from '../../context/LocationContext';
+import { useAuth } from '../../context/AuthContext';
 import ProviderCard from '../../components/common/ProviderCard';
 
 export default function ProvidersListScreen({ navigation, route }) {
@@ -11,15 +13,26 @@ export default function ProvidersListScreen({ navigation, route }) {
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState('list');
   const [activeFilter, setActiveFilter] = useState('All');
+  const { coords } = useLocation();
+  const { user } = useAuth();
+
+  const userLat = coords?.lat || user?.lat;
+  const userLng = coords?.lng || user?.lng;
 
   useEffect(() => {
     loadProviders();
-  }, []);
+  }, [userLat, userLng]);
 
   const loadProviders = async () => {
     try {
       const params = {};
       if (category) params.service_type = category;
+      if (userLat && userLng) {
+        params.lat = userLat;
+        params.lng = userLng;
+        params.radius_km = 15;
+        params.sort = 'distance';
+      }
       const res = await providersAPI.list(params);
       setProviders(res.data?.items || res.data || []);
     } catch (err) {
@@ -29,14 +42,16 @@ export default function ProvidersListScreen({ navigation, route }) {
     }
   };
 
-  const filters = ['All', 'Available Now', 'Home Service', 'Top Rated'];
+  const filters = ['All', 'Nearest', 'Available Now', 'Home Service', 'Top Rated'];
 
-  const filteredProviders = providers.filter((p) => {
-    if (activeFilter === 'Available Now') return p.is_available;
-    if (activeFilter === 'Home Service') return p.offers_home_service;
-    if (activeFilter === 'Top Rated') return p.rating >= 4.5;
-    return true;
-  });
+  const filteredProviders = (() => {
+    let filtered = providers;
+    if (activeFilter === 'Available Now') filtered = providers.filter(p => p.is_available);
+    else if (activeFilter === 'Home Service') filtered = providers.filter(p => p.offers_home_service);
+    else if (activeFilter === 'Top Rated') filtered = providers.filter(p => p.rating >= 4.5);
+    else if (activeFilter === 'Nearest') filtered = [...providers].sort((a, b) => (a.distance_km ?? 999) - (b.distance_km ?? 999));
+    return filtered;
+  })();
 
   return (
     <View className="flex-1 bg-white">

@@ -39,6 +39,8 @@ class UserResponse(BaseModel):
     email: Optional[str]
     phone: str
     city: Optional[str]
+    lat: Optional[float] = None
+    lng: Optional[float] = None
     avatar_url: Optional[str]
     role: str
     wallet_balance: float
@@ -52,4 +54,6 @@ class UpdateProfileRequest(BaseModel):
     email: Optional[str] = None
     city: Optional[str] = None
     address: Optional[str] = None
+    lat: Optional[float] = None
+    lng: Optional[float] = None
     avatar_url: Optional[str] = None

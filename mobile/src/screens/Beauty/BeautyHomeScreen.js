@@ -4,12 +4,15 @@ import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { BEAUTY_CATEGORIES } from '../../constants/data';
 import { providersAPI } from '../../services/api';
+import { useLocation } from '../../context/LocationContext';
+import { useAuth } from '../../context/AuthContext';
 import SectionHeader from '../../components/common/SectionHeader';
 import CategoryCard from '../../components/common/CategoryCard';
 import ProviderCard from '../../components/common/ProviderCard';
 
 const FILTERS = [
   { id: 'all', label: '✨ All' },
+  { id: 'nearest', label: '📍 Nearest' },
   { id: 'home', label: '🏠 Home Service' },
   { id: 'salon', label: '💈 Salon Visit' },
   { id: 'express', label: '⚡ Express (2hrs)' },
@@ -20,18 +23,26 @@ export default function BeautyHomeScreen({ navigation }) {
   const [allProviders, setAllProviders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState('all');
+  const { coords, refreshLocation, areaName } = useLocation();
+  const { user } = useAuth();
+
+  // Use coords from GPS, or from user profile as fallback
+  const userLat = coords?.lat || user?.lat;
+  const userLng = coords?.lng || user?.lng;
 
   useEffect(() => {
     loadProviders();
-  }, []);
+  }, [userLat, userLng]);
 
   useEffect(() => {
     if (activeFilter === 'all') {
       setProviders(allProviders);
     } else if (activeFilter === 'home') {
-      setProviders(allProviders.filter(p => p.service_type?.toLowerCase().includes('home') || p.is_available));
+      setProviders(allProviders.filter(p => p.offers_home_service));
     } else if (activeFilter === 'salon') {
-      setProviders(allProviders.filter(p => p.service_type?.toLowerCase().includes('salon') || !p.is_available));
+      setProviders(allProviders.filter(p => p.offers_salon_service));
+    } else if (activeFilter === 'nearest') {
+      setProviders([...allProviders].sort((a, b) => (a.distance_km ?? 999) - (b.distance_km ?? 999)));
     } else if (activeFilter === 'express') {
       setProviders(allProviders.filter(p => p.rating >= 4.5));
     }
@@ -39,7 +50,16 @@ export default function BeautyHomeScreen({ navigation }) {
 
   const loadProviders = async () => {
     try {
-      const res = await providersAPI.list({ sort: 'rating' });
+      const params = {};
+      if (userLat && userLng) {
+        params.lat = userLat;
+        params.lng = userLng;
+        params.radius_km = 15;
+        params.sort = 'distance';
+      } else {
+        params.sort = 'rating';
+      }
+      const res = await providersAPI.list(params);
       const data = res.data || [];
       setAllProviders(data);
       setProviders(data);
@@ -115,6 +135,22 @@ export default function BeautyHomeScreen({ navigation }) {
             </TouchableOpacity>
           ))}
         </ScrollView>
+
+        {/* Location banner */}
+        {!userLat && !userLng && (
+          <TouchableOpacity
+            className="flex-row items-center gap-2.5 mx-6 mt-3 px-4 py-3 rounded-xl bg-orange-light/30 border border-orange/20"
+            onPress={async () => {
+              await refreshLocation();
+            }}
+          >
+            <Ionicons name="location" size={16} color="#FD8950" />
+            <Text className="text-xs text-orange font-semibold flex-1">
+              Enable location for nearby results
+            </Text>
+            <Text className="text-[10px] text-orange/70 font-medium">Turn On</Text>
+          </TouchableOpacity>
+        )}
 
         {/* Categories */}
         <View className="mt-4">

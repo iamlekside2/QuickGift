@@ -42,7 +42,16 @@ export default function ProviderCard({ item, onPress }) {
             <Text className="text-[11px] text-gray-600 font-semibold">{item.rating || 0}</Text>
             <Text className="text-[10px] text-gray-400">({reviews})</Text>
           </View>
-          {location ? (
+          {item.distance_km != null ? (
+            <View className="flex-row items-center gap-0.5">
+              <Ionicons name="navigate-outline" size={11} color="#35615D" />
+              <Text className="text-[10px] text-teal font-semibold">
+                {item.distance_km < 1
+                  ? `${Math.round(item.distance_km * 1000)}m`
+                  : `${item.distance_km.toFixed(1)}km`}
+              </Text>
+            </View>
+          ) : location ? (
             <View className="flex-row items-center gap-0.5">
               <Ionicons name="location-outline" size={11} color="#9CA3AF" />
               <Text className="text-[10px] text-gray-400">{location}</Text>

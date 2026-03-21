@@ -33,6 +33,8 @@ async def init_db():
     # Add columns that may not exist yet (safe to run multiple times)
     migrations = [
         ("users", "push_token", "VARCHAR(200)"),
+        ("users", "lat", "FLOAT"),
+        ("users", "lng", "FLOAT"),
     ]
     async with engine.begin() as conn:
         for table, column, col_type in migrations:
