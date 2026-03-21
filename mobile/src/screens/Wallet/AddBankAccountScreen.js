@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, TouchableOpacity, Platform, ScrollView,
   TextInput, Alert, ActivityIndicator, FlatList, Modal,
@@ -7,40 +7,92 @@ import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { walletAPI } from '../../services/api';
 
+// Fallback banks if API fails
+const FALLBACK_BANKS = [
+  { name: 'Access Bank', code: '044' },
+  { name: 'Ecobank Nigeria', code: '050' },
+  { name: 'Fidelity Bank', code: '070' },
+  { name: 'First Bank of Nigeria', code: '011' },
+  { name: 'First City Monument Bank', code: '214' },
+  { name: 'Guaranty Trust Bank', code: '058' },
+  { name: 'Keystone Bank', code: '082' },
+  { name: 'Kuda Bank', code: '50211' },
+  { name: 'Moniepoint', code: '50515' },
+  { name: 'OPay', code: '999992' },
+  { name: 'PalmPay', code: '999991' },
+  { name: 'Polaris Bank', code: '076' },
+  { name: 'Stanbic IBTC Bank', code: '221' },
+  { name: 'Sterling Bank', code: '232' },
+  { name: 'Union Bank', code: '032' },
+  { name: 'United Bank for Africa', code: '033' },
+  { name: 'Wema Bank', code: '035' },
+  { name: 'Zenith Bank', code: '057' },
+];
+
 export default function AddBankAccountScreen({ navigation }) {
   const [banks, setBanks] = useState([]);
   const [selectedBank, setSelectedBank] = useState(null);
   const [accountNumber, setAccountNumber] = useState('');
   const [accountName, setAccountName] = useState('');
+  const [resolving, setResolving] = useState(false);
+  const [resolved, setResolved] = useState(false);
+  const [resolveError, setResolveError] = useState('');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [showBankPicker, setShowBankPicker] = useState(false);
   const [bankSearch, setBankSearch] = useState('');
+  const resolveTimer = useRef(null);
 
   useEffect(() => {
     loadBanks();
   }, []);
 
+  // Auto-resolve when bank is selected and account number is 10 digits
+  useEffect(() => {
+    if (resolveTimer.current) clearTimeout(resolveTimer.current);
+    setResolved(false);
+    setResolveError('');
+
+    if (selectedBank && accountNumber.length === 10) {
+      resolveTimer.current = setTimeout(() => {
+        resolveAccount();
+      }, 300);
+    } else {
+      setAccountName('');
+    }
+
+    return () => {
+      if (resolveTimer.current) clearTimeout(resolveTimer.current);
+    };
+  }, [accountNumber, selectedBank]);
+
   const loadBanks = async () => {
     try {
       const res = await walletAPI.getBanks();
-      setBanks(res.data || []);
+      setBanks(res.data?.length ? res.data : FALLBACK_BANKS);
     } catch (e) {
-      console.log('Error loading banks:', e);
-      // Fallback hardcoded banks if API fails
-      setBanks([
-        { name: 'Access Bank', code: '044' },
-        { name: 'First Bank', code: '011' },
-        { name: 'GTBank', code: '058' },
-        { name: 'Kuda Bank', code: '50211' },
-        { name: 'Moniepoint', code: '50515' },
-        { name: 'OPay', code: '999992' },
-        { name: 'PalmPay', code: '999991' },
-        { name: 'UBA', code: '033' },
-        { name: 'Zenith Bank', code: '057' },
-      ]);
+      setBanks(FALLBACK_BANKS);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const resolveAccount = async () => {
+    setResolving(true);
+    setResolveError('');
+    setAccountName('');
+    try {
+      const res = await walletAPI.resolveAccount(accountNumber, selectedBank.code);
+      if (res.data?.account_name) {
+        setAccountName(res.data.account_name);
+        setResolved(true);
+      }
+    } catch (e) {
+      const msg = e.response?.data?.detail || 'Could not verify this account';
+      setResolveError(msg);
+      setAccountName('');
+    } finally {
+      setResolving(false);
     }
   };
 
@@ -48,7 +100,7 @@ export default function AddBankAccountScreen({ navigation }) {
     b.name.toLowerCase().includes(bankSearch.toLowerCase())
   );
 
-  const isValid = selectedBank && accountNumber.length >= 10 && accountName.trim().length >= 3;
+  const isValid = selectedBank && accountNumber.length === 10 && accountName.trim().length >= 3 && resolved;
 
   const handleSave = async () => {
     if (!isValid) return;
@@ -63,7 +115,7 @@ export default function AddBankAccountScreen({ navigation }) {
       });
       Alert.alert(
         'Bank Account Added',
-        `${selectedBank.name} ****${accountNumber.slice(-4)} has been saved.`,
+        `${selectedBank.name} — ${accountName}`,
         [{ text: 'OK', onPress: () => navigation.goBack() }]
       );
     } catch (e) {
@@ -119,29 +171,33 @@ export default function AddBankAccountScreen({ navigation }) {
             elevation: 3,
           }}
         >
-          {/* Bank Selector */}
-          <Text className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Bank</Text>
+          {/* Step 1: Bank */}
+          <Text className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Step 1 — Select Bank</Text>
           <TouchableOpacity
-            className="flex-row items-center bg-gray-50 rounded-2xl h-14 px-4 border border-gray-150 mb-5"
-            style={{ borderColor: '#E5E7EB' }}
+            className={`flex-row items-center bg-gray-50 rounded-2xl h-14 px-4 border mb-5 ${
+              selectedBank ? 'border-teal' : 'border-gray-200'
+            }`}
             onPress={() => setShowBankPicker(true)}
           >
-            <View className="w-9 h-9 rounded-xl bg-teal-light items-center justify-center mr-3">
-              <Ionicons name="business" size={18} color="#35615D" />
+            <View className={`w-9 h-9 rounded-xl items-center justify-center mr-3 ${
+              selectedBank ? 'bg-teal' : 'bg-gray-200'
+            }`}>
+              <Ionicons name="business" size={18} color={selectedBank ? '#fff' : '#6B7280'} />
             </View>
             <Text className={`flex-1 text-sm ${selectedBank ? 'text-gray-900 font-semibold' : 'text-gray-400'}`}>
-              {selectedBank ? selectedBank.name : 'Select your bank'}
+              {selectedBank ? selectedBank.name : 'Choose your bank'}
             </Text>
             <Ionicons name="chevron-down" size={18} color="#9CA3AF" />
           </TouchableOpacity>
 
-          {/* Account Number */}
-          <Text className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Account Number</Text>
+          {/* Step 2: Account Number */}
+          <Text className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Step 2 — Account Number</Text>
           <View
-            className="flex-row items-center bg-gray-50 rounded-2xl h-14 px-4 border mb-5"
-            style={{ borderColor: accountNumber.length === 10 ? '#35615D' : '#E5E7EB' }}
+            className={`flex-row items-center bg-gray-50 rounded-2xl h-14 px-4 border mb-2 ${
+              accountNumber.length === 10 ? (resolveError ? 'border-red-400' : 'border-teal') : 'border-gray-200'
+            }`}
           >
-            <View className="w-9 h-9 rounded-xl bg-gray-100 items-center justify-center mr-3">
+            <View className="w-9 h-9 rounded-xl bg-gray-200 items-center justify-center mr-3">
               <Ionicons name="keypad" size={18} color="#6B7280" />
             </View>
             <TextInput
@@ -149,42 +205,58 @@ export default function AddBankAccountScreen({ navigation }) {
               value={accountNumber}
               onChangeText={(text) => setAccountNumber(text.replace(/[^0-9]/g, ''))}
               keyboardType="numeric"
-              placeholder="0123456789"
+              placeholder="Enter 10-digit account number"
               placeholderTextColor="#D1D5DB"
               maxLength={10}
+              editable={!!selectedBank}
             />
-            {accountNumber.length === 10 && (
-              <Ionicons name="checkmark-circle" size={20} color="#10B981" />
-            )}
+            {resolving && <ActivityIndicator size="small" color="#35615D" />}
+            {resolved && !resolving && <Ionicons name="checkmark-circle" size={20} color="#10B981" />}
+            {resolveError && !resolving && <Ionicons name="close-circle" size={20} color="#EF4444" />}
           </View>
+          {!selectedBank && accountNumber.length === 0 && (
+            <Text className="text-[11px] text-gray-400 ml-1 mb-4">Select a bank first</Text>
+          )}
+          {resolveError ? (
+            <Text className="text-[11px] text-red-500 ml-1 mb-4">{resolveError}</Text>
+          ) : (
+            <View className="mb-4" />
+          )}
 
-          {/* Account Name */}
-          <Text className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Account Name</Text>
+          {/* Step 3: Account Name (auto-filled) */}
+          <Text className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Step 3 — Account Name</Text>
           <View
-            className="flex-row items-center bg-gray-50 rounded-2xl h-14 px-4 border"
-            style={{ borderColor: accountName.length >= 3 ? '#35615D' : '#E5E7EB' }}
+            className={`flex-row items-center rounded-2xl h-14 px-4 border ${
+              resolved ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'
+            }`}
           >
-            <View className="w-9 h-9 rounded-xl bg-gray-100 items-center justify-center mr-3">
-              <Ionicons name="person" size={18} color="#6B7280" />
+            <View className={`w-9 h-9 rounded-xl items-center justify-center mr-3 ${
+              resolved ? 'bg-green-100' : 'bg-gray-200'
+            }`}>
+              <Ionicons name="person" size={18} color={resolved ? '#10B981' : '#6B7280'} />
             </View>
-            <TextInput
-              className="flex-1 text-sm text-gray-900 font-semibold"
-              value={accountName}
-              onChangeText={setAccountName}
-              placeholder="As shown on your bank account"
-              placeholderTextColor="#D1D5DB"
-              autoCapitalize="words"
-            />
+            {resolving ? (
+              <View className="flex-row items-center gap-2">
+                <ActivityIndicator size="small" color="#35615D" />
+                <Text className="text-sm text-gray-400">Verifying account...</Text>
+              </View>
+            ) : (
+              <Text className={`flex-1 text-sm ${
+                resolved ? 'text-gray-900 font-bold' : 'text-gray-400'
+              }`}>
+                {accountName || 'Will auto-fill when verified'}
+              </Text>
+            )}
           </View>
         </View>
 
-        {/* Info Note */}
+        {/* Info */}
         <View className="flex-row items-start gap-3 mx-5 mt-5 bg-teal-light/30 rounded-2xl p-4">
           <Ionicons name="shield-checkmark" size={20} color="#35615D" />
           <View className="flex-1">
-            <Text className="text-xs font-bold text-teal">Secure & Encrypted</Text>
+            <Text className="text-xs font-bold text-teal">Verified by Paystack</Text>
             <Text className="text-[11px] text-gray-500 mt-1 leading-4">
-              Your bank details are encrypted and stored securely. Withdrawals are processed within 24 hours.
+              We verify your account name automatically. Withdrawals are processed within 24 hours.
             </Text>
           </View>
         </View>
@@ -210,7 +282,7 @@ export default function AddBankAccountScreen({ navigation }) {
             <ActivityIndicator color="#fff" />
           ) : (
             <Text className={`text-base font-bold ${isValid ? 'text-white' : 'text-gray-400'}`}>
-              Save Bank Account
+              {resolved ? `Save — ${accountName}` : 'Verify account to continue'}
             </Text>
           )}
         </TouchableOpacity>
@@ -219,7 +291,6 @@ export default function AddBankAccountScreen({ navigation }) {
       {/* Bank Picker Modal */}
       <Modal visible={showBankPicker} animationType="slide" presentationStyle="pageSheet">
         <View className="flex-1 bg-white" style={{ paddingTop: Platform.OS === 'ios' ? 60 : 30 }}>
-          {/* Modal Header */}
           <View className="flex-row items-center px-5 pb-4 border-b border-gray-100">
             <Text className="flex-1 text-lg font-bold text-gray-800">Select Bank</Text>
             <TouchableOpacity
@@ -230,7 +301,6 @@ export default function AddBankAccountScreen({ navigation }) {
             </TouchableOpacity>
           </View>
 
-          {/* Search */}
           <View className="px-5 mt-3 mb-2">
             <View className="flex-row items-center bg-gray-100 rounded-2xl h-12 px-4">
               <Ionicons name="search" size={18} color="#9CA3AF" />
@@ -268,11 +338,7 @@ export default function AddBankAccountScreen({ navigation }) {
                 <View className={`w-10 h-10 rounded-xl items-center justify-center mr-3 ${
                   selectedBank?.code === item.code ? 'bg-teal' : 'bg-gray-100'
                 }`}>
-                  <Ionicons
-                    name="business"
-                    size={18}
-                    color={selectedBank?.code === item.code ? '#fff' : '#6B7280'}
-                  />
+                  <Ionicons name="business" size={18} color={selectedBank?.code === item.code ? '#fff' : '#6B7280'} />
                 </View>
                 <Text className={`flex-1 text-sm font-medium ${
                   selectedBank?.code === item.code ? 'text-teal font-bold' : 'text-gray-800'

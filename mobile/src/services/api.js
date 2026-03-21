@@ -142,6 +142,7 @@ const realWalletAPI = {
   transfer: (recipientPhone, amount) => api.post('/wallet/transfer', { recipient_phone: recipientPhone, amount }),
   // Bank accounts
   getBanks: () => api.get('/wallet/banks'),
+  resolveAccount: (accountNumber, bankCode) => api.get('/wallet/resolve-account', { params: { account_number: accountNumber, bank_code: bankCode } }),
   getBankAccounts: () => api.get('/wallet/bank-accounts'),
   addBankAccount: (data) => api.post('/wallet/bank-accounts', data),
   deleteBankAccount: (id) => api.delete(`/wallet/bank-accounts/${id}`),

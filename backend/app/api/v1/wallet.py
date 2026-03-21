@@ -5,9 +5,11 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
+import httpx
 
 from app.core.database import get_db
 from app.core.security import get_current_user
+from app.core.config import settings
 from app.models.user import User
 from app.models.transaction import Transaction
 from app.models.bank_account import BankAccount
@@ -220,6 +222,39 @@ async def list_banks(
 ):
     """List all supported Nigerian banks."""
     return NIGERIAN_BANKS
+
+
+@router.get("/resolve-account")
+async def resolve_bank_account(
+    account_number: str = Query(..., min_length=10, max_length=10),
+    bank_code: str = Query(...),
+    current_user: dict = Depends(get_current_user),
+):
+    """Verify a bank account number and return the account holder's name via Paystack."""
+    if not settings.PAYSTACK_SECRET_KEY:
+        raise HTTPException(status_code=503, detail="Payment service not configured")
+
+    async with httpx.AsyncClient() as client:
+        resp = await client.get(
+            f"{settings.PAYSTACK_BASE_URL}/bank/resolve",
+            params={"account_number": account_number, "bank_code": bank_code},
+            headers={"Authorization": f"Bearer {settings.PAYSTACK_SECRET_KEY}"},
+            timeout=15.0,
+        )
+
+    data = resp.json()
+    if resp.status_code == 200 and data.get("status"):
+        return {
+            "account_name": data["data"]["account_name"],
+            "account_number": data["data"]["account_number"],
+            "bank_id": data["data"].get("bank_id"),
+            "verified": True,
+        }
+
+    raise HTTPException(
+        status_code=400,
+        detail=data.get("message", "Could not verify account. Check the number and try again."),
+    )
 
 
 @router.get("/bank-accounts", response_model=List[BankAccountResponse])
