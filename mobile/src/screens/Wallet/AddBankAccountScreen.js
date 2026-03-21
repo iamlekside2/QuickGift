@@ -27,6 +27,18 @@ export default function AddBankAccountScreen({ navigation }) {
       setBanks(res.data || []);
     } catch (e) {
       console.log('Error loading banks:', e);
+      // Fallback hardcoded banks if API fails
+      setBanks([
+        { name: 'Access Bank', code: '044' },
+        { name: 'First Bank', code: '011' },
+        { name: 'GTBank', code: '058' },
+        { name: 'Kuda Bank', code: '50211' },
+        { name: 'Moniepoint', code: '50515' },
+        { name: 'OPay', code: '999992' },
+        { name: 'PalmPay', code: '999991' },
+        { name: 'UBA', code: '033' },
+        { name: 'Zenith Bank', code: '057' },
+      ]);
     } finally {
       setLoading(false);
     }
@@ -51,7 +63,7 @@ export default function AddBankAccountScreen({ navigation }) {
       });
       Alert.alert(
         'Bank Account Added',
-        `${selectedBank.name} account ending in ${accountNumber.slice(-4)} has been saved.`,
+        `${selectedBank.name} ****${accountNumber.slice(-4)} has been saved.`,
         [{ text: 'OK', onPress: () => navigation.goBack() }]
       );
     } catch (e) {
@@ -61,14 +73,29 @@ export default function AddBankAccountScreen({ navigation }) {
     }
   };
 
+  if (loading) {
+    return (
+      <View className="flex-1 bg-white items-center justify-center">
+        <ActivityIndicator size="large" color="#35615D" />
+      </View>
+    );
+  }
+
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1 bg-gray-50">
       <StatusBar style="dark" />
 
       {/* Header */}
       <View
-        className="flex-row items-center px-5 pb-4 bg-white border-b border-gray-100"
-        style={{ paddingTop: Platform.OS === 'ios' ? 60 : 40 }}
+        className="flex-row items-center px-5 pb-4 bg-white"
+        style={{
+          paddingTop: Platform.OS === 'ios' ? 60 : 40,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.05,
+          shadowRadius: 4,
+          elevation: 2,
+        }}
       >
         <TouchableOpacity
           className="w-10 h-10 rounded-2xl bg-gray-100 items-center justify-center"
@@ -80,29 +107,45 @@ export default function AddBankAccountScreen({ navigation }) {
         <View style={{ width: 40 }} />
       </View>
 
-      <ScrollView className="flex-1 px-6" showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-        {/* Bank Selector */}
-        <View className="mt-6">
-          <Text className="text-sm font-bold text-gray-700 mb-2">Select Bank</Text>
+      <ScrollView className="flex-1" showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+        {/* Form Card */}
+        <View
+          className="mx-5 mt-5 bg-white rounded-3xl p-5"
+          style={{
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.05,
+            shadowRadius: 10,
+            elevation: 3,
+          }}
+        >
+          {/* Bank Selector */}
+          <Text className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Bank</Text>
           <TouchableOpacity
-            className="flex-row items-center bg-gray-50 rounded-2xl px-4 py-4 border border-gray-200"
+            className="flex-row items-center bg-gray-50 rounded-2xl h-14 px-4 border border-gray-150 mb-5"
+            style={{ borderColor: '#E5E7EB' }}
             onPress={() => setShowBankPicker(true)}
           >
-            <Ionicons name="business-outline" size={20} color="#6B7280" />
-            <Text className={`flex-1 ml-3 text-sm ${selectedBank ? 'text-gray-900 font-semibold' : 'text-gray-400'}`}>
-              {selectedBank ? selectedBank.name : 'Choose your bank'}
+            <View className="w-9 h-9 rounded-xl bg-teal-light items-center justify-center mr-3">
+              <Ionicons name="business" size={18} color="#35615D" />
+            </View>
+            <Text className={`flex-1 text-sm ${selectedBank ? 'text-gray-900 font-semibold' : 'text-gray-400'}`}>
+              {selectedBank ? selectedBank.name : 'Select your bank'}
             </Text>
             <Ionicons name="chevron-down" size={18} color="#9CA3AF" />
           </TouchableOpacity>
-        </View>
 
-        {/* Account Number */}
-        <View className="mt-5">
-          <Text className="text-sm font-bold text-gray-700 mb-2">Account Number</Text>
-          <View className="flex-row items-center bg-gray-50 rounded-2xl px-4 py-4 border border-gray-200">
-            <Ionicons name="keypad-outline" size={20} color="#6B7280" />
+          {/* Account Number */}
+          <Text className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Account Number</Text>
+          <View
+            className="flex-row items-center bg-gray-50 rounded-2xl h-14 px-4 border mb-5"
+            style={{ borderColor: accountNumber.length === 10 ? '#35615D' : '#E5E7EB' }}
+          >
+            <View className="w-9 h-9 rounded-xl bg-gray-100 items-center justify-center mr-3">
+              <Ionicons name="keypad" size={18} color="#6B7280" />
+            </View>
             <TextInput
-              className="flex-1 ml-3 text-sm text-gray-900 font-semibold"
+              className="flex-1 text-sm text-gray-900 font-semibold"
               value={accountNumber}
               onChangeText={(text) => setAccountNumber(text.replace(/[^0-9]/g, ''))}
               keyboardType="numeric"
@@ -114,33 +157,33 @@ export default function AddBankAccountScreen({ navigation }) {
               <Ionicons name="checkmark-circle" size={20} color="#10B981" />
             )}
           </View>
-        </View>
 
-        {/* Account Name */}
-        <View className="mt-5">
-          <Text className="text-sm font-bold text-gray-700 mb-2">Account Name</Text>
-          <View className="flex-row items-center bg-gray-50 rounded-2xl px-4 py-4 border border-gray-200">
-            <Ionicons name="person-outline" size={20} color="#6B7280" />
+          {/* Account Name */}
+          <Text className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Account Name</Text>
+          <View
+            className="flex-row items-center bg-gray-50 rounded-2xl h-14 px-4 border"
+            style={{ borderColor: accountName.length >= 3 ? '#35615D' : '#E5E7EB' }}
+          >
+            <View className="w-9 h-9 rounded-xl bg-gray-100 items-center justify-center mr-3">
+              <Ionicons name="person" size={18} color="#6B7280" />
+            </View>
             <TextInput
-              className="flex-1 ml-3 text-sm text-gray-900 font-semibold"
+              className="flex-1 text-sm text-gray-900 font-semibold"
               value={accountName}
               onChangeText={setAccountName}
-              placeholder="John Doe"
+              placeholder="As shown on your bank account"
               placeholderTextColor="#D1D5DB"
               autoCapitalize="words"
             />
           </View>
-          <Text className="text-[11px] text-gray-400 mt-1.5 ml-1">
-            Enter the name on your bank account exactly as it appears
-          </Text>
         </View>
 
         {/* Info Note */}
-        <View className="flex-row items-start gap-2.5 mt-8 bg-teal-light/40 rounded-2xl p-4">
-          <Ionicons name="shield-checkmark-outline" size={18} color="#35615D" />
+        <View className="flex-row items-start gap-3 mx-5 mt-5 bg-teal-light/30 rounded-2xl p-4">
+          <Ionicons name="shield-checkmark" size={20} color="#35615D" />
           <View className="flex-1">
-            <Text className="text-xs font-bold text-teal">Secure & Verified</Text>
-            <Text className="text-[11px] text-gray-500 mt-0.5 leading-4">
+            <Text className="text-xs font-bold text-teal">Secure & Encrypted</Text>
+            <Text className="text-[11px] text-gray-500 mt-1 leading-4">
               Your bank details are encrypted and stored securely. Withdrawals are processed within 24 hours.
             </Text>
           </View>
@@ -152,7 +195,7 @@ export default function AddBankAccountScreen({ navigation }) {
       {/* Bottom CTA */}
       <View className="px-6 pb-8 pt-4 bg-white border-t border-gray-100">
         <TouchableOpacity
-          className={`py-4 rounded-2xl items-center ${isValid ? 'bg-teal' : 'bg-gray-200'}`}
+          className={`h-14 rounded-2xl items-center justify-center ${isValid ? 'bg-teal' : 'bg-gray-200'}`}
           style={isValid ? {
             shadowColor: '#35615D',
             shadowOffset: { width: 0, height: 4 },
@@ -176,16 +219,20 @@ export default function AddBankAccountScreen({ navigation }) {
       {/* Bank Picker Modal */}
       <Modal visible={showBankPicker} animationType="slide" presentationStyle="pageSheet">
         <View className="flex-1 bg-white" style={{ paddingTop: Platform.OS === 'ios' ? 60 : 30 }}>
+          {/* Modal Header */}
           <View className="flex-row items-center px-5 pb-4 border-b border-gray-100">
             <Text className="flex-1 text-lg font-bold text-gray-800">Select Bank</Text>
-            <TouchableOpacity onPress={() => setShowBankPicker(false)}>
-              <Ionicons name="close" size={24} color="#6B7280" />
+            <TouchableOpacity
+              className="w-9 h-9 rounded-full bg-gray-100 items-center justify-center"
+              onPress={() => { setShowBankPicker(false); setBankSearch(''); }}
+            >
+              <Ionicons name="close" size={20} color="#6B7280" />
             </TouchableOpacity>
           </View>
 
           {/* Search */}
           <View className="px-5 mt-3 mb-2">
-            <View className="flex-row items-center bg-gray-100 rounded-xl px-3.5 py-3">
+            <View className="flex-row items-center bg-gray-100 rounded-2xl h-12 px-4">
               <Ionicons name="search" size={18} color="#9CA3AF" />
               <TextInput
                 className="flex-1 ml-2.5 text-sm text-gray-900"
@@ -206,10 +253,10 @@ export default function AddBankAccountScreen({ navigation }) {
           <FlatList
             data={filteredBanks}
             keyExtractor={(item) => item.code}
-            contentContainerStyle={{ paddingHorizontal: 20 }}
+            contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 8 }}
             renderItem={({ item }) => (
               <TouchableOpacity
-                className={`flex-row items-center py-3.5 px-3 rounded-xl mb-0.5 ${
+                className={`flex-row items-center py-3.5 px-4 rounded-2xl mb-1 ${
                   selectedBank?.code === item.code ? 'bg-teal-light/40' : ''
                 }`}
                 onPress={() => {
@@ -218,10 +265,18 @@ export default function AddBankAccountScreen({ navigation }) {
                   setBankSearch('');
                 }}
               >
-                <View className="w-9 h-9 rounded-lg bg-gray-100 items-center justify-center mr-3">
-                  <Ionicons name="business" size={16} color="#6B7280" />
+                <View className={`w-10 h-10 rounded-xl items-center justify-center mr-3 ${
+                  selectedBank?.code === item.code ? 'bg-teal' : 'bg-gray-100'
+                }`}>
+                  <Ionicons
+                    name="business"
+                    size={18}
+                    color={selectedBank?.code === item.code ? '#fff' : '#6B7280'}
+                  />
                 </View>
-                <Text className="flex-1 text-sm font-medium text-gray-800">{item.name}</Text>
+                <Text className={`flex-1 text-sm font-medium ${
+                  selectedBank?.code === item.code ? 'text-teal font-bold' : 'text-gray-800'
+                }`}>{item.name}</Text>
                 {selectedBank?.code === item.code && (
                   <Ionicons name="checkmark-circle" size={20} color="#35615D" />
                 )}
@@ -229,7 +284,8 @@ export default function AddBankAccountScreen({ navigation }) {
             )}
             ListEmptyComponent={
               <View className="items-center py-12">
-                <Text className="text-sm text-gray-400">No banks found</Text>
+                <Ionicons name="search-outline" size={32} color="#D1D5DB" />
+                <Text className="text-sm text-gray-400 mt-2">No banks found</Text>
               </View>
             }
           />

@@ -1,5 +1,6 @@
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase
+import sqlalchemy
 
 from app.core.config import settings
 
@@ -27,22 +28,30 @@ async def get_db():
 
 
 async def init_db():
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    # Run migrations FIRST (add columns to existing tables)
+    # This must happen before create_all so models can reference new columns
+    is_pg = "postgresql" in db_url or "postgres" in db_url
+    float_type = "DOUBLE PRECISION" if is_pg else "FLOAT"
+    varchar = "VARCHAR" if is_pg else "VARCHAR"
 
-    # Add columns that may not exist yet (safe to run multiple times)
     migrations = [
-        ("users", "push_token", "VARCHAR(200)"),
-        ("users", "lat", "FLOAT"),
-        ("users", "lng", "FLOAT"),
+        ("users", "push_token", f"{varchar}(200)"),
+        ("users", "lat", float_type),
+        ("users", "lng", float_type),
+        ("users", "updated_at", "TIMESTAMP"),
     ]
+
     async with engine.begin() as conn:
         for table, column, col_type in migrations:
             try:
                 await conn.execute(
-                    __import__("sqlalchemy").text(
+                    sqlalchemy.text(
                         f"ALTER TABLE {table} ADD COLUMN {column} {col_type}"
                     )
                 )
             except Exception:
                 pass  # Column already exists
+
+    # Create any new tables (bank_accounts, deliveries, payouts, etc.)
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)

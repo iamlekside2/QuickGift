@@ -138,6 +138,57 @@ async def list_providers(
     return result.scalars().all()
 
 
+@router.get("/me", response_model=ProviderDetailResponse)
+async def get_my_provider(
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get the current user's provider profile."""
+    result = await db.execute(
+        select(Provider).where(Provider.user_id == current_user["user_id"])
+    )
+    provider = result.scalars().first()
+    if not provider:
+        raise HTTPException(status_code=404, detail="You don't have a provider profile")
+
+    services_result = await db.execute(
+        select(Service).where(Service.provider_id == provider.id, Service.is_active == True)
+    )
+    services = services_result.scalars().all()
+
+    portfolio_result = await db.execute(
+        select(Portfolio).where(Portfolio.provider_id == provider.id).order_by(Portfolio.created_at.desc())
+    )
+    portfolio = [{"id": p.id, "image_url": p.image_url, "caption": p.caption} for p in portfolio_result.scalars().all()]
+
+    return ProviderDetailResponse(
+        **{c.name: getattr(provider, c.name) for c in provider.__table__.columns},
+        services=services,
+        portfolio=portfolio,
+    )
+
+
+@router.post("/me/services", response_model=ServiceResponse)
+async def add_my_service(
+    req: ServiceCreate,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Add a service to the current user's provider profile."""
+    result = await db.execute(
+        select(Provider).where(Provider.user_id == current_user["user_id"])
+    )
+    provider = result.scalars().first()
+    if not provider:
+        raise HTTPException(status_code=404, detail="You don't have a provider profile. Complete your business setup first.")
+
+    service = Service(provider_id=provider.id, **req.model_dump())
+    db.add(service)
+    await db.commit()
+    await db.refresh(service)
+    return service
+
+
 @router.get("/{provider_id}", response_model=ProviderDetailResponse)
 async def get_provider(provider_id: str, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Provider).where(Provider.id == provider_id))

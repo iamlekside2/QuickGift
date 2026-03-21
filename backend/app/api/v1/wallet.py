@@ -215,7 +215,9 @@ async def transfer(
 # ── Bank Accounts ────────────────────────────────────────
 
 @router.get("/banks")
-async def list_banks():
+async def list_banks(
+    current_user: dict = Depends(get_current_user),
+):
     """List all supported Nigerian banks."""
     return NIGERIAN_BANKS
 

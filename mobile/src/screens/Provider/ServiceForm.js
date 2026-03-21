@@ -25,25 +25,22 @@ export default function ServiceForm({ route, navigation }) {
   const [active, setActive] = useState(existing.active !== false);
   const [saving, setSaving] = useState(false);
 
+  const durationToMinutes = {
+    '30 min': 30, '1 hr': 60, '1.5 hrs': 90, '2 hrs': 120, '3 hrs': 180,
+  };
+
   const handleSave = async () => {
     if (!name || !price) {
       Alert.alert('Missing Fields', 'Please fill in service name and price.');
       return;
     }
-    const providerId = user?.provider_id || user?.id;
-    if (!providerId) {
-      Alert.alert('Error', 'Provider profile not found. Please complete your business profile first.');
-      return;
-    }
     try {
       setSaving(true);
-      await providersAPI.addService(providerId, {
+      await providersAPI.addMyService({
         name: name.trim(),
         description: description.trim(),
-        duration,
+        duration_minutes: durationToMinutes[duration] || 60,
         price: parseFloat(price),
-        category,
-        is_active: active,
       });
       Alert.alert(
         mode === 'add' ? 'Service Added' : 'Service Updated',
