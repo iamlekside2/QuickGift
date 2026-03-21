@@ -39,6 +39,8 @@ async def create_order(
         product = product_result.scalars().first()
         if not product:
             raise HTTPException(status_code=404, detail=f"Product {item.product_id} not found")
+        if product.status != "active":
+            raise HTTPException(status_code=400, detail=f'"{product.name}" is currently unavailable')
 
         item_total = product.price * item.quantity
         subtotal += item_total
@@ -105,6 +107,27 @@ async def list_orders(
     query = query.order_by(Order.created_at.desc())
     result = await db.execute(query)
     return result.scalars().all()
+
+
+@router.post("/{order_id}/cancel")
+async def cancel_order(
+    order_id: str,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Cancel an order (only if pending or confirmed)."""
+    result = await db.execute(select(Order).where(Order.id == order_id))
+    order = result.scalars().first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    if order.user_id != current_user["user_id"] and current_user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Not authorized")
+    if order.status not in ("pending", "confirmed"):
+        raise HTTPException(status_code=400, detail=f"Cannot cancel order in '{order.status}' status")
+
+    order.status = "cancelled"
+    await db.commit()
+    return {"status": "cancelled", "order_id": order_id}
 
 
 @router.get("/{order_id}", response_model=OrderDetailResponse)

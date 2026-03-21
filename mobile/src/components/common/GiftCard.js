@@ -1,5 +1,5 @@
 import React from 'react';
-import { TouchableOpacity, Text, View } from 'react-native';
+import { TouchableOpacity, Text, View, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 const EMOJI_MAP = {
@@ -32,8 +32,12 @@ export default function GiftCard({ item, onPress }) {
       onPress={onPress}
       activeOpacity={0.85}
     >
-      <View className="h-[130px] bg-cream items-center justify-center relative">
-        <Text style={{ fontSize: 52 }}>{emoji}</Text>
+      <View className="h-[130px] bg-cream items-center justify-center relative overflow-hidden">
+        {item.image_url ? (
+          <Image source={{ uri: item.image_url }} className="w-full h-full" resizeMode="cover" />
+        ) : (
+          <Text style={{ fontSize: 52 }}>{emoji}</Text>
+        )}
         {item.rating >= 4.7 && (
           <View className="absolute top-2.5 left-2.5 bg-white/90 rounded-full px-2 py-0.5 flex-row items-center gap-0.5">
             <Ionicons name="star" size={10} color="#F59E0B" />

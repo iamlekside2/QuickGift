@@ -1,7 +1,13 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Platform, Alert, Switch, ActivityIndicator, Modal, TextInput } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Platform, Alert, Switch, ActivityIndicator, Modal, TextInput, FlatList } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
+
+const TIME_OPTIONS = [
+  '8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM',
+  '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM',
+  '6:00 PM', '7:00 PM', '8:00 PM',
+];
 
 const DAYS = [
   { key: 'mon', label: 'Monday' },
@@ -28,6 +34,22 @@ export default function AvailabilityScreen({ navigation }) {
   const [buffer, setBuffer] = useState('30 min');
   const [blockedDates, setBlockedDates] = useState([]);
   const [saving, setSaving] = useState(false);
+  const [timePickerVisible, setTimePickerVisible] = useState(false);
+  const [timePickerTarget, setTimePickerTarget] = useState({ dayKey: null, field: null }); // field: 'start' or 'end'
+
+  const openTimePicker = (dayKey, field) => {
+    setTimePickerTarget({ dayKey, field });
+    setTimePickerVisible(true);
+  };
+
+  const selectTime = (time) => {
+    const { dayKey, field } = timePickerTarget;
+    setSchedule((prev) => ({
+      ...prev,
+      [dayKey]: { ...prev[dayKey], [field]: time },
+    }));
+    setTimePickerVisible(false);
+  };
 
   const toggleDay = (key) => {
     setSchedule((prev) => ({
@@ -99,13 +121,19 @@ export default function AvailabilityScreen({ navigation }) {
                 </Text>
                 {daySchedule.active ? (
                   <View className="flex-1 flex-row items-center justify-end gap-2">
-                    <View className="bg-gray-50 rounded-2xl px-3 py-1.5 border border-gray-100">
+                    <TouchableOpacity
+                      className="bg-gray-50 rounded-2xl px-3 py-1.5 border border-gray-100"
+                      onPress={() => openTimePicker(day.key, 'start')}
+                    >
                       <Text className="text-xs text-gray-700">{daySchedule.start}</Text>
-                    </View>
+                    </TouchableOpacity>
                     <Text className="text-xs text-gray-400">to</Text>
-                    <View className="bg-gray-50 rounded-2xl px-3 py-1.5 border border-gray-100">
+                    <TouchableOpacity
+                      className="bg-gray-50 rounded-2xl px-3 py-1.5 border border-gray-100"
+                      onPress={() => openTimePicker(day.key, 'end')}
+                    >
                       <Text className="text-xs text-gray-700">{daySchedule.end}</Text>
-                    </View>
+                    </TouchableOpacity>
                   </View>
                 ) : (
                   <Text className="flex-1 text-xs text-gray-400 text-right">Closed</Text>
@@ -201,6 +229,45 @@ export default function AvailabilityScreen({ navigation }) {
 
         <View className="h-[40px]" />
       </ScrollView>
+
+      {/* Time Picker Modal */}
+      <Modal visible={timePickerVisible} transparent animationType="slide">
+        <TouchableOpacity
+          className="flex-1 bg-black/40 justify-end"
+          activeOpacity={1}
+          onPress={() => setTimePickerVisible(false)}
+        >
+          <View className="bg-white rounded-t-3xl pt-4 pb-8 px-5" style={{ maxHeight: 420 }}>
+            <View className="flex-row items-center justify-between mb-3">
+              <Text className="text-base font-bold text-gray-800">
+                Select {timePickerTarget.field === 'start' ? 'Start' : 'End'} Time
+              </Text>
+              <TouchableOpacity onPress={() => setTimePickerVisible(false)}>
+                <Ionicons name="close" size={22} color="#9CA3AF" />
+              </TouchableOpacity>
+            </View>
+            <FlatList
+              data={TIME_OPTIONS}
+              keyExtractor={(item) => item}
+              renderItem={({ item }) => {
+                const isSelected =
+                  timePickerTarget.dayKey &&
+                  schedule[timePickerTarget.dayKey]?.[timePickerTarget.field] === item;
+                return (
+                  <TouchableOpacity
+                    className={`py-3.5 px-4 rounded-xl mb-1 ${isSelected ? 'bg-teal' : ''}`}
+                    onPress={() => selectTime(item)}
+                  >
+                    <Text className={`text-sm font-semibold ${isSelected ? 'text-white' : 'text-gray-700'}`}>
+                      {item}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              }}
+            />
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 }

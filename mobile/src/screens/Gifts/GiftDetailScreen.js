@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Alert, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, Alert, Platform, Image } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Button from '../../components/common/Button';
 import { useCart } from '../../context/CartContext';
 import AppInput from '../../components/common/AppInput';
@@ -12,6 +13,26 @@ export default function GiftDetailScreen({ navigation, route }) {
   const [message, setMessage] = useState('');
   const [isFavorite, setIsFavorite] = useState(false);
   const { addItem } = useCart();
+
+  useEffect(() => {
+    if (!gift?.id) return;
+    AsyncStorage.getItem('@favorites').then((raw) => {
+      const favs = raw ? JSON.parse(raw) : [];
+      setIsFavorite(favs.includes(gift.id));
+    });
+  }, [gift?.id]);
+
+  const toggleFavorite = async () => {
+    const raw = await AsyncStorage.getItem('@favorites');
+    let favs = raw ? JSON.parse(raw) : [];
+    if (favs.includes(gift.id)) {
+      favs = favs.filter((id) => id !== gift.id);
+    } else {
+      favs.push(gift.id);
+    }
+    await AsyncStorage.setItem('@favorites', JSON.stringify(favs));
+    setIsFavorite(!isFavorite);
+  };
 
   const formatPrice = (price) => '\u20A6' + price.toLocaleString();
 
@@ -49,7 +70,7 @@ export default function GiftDetailScreen({ navigation, route }) {
             shadowRadius: 12,
             elevation: 4,
           }}
-          onPress={() => setIsFavorite(!isFavorite)}
+          onPress={toggleFavorite}
         >
           <Ionicons name={isFavorite ? 'heart' : 'heart-outline'} size={22} color={isFavorite ? '#EF4444' : '#35615D'} />
         </TouchableOpacity>
@@ -58,13 +79,17 @@ export default function GiftDetailScreen({ navigation, route }) {
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Image Section */}
         <View
-          className="h-64 bg-cream items-center justify-center mx-5 rounded-3xl"
+          className="h-64 bg-cream items-center justify-center mx-5 rounded-3xl overflow-hidden"
         >
-          <Text className="text-[88px]">
-            {gift?.category === 'cakes' ? '\uD83C\uDF82' :
-             gift?.category === 'flowers' ? '\uD83D\uDC90' :
-             gift?.category === 'chocolates' ? '\uD83C\uDF6B' : '\uD83C\uDF81'}
-          </Text>
+          {gift?.image_url ? (
+            <Image source={{ uri: gift.image_url }} className="w-full h-full" resizeMode="cover" />
+          ) : (
+            <Text className="text-[88px]">
+              {gift?.category === 'cakes' ? '\uD83C\uDF82' :
+               gift?.category === 'flowers' ? '\uD83D\uDC90' :
+               gift?.category === 'chocolates' ? '\uD83C\uDF6B' : '\uD83C\uDF81'}
+            </Text>
+          )}
         </View>
 
         <View className="px-6 pt-6 pb-4 gap-2">

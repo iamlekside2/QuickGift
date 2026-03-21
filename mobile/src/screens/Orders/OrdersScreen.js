@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Platform, Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
@@ -62,6 +62,28 @@ export default function OrdersScreen() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCancelOrder = (item) => {
+    Alert.alert('Cancel Order', 'Are you sure?', [
+      { text: 'No', style: 'cancel' },
+      {
+        text: 'Yes, Cancel',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            if (ordersAPI.cancel) {
+              await ordersAPI.cancel(item.id);
+              loadOrders();
+            } else {
+              Alert.alert('Contact Support', 'Please contact support to cancel this order.');
+            }
+          } catch (err) {
+            Alert.alert('Error', 'Failed to cancel order. Please contact support.');
+          }
+        },
+      },
+    ]);
   };
 
   const allItems = [...orders, ...bookings].sort((a, b) =>
@@ -212,6 +234,16 @@ export default function OrdersScreen() {
                     </Text>
                   </View>
                 </View>
+
+                {/* Cancel button for pending/confirmed orders */}
+                {(status === 'pending' || status === 'confirmed') && (
+                  <TouchableOpacity
+                    className="mt-3 py-2.5 rounded-xl border border-red-200 bg-red-50 items-center"
+                    onPress={() => handleCancelOrder(item)}
+                  >
+                    <Text className="text-xs font-bold text-red-500">Cancel Order</Text>
+                  </TouchableOpacity>
+                )}
               </TouchableOpacity>
             );
           })

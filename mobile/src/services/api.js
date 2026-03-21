@@ -92,6 +92,8 @@ const realProvidersAPI = {
   register: (data) => api.post('/providers', data),
   addService: (providerId, data) => api.post(`/providers/${providerId}/services`, data),
   addMyService: (data) => api.post('/providers/me/services', data),
+  getAvailability: () => api.get('/providers/me/availability'),
+  saveAvailability: (data) => api.put('/providers/me/availability', data),
   myProducts: () => api.get('/products/my-products'),
   addMyProduct: (data) => api.post('/products/my-products', data),
 };
@@ -100,6 +102,7 @@ const realOrdersAPI = {
   create: (data) => api.post('/orders', data),
   list: (params = {}) => api.get('/orders', { params }),
   get: (id) => api.get(`/orders/${id}`),
+  cancel: (id) => api.post(`/orders/${id}/cancel`),
 };
 
 const realBookingsAPI = {

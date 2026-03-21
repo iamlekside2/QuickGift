@@ -196,6 +196,9 @@ async def dashboard_stats(
     pending_providers = (await db.execute(
         select(func.count(Provider.id)).where(Provider.status == "pending")
     )).scalar()
+    pending_bookings = (await db.execute(
+        select(func.count(Booking.id)).where(Booking.status == "pending")
+    )).scalar()
 
     # Commission earned
     order_commission = (await db.execute(
@@ -226,6 +229,7 @@ async def dashboard_stats(
         "pending": {
             "orders": pending_orders,
             "providers": pending_providers,
+            "bookings": pending_bookings,
         },
     }
 
