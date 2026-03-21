@@ -458,8 +458,13 @@ async def main():
     print("  Tables: ensured all tables exist.")
 
     # Add new columns to existing tables (PostgreSQL won't auto-add with create_all)
+    is_pg = "postgresql" in str(engine.url) or "postgres" in str(engine.url)
+    float_type = "DOUBLE PRECISION" if is_pg else "FLOAT"
     migrations = [
         ("users", "push_token", "VARCHAR(200)"),
+        ("users", "lat", float_type),
+        ("users", "lng", float_type),
+        ("users", "updated_at", "TIMESTAMP"),
     ]
     async with engine.begin() as conn:
         for table, column, col_type in migrations:
