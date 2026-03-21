@@ -14,8 +14,8 @@ class Payout(Base):
     id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     provider_id: Mapped[str] = mapped_column(String, ForeignKey("providers.id"), index=True)
     user_id: Mapped[str] = mapped_column(String, ForeignKey("users.id"), index=True)
-    order_id: Mapped[Optional[str]] = mapped_column(String, nullable=True)
-    booking_id: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    order_id: Mapped[Optional[str]] = mapped_column(String, nullable=True, index=True)
+    booking_id: Mapped[Optional[str]] = mapped_column(String, nullable=True, index=True)
     amount: Mapped[float] = mapped_column(Float)  # amount due to provider (total - commission)
     commission: Mapped[float] = mapped_column(Float)  # QuickGift's commission
     status: Mapped[str] = mapped_column(String(20), default="pending", index=True)

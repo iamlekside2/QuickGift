@@ -14,8 +14,8 @@ class Payment(Base):
     id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     user_id: Mapped[str] = mapped_column(String, index=True)
     reference: Mapped[str] = mapped_column(String(100), unique=True, index=True)
-    order_id: Mapped[Optional[str]] = mapped_column(String, nullable=True)
-    booking_id: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    order_id: Mapped[Optional[str]] = mapped_column(String, nullable=True, index=True)
+    booking_id: Mapped[Optional[str]] = mapped_column(String, nullable=True, index=True)
     amount: Mapped[float] = mapped_column(Float)
     currency: Mapped[str] = mapped_column(String(5), default="NGN")
     status: Mapped[str] = mapped_column(String(20), default="pending")  # pending, success, failed, refunded
