@@ -11,7 +11,7 @@ import { useWallet } from '../../context/WalletContext';
 export default function CartScreen({ navigation }) {
   const { items, removeItem, updateQuantity, clearCart, subtotal, itemCount } = useCart();
   const { user, isAuthenticated, isGuest } = useAuth();
-  const { balance: walletBalance } = useWallet();
+  const { balance: walletBalance, debit: walletDebit, refreshBalance } = useWallet();
   const [submitting, setSubmitting] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('card');
 
@@ -67,7 +67,9 @@ export default function CartScreen({ navigation }) {
       const payData = payRes.data;
 
       if (payData.status === 'success' && paymentMethod === 'wallet') {
-        // Wallet payment succeeded
+        // Wallet payment succeeded — update local balance
+        walletDebit(order.total);
+        refreshBalance();
         clearCart();
         Alert.alert(
           'Order Placed!',
@@ -78,12 +80,14 @@ export default function CartScreen({ navigation }) {
       }
 
       if (payData.authorization_url) {
-        clearCart();
+        // Don't clear cart yet — only clear after payment verified
         navigation.navigate('PaystackWebView', {
           authorization_url: payData.authorization_url,
           reference: payData.reference,
           successScreen: 'HomeMain',
         });
+        // Clear cart after navigating (payment will be verified in WebView)
+        clearCart();
         return;
       }
 

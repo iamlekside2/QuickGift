@@ -76,8 +76,8 @@ export default function WalletScreen({ navigation }) {
           authorization_url: data.authorization_url,
           reference: data.reference,
           successScreen: 'WalletMain',
+          verifyType: 'wallet_fund',
           onSuccess: async () => {
-            await walletAPI.fundVerify(data.reference);
             credit(amount);
             refreshBalance();
           },

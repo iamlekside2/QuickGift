@@ -123,7 +123,12 @@ async def cancel_order(
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Cancel an order (only if pending or confirmed)."""
+    """Cancel an order and refund if paid."""
+    from app.models.payment import Payment
+    from app.models.transaction import Transaction
+    from app.models.payout import Payout
+    import uuid as _uuid
+
     result = await db.execute(select(Order).where(Order.id == order_id))
     order = result.scalars().first()
     if not order:
@@ -134,8 +139,52 @@ async def cancel_order(
         raise HTTPException(status_code=400, detail=f"Cannot cancel order in '{order.status}' status")
 
     order.status = "cancelled"
+    refunded = False
+
+    # Refund if order was paid
+    if order.payment_status == "paid":
+        order.payment_status = "refunded"
+
+        # Refund to wallet
+        user_result = await db.execute(select(User).where(User.id == order.user_id))
+        buyer = user_result.scalars().first()
+        if buyer:
+            buyer.wallet_balance += order.total
+            ref = f"RFD-{_uuid.uuid4().hex[:12].upper()}"
+            db.add(Transaction(
+                user_id=buyer.id,
+                type="credit",
+                amount=order.total,
+                description=f"Refund for cancelled order {order.order_number}",
+                reference=ref,
+                balance_after=buyer.wallet_balance,
+                status="completed",
+            ))
+            refunded = True
+
+        # Cancel associated payouts
+        payouts_result = await db.execute(
+            select(Payout).where(Payout.order_id == order_id, Payout.status.in_(["pending", "held"]))
+        )
+        for payout in payouts_result.scalars().all():
+            payout.status = "cancelled"
+
+        # Mark payment as refunded
+        if order.payment_ref:
+            pay_result = await db.execute(
+                select(Payment).where(Payment.reference == order.payment_ref)
+            )
+            payment = pay_result.scalars().first()
+            if payment:
+                payment.status = "refunded"
+
     await db.commit()
-    return {"status": "cancelled", "order_id": order_id}
+    return {
+        "status": "cancelled",
+        "order_id": order_id,
+        "refunded": refunded,
+        "refund_amount": order.total if refunded else 0,
+    }
 
 
 @router.get("/my-vendor-orders")

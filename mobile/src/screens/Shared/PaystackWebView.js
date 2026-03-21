@@ -3,12 +3,12 @@ import { View, Text, TouchableOpacity, ActivityIndicator, Alert, Platform } from
 import { WebView } from 'react-native-webview';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
-import { paymentsAPI } from '../../services/api';
+import { paymentsAPI, walletAPI } from '../../services/api';
 
 const CALLBACK_KEYWORDS = ['callback', 'trxref', 'reference'];
 
 export default function PaystackWebView({ route, navigation }) {
-  const { authorization_url, reference, successScreen, successParams = {} } = route.params || {};
+  const { authorization_url, reference, successScreen, successParams = {}, verifyType } = route.params || {};
   const [loading, setLoading] = useState(true);
   const [verifying, setVerifying] = useState(false);
   const webViewRef = useRef(null);
@@ -40,8 +40,11 @@ export default function PaystackWebView({ route, navigation }) {
   const verifyPayment = async (payRef) => {
     setVerifying(true);
     try {
-      const res = await paymentsAPI.verify(payRef);
-      const status = res.data?.status || res.data?.data?.status;
+      // Use wallet fund verify for wallet top-ups, standard verify for orders/bookings
+      const res = verifyType === 'wallet_fund'
+        ? await walletAPI.fundVerify(payRef)
+        : await paymentsAPI.verify(payRef);
+      const status = res.data?.status || res.data?.data?.status || (res.data?.id ? 'success' : null);
 
       if (status === 'success') {
         Alert.alert('Payment Successful', 'Your payment has been confirmed.', [

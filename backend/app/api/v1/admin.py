@@ -575,3 +575,71 @@ async def revenue_analytics(
         rows.append({"name": day_label, "gifts": gift_rev, "beauty": beauty_rev})
 
     return rows
+
+
+# ---------------------------------------------------------------------------
+# Withdrawal Processing (Admin)
+# ---------------------------------------------------------------------------
+
+@router.get("/withdrawals")
+async def admin_list_withdrawals(
+    status: str = None,
+    page: int = Query(1, ge=1),
+    per_page: int = Query(20, ge=1, le=100),
+    admin: dict = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """List all withdrawal transactions."""
+    query = select(Transaction).where(Transaction.description.like("%Withdrawal%"))
+    if status:
+        query = query.where(Transaction.status == status)
+
+    total = (await db.execute(select(func.count()).select_from(query.subquery()))).scalar()
+    query = query.order_by(Transaction.created_at.desc()).offset((page - 1) * per_page).limit(per_page)
+    result = await db.execute(query)
+
+    return {"items": result.scalars().all(), "total": total, "page": page, "per_page": per_page}
+
+
+@router.patch("/withdrawals/{transaction_id}/complete")
+async def complete_withdrawal(
+    transaction_id: str,
+    admin: dict = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Mark a withdrawal as completed (processed to bank)."""
+    result = await db.execute(select(Transaction).where(Transaction.id == transaction_id))
+    tx = result.scalars().first()
+    if not tx:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+    if tx.status != "pending":
+        raise HTTPException(status_code=400, detail=f"Transaction is already {tx.status}")
+
+    tx.status = "completed"
+    await db.commit()
+    return {"status": "completed", "transaction_id": transaction_id}
+
+
+@router.patch("/withdrawals/{transaction_id}/fail")
+async def fail_withdrawal(
+    transaction_id: str,
+    admin: dict = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Mark a withdrawal as failed and refund the user's wallet."""
+    result = await db.execute(select(Transaction).where(Transaction.id == transaction_id))
+    tx = result.scalars().first()
+    if not tx:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+    if tx.status != "pending":
+        raise HTTPException(status_code=400, detail=f"Transaction is already {tx.status}")
+
+    # Refund the wallet
+    user_result = await db.execute(select(User).where(User.id == tx.user_id))
+    user = user_result.scalars().first()
+    if user:
+        user.wallet_balance += tx.amount
+
+    tx.status = "failed"
+    await db.commit()
+    return {"status": "failed", "transaction_id": transaction_id, "refunded": True}

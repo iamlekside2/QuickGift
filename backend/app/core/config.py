@@ -58,6 +58,14 @@ class Settings(BaseModel):
     GIFT_COMMISSION_PERCENT: float = float(os.getenv("GIFT_COMMISSION_PERCENT", "10.0"))
     BEAUTY_COMMISSION_PERCENT: float = float(os.getenv("BEAUTY_COMMISSION_PERCENT", "10.0"))
 
+    # Delivery (0 = providers handle their own, Kwik used when dispatched)
+    DELIVERY_BASE_FEE: int = 0
+    DELIVERY_PER_KM: int = 0
+    EXPRESS_MULTIPLIER: float = 1.0
+
+    # Provider Payouts
+    PAYOUT_HOLD_HOURS: int = 24
+
     # Kwik Delivery
     KWIK_EMAIL: str = os.getenv("KWIK_EMAIL", "")
     KWIK_PASSWORD: str = os.getenv("KWIK_PASSWORD", "")
@@ -74,9 +82,6 @@ class Settings(BaseModel):
         if self.KWIK_ENV == "live":
             return "app.kwik.delivery"
         return "app-test.kwik.delivery"
-
-    # Provider Payouts
-    PAYOUT_HOLD_HOURS: int = 24  # hold period after delivery before auto-payout
 
     # CORS — always include production + local dev, plus any from env
     ALLOWED_ORIGINS: list = list(set(
