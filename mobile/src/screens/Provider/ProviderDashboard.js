@@ -4,30 +4,40 @@ import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../../context/AuthContext';
-import { bookingsAPI } from '../../services/api';
+import { bookingsAPI, providersAPI } from '../../services/api';
 
 export default function ProviderDashboard({ navigation }) {
   const { user } = useAuth();
   const firstName = user?.full_name?.split(' ')[0] || 'Provider';
 
   const [bookings, setBookings] = useState([]);
+  const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [setupDismissed, setSetupDismissed] = useState(false);
 
   const todayStr = new Date().toISOString().split('T')[0];
 
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await bookingsAPI.list();
-      const all = res.data?.bookings || res.data || [];
+      const [bookingsRes, servicesRes] = await Promise.all([
+        bookingsAPI.list().catch(() => ({ data: [] })),
+        user?.provider_id
+          ? providersAPI.services(user.provider_id).catch(() => ({ data: [] }))
+          : Promise.resolve({ data: [] }),
+      ]);
+      const all = bookingsRes.data?.bookings || bookingsRes.data || [];
       setBookings(Array.isArray(all) ? all : []);
+      const svcList = servicesRes.data || [];
+      setServices(Array.isArray(svcList) ? svcList : []);
     } catch (e) {
-      console.log('Error fetching bookings:', e);
+      console.log('Error fetching data:', e);
       setBookings([]);
+      setServices([]);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user?.provider_id]);
 
   useFocusEffect(
     useCallback(() => {
@@ -60,6 +70,43 @@ export default function ProviderDashboard({ navigation }) {
     .reduce((sum, b) => sum + (b.price || b.amount || 0), 0);
 
   const rating = user?.rating || user?.provider_rating || 0;
+
+  // Setup checklist — show when provider is new
+  const hasServices = services.length > 0;
+  const hasBookings = bookings.length > 0;
+  const hasAvatar = !!user?.avatar_url;
+  const hasLocation = !!(user?.lat && user?.lng);
+  const isNewProvider = !hasServices && !hasBookings && !setupDismissed;
+
+  const setupSteps = [
+    {
+      id: 'services',
+      label: 'Add your first service',
+      description: 'Tell clients what you offer and set your prices',
+      icon: 'pricetag-outline',
+      done: hasServices,
+      screen: 'ServiceForm',
+      params: { mode: 'add' },
+    },
+    {
+      id: 'avatar',
+      label: 'Upload a profile photo',
+      description: 'Help clients recognize your brand',
+      icon: 'camera-outline',
+      done: hasAvatar,
+      screen: 'EditBusinessProfile',
+    },
+    {
+      id: 'location',
+      label: 'Set your exact location',
+      description: 'So nearby clients can find you easily',
+      icon: 'location-outline',
+      done: hasLocation,
+      screen: 'EditBusinessProfile',
+    },
+  ];
+  const completedSteps = setupSteps.filter(s => s.done).length;
+  const totalSteps = setupSteps.length;
 
   const stats = {
     todayBookings: todayBookings.length,
@@ -100,6 +147,92 @@ export default function ProviderDashboard({ navigation }) {
       </View>
 
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+        {/* Setup Checklist — for new providers */}
+        {isNewProvider && (
+          <View className="mx-5 mt-4 bg-white rounded-3xl overflow-hidden"
+            style={{
+              shadowColor: '#35615D',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.1,
+              shadowRadius: 12,
+              elevation: 4,
+            }}
+          >
+            {/* Header */}
+            <View className="bg-gradient-to-r from-teal to-teal-dark p-5 bg-teal">
+              <View className="flex-row items-center justify-between">
+                <View className="flex-1">
+                  <Text className="text-white text-lg font-extrabold">
+                    {completedSteps === 0 ? "Let's set up your store!" : "Almost there!"}
+                  </Text>
+                  <Text className="text-white/60 text-xs mt-1">
+                    Complete these steps to start getting clients
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  onPress={() => setSetupDismissed(true)}
+                  className="w-8 h-8 rounded-full bg-white/15 items-center justify-center"
+                >
+                  <Ionicons name="close" size={16} color="#fff" />
+                </TouchableOpacity>
+              </View>
+              {/* Progress bar */}
+              <View className="mt-4 flex-row items-center gap-2.5">
+                <View className="flex-1 h-2 bg-white/20 rounded-full overflow-hidden">
+                  <View
+                    className="h-full bg-white rounded-full"
+                    style={{ width: `${(completedSteps / totalSteps) * 100}%` }}
+                  />
+                </View>
+                <Text className="text-white/80 text-xs font-bold">{completedSteps}/{totalSteps}</Text>
+              </View>
+            </View>
+
+            {/* Steps */}
+            <View className="p-4 gap-2">
+              {setupSteps.map((step) => (
+                <TouchableOpacity
+                  key={step.id}
+                  className={`flex-row items-center gap-3 p-3.5 rounded-2xl ${
+                    step.done ? 'bg-green-50/80' : 'bg-gray-50'
+                  }`}
+                  onPress={() => {
+                    if (!step.done) navigation.navigate(step.screen, step.params || {});
+                  }}
+                  activeOpacity={step.done ? 1 : 0.7}
+                >
+                  <View className={`w-10 h-10 rounded-xl items-center justify-center ${
+                    step.done ? 'bg-green-100' : 'bg-teal-light'
+                  }`}>
+                    {step.done ? (
+                      <Ionicons name="checkmark-circle" size={22} color="#10B981" />
+                    ) : (
+                      <Ionicons name={step.icon} size={20} color="#35615D" />
+                    )}
+                  </View>
+                  <View className="flex-1">
+                    <Text className={`text-[13px] font-bold ${
+                      step.done ? 'text-green-700 line-through' : 'text-gray-800'
+                    }`}>
+                      {step.label}
+                    </Text>
+                    <Text className={`text-[11px] mt-0.5 ${
+                      step.done ? 'text-green-500' : 'text-gray-400'
+                    }`}>
+                      {step.done ? 'Completed' : step.description}
+                    </Text>
+                  </View>
+                  {!step.done && (
+                    <View className="w-7 h-7 rounded-full bg-teal items-center justify-center">
+                      <Ionicons name="arrow-forward" size={14} color="#fff" />
+                    </View>
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        )}
+
         {/* Earnings Card */}
         <View
           className="mx-5 mt-4 bg-teal rounded-3xl p-6 overflow-hidden"
