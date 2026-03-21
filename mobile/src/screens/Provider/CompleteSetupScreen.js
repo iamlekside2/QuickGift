@@ -21,16 +21,16 @@ const paperTheme = {
   roundness: 12,
 };
 
+const BUSINESS_TYPES = [
+  { label: '🛍️ Seller', value: 'Seller', desc: 'I sell gift items (cakes, flowers, hampers, etc.)' },
+  { label: '💅 Service Provider', value: 'Service Provider', desc: 'I offer beauty/personal services' },
+  { label: '🏪 Both', value: 'Both', desc: 'I sell products and offer services' },
+];
+
 const SERVICE_TYPES = [
-  'Hair Styling',
-  'Makeup',
-  'Nails',
-  'Barber',
-  'Massage',
-  'Waxing',
-  'Skincare',
-  'Lashes',
-  'Other',
+  'Hair Styling', 'Makeup', 'Nails', 'Barber', 'Massage',
+  'Waxing', 'Skincare', 'Lashes', 'Photography', 'Catering',
+  'Cleaning', 'Tailoring', 'Fitness', 'Spa', 'Other',
 ];
 
 export default function CompleteSetupScreen() {
@@ -39,13 +39,17 @@ export default function CompleteSetupScreen() {
   const [loading, setLoading] = useState(false);
 
   const [businessName, setBusinessName] = useState('');
+  const [businessType, setBusinessType] = useState(''); // Seller, Service Provider, Both
   const [serviceType, setServiceType] = useState('');
   const [city, setCity] = useState('');
   const [location, setLocation] = useState('');
   const [bio, setBio] = useState('');
 
+  const isSeller = businessType === 'Seller' || businessType === 'Both';
+  const isServiceProvider = businessType === 'Service Provider' || businessType === 'Both';
+
   const isStep1Valid = businessName.trim().length >= 2;
-  const isStep2Valid = serviceType && city.trim().length >= 2;
+  const isStep2Valid = businessType && (isSeller || serviceType) && city.trim().length >= 2;
 
   const handleNext = () => {
     if (!isStep1Valid) {
@@ -64,7 +68,7 @@ export default function CompleteSetupScreen() {
     try {
       await providersAPI.register({
         business_name: businessName.trim(),
-        service_type: serviceType,
+        service_type: isSeller && !isServiceProvider ? 'Seller' : serviceType || 'Other',
         city: city.trim(),
         location: location.trim() || city.trim(),
         bio: bio.trim() || undefined,
@@ -180,35 +184,70 @@ export default function CompleteSetupScreen() {
           </>
         ) : (
           <>
-            {/* Step 2: Service & Location */}
-            <Text className="text-lg font-bold text-gray-800 mb-1">Service & Location</Text>
-            <Text className="text-sm text-gray-400 mb-5">What do you offer and where are you based?</Text>
+            {/* Step 2: Business Type & Location */}
+            <Text className="text-lg font-bold text-gray-800 mb-1">What do you do?</Text>
+            <Text className="text-sm text-gray-400 mb-5">Tell us about your business and where you're based</Text>
 
-            {/* Service Type Chips */}
+            {/* Business Type */}
             <View className="mb-5">
-              <Text className="text-sm font-bold text-gray-700 mb-3">Service Type</Text>
-              <View className="flex-row flex-wrap gap-2">
-                {SERVICE_TYPES.map((type) => (
+              <Text className="text-sm font-bold text-gray-700 mb-3">I am a...</Text>
+              <View className="gap-2.5">
+                {BUSINESS_TYPES.map((bt) => (
                   <TouchableOpacity
-                    key={type}
-                    className={`px-4 py-2.5 rounded-xl border ${
-                      serviceType === type
-                        ? 'bg-teal border-teal'
+                    key={bt.value}
+                    className={`flex-row items-center p-4 rounded-2xl border ${
+                      businessType === bt.value
+                        ? 'bg-teal-light/40 border-teal'
                         : 'bg-gray-50 border-gray-200'
                     }`}
-                    onPress={() => setServiceType(type)}
+                    onPress={() => setBusinessType(bt.value)}
                   >
-                    <Text
-                      className={`text-sm font-semibold ${
-                        serviceType === type ? 'text-white' : 'text-gray-600'
-                      }`}
-                    >
-                      {type}
-                    </Text>
+                    <Text className="text-2xl mr-3">{bt.label.split(' ')[0]}</Text>
+                    <View className="flex-1">
+                      <Text className={`text-sm font-bold ${
+                        businessType === bt.value ? 'text-teal' : 'text-gray-800'
+                      }`}>{bt.label.substring(bt.label.indexOf(' ') + 1)}</Text>
+                      <Text className="text-[11px] text-gray-400 mt-0.5">{bt.desc}</Text>
+                    </View>
+                    {businessType === bt.value ? (
+                      <View className="w-6 h-6 rounded-full bg-teal items-center justify-center">
+                        <Ionicons name="checkmark" size={14} color="#fff" />
+                      </View>
+                    ) : (
+                      <View className="w-6 h-6 rounded-full border-2 border-gray-300" />
+                    )}
                   </TouchableOpacity>
                 ))}
               </View>
             </View>
+
+            {/* Service Type - only show if service provider */}
+            {isServiceProvider && (
+              <View className="mb-5">
+                <Text className="text-sm font-bold text-gray-700 mb-3">Service Category</Text>
+                <View className="flex-row flex-wrap gap-2">
+                  {SERVICE_TYPES.map((type) => (
+                    <TouchableOpacity
+                      key={type}
+                      className={`px-4 py-2.5 rounded-xl border ${
+                        serviceType === type
+                          ? 'bg-teal border-teal'
+                          : 'bg-gray-50 border-gray-200'
+                      }`}
+                      onPress={() => setServiceType(type)}
+                    >
+                      <Text
+                        className={`text-sm font-semibold ${
+                          serviceType === type ? 'text-white' : 'text-gray-600'
+                        }`}
+                      >
+                        {type}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            )}
 
             {/* City */}
             <View className="mb-4">

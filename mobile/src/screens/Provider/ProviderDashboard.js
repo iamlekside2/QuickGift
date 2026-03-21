@@ -74,12 +74,19 @@ export default function ProviderDashboard({ navigation }) {
 
   const rating = user?.rating || user?.provider_rating || 0;
 
+  // Determine business type from service_type or provider data
+  const providerServiceType = user?.service_type || '';
+  const isSeller = providerServiceType === 'Seller' || providerServiceType === 'Both';
+  const isServiceProv = providerServiceType !== 'Seller'; // Service Provider or Both or specific type
+  const providerStatus = user?.provider_status || user?.status || 'pending';
+  const isPendingApproval = providerStatus === 'pending';
+
   // Setup checklist — show when provider is new
   const hasServices = services.length > 0;
   const hasBookings = bookings.length > 0;
   const hasAvatar = !!user?.avatar_url;
   const hasLocation = !!(user?.lat && user?.lng) || !!(coords?.lat && coords?.lng);
-  const isNewProvider = !hasServices && !hasBookings && !setupDismissed;
+  const isNewProvider = (!hasServices && !hasBookings && !setupDismissed) || isPendingApproval;
 
   const [locationLoading, setLocationLoading] = useState(false);
   const [avatarLoading, setAvatarLoading] = useState(false);
@@ -134,7 +141,15 @@ export default function ProviderDashboard({ navigation }) {
   };
 
   const setupSteps = [
-    {
+    // Dynamic first step based on business type
+    isSeller ? {
+      id: 'products',
+      label: 'Add your first product',
+      description: 'List what you sell — cakes, flowers, hampers, etc.',
+      icon: 'cube-outline',
+      done: false, // TODO: check product count when product API is ready
+      action: () => navigation.navigate('ProductForm', { mode: 'add' }),
+    } : {
       id: 'services',
       label: 'Add your first service',
       description: 'Tell clients what you offer and set your prices',
@@ -203,6 +218,23 @@ export default function ProviderDashboard({ navigation }) {
       </View>
 
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+        {/* Pending Approval Banner */}
+        {isPendingApproval && (
+          <View
+            className="mx-5 mt-4 bg-amber-50 rounded-2xl p-4 flex-row items-center gap-3 border border-amber-200"
+          >
+            <View className="w-10 h-10 rounded-xl bg-amber-100 items-center justify-center">
+              <Ionicons name="hourglass-outline" size={22} color="#D97706" />
+            </View>
+            <View className="flex-1">
+              <Text className="text-sm font-bold text-amber-800">Pending Approval</Text>
+              <Text className="text-[11px] text-amber-600 mt-0.5 leading-4">
+                Your store is under review. Once approved by our team, customers will be able to find you. Complete your setup below in the meantime!
+              </Text>
+            </View>
+          </View>
+        )}
+
         {/* Setup Checklist — for new providers */}
         {isNewProvider && (
           <View className="mx-5 mt-4 bg-white rounded-3xl overflow-hidden"
@@ -219,10 +251,14 @@ export default function ProviderDashboard({ navigation }) {
               <View className="flex-row items-center justify-between">
                 <View className="flex-1">
                   <Text className="text-white text-lg font-extrabold">
-                    {completedSteps === 0 ? "Let's set up your store!" : "Almost there!"}
+                    {completedSteps === 0
+                      ? (isSeller ? "Let's set up your store!" : "Let's set up your profile!")
+                      : "Almost there!"}
                   </Text>
                   <Text className="text-white/60 text-xs mt-1">
-                    Complete these steps to start getting clients
+                    {isSeller
+                      ? 'Complete these steps to start selling'
+                      : 'Complete these steps to start getting clients'}
                   </Text>
                 </View>
                 <TouchableOpacity
