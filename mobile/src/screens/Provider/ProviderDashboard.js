@@ -11,18 +11,20 @@ import * as ImagePicker from 'expo-image-picker';
 export default function ProviderDashboard({ navigation }) {
   const { user, updateProfile, updateUser } = useAuth();
   const { refreshLocation, coords } = useLocation();
-  const businessName = providerData?.business_name || null;
-  const personalName = user?.full_name?.split(' ')[0] || 'there';
-
-  // Time-based greeting
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
 
   const [bookings, setBookings] = useState([]);
   const [services, setServices] = useState([]);
   const [providerData, setProviderData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [setupDismissed, setSetupDismissed] = useState(false);
+
+  // Must be after providerData state declaration
+  const businessName = providerData?.business_name || null;
+  const personalName = user?.full_name?.split(' ')[0] || 'there';
+
+  // Time-based greeting
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
 
   const todayStr = new Date().toISOString().split('T')[0];
 
