@@ -46,9 +46,11 @@ export default React.memo(function ProviderCard({ item, onPress }) {
             <View className="flex-row items-center gap-0.5">
               <Ionicons name="navigate-outline" size={11} color="#35615D" />
               <Text className="text-[10px] text-teal font-semibold">
-                {item.distance_km < 1
-                  ? `${Math.round(item.distance_km * 1000)}m`
-                  : `${item.distance_km.toFixed(1)}km`}
+                {item.distance_km < 0.1
+                  ? 'Nearby'
+                  : item.distance_km < 1
+                    ? `${Math.round(item.distance_km * 1000)}m away`
+                    : `${item.distance_km.toFixed(1)}km away`}
               </Text>
             </View>
           ) : location ? (

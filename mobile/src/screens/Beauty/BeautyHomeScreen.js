@@ -53,19 +53,37 @@ export default function BeautyHomeScreen({ navigation }) {
     try {
       const params = {};
       if (userLat && userLng) {
+        // Tight radius first — show nearby providers (same area/bus stops)
         params.lat = userLat;
         params.lng = userLng;
-        params.radius_km = 20; // Generous radius for Nigerian cities
+        params.radius_km = 5; // ~5km = your area + neighboring bus stops
         params.sort = 'distance';
+
+        let res = await providersAPI.list(params);
+        let data = res.data || [];
+
+        // If too few results, expand radius gradually
+        if (data.length < 3) {
+          params.radius_km = 10; // Expand to ~10km
+          res = await providersAPI.list(params);
+          data = res.data || [];
+        }
+        if (data.length < 3) {
+          params.radius_km = 20; // Final expansion ~20km
+          res = await providersAPI.list(params);
+          data = res.data || [];
+        }
+
+        setAllProviders(data);
+        setProviders(data);
       } else {
-        // No GPS — fall back to city-based filtering
-        if (user?.city) params.city = user.city;
+        // No GPS — show all providers sorted by rating (prompt to enable location)
         params.sort = 'rating';
+        const res = await providersAPI.list(params);
+        const data = res.data || [];
+        setAllProviders(data);
+        setProviders(data);
       }
-      const res = await providersAPI.list(params);
-      const data = res.data || [];
-      setAllProviders(data);
-      setProviders(data);
     } catch (err) {
       console.log('Error loading providers:', err);
     } finally {

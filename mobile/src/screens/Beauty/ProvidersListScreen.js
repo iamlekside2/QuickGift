@@ -38,7 +38,7 @@ export default function ProvidersListScreen({ navigation, route }) {
       if (userLat && userLng) {
         params.lat = userLat;
         params.lng = userLng;
-        params.radius_km = 20;
+        params.radius_km = 5; // Tight radius — same area first
         params.sort = 'distance';
       }
       const res = await providersAPI.list(params);

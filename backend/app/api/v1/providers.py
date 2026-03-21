@@ -62,7 +62,7 @@ async def list_providers(
             if p.lat is not None and p.lng is not None:
                 dist = haversine_km(lat, lng, p.lat, p.lng)
                 if dist <= radius_km:
-                    with_distance.append((p, round(dist, 1)))
+                    with_distance.append((p, round(dist, 2)))
             else:
                 # Providers without coords: include but deprioritize (show at end)
                 without_coords.append((p, None))
