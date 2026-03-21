@@ -91,12 +91,10 @@ export default function ProviderDashboard({ navigation }) {
   const providerStatus = providerData?.status || 'pending';
   const isPendingApproval = providerStatus === 'pending';
 
-  // Setup checklist — show when provider is new
+  // Setup checklist — derived from actual completion state
   const hasServices = services.length > 0;
-  const hasBookings = bookings.length > 0;
   const hasAvatar = !!user?.avatar_url;
   const hasLocation = !!(user?.lat && user?.lng) || !!(coords?.lat && coords?.lng);
-  const isNewProvider = (!hasServices && !hasBookings && !setupDismissed) || isPendingApproval;
 
   const [locationLoading, setLocationLoading] = useState(false);
   const [avatarLoading, setAvatarLoading] = useState(false);
@@ -188,6 +186,12 @@ export default function ProviderDashboard({ navigation }) {
   ];
   const completedSteps = setupSteps.filter(s => s.done).length;
   const totalSteps = setupSteps.length;
+  const allStepsDone = completedSteps === totalSteps;
+  const incompleteSteps = setupSteps.filter(s => !s.done);
+
+  // Show setup section only if there are incomplete steps AND user hasn't dismissed
+  // Once ALL steps are done, never show (even if dismissed state is lost)
+  const showSetup = !allStepsDone && !setupDismissed;
 
   const stats = {
     todayBookings: todayBookings.length,
@@ -249,8 +253,8 @@ export default function ProviderDashboard({ navigation }) {
           </View>
         )}
 
-        {/* Setup Checklist — for new providers */}
-        {isNewProvider && (
+        {/* Setup Checklist — only shows incomplete steps, hides when all done */}
+        {showSetup && (
           <View className="mx-5 mt-4 bg-white rounded-3xl overflow-hidden"
             style={{
               shadowColor: '#35615D',
@@ -261,18 +265,20 @@ export default function ProviderDashboard({ navigation }) {
             }}
           >
             {/* Header */}
-            <View className="bg-gradient-to-r from-teal to-teal-dark p-5 bg-teal">
+            <View className="p-5 bg-teal">
               <View className="flex-row items-center justify-between">
                 <View className="flex-1">
                   <Text className="text-white text-lg font-extrabold">
                     {completedSteps === 0
                       ? (isSeller ? "Let's set up your store!" : "Let's set up your profile!")
-                      : "Almost there!"}
+                      : `${incompleteSteps.length} step${incompleteSteps.length !== 1 ? 's' : ''} remaining`}
                   </Text>
                   <Text className="text-white/60 text-xs mt-1">
-                    {isSeller
-                      ? 'Complete these steps to start selling'
-                      : 'Complete these steps to start getting clients'}
+                    {completedSteps > 0
+                      ? `${completedSteps} of ${totalSteps} completed — almost there!`
+                      : isSeller
+                        ? 'Complete these steps to start selling'
+                        : 'Complete these steps to start getting clients'}
                   </Text>
                 </View>
                 <TouchableOpacity
@@ -294,50 +300,53 @@ export default function ProviderDashboard({ navigation }) {
               </View>
             </View>
 
-            {/* Steps */}
+            {/* Only show INCOMPLETE steps */}
             <View className="p-4 gap-2">
-              {setupSteps.map((step) => (
+              {incompleteSteps.map((step) => (
                 <TouchableOpacity
                   key={step.id}
-                  className={`flex-row items-center gap-3 p-3.5 rounded-2xl ${
-                    step.done ? 'bg-green-50/80' : 'bg-gray-50'
-                  }`}
+                  className="flex-row items-center gap-3 p-3.5 rounded-2xl bg-gray-50"
                   onPress={() => {
-                    if (!step.done && !step.loading && step.action) step.action();
+                    if (!step.loading && step.action) step.action();
                   }}
-                  activeOpacity={step.done ? 1 : 0.7}
+                  activeOpacity={0.7}
                   disabled={step.loading}
                 >
-                  <View className={`w-10 h-10 rounded-xl items-center justify-center ${
-                    step.done ? 'bg-green-100' : 'bg-teal-light'
-                  }`}>
+                  <View className="w-10 h-10 rounded-xl items-center justify-center bg-teal-light">
                     {step.loading ? (
                       <ActivityIndicator size="small" color="#35615D" />
-                    ) : step.done ? (
-                      <Ionicons name="checkmark-circle" size={22} color="#10B981" />
                     ) : (
                       <Ionicons name={step.icon} size={20} color="#35615D" />
                     )}
                   </View>
                   <View className="flex-1">
-                    <Text className={`text-[13px] font-bold ${
-                      step.done ? 'text-green-700 line-through' : 'text-gray-800'
-                    }`}>
-                      {step.label}
-                    </Text>
-                    <Text className={`text-[11px] mt-0.5 ${
-                      step.done ? 'text-green-500' : 'text-gray-400'
-                    }`}>
-                      {step.loading ? 'Please wait...' : step.done ? 'Completed' : step.description}
+                    <Text className="text-[13px] font-bold text-gray-800">{step.label}</Text>
+                    <Text className="text-[11px] mt-0.5 text-gray-400">
+                      {step.loading ? 'Please wait...' : step.description}
                     </Text>
                   </View>
-                  {!step.done && !step.loading && (
+                  {!step.loading && (
                     <View className="w-7 h-7 rounded-full bg-teal items-center justify-center">
                       <Ionicons name="arrow-forward" size={14} color="#fff" />
                     </View>
                   )}
                 </TouchableOpacity>
               ))}
+            </View>
+          </View>
+        )}
+
+        {/* All set up congratulations — show briefly when all steps done */}
+        {allStepsDone && !loading && providerData && (
+          <View className="mx-5 mt-4 flex-row items-center gap-3 bg-green-50 rounded-2xl p-4 border border-green-200">
+            <View className="w-10 h-10 rounded-xl bg-green-100 items-center justify-center">
+              <Ionicons name="checkmark-done" size={22} color="#10B981" />
+            </View>
+            <View className="flex-1">
+              <Text className="text-sm font-bold text-green-800">You're all set up!</Text>
+              <Text className="text-[11px] text-green-600 mt-0.5">
+                {isPendingApproval ? 'Waiting for admin approval to go live' : 'Your store is live and visible to customers'}
+              </Text>
             </View>
           </View>
         )}
