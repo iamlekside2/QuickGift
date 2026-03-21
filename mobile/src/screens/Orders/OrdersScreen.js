@@ -251,19 +251,22 @@ export default function OrdersScreen() {
                   </TouchableOpacity>
                 )}
 
-                {/* Leave Review for delivered gift orders */}
-                {status === 'delivered' && isGift && (
+                {/* Leave Review for delivered/completed orders */}
+                {(status === 'delivered' || status === 'completed') && (
                   <TouchableOpacity
-                    className="mt-2 bg-teal/10 py-2 px-3 rounded-xl self-start"
+                    className="mt-2 bg-teal/10 py-2 px-3 rounded-xl self-start flex-row items-center gap-1"
                     onPress={() => navigation.navigate('Home', {
                       screen: 'WriteReview',
                       params: {
-                        targetType: 'product',
-                        targetId: item.product_id || item.id,
+                        targetType: isGift ? 'product' : 'provider',
+                        targetId: isGift ? (item.product_id || item.id) : (item.provider_id || item.id),
                         targetName: name,
+                        orderId: isGift ? item.id : undefined,
+                        bookingId: !isGift ? item.id : undefined,
                       },
                     })}
                   >
+                    <Ionicons name="star-outline" size={14} color="#35615D" />
                     <Text className="text-xs font-bold text-teal">Leave Review</Text>
                   </TouchableOpacity>
                 )}

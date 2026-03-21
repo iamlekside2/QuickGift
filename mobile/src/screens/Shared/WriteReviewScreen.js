@@ -6,7 +6,7 @@ import AppInput from '../../components/common/AppInput';
 import { reviewsAPI } from '../../services/api';
 
 export default function WriteReviewScreen({ navigation, route }) {
-  const { targetType = 'product', targetId, targetName = '' } = route.params || {};
+  const { targetType = 'product', targetId, targetName = '', orderId, bookingId } = route.params || {};
 
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
@@ -25,13 +25,15 @@ export default function WriteReviewScreen({ navigation, route }) {
         target_id: targetId,
         rating,
         comment: comment.trim(),
+        order_id: orderId || undefined,
+        booking_id: bookingId || undefined,
       });
       Alert.alert('Review submitted!', '', [
         { text: 'OK', onPress: () => navigation.goBack() },
       ]);
     } catch (err) {
-      console.log('Error submitting review:', err);
-      Alert.alert('Error', 'Could not submit review. Please try again.');
+      const msg = err.response?.data?.detail || 'Could not submit review. Please try again.';
+      Alert.alert('Error', msg);
     } finally {
       setSubmitting(false);
     }

@@ -460,6 +460,8 @@ async def run_migrations(eng):
         ("users", "lng", float_type),
         ("users", "updated_at", "TIMESTAMP"),
         ("providers", "status_reason", "TEXT"),
+        ("reviews", "order_id", "VARCHAR(255)"),
+        ("reviews", "booking_id", "VARCHAR(255)"),
     ]
 
     # IMPORTANT: Each migration in its OWN transaction.

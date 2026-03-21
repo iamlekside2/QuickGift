@@ -121,9 +121,9 @@ export default function ProviderReviews({ navigation }) {
           {/* Reviews List */}
           <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false}>
             {reviews.map((review) => {
-              const clientName = review.client_name || review.reviewer_name || review.user_name || 'Client';
-              const serviceName = review.service_name || review.service || '';
-              const dateStr = review.date || review.created_at || '';
+              const clientName = review.user_name || 'Client';
+              const serviceName = '';
+              const dateStr = review.created_at || '';
               const displayDate = dateStr ? new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
               return (
                 <View

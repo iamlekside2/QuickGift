@@ -40,6 +40,8 @@ async def init_db():
         ("users", "lng", float_type),
         ("users", "updated_at", "TIMESTAMP"),
         ("providers", "status_reason", "TEXT"),
+        ("reviews", "order_id", f"{varchar}(255)"),
+        ("reviews", "booking_id", f"{varchar}(255)"),
     ]
 
     # Each migration in its OWN transaction — PostgreSQL aborts
