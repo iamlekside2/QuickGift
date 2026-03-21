@@ -28,6 +28,7 @@ import ProviderProfileScreen from '../screens/Beauty/ProviderProfileScreen';
 import BookingScreen from '../screens/Beauty/BookingScreen';
 
 import WriteReviewScreen from '../screens/Shared/WriteReviewScreen';
+import RaiseDisputeScreen from '../screens/Shared/RaiseDisputeScreen';
 
 import ChatListScreen from '../screens/Chat/ChatListScreen';
 import ChatScreen from '../screens/Chat/ChatScreen';
@@ -57,6 +58,7 @@ function HomeStack() {
       <Stack.Screen name="ChatScreen" component={ChatScreen} />
       <Stack.Screen name="PaystackWebView" component={PaystackWebView} />
       <Stack.Screen name="WriteReview" component={WriteReviewScreen} />
+      <Stack.Screen name="RaiseDispute" component={RaiseDisputeScreen} />
     </Stack.Navigator>
   );
 }

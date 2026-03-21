@@ -270,6 +270,20 @@ export default function OrdersScreen() {
                     <Text className="text-xs font-bold text-teal">Leave Review</Text>
                   </TouchableOpacity>
                 )}
+
+                {/* Report Issue for delivered/completed orders */}
+                {(status === 'delivered' || status === 'completed') && (
+                  <TouchableOpacity
+                    className="mt-1 py-2 px-3 rounded-xl self-start flex-row items-center gap-1"
+                    onPress={() => navigation.navigate('Home', {
+                      screen: 'RaiseDispute',
+                      params: { orderId: isGift ? item.id : undefined, bookingId: !isGift ? item.id : undefined, orderNumber: item.order_number || item.booking_number },
+                    })}
+                  >
+                    <Ionicons name="flag-outline" size={14} color="#EF4444" />
+                    <Text className="text-xs font-bold text-red-500">Report Issue</Text>
+                  </TouchableOpacity>
+                )}
               </TouchableOpacity>
             );
           })

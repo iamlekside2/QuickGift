@@ -187,4 +187,11 @@ export const walletAPI = realWalletAPI;
 export const uploadAPI = realUploadAPI;
 export const deliveryAPI = realDeliveryAPI;
 
+const realDisputesAPI = {
+  raise: (data) => api.post('/disputes', data),
+  list: (params = {}) => api.get('/disputes', { params }),
+  respond: (id, data) => api.patch(`/disputes/${id}/respond`, data),
+};
+export const disputesAPI = realDisputesAPI;
+
 export default api;

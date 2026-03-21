@@ -26,7 +26,7 @@ const baseQueryWithReauth = async (args, api, extraOptions) => {
 export const api = createApi({
   reducerPath: 'api',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['Dashboard', 'Orders', 'Products', 'Providers', 'Users', 'Bookings', 'Payments', 'Transactions', 'Payouts'],
+  tagTypes: ['Dashboard', 'Orders', 'Products', 'Providers', 'Users', 'Bookings', 'Payments', 'Transactions', 'Payouts', 'Disputes'],
   endpoints: (builder) => ({
     // ── Auth ─────────────────────────────────────────
     login: builder.mutation({
@@ -209,6 +209,26 @@ export const api = createApi({
       providesTags: ['Transactions'],
     }),
 
+    // ── Disputes (Admin) ───────────────────────────
+    getAdminDisputes: builder.query({
+      query: ({ status, page = 1, per_page = 20 } = {}) => {
+        const params = new URLSearchParams()
+        if (status) params.append('status', status)
+        params.append('page', page)
+        params.append('per_page', per_page)
+        return `/disputes/admin/all?${params.toString()}`
+      },
+      providesTags: ['Disputes'],
+    }),
+    resolveDispute: builder.mutation({
+      query: ({ id, resolution, notes }) => ({
+        url: `/disputes/admin/${id}/resolve`,
+        method: 'PATCH',
+        body: { resolution, notes },
+      }),
+      invalidatesTags: ['Disputes', 'Dashboard'],
+    }),
+
     // ── Payouts (Admin) ─────────────────────────────
     getAdminPayouts: builder.query({
       query: ({ status, page = 1, per_page = 20 } = {}) => {
@@ -268,4 +288,6 @@ export const {
   useCancelPayoutMutation,
   useGetAdminSettingsQuery,
   useGetRevenueAnalyticsQuery,
+  useGetAdminDisputesQuery,
+  useResolveDisputeMutation,
 } = api
