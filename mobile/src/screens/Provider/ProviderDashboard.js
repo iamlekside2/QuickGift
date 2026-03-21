@@ -11,8 +11,12 @@ import * as ImagePicker from 'expo-image-picker';
 export default function ProviderDashboard({ navigation }) {
   const { user, updateProfile, updateUser } = useAuth();
   const { refreshLocation, coords } = useLocation();
-  // Use business name on provider screens, personal name only as last fallback
-  const displayName = providerData?.business_name || user?.full_name?.split(' ')[0] || 'Provider';
+  const businessName = providerData?.business_name || null;
+  const personalName = user?.full_name?.split(' ')[0] || 'there';
+
+  // Time-based greeting
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
 
   const [bookings, setBookings] = useState([]);
   const [services, setServices] = useState([]);
@@ -208,9 +212,13 @@ export default function ProviderDashboard({ navigation }) {
         }}
       >
         <View className="flex-row justify-between items-center">
-          <View>
-            <Text className="text-2xl font-extrabold text-gray-800">Hi {displayName}</Text>
-            <Text className="text-sm text-gray-400 mt-0.5">Here's your business overview</Text>
+          <View className="flex-1 mr-3">
+            <Text className="text-sm text-gray-400 font-medium">{greeting}, {personalName} 👋</Text>
+            {businessName ? (
+              <Text className="text-xl font-extrabold text-gray-800 mt-0.5" numberOfLines={1}>{businessName}</Text>
+            ) : (
+              <Text className="text-xl font-extrabold text-gray-800 mt-0.5">Your Dashboard</Text>
+            )}
           </View>
           <TouchableOpacity
             className="w-11 h-11 rounded-2xl bg-gray-100 items-center justify-center"
