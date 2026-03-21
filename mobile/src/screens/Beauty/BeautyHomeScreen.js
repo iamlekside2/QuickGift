@@ -6,6 +6,7 @@ import { BEAUTY_CATEGORIES } from '../../constants/data';
 import { providersAPI } from '../../services/api';
 import { useLocation } from '../../context/LocationContext';
 import { useAuth } from '../../context/AuthContext';
+import { LoadingState, EmptyState } from '../../components/common/ScreenStates';
 import SectionHeader from '../../components/common/SectionHeader';
 import CategoryCard from '../../components/common/CategoryCard';
 import ProviderCard from '../../components/common/ProviderCard';
@@ -173,7 +174,7 @@ export default function BeautyHomeScreen({ navigation }) {
           onAction={() => navigation.navigate('ProvidersList', { title: 'All Providers' })}
         />
         {loading ? (
-          <ActivityIndicator size="large" color="#35615D" style={{ marginVertical: 32 }} />
+          <LoadingState message="Loading providers..." />
         ) : providers.length > 0 ? (
           <View className="px-6 gap-3.5">
             {providers.map((item) => (
@@ -185,13 +186,7 @@ export default function BeautyHomeScreen({ navigation }) {
             ))}
           </View>
         ) : (
-          <View className="items-center py-12 px-8">
-            <View className="w-16 h-16 rounded-full bg-gray-100 items-center justify-center mb-4">
-              <Ionicons name="search-outline" size={28} color="#9CA3AF" />
-            </View>
-            <Text className="text-base font-bold text-gray-800 mb-1">No providers found</Text>
-            <Text className="text-sm text-gray-400 text-center">Try a different filter to see more results.</Text>
-          </View>
+          <EmptyState icon="search-outline" title="No providers found" subtitle="Try a different filter to see more results." />
         )}
 
         <View style={{ height: 100 }} />

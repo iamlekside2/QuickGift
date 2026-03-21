@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { bookingsAPI } from '../../services/api';
+import { LoadingState, EmptyState } from '../../components/common/ScreenStates';
 
 const TABS = ['Upcoming', 'Pending', 'Completed'];
 
@@ -90,16 +91,9 @@ export default function ProviderBookings({ navigation }) {
       {/* Bookings List */}
       <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false}>
         {loading ? (
-          <View className="items-center mt-16">
-            <ActivityIndicator size="large" color="#35615D" />
-            <Text className="text-sm text-gray-400 mt-3">Loading bookings...</Text>
-          </View>
+          <LoadingState message="Loading bookings..." />
         ) : bookings.length === 0 ? (
-          <View className="items-center mt-16">
-            <Ionicons name="calendar-outline" size={48} color="#9CA3AF" />
-            <Text className="text-base font-bold text-gray-800 mt-3">No {activeTab.toLowerCase()} bookings</Text>
-            <Text className="text-sm text-gray-400 mt-1">You're all caught up!</Text>
-          </View>
+          <EmptyState icon="calendar-outline" title={`No ${activeTab.toLowerCase()} bookings`} subtitle="You're all caught up!" />
         ) : (
           bookings.map((booking) => (
             <TouchableOpacity

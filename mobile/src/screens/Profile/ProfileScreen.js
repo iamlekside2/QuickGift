@@ -102,7 +102,7 @@ export default function ProfileScreen({ navigation }) {
       {/* Fixed teal header - stays above scroll */}
       <View
         className="bg-teal"
-        style={{ paddingTop: Platform.OS === 'ios' ? 50 : 30 }}
+        style={{ paddingTop: Platform.OS === 'ios' ? 60 : 40 }}
       >
         <View className="px-5 pb-8">
           <View className="flex-row items-center justify-between mb-6">

@@ -3,6 +3,7 @@ import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, Platform, Te
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { productsAPI } from '../../services/api';
+import { LoadingState, EmptyState } from '../../components/common/ScreenStates';
 
 export default function GiftsListScreen({ navigation, route }) {
   const { category, title, search: showSearch } = route.params || {};
@@ -150,9 +151,7 @@ export default function GiftsListScreen({ navigation, route }) {
 
       {/* Gift Grid */}
       {loading ? (
-        <View className="flex-1 justify-center items-center">
-          <ActivityIndicator size="large" color="#35615D" />
-        </View>
+        <LoadingState message="Loading gifts..." />
       ) : (
         <FlatList
           data={gifts}
@@ -163,24 +162,7 @@ export default function GiftsListScreen({ navigation, route }) {
           showsVerticalScrollIndicator={false}
           renderItem={renderGift}
           ListEmptyComponent={
-            <View className="items-center mt-20 px-8">
-              <View
-                className="w-24 h-24 rounded-full bg-cream items-center justify-center mb-5"
-                style={{
-                  shadowColor: '#35615D',
-                  shadowOffset: { width: 0, height: 4 },
-                  shadowOpacity: 0.06,
-                  shadowRadius: 12,
-                  elevation: 3,
-                }}
-              >
-                <Text className="text-5xl">{'\uD83C\uDF81'}</Text>
-              </View>
-              <Text className="text-lg font-bold text-gray-800 mb-2">No gifts found</Text>
-              <Text className="text-sm text-gray-400 text-center leading-5">
-                We couldn't find any gifts matching your criteria. Try a different filter or category.
-              </Text>
-            </View>
+            <EmptyState emoji={'\uD83C\uDF81'} title="No gifts found" subtitle="We couldn't find any gifts matching your criteria. Try a different filter or category." />
           }
         />
       )}

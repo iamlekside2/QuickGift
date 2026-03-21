@@ -3,6 +3,7 @@ import { View, Text, ScrollView, FlatList, TouchableOpacity, ActivityIndicator, 
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { productsAPI } from '../../services/api';
+import { LoadingState } from '../../components/common/ScreenStates';
 import SectionHeader from '../../components/common/SectionHeader';
 import CategoryCard from '../../components/common/CategoryCard';
 import GiftCard from '../../components/common/GiftCard';
@@ -34,14 +35,7 @@ export default function GiftsHomeScreen({ navigation }) {
     }
   };
 
-  if (loading) {
-    return (
-      <View className="flex-1 bg-teal justify-center items-center">
-        <StatusBar style="light" />
-        <ActivityIndicator size="large" color="#fff" />
-      </View>
-    );
-  }
+  if (loading) return <View className="flex-1 bg-white"><LoadingState message="Loading gifts..." /></View>;
 
   return (
     <View className="flex-1 bg-white">

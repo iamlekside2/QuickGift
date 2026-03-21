@@ -3,6 +3,7 @@ import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, Platform } f
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { providersAPI } from '../../services/api';
+import { LoadingState, EmptyState } from '../../components/common/ScreenStates';
 import { useLocation } from '../../context/LocationContext';
 import { useAuth } from '../../context/AuthContext';
 import ProviderCard from '../../components/common/ProviderCard';
@@ -115,7 +116,7 @@ export default function ProvidersListScreen({ navigation, route }) {
 
       {/* Provider List */}
       {loading ? (
-        <ActivityIndicator size="large" color="#35615D" style={{ marginTop: 40 }} />
+        <LoadingState message="Finding providers..." />
       ) : (
         <FlatList
           data={filteredProviders}
@@ -129,11 +130,7 @@ export default function ProvidersListScreen({ navigation, route }) {
             />
           )}
           ListEmptyComponent={
-            <View className="items-center pt-20">
-              <Text className="text-5xl mb-4">💈</Text>
-              <Text className="text-lg font-semibold text-gray-400">No providers found</Text>
-              <Text className="text-sm text-gray-300 mt-1">Try adjusting your filters</Text>
-            </View>
+            <EmptyState emoji="💈" title="No providers found" subtitle="Try adjusting your filters" />
           }
         />
       )}
