@@ -23,6 +23,7 @@ async def list_providers(
     service_type: Optional[str] = None,
     available: Optional[bool] = None,
     search: Optional[str] = None,
+    min_rating: Optional[float] = Query(None, ge=0, le=5),
     sort: str = Query("rating", pattern="^(rating|bookings|newest|distance)$"),
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=50),
@@ -52,6 +53,8 @@ async def list_providers(
         query = query.where(Provider.is_available == available)
     if search:
         query = query.where(Provider.business_name.ilike(f"%{search}%"))
+    if min_rating is not None:
+        query = query.where(Provider.rating >= min_rating)
 
     # For distance sort, fetch all matching and sort in Python
     if sort == "distance" and lat is not None and lng is not None:

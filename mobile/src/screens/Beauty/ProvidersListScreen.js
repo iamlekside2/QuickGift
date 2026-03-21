@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, Platform, TextInput } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { providersAPI } from '../../services/api';
@@ -9,25 +9,32 @@ import { useAuth } from '../../context/AuthContext';
 import ProviderCard from '../../components/common/ProviderCard';
 
 export default function ProvidersListScreen({ navigation, route }) {
-  const { category, title } = route.params || {};
+  const { category, title, search: showSearch } = route.params || {};
   const [providers, setProviders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState('list');
   const [activeFilter, setActiveFilter] = useState('All');
+  const [searchQuery, setSearchQuery] = useState('');
   const { coords } = useLocation();
   const { user } = useAuth();
 
   const userLat = coords?.lat || user?.lat;
   const userLng = coords?.lng || user?.lng;
 
+  // Debounced search + location change
   useEffect(() => {
-    loadProviders();
-  }, [userLat, userLng]);
+    const timer = setTimeout(() => {
+      if (searchQuery.length >= 2 || searchQuery.length === 0) loadProviders();
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [userLat, userLng, searchQuery]);
 
   const loadProviders = async () => {
+    setLoading(true);
     try {
       const params = {};
       if (category) params.service_type = category;
+      if (searchQuery.trim()) params.search = searchQuery.trim();
       if (userLat && userLng) {
         params.lat = userLat;
         params.lng = userLng;
@@ -75,6 +82,26 @@ export default function ProvidersListScreen({ navigation, route }) {
         >
           <Ionicons name={viewMode === 'list' ? 'map-outline' : 'list-outline'} size={20} color="#1F2937" />
         </TouchableOpacity>
+      </View>
+
+      {/* Search Bar */}
+      <View className="px-6 mb-3">
+        <View className="flex-row items-center bg-gray-100 rounded-2xl px-4 h-11">
+          <Ionicons name="search" size={18} color="#9CA3AF" />
+          <TextInput
+            className="flex-1 ml-2.5 text-sm text-gray-900"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholder="Search providers..."
+            placeholderTextColor="#9CA3AF"
+            autoFocus={!!showSearch}
+          />
+          {searchQuery ? (
+            <TouchableOpacity onPress={() => setSearchQuery('')}>
+              <Ionicons name="close-circle" size={18} color="#9CA3AF" />
+            </TouchableOpacity>
+          ) : null}
+        </View>
       </View>
 
       {/* Filter Row */}

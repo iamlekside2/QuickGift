@@ -57,6 +57,9 @@ async def list_products(
     city: Optional[str] = None,
     search: Optional[str] = None,
     featured: Optional[bool] = None,
+    min_price: Optional[float] = Query(None, ge=0),
+    max_price: Optional[float] = Query(None, ge=0),
+    min_rating: Optional[float] = Query(None, ge=0, le=5),
     sort: str = Query("popular", pattern="^(popular|price_asc|price_desc|rating|newest)$"),
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
@@ -69,7 +72,16 @@ async def list_products(
     if city:
         query = query.where(Product.city == city)
     if search:
-        query = query.where(Product.name.ilike(f"%{search}%"))
+        # Search by name OR vendor_name
+        query = query.where(
+            Product.name.ilike(f"%{search}%") | Product.vendor_name.ilike(f"%{search}%")
+        )
+    if min_price is not None:
+        query = query.where(Product.price >= min_price)
+    if max_price is not None:
+        query = query.where(Product.price <= max_price)
+    if min_rating is not None:
+        query = query.where(Product.rating >= min_rating)
     if featured is not None:
         query = query.where(Product.is_featured == featured)
 
