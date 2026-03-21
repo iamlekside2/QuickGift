@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import {
   LayoutDashboard, ShoppingCart, Package, Sparkles,
   Users, Menu, X, LogOut, Gift, Bell, CalendarCheck,
-  Settings, Search, ChevronRight
+  Settings, Search, ChevronRight, Wallet, Banknote
 } from 'lucide-react'
 import { logout, selectCurrentUser } from '../features/authSlice'
 
@@ -15,6 +15,8 @@ const NAV_ITEMS = [
   { path: '/products', label: 'Products', icon: Package },
   { path: '/providers', label: 'Providers', icon: Sparkles },
   { path: '/users', label: 'Users', icon: Users },
+  { path: '/transactions', label: 'Transactions', icon: Wallet },
+  { path: '/payouts', label: 'Payouts', icon: Banknote },
 ]
 
 const BOTTOM_NAV = [

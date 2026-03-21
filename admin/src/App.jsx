@@ -9,6 +9,8 @@ import BookingsPage from './pages/BookingsPage'
 import ProductsPage from './pages/ProductsPage'
 import ProvidersPage from './pages/ProvidersPage'
 import UsersPage from './pages/UsersPage'
+import TransactionsPage from './pages/TransactionsPage'
+import PayoutsPage from './pages/PayoutsPage'
 import SettingsPage from './pages/SettingsPage'
 
 function ProtectedRoute({ children }) {
@@ -28,6 +30,8 @@ function App() {
         <Route path="products" element={<ProductsPage />} />
         <Route path="providers" element={<ProvidersPage />} />
         <Route path="users" element={<UsersPage />} />
+        <Route path="transactions" element={<TransactionsPage />} />
+        <Route path="payouts" element={<PayoutsPage />} />
         <Route path="settings" element={<SettingsPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

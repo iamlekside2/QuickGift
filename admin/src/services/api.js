@@ -26,7 +26,7 @@ const baseQueryWithReauth = async (args, api, extraOptions) => {
 export const api = createApi({
   reducerPath: 'api',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['Dashboard', 'Orders', 'Products', 'Providers', 'Users', 'Bookings'],
+  tagTypes: ['Dashboard', 'Orders', 'Products', 'Providers', 'Users', 'Bookings', 'Payments', 'Transactions', 'Payouts'],
   endpoints: (builder) => ({
     // ── Auth ─────────────────────────────────────────
     login: builder.mutation({
@@ -158,6 +158,60 @@ export const api = createApi({
     getReviews: builder.query({
       query: ({ targetType, targetId }) => `/reviews/${targetType}/${targetId}`,
     }),
+
+    // ── Payments (Admin) ────────────────────────────
+    getAdminPayments: builder.query({
+      query: ({ status, page = 1, per_page = 20 } = {}) => {
+        const params = new URLSearchParams()
+        if (status) params.append('status', status)
+        params.append('page', page)
+        params.append('per_page', per_page)
+        return `/admin/payments?${params.toString()}`
+      },
+      providesTags: ['Payments'],
+    }),
+
+    // ── Transactions (Admin) ────────────────────────
+    getAdminTransactions: builder.query({
+      query: ({ type, page = 1, per_page = 20 } = {}) => {
+        const params = new URLSearchParams()
+        if (type) params.append('type', type)
+        params.append('page', page)
+        params.append('per_page', per_page)
+        return `/admin/transactions?${params.toString()}`
+      },
+      providesTags: ['Transactions'],
+    }),
+
+    // ── Payouts (Admin) ─────────────────────────────
+    getAdminPayouts: builder.query({
+      query: ({ status, page = 1, per_page = 20 } = {}) => {
+        const params = new URLSearchParams()
+        if (status) params.append('status', status)
+        params.append('page', page)
+        params.append('per_page', per_page)
+        return `/admin/payouts?${params.toString()}`
+      },
+      providesTags: ['Payouts'],
+    }),
+    getPayoutStats: builder.query({
+      query: () => '/admin/payouts/stats',
+      providesTags: ['Payouts'],
+    }),
+    releasePayout: builder.mutation({
+      query: (id) => ({
+        url: `/admin/payouts/${id}/release`,
+        method: 'PATCH',
+      }),
+      invalidatesTags: ['Payouts', 'Dashboard'],
+    }),
+    cancelPayout: builder.mutation({
+      query: (id) => ({
+        url: `/admin/payouts/${id}/cancel`,
+        method: 'PATCH',
+      }),
+      invalidatesTags: ['Payouts', 'Dashboard'],
+    }),
   }),
 })
 
@@ -178,4 +232,10 @@ export const {
   useRejectProviderMutation,
   useGetAdminUsersQuery,
   useGetReviewsQuery,
+  useGetAdminPaymentsQuery,
+  useGetAdminTransactionsQuery,
+  useGetAdminPayoutsQuery,
+  useGetPayoutStatsQuery,
+  useReleasePayoutMutation,
+  useCancelPayoutMutation,
 } = api

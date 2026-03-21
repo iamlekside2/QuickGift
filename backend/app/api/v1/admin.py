@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy import select, func
@@ -13,6 +14,8 @@ from app.models.booking import Booking
 from app.models.product import Product, Category, Occasion
 from app.models.provider import Provider, Service
 from app.models.payment import Payment
+from app.models.transaction import Transaction
+from app.models.payout import Payout
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
@@ -311,3 +314,175 @@ async def admin_list_bookings(
     bookings = result.scalars().all()
 
     return {"items": bookings, "total": total, "page": page, "per_page": per_page}
+
+
+# ---------------------------------------------------------------------------
+# Payments (Admin)
+# ---------------------------------------------------------------------------
+
+@router.get("/payments")
+async def admin_list_payments(
+    status: str = None,
+    page: int = Query(1, ge=1),
+    per_page: int = Query(20, ge=1, le=100),
+    admin: dict = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    query = select(Payment)
+    if status:
+        query = query.where(Payment.status == status)
+
+    total = (await db.execute(select(func.count()).select_from(query.subquery()))).scalar()
+    query = query.order_by(Payment.created_at.desc()).offset((page - 1) * per_page).limit(per_page)
+    result = await db.execute(query)
+    payments = result.scalars().all()
+
+    return {"items": payments, "total": total, "page": page, "per_page": per_page}
+
+
+# ---------------------------------------------------------------------------
+# Transactions (Admin)
+# ---------------------------------------------------------------------------
+
+@router.get("/transactions")
+async def admin_list_transactions(
+    type: str = None,
+    page: int = Query(1, ge=1),
+    per_page: int = Query(20, ge=1, le=100),
+    admin: dict = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    query = select(Transaction)
+    if type:
+        query = query.where(Transaction.type == type)
+
+    total = (await db.execute(select(func.count()).select_from(query.subquery()))).scalar()
+    query = query.order_by(Transaction.created_at.desc()).offset((page - 1) * per_page).limit(per_page)
+    result = await db.execute(query)
+    txns = result.scalars().all()
+
+    return {"items": txns, "total": total, "page": page, "per_page": per_page}
+
+
+# ---------------------------------------------------------------------------
+# Payouts (Admin)
+# ---------------------------------------------------------------------------
+
+@router.get("/payouts")
+async def admin_list_payouts(
+    status: str = None,
+    page: int = Query(1, ge=1),
+    per_page: int = Query(20, ge=1, le=100),
+    admin: dict = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    query = select(Payout)
+    if status:
+        query = query.where(Payout.status == status)
+
+    total = (await db.execute(select(func.count()).select_from(query.subquery()))).scalar()
+    query = query.order_by(Payout.created_at.desc()).offset((page - 1) * per_page).limit(per_page)
+    result = await db.execute(query)
+    payouts = result.scalars().all()
+
+    return {"items": payouts, "total": total, "page": page, "per_page": per_page}
+
+
+@router.patch("/payouts/{payout_id}/release")
+async def release_payout(
+    payout_id: str,
+    admin: dict = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Manually release a held payout to the provider's wallet."""
+    result = await db.execute(select(Payout).where(Payout.id == payout_id))
+    payout = result.scalars().first()
+    if not payout:
+        raise HTTPException(status_code=404, detail="Payout not found")
+
+    if payout.status not in ("held", "released"):
+        raise HTTPException(status_code=400, detail=f"Cannot release payout in '{payout.status}' status")
+
+    # Credit provider's wallet
+    provider_result = await db.execute(select(Provider).where(Provider.id == payout.provider_id))
+    provider = provider_result.scalars().first()
+
+    if provider:
+        user_result = await db.execute(select(User).where(User.id == provider.user_id))
+        provider_user = user_result.scalars().first()
+        if provider_user:
+            provider_user.wallet_balance += payout.amount
+
+            # Record transaction
+            ref = f"PO-{uuid.uuid4().hex[:12].upper()}"
+            tx = Transaction(
+                user_id=provider_user.id,
+                type="credit",
+                amount=payout.amount,
+                description=f"Payout for {'order' if payout.order_id else 'booking'} {payout.order_id or payout.booking_id}",
+                reference=ref,
+                balance_after=provider_user.wallet_balance,
+                status="completed",
+            )
+            db.add(tx)
+
+            # Update provider revenue
+            provider.total_revenue += payout.amount
+
+    payout.status = "paid"
+    payout.paid_at = datetime.utcnow()
+    await db.commit()
+
+    return {"status": "ok", "payout_id": payout_id, "amount": payout.amount}
+
+
+@router.patch("/payouts/{payout_id}/cancel")
+async def cancel_payout(
+    payout_id: str,
+    admin: dict = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Cancel a payout (e.g. for refunded orders)."""
+    result = await db.execute(select(Payout).where(Payout.id == payout_id))
+    payout = result.scalars().first()
+    if not payout:
+        raise HTTPException(status_code=404, detail="Payout not found")
+
+    if payout.status == "paid":
+        raise HTTPException(status_code=400, detail="Cannot cancel an already paid payout")
+
+    payout.status = "cancelled"
+    await db.commit()
+
+    return {"status": "ok", "payout_id": payout_id}
+
+
+@router.get("/payouts/stats")
+async def payout_stats(
+    admin: dict = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get payout statistics."""
+    total_held = (await db.execute(
+        select(func.coalesce(func.sum(Payout.amount), 0)).where(Payout.status == "held")
+    )).scalar()
+    total_released = (await db.execute(
+        select(func.coalesce(func.sum(Payout.amount), 0)).where(Payout.status == "released")
+    )).scalar()
+    total_paid = (await db.execute(
+        select(func.coalesce(func.sum(Payout.amount), 0)).where(Payout.status == "paid")
+    )).scalar()
+    total_commission = (await db.execute(
+        select(func.coalesce(func.sum(Payout.commission), 0)).where(Payout.status.in_(["held", "released", "paid"]))
+    )).scalar()
+    pending_count = (await db.execute(
+        select(func.count(Payout.id)).where(Payout.status.in_(["held", "released"]))
+    )).scalar()
+
+    return {
+        "held": total_held,
+        "released": total_released,
+        "paid": total_paid,
+        "total_commission": total_commission,
+        "pending_count": pending_count,
+    }

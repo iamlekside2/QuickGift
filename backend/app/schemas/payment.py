@@ -1,13 +1,15 @@
 from pydantic import BaseModel
 from typing import Optional
+from datetime import datetime
 
 
 class InitializePayment(BaseModel):
     order_id: Optional[str] = None
     booking_id: Optional[str] = None
     amount: float
-    email: str
+    email: Optional[str] = None
     callback_url: Optional[str] = None
+    method: Optional[str] = "card"  # "card" (Paystack) or "wallet"
 
 
 class PaymentResponse(BaseModel):
@@ -17,7 +19,8 @@ class PaymentResponse(BaseModel):
     currency: str
     status: str
     provider: str
-    created_at: str
+    channel: Optional[str] = None
+    created_at: datetime
 
     class Config:
         from_attributes = True

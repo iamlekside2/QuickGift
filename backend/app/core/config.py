@@ -39,14 +39,17 @@ class Settings(BaseModel):
     CLOUDINARY_API_KEY: str = os.getenv("CLOUDINARY_API_KEY", "")
     CLOUDINARY_API_SECRET: str = os.getenv("CLOUDINARY_API_SECRET", "")
 
-    # Commissions
-    GIFT_COMMISSION_PERCENT: float = 25.0
-    BEAUTY_COMMISSION_PERCENT: float = 20.0
+    # Commissions (10% for both products and services)
+    GIFT_COMMISSION_PERCENT: float = float(os.getenv("GIFT_COMMISSION_PERCENT", "10.0"))
+    BEAUTY_COMMISSION_PERCENT: float = float(os.getenv("BEAUTY_COMMISSION_PERCENT", "10.0"))
 
-    # Delivery
-    DELIVERY_BASE_FEE: int = 1000
-    DELIVERY_PER_KM: int = 200
-    EXPRESS_MULTIPLIER: float = 2.5
+    # Delivery (disabled for now — providers handle their own)
+    DELIVERY_BASE_FEE: int = 0
+    DELIVERY_PER_KM: int = 0
+    EXPRESS_MULTIPLIER: float = 1.0
+
+    # Provider Payouts
+    PAYOUT_HOLD_HOURS: int = 24  # hold period after delivery before auto-payout
 
     # CORS — always include production + local dev, plus any from env
     ALLOWED_ORIGINS: list = list(set(
