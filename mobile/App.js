@@ -2,6 +2,7 @@ import "./global.css";
 import { NavigationContainer } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
+import ErrorBoundary from './src/components/common/ErrorBoundary';
 import { AuthProvider } from './src/context/AuthContext';
 import { LocationProvider } from './src/context/LocationContext';
 import { CartProvider } from './src/context/CartContext';
@@ -13,17 +14,19 @@ SplashScreen.preventAutoHideAsync().catch(() => {});
 
 export default function App() {
   return (
-    <AuthProvider>
-      <LocationProvider>
-      <WalletProvider>
-      <CartProvider>
-        <NavigationContainer onReady={() => SplashScreen.hideAsync()}>
-          <StatusBar style="dark" />
-          <RootNavigator />
-        </NavigationContainer>
-      </CartProvider>
-      </WalletProvider>
-      </LocationProvider>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <LocationProvider>
+          <WalletProvider>
+            <CartProvider>
+              <NavigationContainer onReady={() => SplashScreen.hideAsync()}>
+                <StatusBar style="dark" />
+                <RootNavigator />
+              </NavigationContainer>
+            </CartProvider>
+          </WalletProvider>
+        </LocationProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }

@@ -15,8 +15,12 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.quickgift.app",
+      "buildNumber": "1",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSLocationWhenInUseUsageDescription": "QuickGift needs your location to show nearby gift shops and beauty service providers.",
+        "NSCameraUsageDescription": "QuickGift needs camera access to take profile photos and upload product images.",
+        "NSPhotoLibraryUsageDescription": "QuickGift needs photo library access to upload profile photos and product images."
       }
     },
     "android": {
@@ -25,11 +29,37 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.quickgift.app"
+      "package": "com.quickgift.app",
+      "versionCode": 1,
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "INTERNET",
+        "VIBRATE",
+        "RECEIVE_BOOT_COMPLETED"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "QuickGift needs your location to show nearby gift shops and beauty providers."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "QuickGift needs access to your photos to upload profile pictures and product images.",
+          "cameraPermission": "QuickGift needs camera access to take profile photos."
+        }
+      ]
+    ],
     "extra": {
       "eas": {
         "projectId": "3dbff884-e5eb-40ac-898d-38ed322ea0ac"

@@ -32,6 +32,8 @@ import WriteReviewScreen from '../screens/Shared/WriteReviewScreen';
 import ChatListScreen from '../screens/Chat/ChatListScreen';
 import ChatScreen from '../screens/Chat/ChatScreen';
 import PaystackWebView from '../screens/Shared/PaystackWebView';
+import PrivacyPolicyScreen from '../screens/Shared/PrivacyPolicyScreen';
+import TermsScreen from '../screens/Shared/TermsScreen';
 import WithdrawScreen from '../screens/Wallet/WithdrawScreen';
 import AddBankAccountScreen from '../screens/Wallet/AddBankAccountScreen';
 
@@ -68,6 +70,8 @@ function ProfileStack() {
       <Stack.Screen name="AddBankAccount" component={AddBankAccountScreen} />
       <Stack.Screen name="HelpSupport" component={HelpSupportScreen} />
       <Stack.Screen name="Settings" component={SettingsScreen} />
+      <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
+      <Stack.Screen name="Terms" component={TermsScreen} />
       <Stack.Screen name="EditProfile" component={EditProfileScreen} />
       <Stack.Screen name="Favourites" component={FavouritesScreen} />
       <Stack.Screen name="Reminders" component={RemindersScreen} />

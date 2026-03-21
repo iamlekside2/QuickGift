@@ -71,8 +71,8 @@ export default function SettingsScreen({ navigation }) {
   const accountItems = [
     { icon: 'language-outline', label: 'Language', value: 'English' },
     { icon: 'cash-outline', label: 'Currency', value: 'NGN (\u20A6)' },
-    { icon: 'shield-outline', label: 'Privacy Policy', onPress: () => Linking.openURL(PRIVACY_URL) },
-    { icon: 'document-text-outline', label: 'Terms of Service', onPress: () => Linking.openURL(TERMS_URL) },
+    { icon: 'shield-outline', label: 'Privacy Policy', onPress: () => navigation.navigate('PrivacyPolicy') },
+    { icon: 'document-text-outline', label: 'Terms of Service', onPress: () => navigation.navigate('Terms') },
   ];
 
   return (
