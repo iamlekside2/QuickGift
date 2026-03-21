@@ -29,10 +29,25 @@ class Settings(BaseModel):
     TERMII_API_KEY: str = os.getenv("TERMII_API_KEY", "")
     TERMII_SENDER_ID: str = os.getenv("TERMII_SENDER_ID", "QuickGift")
 
-    # Paystack
-    PAYSTACK_SECRET_KEY: str = os.getenv("PAYSTACK_SECRET_KEY", "")
-    PAYSTACK_PUBLIC_KEY: str = os.getenv("PAYSTACK_PUBLIC_KEY", "")
+    # Paystack — uses test keys by default, live keys only when PAYSTACK_LIVE=true
+    PAYSTACK_LIVE: bool = os.getenv("PAYSTACK_LIVE", "false").lower() == "true"
+    PAYSTACK_TEST_SECRET_KEY: str = os.getenv("PAYSTACK_TEST_SECRET_KEY", "")
+    PAYSTACK_TEST_PUBLIC_KEY: str = os.getenv("PAYSTACK_TEST_PUBLIC_KEY", "")
+    PAYSTACK_LIVE_SECRET_KEY: str = os.getenv("PAYSTACK_LIVE_SECRET_KEY", "")
+    PAYSTACK_LIVE_PUBLIC_KEY: str = os.getenv("PAYSTACK_LIVE_PUBLIC_KEY", "")
     PAYSTACK_BASE_URL: str = "https://api.paystack.co"
+
+    @property
+    def PAYSTACK_SECRET_KEY(self) -> str:
+        if self.PAYSTACK_LIVE:
+            return self.PAYSTACK_LIVE_SECRET_KEY
+        return self.PAYSTACK_TEST_SECRET_KEY
+
+    @property
+    def PAYSTACK_PUBLIC_KEY(self) -> str:
+        if self.PAYSTACK_LIVE:
+            return self.PAYSTACK_LIVE_PUBLIC_KEY
+        return self.PAYSTACK_TEST_PUBLIC_KEY
 
     # Cloudinary
     CLOUDINARY_CLOUD_NAME: str = os.getenv("CLOUDINARY_CLOUD_NAME", "")
