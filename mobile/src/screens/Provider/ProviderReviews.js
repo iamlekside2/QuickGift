@@ -54,7 +54,7 @@ export default function ProviderReviews({ navigation }) {
       <StatusBar style="dark" />
       {/* Header */}
       <View
-        style={{ paddingTop: Platform.OS === 'ios' ? 60 : 40, shadowColor: '#1F2937', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
+        style={{ paddingTop: Platform.OS === 'ios' ? 60 : 40, shadowColor: '#211F1C', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
         className="px-5 pb-4 bg-white"
       >
         <View className="flex-row items-center gap-3">
@@ -62,7 +62,7 @@ export default function ProviderReviews({ navigation }) {
             className="w-10 h-10 rounded-2xl bg-gray-100 items-center justify-center"
             onPress={() => navigation.goBack()}
           >
-            <Ionicons name="arrow-back" size={20} color="#1F2937" />
+            <Ionicons name="arrow-back" size={20} color="#211F1C" />
           </TouchableOpacity>
           <Text className="text-[22px] font-bold text-gray-800" style={{ letterSpacing: 0.3 }}>Reviews</Text>
         </View>
@@ -70,11 +70,11 @@ export default function ProviderReviews({ navigation }) {
 
       {loading ? (
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#35615D" />
+          <ActivityIndicator size="large" color="#1F4A45" />
         </View>
       ) : reviews.length === 0 ? (
         <View className="flex-1 items-center justify-center px-5">
-          <Ionicons name="star-outline" size={48} color="#9CA3AF" />
+          <Ionicons name="star-outline" size={48} color="#9A948A" />
           <Text className="text-base font-bold text-gray-800 mt-3">No reviews yet</Text>
           <Text className="text-sm text-gray-400 mt-1 text-center">Reviews from your clients will appear here</Text>
         </View>
@@ -83,7 +83,7 @@ export default function ProviderReviews({ navigation }) {
           {/* Stats Card */}
           <View
             className="mx-5 mt-4 mb-5 bg-white rounded-2xl p-5 flex-row items-center"
-            style={{ shadowColor: '#1F2937', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
+            style={{ shadowColor: '#211F1C', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
           >
             <View className="items-center mr-6">
               <Text className="text-4xl font-extrabold text-gray-800">{average}</Text>
@@ -93,7 +93,7 @@ export default function ProviderReviews({ navigation }) {
                     key={star}
                     name={star <= Math.floor(Number(average)) ? 'star' : (star - 0.5 <= Number(average) ? 'star-half' : 'star-outline')}
                     size={14}
-                    color="#FD8950"
+                    color="#E8632F"
                   />
                 ))}
               </View>
@@ -129,7 +129,7 @@ export default function ProviderReviews({ navigation }) {
                 <View
                   key={review.id || review._id}
                   className="bg-white rounded-2xl p-4 mb-3"
-                  style={{ shadowColor: '#1F2937', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
+                  style={{ shadowColor: '#211F1C', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
                 >
                   <View className="flex-row justify-between items-start mb-2">
                     <View className="flex-row items-center gap-2">
@@ -149,7 +149,7 @@ export default function ProviderReviews({ navigation }) {
                           key={star}
                           name={star <= (review.rating || 0) ? 'star' : 'star-outline'}
                           size={12}
-                          color="#FD8950"
+                          color="#E8632F"
                         />
                       ))}
                     </View>

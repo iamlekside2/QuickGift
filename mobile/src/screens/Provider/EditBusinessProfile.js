@@ -83,7 +83,7 @@ export default function EditBusinessProfile({ navigation }) {
   if (loadingProfile) {
     return (
       <View className="flex-1 bg-gray-50 items-center justify-center">
-        <ActivityIndicator size="large" color="#35615D" />
+        <ActivityIndicator size="large" color="#1F4A45" />
       </View>
     );
   }
@@ -100,7 +100,7 @@ export default function EditBusinessProfile({ navigation }) {
             className="w-10 h-10 rounded-2xl bg-gray-100 items-center justify-center"
             onPress={() => navigation.goBack()}
           >
-            <Ionicons name="arrow-back" size={20} color="#1F2937" />
+            <Ionicons name="arrow-back" size={20} color="#211F1C" />
           </TouchableOpacity>
           <Text className="text-xl font-bold text-gray-800">Edit Business Profile</Text>
         </View>
@@ -108,7 +108,7 @@ export default function EditBusinessProfile({ navigation }) {
 
       <ScrollView className="flex-1 px-5 pt-6" showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         {/* Business Details */}
-        <View className="bg-white rounded-2xl p-5 mb-5" style={{ shadowColor: '#1F2937', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}>
+        <View className="bg-white rounded-2xl p-5 mb-5" style={{ shadowColor: '#211F1C', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}>
           <Text className="text-base font-bold text-gray-800 mb-4">Business Details</Text>
 
           <AppInput
@@ -129,7 +129,7 @@ export default function EditBusinessProfile({ navigation }) {
         </View>
 
         {/* Category */}
-        <View className="bg-white rounded-2xl p-5 mb-5" style={{ shadowColor: '#1F2937', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}>
+        <View className="bg-white rounded-2xl p-5 mb-5" style={{ shadowColor: '#211F1C', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}>
           <Text className="text-base font-bold text-gray-800 mb-3">Category</Text>
           <View className="flex-row flex-wrap gap-2">
             {CATEGORIES.map((cat) => (
@@ -145,7 +145,7 @@ export default function EditBusinessProfile({ navigation }) {
         </View>
 
         {/* Contact & Location */}
-        <View className="bg-white rounded-2xl p-5 mb-5" style={{ shadowColor: '#1F2937', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}>
+        <View className="bg-white rounded-2xl p-5 mb-5" style={{ shadowColor: '#211F1C', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}>
           <Text className="text-base font-bold text-gray-800 mb-4">Contact & Location</Text>
           <AppInput label="Phone" value={phone} onChangeText={setPhone} type="phone" />
           <AppInput label="Email" value={email} onChangeText={setEmail} type="email" icon="mail-outline" />
@@ -153,7 +153,7 @@ export default function EditBusinessProfile({ navigation }) {
         </View>
 
         {/* Service Type */}
-        <View className="bg-white rounded-2xl p-5 mb-5" style={{ shadowColor: '#1F2937', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}>
+        <View className="bg-white rounded-2xl p-5 mb-5" style={{ shadowColor: '#211F1C', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}>
           <Text className="text-base font-bold text-gray-800 mb-3">Service Type</Text>
           <View className="flex-row gap-2">
             {SERVICE_TYPES.map((st) => (
@@ -171,7 +171,7 @@ export default function EditBusinessProfile({ navigation }) {
         {/* Save */}
         <TouchableOpacity
           className={`py-4 rounded-2xl items-center mb-8 ${saving ? 'bg-teal/70' : 'bg-teal'}`}
-          style={{ shadowColor: '#35615D', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.25, shadowRadius: 8, elevation: 4 }}
+          style={{ shadowColor: '#1F4A45', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.25, shadowRadius: 8, elevation: 4 }}
           onPress={handleSave}
           disabled={saving}
         >

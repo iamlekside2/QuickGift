@@ -86,7 +86,7 @@ export default function ServiceForm({ route, navigation }) {
         className="px-5 pb-4 bg-white"
         style={{
           paddingTop: Platform.OS === 'ios' ? 60 : 40,
-          shadowColor: '#1F2937',
+          shadowColor: '#211F1C',
           shadowOffset: { width: 0, height: 2 },
           shadowOpacity: 0.04,
           shadowRadius: 8,
@@ -98,7 +98,7 @@ export default function ServiceForm({ route, navigation }) {
             className="w-10 h-10 rounded-2xl bg-gray-100 items-center justify-center"
             onPress={() => navigation.goBack()}
           >
-            <Ionicons name="arrow-back" size={20} color="#1F2937" />
+            <Ionicons name="arrow-back" size={20} color="#211F1C" />
           </TouchableOpacity>
           <Text className="text-xl font-bold text-gray-800">
             {mode === 'add' ? 'Add Service' : 'Edit Service'}
@@ -111,7 +111,7 @@ export default function ServiceForm({ route, navigation }) {
         <View
           className="bg-white rounded-2xl p-5 mb-6"
           style={{
-            shadowColor: '#1F2937',
+            shadowColor: '#211F1C',
             shadowOffset: { width: 0, height: 2 },
             shadowOpacity: 0.04,
             shadowRadius: 8,
@@ -150,7 +150,7 @@ export default function ServiceForm({ route, navigation }) {
         <View
           className="bg-white rounded-2xl p-5 mb-6"
           style={{
-            shadowColor: '#1F2937',
+            shadowColor: '#211F1C',
             shadowOffset: { width: 0, height: 2 },
             shadowOpacity: 0.04,
             shadowRadius: 8,
@@ -167,7 +167,7 @@ export default function ServiceForm({ route, navigation }) {
                   duration === d ? 'bg-teal' : 'bg-white border border-gray-100'
                 }`}
                 style={duration === d ? {
-                  shadowColor: '#35615D',
+                  shadowColor: '#1F4A45',
                   shadowOffset: { width: 0, height: 2 },
                   shadowOpacity: 0.2,
                   shadowRadius: 4,
@@ -192,7 +192,7 @@ export default function ServiceForm({ route, navigation }) {
                   category === cat ? 'bg-teal' : 'bg-white border border-gray-100'
                 }`}
                 style={category === cat ? {
-                  shadowColor: '#35615D',
+                  shadowColor: '#1F4A45',
                   shadowOffset: { width: 0, height: 2 },
                   shadowOpacity: 0.2,
                   shadowRadius: 4,
@@ -212,7 +212,7 @@ export default function ServiceForm({ route, navigation }) {
         <View
           className="flex-row items-center justify-between bg-white rounded-2xl p-4 mb-6"
           style={{
-            shadowColor: '#1F2937',
+            shadowColor: '#211F1C',
             shadowOffset: { width: 0, height: 2 },
             shadowOpacity: 0.04,
             shadowRadius: 8,
@@ -226,7 +226,7 @@ export default function ServiceForm({ route, navigation }) {
           <Switch
             value={active}
             onValueChange={setActive}
-            trackColor={{ false: '#E5E7EB', true: '#35615D' }}
+            trackColor={{ false: '#EAE3D8', true: '#1F4A45' }}
             thumbColor="#fff"
           />
         </View>
@@ -235,7 +235,7 @@ export default function ServiceForm({ route, navigation }) {
         <TouchableOpacity
           className={`py-4 rounded-2xl items-center mb-3 ${saving ? 'bg-teal/70' : 'bg-teal'}`}
           style={{
-            shadowColor: '#35615D',
+            shadowColor: '#1F4A45',
             shadowOffset: { width: 0, height: 4 },
             shadowOpacity: 0.25,
             shadowRadius: 8,

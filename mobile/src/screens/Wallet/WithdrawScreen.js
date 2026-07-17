@@ -88,7 +88,7 @@ export default function WithdrawScreen({ navigation }) {
   if (loading) {
     return (
       <View className="flex-1 bg-white items-center justify-center">
-        <ActivityIndicator size="large" color="#35615D" />
+        <ActivityIndicator size="large" color="#1F4A45" />
       </View>
     );
   }
@@ -106,7 +106,7 @@ export default function WithdrawScreen({ navigation }) {
           className="w-10 h-10 rounded-2xl bg-gray-100 items-center justify-center"
           onPress={() => navigation.goBack()}
         >
-          <Ionicons name="arrow-back" size={20} color="#1F2937" />
+          <Ionicons name="arrow-back" size={20} color="#211F1C" />
         </TouchableOpacity>
         <Text className="flex-1 text-center text-lg font-bold text-gray-800">Withdraw</Text>
         <View style={{ width: 40 }} />
@@ -168,7 +168,7 @@ export default function WithdrawScreen({ navigation }) {
               onPress={() => navigation.navigate('AddBankAccount')}
               className="flex-row items-center gap-1"
             >
-              <Ionicons name="add-circle-outline" size={16} color="#35615D" />
+              <Ionicons name="add-circle-outline" size={16} color="#1F4A45" />
               <Text className="text-xs font-semibold text-teal">Add Bank</Text>
             </TouchableOpacity>
           </View>
@@ -179,7 +179,7 @@ export default function WithdrawScreen({ navigation }) {
               onPress={() => navigation.navigate('AddBankAccount')}
             >
               <View className="w-12 h-12 rounded-full bg-teal-light items-center justify-center mb-3">
-                <Ionicons name="card-outline" size={24} color="#35615D" />
+                <Ionicons name="card-outline" size={24} color="#1F4A45" />
               </View>
               <Text className="text-sm font-bold text-gray-700">No bank account added</Text>
               <Text className="text-xs text-gray-400 mt-1">Tap to add your bank account</Text>
@@ -202,7 +202,7 @@ export default function WithdrawScreen({ navigation }) {
                     <Ionicons
                       name="business-outline"
                       size={20}
-                      color={selectedAccount?.id === acct.id ? '#fff' : '#6B7280'}
+                      color={selectedAccount?.id === acct.id ? '#fff' : '#6E6A63'}
                     />
                   </View>
                   <View className="flex-1 ml-3">
@@ -232,7 +232,7 @@ export default function WithdrawScreen({ navigation }) {
         <TouchableOpacity
           className={`py-4 rounded-2xl items-center ${isValid ? 'bg-teal' : 'bg-gray-200'}`}
           style={isValid ? {
-            shadowColor: '#35615D',
+            shadowColor: '#1F4A45',
             shadowOffset: { width: 0, height: 4 },
             shadowOpacity: 0.25,
             shadowRadius: 8,

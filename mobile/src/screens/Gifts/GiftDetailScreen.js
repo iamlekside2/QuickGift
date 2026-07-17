@@ -1,18 +1,40 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Alert, Platform, Image } from 'react-native';
+import React, { useState, useEffect, useMemo } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, Alert, Platform, Image, TextInput } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Button from '../../components/common/Button';
 import { useCart } from '../../context/CartContext';
-import AppInput from '../../components/common/AppInput';
+import { iconFor } from '../../utils/categoryIcons';
+
+// NOTE: backend charges subtotal only (DELIVERY_BASE_FEE=0, no card-fee field),
+// so the gift message card is a free feature for now. Monetizing it (and the
+// ₦1,500 delivery in the handoff) needs backend support — tracked separately.
+const CARD_FEE = 0;
 
 export default function GiftDetailScreen({ navigation, route }) {
   const { gift } = route.params || {};
   const [quantity, setQuantity] = useState(1);
   const [message, setMessage] = useState('');
+  const [addCard, setAddCard] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [variantIdx, setVariantIdx] = useState(0);
   const { addItem } = useCart();
+
+  // Size variants — use gift.variants/sizes if the product defines them.
+  const variants = useMemo(() => {
+    const raw = gift?.variants || gift?.sizes;
+    if (Array.isArray(raw) && raw.length) {
+      return raw.map((v) => ({
+        label: v.label || v.name || v.size,
+        price: v.price != null ? v.price : gift?.price || 0,
+      }));
+    }
+    return null;
+  }, [gift]);
+
+  const unitPrice = variants ? variants[variantIdx].price : gift?.price || 0;
+  const total = unitPrice * quantity + (addCard ? CARD_FEE : 0);
 
   useEffect(() => {
     if (!gift?.id) return;
@@ -25,242 +47,189 @@ export default function GiftDetailScreen({ navigation, route }) {
   const toggleFavorite = async () => {
     const raw = await AsyncStorage.getItem('@favorites');
     let favs = raw ? JSON.parse(raw) : [];
-    if (favs.includes(gift.id)) {
-      favs = favs.filter((id) => id !== gift.id);
-    } else {
-      favs.push(gift.id);
-    }
+    favs = favs.includes(gift.id) ? favs.filter((id) => id !== gift.id) : [...favs, gift.id];
     await AsyncStorage.setItem('@favorites', JSON.stringify(favs));
     setIsFavorite(!isFavorite);
   };
 
-  const formatPrice = (price) => '\u20A6' + price.toLocaleString();
+  const formatPrice = (p) => '₦' + (p || 0).toLocaleString();
+
+  const handleAdd = () => {
+    addItem(
+      {
+        ...gift,
+        price: unitPrice,
+        variant: variants ? variants[variantIdx].label : undefined,
+        personal_message: addCard && message ? message : undefined,
+        card_fee: addCard ? CARD_FEE : 0,
+      },
+      quantity
+    );
+    Alert.alert('Added!', `${gift.name} added to cart`, [
+      { text: 'Continue Shopping', style: 'cancel' },
+      { text: 'View Cart', onPress: () => navigation.navigate('Cart') },
+    ]);
+  };
 
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1 bg-cream">
       <StatusBar style="dark" />
 
-      {/* Fixed Header Bar - stays above scroll */}
-      <View
-        className="flex-row items-center justify-between px-5 bg-white"
-        style={{ paddingTop: Platform.OS === 'ios' ? 56 : 36, paddingBottom: 10 }}
-      >
-        <TouchableOpacity
-          className="w-12 h-12 rounded-2xl bg-gray-100 items-center justify-center"
-          style={{
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.08,
-            shadowRadius: 12,
-            elevation: 4,
-          }}
-          onPress={() => navigation.goBack()}
-        >
-          <Ionicons name="arrow-back" size={22} color="#1F2937" />
-        </TouchableOpacity>
-
-        <Text className="text-lg font-bold text-gray-800">Gift Details</Text>
-
-        <TouchableOpacity
-          className="w-12 h-12 rounded-2xl bg-gray-100 items-center justify-center"
-          style={{
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.08,
-            shadowRadius: 12,
-            elevation: 4,
-          }}
-          onPress={toggleFavorite}
-        >
-          <Ionicons name={isFavorite ? 'heart' : 'heart-outline'} size={22} color={isFavorite ? '#EF4444' : '#35615D'} />
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Image Section */}
-        <View
-          className="h-64 bg-cream items-center justify-center mx-5 rounded-3xl overflow-hidden"
-        >
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
+        {/* Hero image (300px) with floating controls */}
+        <View className="bg-sand items-center justify-center" style={{ height: 300 }}>
           {gift?.image_url ? (
             <Image source={{ uri: gift.image_url }} className="w-full h-full" resizeMode="cover" />
           ) : (
-            <Text className="text-[88px]">
-              {gift?.category === 'cakes' ? '\uD83C\uDF82' :
-               gift?.category === 'flowers' ? '\uD83D\uDC90' :
-               gift?.category === 'chocolates' ? '\uD83C\uDF6B' : '\uD83C\uDF81'}
-            </Text>
+            <Ionicons name={iconFor(gift?.category || gift?.category_name)} size={92} color="#B5AFA2" />
           )}
+
+          <View
+            className="absolute left-5 right-5 flex-row items-center justify-between"
+            style={{ top: Platform.OS === 'ios' ? 56 : 40 }}
+          >
+            <TouchableOpacity
+              className="w-10 h-10 rounded-full items-center justify-center"
+              style={{ backgroundColor: 'rgba(255,255,255,0.92)' }}
+              onPress={() => navigation.goBack()}
+            >
+              <Ionicons name="arrow-back" size={20} color="#211F1C" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              className="w-10 h-10 rounded-full items-center justify-center"
+              style={{ backgroundColor: 'rgba(255,255,255,0.92)' }}
+              onPress={toggleFavorite}
+            >
+              <Ionicons name={isFavorite ? 'heart' : 'heart-outline'} size={20} color={isFavorite ? '#D24B4B' : '#211F1C'} />
+            </TouchableOpacity>
+          </View>
         </View>
 
-        <View className="px-6 pt-6 pb-4 gap-2">
-          {/* Product Info */}
-          <Text className="text-2xl font-extrabold text-gray-800 tracking-tight">
-            {gift?.name}
-          </Text>
-          <Text className="text-[15px] text-gray-400">
-            by {gift?.vendor_name || gift?.vendor}
-          </Text>
-
-          {/* Meta Row */}
-          <View className="flex-row items-center gap-4 mt-2">
-            <View className="flex-row items-center gap-1.5 bg-amber-50 px-3 py-1.5 rounded-full">
-              <Ionicons name="star" size={14} color="#F59E0B" />
-              <Text className="text-sm text-amber-600 font-semibold">
-                {gift?.rating} ({gift?.review_count || 0})
-              </Text>
+        {/* Content sheet overlapping the hero */}
+        <View
+          className="bg-cream px-5 pt-6"
+          style={{ marginTop: -24, borderTopLeftRadius: 28, borderTopRightRadius: 28 }}
+        >
+          {/* Title + rating */}
+          <View className="flex-row items-start justify-between gap-3">
+            <View className="flex-1">
+              <Text className="text-[22px] font-extrabold text-ink tracking-tight">{gift?.name}</Text>
+              <Text className="text-[14px] text-ink-soft mt-1">by {gift?.vendor_name || gift?.vendor}</Text>
             </View>
-            <View className="flex-row items-center gap-1.5 bg-emerald-50 px-3 py-1.5 rounded-full">
-              <Ionicons name="bicycle-outline" size={14} color="#10B981" />
-              <Text className="text-xs text-emerald-600 font-medium">Same-day</Text>
+            <View className="flex-row items-center gap-1 bg-orange-light px-3 py-1.5 rounded-full mt-1">
+              <Ionicons name="star" size={13} color="#E8632F" />
+              <Text className="text-[13px] text-orange-dark font-bold">{gift?.rating || '—'}</Text>
             </View>
           </View>
 
-          {/* Price */}
-          <Text className="text-3xl font-extrabold text-teal mt-3">
-            {formatPrice(gift?.price || 0)}
-          </Text>
+          {/* Same-day pill */}
+          <View className="flex-row items-center gap-2 mt-3">
+            <View className="flex-row items-center gap-1.5 bg-success-bg px-3 py-1.5 rounded-full">
+              <Ionicons name="bicycle-outline" size={14} color="#3E8E63" />
+              <Text className="text-xs text-success font-bold">Same-day delivery</Text>
+            </View>
+          </View>
 
-          {/* Quantity Section */}
-          <View className="mt-6 gap-3">
-            <Text className="text-base font-bold text-gray-800">Quantity</Text>
+          {/* Description */}
+          {gift?.description ? (
+            <Text className="text-[13.5px] text-ink-soft leading-[21px] mt-4">{gift.description}</Text>
+          ) : null}
+
+          {/* Size variants */}
+          {variants && (
+            <View className="mt-6">
+              <Text className="text-[16px] font-bold text-ink mb-3">Size</Text>
+              <View className="flex-row flex-wrap gap-2.5">
+                {variants.map((v, i) => {
+                  const active = variantIdx === i;
+                  return (
+                    <TouchableOpacity
+                      key={v.label + i}
+                      className={`px-4 py-2.5 rounded-full border-[1.5px] ${active ? 'bg-teal border-teal' : 'bg-white border-line-border'}`}
+                      onPress={() => setVariantIdx(i)}
+                      activeOpacity={0.85}
+                    >
+                      <Text className={`text-[13px] font-bold ${active ? 'text-white' : 'text-ink'}`}>
+                        {v.label} · {formatPrice(v.price)}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+          )}
+
+          {/* Quantity stepper */}
+          <View className="mt-6">
+            <Text className="text-[16px] font-bold text-ink mb-3">Quantity</Text>
             <View className="flex-row items-center gap-5">
               <TouchableOpacity
-                className="w-12 h-12 rounded-2xl bg-gray-100 items-center justify-center"
+                className="w-9 h-9 rounded-full bg-sand items-center justify-center"
                 onPress={() => setQuantity(Math.max(1, quantity - 1))}
-                style={{
-                  shadowColor: '#000',
-                  shadowOffset: { width: 0, height: 2 },
-                  shadowOpacity: 0.04,
-                  shadowRadius: 6,
-                  elevation: 2,
-                }}
               >
-                <Ionicons name="remove" size={20} color="#1F2937" />
+                <Ionicons name="remove" size={18} color="#211F1C" />
               </TouchableOpacity>
-              <Text className="text-2xl font-extrabold text-gray-800 w-8 text-center">
-                {quantity}
-              </Text>
+              <Text className="text-[18px] font-extrabold text-ink w-8 text-center">{quantity}</Text>
               <TouchableOpacity
-                className="w-12 h-12 rounded-2xl bg-teal items-center justify-center"
+                className="w-9 h-9 rounded-full bg-teal items-center justify-center"
                 onPress={() => setQuantity(quantity + 1)}
-                style={{
-                  shadowColor: '#35615D',
-                  shadowOffset: { width: 0, height: 3 },
-                  shadowOpacity: 0.2,
-                  shadowRadius: 6,
-                  elevation: 3,
-                }}
               >
-                <Ionicons name="add" size={20} color="#fff" />
+                <Ionicons name="add" size={18} color="#fff" />
               </TouchableOpacity>
             </View>
           </View>
 
-          {/* Personal Message Section */}
-          <View className="mt-6 gap-3">
-            <Text className="text-base font-bold text-gray-800">Add a Personal Message</Text>
-            <AppInput
-              label="Personal Message"
-              placeholder="Write a heartfelt message..."
-              value={message}
-              onChangeText={setMessage}
-              type="multiline"
-            />
-          </View>
-
-          {/* Delivery Options */}
-          <View className="mt-6 gap-3">
-            <Text className="text-base font-bold text-gray-800">Delivery Options</Text>
-
-            <TouchableOpacity
-              className="flex-row items-center gap-4 bg-white rounded-2xl p-4"
-              style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2, borderWidth: 1, borderColor: '#F3F4F6' }}
-              onPress={() => Alert.alert('Coming Soon', 'Anonymous delivery will be available soon!')}
+          {/* Message card checkbox row (+₦500) */}
+          <TouchableOpacity
+            className="mt-6 flex-row items-center gap-3 bg-white rounded-[16px] p-4 border-[1.5px]"
+            style={{ borderColor: addCard ? '#1F4A45' : '#EAE3D8' }}
+            onPress={() => setAddCard(!addCard)}
+            activeOpacity={0.85}
+          >
+            <View
+              className="w-6 h-6 rounded-md items-center justify-center border-[1.5px]"
+              style={{ backgroundColor: addCard ? '#1F4A45' : 'transparent', borderColor: addCard ? '#1F4A45' : '#B5AFA2' }}
             >
-              <View className="w-10 h-10 rounded-xl bg-teal-light items-center justify-center">
-                <Ionicons name="gift-outline" size={20} color="#35615D" />
-              </View>
-              <View className="flex-1">
-                <Text className="text-[15px] font-semibold text-gray-800">Anonymous Delivery</Text>
-                <Text className="text-xs text-gray-400 mt-0.5">Hide your name from the recipient</Text>
-              </View>
-              <View className="bg-gray-100 px-2 py-0.5 rounded-full">
-                <Text className="text-[9px] text-gray-400 font-bold">SOON</Text>
-              </View>
-            </TouchableOpacity>
+              {addCard && <Ionicons name="checkmark" size={15} color="#fff" />}
+            </View>
+            <View className="flex-1">
+              <Text className="text-[14px] font-bold text-ink">Add a gift message card</Text>
+              <Text className="text-[12px] text-ink-caption mt-0.5">Handwritten note with your message</Text>
+            </View>
+            <Text className="text-[13px] font-bold text-success">Free</Text>
+          </TouchableOpacity>
 
-            <TouchableOpacity
-              className="flex-row items-center gap-4 bg-white rounded-2xl p-4"
-              style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2, borderWidth: 1, borderColor: '#F3F4F6' }}
-              onPress={() => Alert.alert('Coming Soon', 'Scheduled delivery will be available soon!')}
-            >
-              <View className="w-10 h-10 rounded-xl bg-orange-light items-center justify-center">
-                <Ionicons name="calendar-outline" size={20} color="#FD8950" />
-              </View>
-              <View className="flex-1">
-                <Text className="text-[15px] font-semibold text-gray-800">Schedule Delivery</Text>
-                <Text className="text-xs text-gray-400 mt-0.5">Pick a date and time</Text>
-              </View>
-              <View className="bg-gray-100 px-2 py-0.5 rounded-full">
-                <Text className="text-[9px] text-gray-400 font-bold">SOON</Text>
-              </View>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              className="flex-row items-center gap-4 bg-white rounded-2xl p-4"
-              style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2, borderWidth: 1, borderColor: '#F3F4F6' }}
-              onPress={() => Alert.alert('Coming Soon', 'Proof of Joy will be available soon!')}
-            >
-              <View className="w-10 h-10 rounded-xl bg-cream items-center justify-center">
-                <Ionicons name="camera-outline" size={20} color="#F59E0B" />
-              </View>
-              <View className="flex-1">
-                <Text className="text-[15px] font-semibold text-gray-800">Proof of Joy</Text>
-                <Text className="text-xs text-gray-400 mt-0.5">Get a photo when gift is received</Text>
-              </View>
-              <View className="bg-gray-100 px-2 py-0.5 rounded-full">
-                <Text className="text-[9px] text-gray-400 font-bold">SOON</Text>
-              </View>
-            </TouchableOpacity>
-          </View>
+          {/* Message input (revealed when card added) */}
+          {addCard && (
+            <View className="mt-3 bg-white rounded-[16px] border-[1.5px] border-line-border p-4">
+              <TextInput
+                value={message}
+                onChangeText={setMessage}
+                placeholder="Write a heartfelt message…"
+                placeholderTextColor="#B5AFA2"
+                multiline
+                style={{ minHeight: 72, fontSize: 14, color: '#211F1C', textAlignVertical: 'top' }}
+              />
+            </View>
+          )}
         </View>
-
-        <View className="h-8" />
       </ScrollView>
 
-      {/* Bottom Bar */}
+      {/* Pinned bottom bar */}
       <View
-        className="flex-row items-center gap-5 px-6 bg-white"
+        className="flex-row items-center gap-5 px-5 bg-white"
         style={{
-          paddingTop: 16,
-          paddingBottom: Platform.OS === 'ios' ? 34 : 20,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: -4 },
-          shadowOpacity: 0.06,
-          shadowRadius: 16,
-          elevation: 8,
+          paddingTop: 14,
+          paddingBottom: Platform.OS === 'ios' ? 34 : 18,
           borderTopWidth: 1,
-          borderTopColor: '#F9FAFB',
+          borderTopColor: '#F5F0E7',
         }}
       >
         <View>
-          <Text className="text-xs text-gray-400 font-medium">Total</Text>
-          <Text className="text-2xl font-extrabold text-gray-800">
-            {formatPrice((gift?.price || 0) * quantity)}
-          </Text>
+          <Text className="text-xs text-ink-caption font-semibold">Total</Text>
+          <Text className="text-[22px] font-extrabold text-ink">{formatPrice(total)}</Text>
         </View>
-        <Button
-          title="Add to Cart"
-          onPress={() => {
-            addItem({ ...gift, personal_message: message || undefined }, quantity);
-            Alert.alert('Added!', `${gift.name} added to cart`, [
-              { text: 'Continue Shopping', style: 'cancel' },
-              { text: 'View Cart', onPress: () => navigation.navigate('Cart') },
-            ]);
-          }}
-          size="lg"
-          style={{ flex: 1 }}
-        />
+        <Button title="Add to Cart" onPress={handleAdd} style={{ flex: 1 }} />
       </View>
     </View>
   );

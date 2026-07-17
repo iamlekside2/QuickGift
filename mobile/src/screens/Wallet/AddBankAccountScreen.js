@@ -128,7 +128,7 @@ export default function AddBankAccountScreen({ navigation }) {
   if (loading) {
     return (
       <View className="flex-1 bg-white items-center justify-center">
-        <ActivityIndicator size="large" color="#35615D" />
+        <ActivityIndicator size="large" color="#1F4A45" />
       </View>
     );
   }
@@ -153,7 +153,7 @@ export default function AddBankAccountScreen({ navigation }) {
           className="w-10 h-10 rounded-2xl bg-gray-100 items-center justify-center"
           onPress={() => navigation.goBack()}
         >
-          <Ionicons name="arrow-back" size={20} color="#1F2937" />
+          <Ionicons name="arrow-back" size={20} color="#211F1C" />
         </TouchableOpacity>
         <Text className="flex-1 text-center text-lg font-bold text-gray-800">Add Bank Account</Text>
         <View style={{ width: 40 }} />
@@ -182,12 +182,12 @@ export default function AddBankAccountScreen({ navigation }) {
             <View className={`w-9 h-9 rounded-xl items-center justify-center mr-3 ${
               selectedBank ? 'bg-teal' : 'bg-gray-200'
             }`}>
-              <Ionicons name="business" size={18} color={selectedBank ? '#fff' : '#6B7280'} />
+              <Ionicons name="business" size={18} color={selectedBank ? '#fff' : '#6E6A63'} />
             </View>
             <Text className={`flex-1 text-sm ${selectedBank ? 'text-gray-900 font-semibold' : 'text-gray-400'}`}>
               {selectedBank ? selectedBank.name : 'Choose your bank'}
             </Text>
-            <Ionicons name="chevron-down" size={18} color="#9CA3AF" />
+            <Ionicons name="chevron-down" size={18} color="#9A948A" />
           </TouchableOpacity>
 
           {/* Step 2: Account Number */}
@@ -198,7 +198,7 @@ export default function AddBankAccountScreen({ navigation }) {
             }`}
           >
             <View className="w-9 h-9 rounded-xl bg-gray-200 items-center justify-center mr-3">
-              <Ionicons name="keypad" size={18} color="#6B7280" />
+              <Ionicons name="keypad" size={18} color="#6E6A63" />
             </View>
             <TextInput
               className="flex-1 text-sm text-gray-900 font-semibold"
@@ -206,13 +206,13 @@ export default function AddBankAccountScreen({ navigation }) {
               onChangeText={(text) => setAccountNumber(text.replace(/[^0-9]/g, ''))}
               keyboardType="numeric"
               placeholder="Enter 10-digit account number"
-              placeholderTextColor="#D1D5DB"
+              placeholderTextColor="#B5AFA2"
               maxLength={10}
               editable={!!selectedBank}
             />
-            {resolving && <ActivityIndicator size="small" color="#35615D" />}
-            {resolved && !resolving && <Ionicons name="checkmark-circle" size={20} color="#10B981" />}
-            {resolveError && !resolving && <Ionicons name="close-circle" size={20} color="#EF4444" />}
+            {resolving && <ActivityIndicator size="small" color="#1F4A45" />}
+            {resolved && !resolving && <Ionicons name="checkmark-circle" size={20} color="#3E8E63" />}
+            {resolveError && !resolving && <Ionicons name="close-circle" size={20} color="#D24B4B" />}
           </View>
           {!selectedBank && accountNumber.length === 0 && (
             <Text className="text-[11px] text-gray-400 ml-1 mb-4">Select a bank first</Text>
@@ -233,11 +233,11 @@ export default function AddBankAccountScreen({ navigation }) {
             <View className={`w-9 h-9 rounded-xl items-center justify-center mr-3 ${
               resolved ? 'bg-green-100' : 'bg-gray-200'
             }`}>
-              <Ionicons name="person" size={18} color={resolved ? '#10B981' : '#6B7280'} />
+              <Ionicons name="person" size={18} color={resolved ? '#3E8E63' : '#6E6A63'} />
             </View>
             {resolving ? (
               <View className="flex-row items-center gap-2">
-                <ActivityIndicator size="small" color="#35615D" />
+                <ActivityIndicator size="small" color="#1F4A45" />
                 <Text className="text-sm text-gray-400">Verifying account...</Text>
               </View>
             ) : (
@@ -252,7 +252,7 @@ export default function AddBankAccountScreen({ navigation }) {
 
         {/* Info */}
         <View className="flex-row items-start gap-3 mx-5 mt-5 bg-teal-light/30 rounded-2xl p-4">
-          <Ionicons name="shield-checkmark" size={20} color="#35615D" />
+          <Ionicons name="shield-checkmark" size={20} color="#1F4A45" />
           <View className="flex-1">
             <Text className="text-xs font-bold text-teal">Verified by Paystack</Text>
             <Text className="text-[11px] text-gray-500 mt-1 leading-4">
@@ -269,7 +269,7 @@ export default function AddBankAccountScreen({ navigation }) {
         <TouchableOpacity
           className={`h-14 rounded-2xl items-center justify-center ${isValid ? 'bg-teal' : 'bg-gray-200'}`}
           style={isValid ? {
-            shadowColor: '#35615D',
+            shadowColor: '#1F4A45',
             shadowOffset: { width: 0, height: 4 },
             shadowOpacity: 0.25,
             shadowRadius: 8,
@@ -297,24 +297,24 @@ export default function AddBankAccountScreen({ navigation }) {
               className="w-9 h-9 rounded-full bg-gray-100 items-center justify-center"
               onPress={() => { setShowBankPicker(false); setBankSearch(''); }}
             >
-              <Ionicons name="close" size={20} color="#6B7280" />
+              <Ionicons name="close" size={20} color="#6E6A63" />
             </TouchableOpacity>
           </View>
 
           <View className="px-5 mt-3 mb-2">
             <View className="flex-row items-center bg-gray-100 rounded-2xl h-12 px-4">
-              <Ionicons name="search" size={18} color="#9CA3AF" />
+              <Ionicons name="search" size={18} color="#9A948A" />
               <TextInput
                 className="flex-1 ml-2.5 text-sm text-gray-900"
                 value={bankSearch}
                 onChangeText={setBankSearch}
                 placeholder="Search banks..."
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor="#9A948A"
                 autoFocus
               />
               {bankSearch ? (
                 <TouchableOpacity onPress={() => setBankSearch('')}>
-                  <Ionicons name="close-circle" size={18} color="#9CA3AF" />
+                  <Ionicons name="close-circle" size={18} color="#9A948A" />
                 </TouchableOpacity>
               ) : null}
             </View>
@@ -338,19 +338,19 @@ export default function AddBankAccountScreen({ navigation }) {
                 <View className={`w-10 h-10 rounded-xl items-center justify-center mr-3 ${
                   selectedBank?.code === item.code ? 'bg-teal' : 'bg-gray-100'
                 }`}>
-                  <Ionicons name="business" size={18} color={selectedBank?.code === item.code ? '#fff' : '#6B7280'} />
+                  <Ionicons name="business" size={18} color={selectedBank?.code === item.code ? '#fff' : '#6E6A63'} />
                 </View>
                 <Text className={`flex-1 text-sm font-medium ${
                   selectedBank?.code === item.code ? 'text-teal font-bold' : 'text-gray-800'
                 }`}>{item.name}</Text>
                 {selectedBank?.code === item.code && (
-                  <Ionicons name="checkmark-circle" size={20} color="#35615D" />
+                  <Ionicons name="checkmark-circle" size={20} color="#1F4A45" />
                 )}
               </TouchableOpacity>
             )}
             ListEmptyComponent={
               <View className="items-center py-12">
-                <Ionicons name="search-outline" size={32} color="#D1D5DB" />
+                <Ionicons name="search-outline" size={32} color="#B5AFA2" />
                 <Text className="text-sm text-gray-400 mt-2">No banks found</Text>
               </View>
             }

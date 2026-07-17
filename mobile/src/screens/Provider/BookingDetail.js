@@ -80,7 +80,7 @@ export default function BookingDetail({ route, navigation }) {
       <StatusBar style="dark" />
       {/* Header */}
       <View
-        style={{ paddingTop: Platform.OS === 'ios' ? 60 : 40, shadowColor: '#1F2937', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
+        style={{ paddingTop: Platform.OS === 'ios' ? 60 : 40, shadowColor: '#211F1C', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
         className="px-5 pb-4 bg-white"
       >
         <View className="flex-row items-center gap-3">
@@ -88,7 +88,7 @@ export default function BookingDetail({ route, navigation }) {
             className="w-10 h-10 rounded-2xl bg-gray-100 items-center justify-center"
             onPress={() => navigation.goBack()}
           >
-            <Ionicons name="arrow-back" size={20} color="#1F2937" />
+            <Ionicons name="arrow-back" size={20} color="#211F1C" />
           </TouchableOpacity>
           <Text className="text-[22px] font-bold text-gray-800" style={{ letterSpacing: 0.3 }}>Booking Details</Text>
         </View>
@@ -103,7 +103,7 @@ export default function BookingDetail({ route, navigation }) {
         {/* Client Info */}
         <View
           className="flex-row items-center bg-white rounded-2xl p-4 mb-4"
-          style={{ shadowColor: '#1F2937', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
+          style={{ shadowColor: '#211F1C', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
         >
           <View className="w-14 h-14 rounded-full bg-teal-light items-center justify-center">
             <Text className="text-teal font-bold text-xl">
@@ -116,7 +116,7 @@ export default function BookingDetail({ route, navigation }) {
           </View>
           {clientPhone !== 'Not provided' && (
             <TouchableOpacity className="w-10 h-10 rounded-full bg-teal-light items-center justify-center">
-              <Ionicons name="call-outline" size={18} color="#35615D" />
+              <Ionicons name="call-outline" size={18} color="#1F4A45" />
             </TouchableOpacity>
           )}
         </View>
@@ -125,7 +125,7 @@ export default function BookingDetail({ route, navigation }) {
         <Text className="text-[17px] font-bold text-gray-800 mb-3">Service Details</Text>
         <View
           className="bg-white rounded-2xl p-4 mb-4 gap-3"
-          style={{ shadowColor: '#1F2937', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
+          style={{ shadowColor: '#211F1C', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
         >
           <View className="flex-row justify-between">
             <Text className="text-sm text-gray-400">Service</Text>
@@ -155,10 +155,10 @@ export default function BookingDetail({ route, navigation }) {
         <Text className="text-[17px] font-bold text-gray-800 mb-3">Location</Text>
         <View
           className="bg-white rounded-2xl p-4 mb-4 flex-row items-center gap-3"
-          style={{ shadowColor: '#1F2937', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
+          style={{ shadowColor: '#211F1C', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
         >
           <View className="w-10 h-10 rounded-full bg-teal-light items-center justify-center">
-            <Ionicons name="location-outline" size={18} color="#35615D" />
+            <Ionicons name="location-outline" size={18} color="#1F4A45" />
           </View>
           <View className="flex-1">
             <Text className="text-sm font-bold text-gray-800">{booking.service_type || 'Location'}</Text>
@@ -170,7 +170,7 @@ export default function BookingDetail({ route, navigation }) {
         <Text className="text-[17px] font-bold text-gray-800 mb-3">Client Notes</Text>
         <View
           className="bg-white rounded-2xl p-4 mb-6"
-          style={{ shadowColor: '#1F2937', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
+          style={{ shadowColor: '#211F1C', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
         >
           <Text className="text-sm text-gray-600 leading-5">
             {notes || 'No notes provided'}
@@ -181,7 +181,7 @@ export default function BookingDetail({ route, navigation }) {
         {status === 'completed' && booking.review && (
           <View
             className="bg-white rounded-2xl p-4 mb-6 items-center"
-            style={{ shadowColor: '#1F2937', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
+            style={{ shadowColor: '#211F1C', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
           >
             <View className="flex-row mb-1">
               {[1, 2, 3, 4, 5].map((star) => (
@@ -189,7 +189,7 @@ export default function BookingDetail({ route, navigation }) {
                   key={star}
                   name={star <= (booking.review?.rating || 0) ? 'star' : 'star-outline'}
                   size={20}
-                  color="#FD8950"
+                  color="#E8632F"
                 />
               ))}
             </View>
@@ -209,11 +209,11 @@ export default function BookingDetail({ route, navigation }) {
       {status !== 'completed' && status !== 'cancelled' && (
         <View
           className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-5 pb-8 pt-4"
-          style={{ shadowColor: '#1F2937', shadowOffset: { width: 0, height: -2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 4 }}
+          style={{ shadowColor: '#211F1C', shadowOffset: { width: 0, height: -2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 4 }}
         >
           {actionLoading ? (
             <View className="py-4 items-center">
-              <ActivityIndicator size="small" color="#35615D" />
+              <ActivityIndicator size="small" color="#1F4A45" />
             </View>
           ) : (
             <>

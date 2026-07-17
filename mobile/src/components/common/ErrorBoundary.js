@@ -29,19 +29,19 @@ export default class ErrorBoundary extends React.Component {
     if (this.state.hasError) {
       return (
         <View style={{ flex: 1, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', padding: 32 }}>
-          <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: '#FEE2E2', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
-            <Ionicons name="warning-outline" size={40} color="#EF4444" />
+          <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: '#FBE6E6', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
+            <Ionicons name="warning-outline" size={40} color="#D24B4B" />
           </View>
-          <Text style={{ fontSize: 22, fontWeight: '800', color: '#1F2937', marginBottom: 8, textAlign: 'center' }}>
+          <Text style={{ fontSize: 22, fontWeight: '800', color: '#211F1C', marginBottom: 8, textAlign: 'center' }}>
             Something went wrong
           </Text>
-          <Text style={{ fontSize: 14, color: '#9CA3AF', textAlign: 'center', lineHeight: 20, marginBottom: 24 }}>
+          <Text style={{ fontSize: 14, color: '#9A948A', textAlign: 'center', lineHeight: 20, marginBottom: 24 }}>
             The app encountered an unexpected error. Please try again.
           </Text>
           <TouchableOpacity
             onPress={this.handleRetry}
             style={{
-              backgroundColor: '#35615D',
+              backgroundColor: '#1F4A45',
               paddingHorizontal: 32,
               paddingVertical: 14,
               borderRadius: 16,

@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 import HomeScreen from '../screens/Home/HomeScreen';
 import OrdersScreen from '../screens/Orders/OrdersScreen';
+import OrderTrackingScreen from '../screens/Orders/OrderTrackingScreen';
 import WalletScreen from '../screens/Wallet/WalletScreen';
 import ProfileScreen from '../screens/Profile/ProfileScreen';
 import HelpSupportScreen from '../screens/Shared/HelpSupportScreen';
@@ -26,6 +27,7 @@ import BeautyHomeScreen from '../screens/Beauty/BeautyHomeScreen';
 import ProvidersListScreen from '../screens/Beauty/ProvidersListScreen';
 import ProviderProfileScreen from '../screens/Beauty/ProviderProfileScreen';
 import BookingScreen from '../screens/Beauty/BookingScreen';
+import BookingConfirmedScreen from '../screens/Beauty/BookingConfirmedScreen';
 
 import WriteReviewScreen from '../screens/Shared/WriteReviewScreen';
 import RaiseDisputeScreen from '../screens/Shared/RaiseDisputeScreen';
@@ -41,24 +43,84 @@ import AddBankAccountScreen from '../screens/Wallet/AddBankAccountScreen';
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
-function HomeStack() {
+// Gift purchase flow — reused by the Home and Gifts stacks.
+function giftFlowScreens() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="HomeMain" component={HomeScreen} />
+    <>
       <Stack.Screen name="GiftsHome" component={GiftsHomeScreen} />
       <Stack.Screen name="GiftsList" component={GiftsListScreen} />
       <Stack.Screen name="GiftDetail" component={GiftDetailScreen} />
       <Stack.Screen name="RecipientDetails" component={RecipientDetailsScreen} />
       <Stack.Screen name="PaymentScreen" component={PaymentScreen} />
+    </>
+  );
+}
+
+// Artisan booking flow — reused by the Home and Services stacks.
+function serviceFlowScreens() {
+  return (
+    <>
       <Stack.Screen name="BeautyHome" component={BeautyHomeScreen} />
       <Stack.Screen name="ProvidersList" component={ProvidersListScreen} />
       <Stack.Screen name="ProviderProfile" component={ProviderProfileScreen} />
       <Stack.Screen name="Booking" component={BookingScreen} />
+      <Stack.Screen name="BookingConfirmed" component={BookingConfirmedScreen} />
+    </>
+  );
+}
+
+// Common leaf screens reachable from most flows.
+function commonScreens() {
+  return (
+    <>
       <Stack.Screen name="Favourites" component={FavouritesScreen} />
+      <Stack.Screen name="ChatList" component={ChatListScreen} />
       <Stack.Screen name="ChatScreen" component={ChatScreen} />
       <Stack.Screen name="PaystackWebView" component={PaystackWebView} />
       <Stack.Screen name="WriteReview" component={WriteReviewScreen} />
       <Stack.Screen name="RaiseDispute" component={RaiseDisputeScreen} />
+      <Stack.Screen name="OrderTracking" component={OrderTrackingScreen} />
+    </>
+  );
+}
+
+function HomeStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="HomeMain" component={HomeScreen} />
+      {giftFlowScreens()}
+      {serviceFlowScreens()}
+      {commonScreens()}
+    </Stack.Navigator>
+  );
+}
+
+function GiftsStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="GiftsHome">
+      {giftFlowScreens()}
+      {commonScreens()}
+    </Stack.Navigator>
+  );
+}
+
+function ServicesStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="BeautyHome">
+      {serviceFlowScreens()}
+      {commonScreens()}
+    </Stack.Navigator>
+  );
+}
+
+function OrdersStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="OrdersMain" component={OrdersScreen} />
+      <Stack.Screen name="OrderTracking" component={OrderTrackingScreen} />
+      <Stack.Screen name="WriteReview" component={WriteReviewScreen} />
+      <Stack.Screen name="RaiseDispute" component={RaiseDisputeScreen} />
+      <Stack.Screen name="ChatScreen" component={ChatScreen} />
     </Stack.Navigator>
   );
 }
@@ -79,25 +141,8 @@ function ProfileStack() {
       <Stack.Screen name="Reminders" component={RemindersScreen} />
       <Stack.Screen name="Addresses" component={AddressesScreen} />
       <Stack.Screen name="ReferFriend" component={ReferFriendScreen} />
-    </Stack.Navigator>
-  );
-}
-
-function MessagesStack() {
-  return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="ChatList" component={ChatListScreen} />
       <Stack.Screen name="ChatScreen" component={ChatScreen} />
-    </Stack.Navigator>
-  );
-}
-
-function WalletStack() {
-  return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="WalletMain" component={WalletScreen} />
-      <Stack.Screen name="WithdrawScreen" component={WithdrawScreen} />
-      <Stack.Screen name="AddBankAccount" component={AddBankAccountScreen} />
     </Stack.Navigator>
   );
 }
@@ -112,10 +157,10 @@ function TabIcon({ name, focused, color }) {
           width: 20,
           height: 3,
           borderRadius: 2,
-          backgroundColor: '#35615D',
+          backgroundColor: '#E8632F',
         }} />
       )}
-      <Ionicons name={name} size={22} color={color} />
+      <Ionicons name={name} size={20} color={color} />
     </View>
   );
 }
@@ -128,17 +173,17 @@ export default function BuyerTabs() {
         tabBarIcon: ({ focused, color }) => {
           let iconName;
           if (route.name === 'Home') iconName = focused ? 'home' : 'home-outline';
-          else if (route.name === 'Messages') iconName = focused ? 'chatbubbles' : 'chatbubbles-outline';
+          else if (route.name === 'Gifts') iconName = focused ? 'gift' : 'gift-outline';
+          else if (route.name === 'Services') iconName = focused ? 'briefcase' : 'briefcase-outline';
           else if (route.name === 'Orders') iconName = focused ? 'receipt' : 'receipt-outline';
-          else if (route.name === 'Wallet') iconName = focused ? 'wallet' : 'wallet-outline';
           else if (route.name === 'Profile') iconName = focused ? 'person' : 'person-outline';
           return <TabIcon name={iconName} focused={focused} color={color} />;
         },
-        tabBarActiveTintColor: '#35615D',
-        tabBarInactiveTintColor: '#B0B8C1',
+        tabBarActiveTintColor: '#E8632F',
+        tabBarInactiveTintColor: '#6E6A63',
         tabBarLabelStyle: {
           fontSize: 11,
-          fontWeight: '600',
+          fontWeight: '700',
           marginTop: 2,
           letterSpacing: 0.2,
         },
@@ -149,7 +194,7 @@ export default function BuyerTabs() {
           backgroundColor: '#FFFFFF',
           borderTopWidth: 0,
           elevation: 0,
-          shadowColor: '#1F2937',
+          shadowColor: '#211F1C',
           shadowOffset: { width: 0, height: -6 },
           shadowOpacity: 0.06,
           shadowRadius: 16,
@@ -157,9 +202,9 @@ export default function BuyerTabs() {
       })}
     >
       <Tab.Screen name="Home" component={HomeStack} />
-      <Tab.Screen name="Messages" component={MessagesStack} />
-      <Tab.Screen name="Orders" component={OrdersScreen} />
-      <Tab.Screen name="Wallet" component={WalletStack} />
+      <Tab.Screen name="Gifts" component={GiftsStack} />
+      <Tab.Screen name="Services" component={ServicesStack} />
+      <Tab.Screen name="Orders" component={OrdersStack} />
       <Tab.Screen name="Profile" component={ProfileStack} />
     </Tab.Navigator>
   );

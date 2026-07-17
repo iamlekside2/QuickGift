@@ -53,7 +53,7 @@ export default function BusinessProfile({ navigation }) {
       <View className="flex-1 bg-gray-50">
         <StatusBar style="dark" />
         <View
-          style={{ paddingTop: Platform.OS === 'ios' ? 60 : 40, shadowColor: '#1F2937', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
+          style={{ paddingTop: Platform.OS === 'ios' ? 60 : 40, shadowColor: '#211F1C', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
           className="px-5 pb-4 bg-white"
         >
           <View className="flex-row items-center gap-3">
@@ -61,13 +61,13 @@ export default function BusinessProfile({ navigation }) {
               className="w-10 h-10 rounded-2xl bg-gray-100 items-center justify-center"
               onPress={() => navigation.goBack()}
             >
-              <Ionicons name="arrow-back" size={20} color="#1F2937" />
+              <Ionicons name="arrow-back" size={20} color="#211F1C" />
             </TouchableOpacity>
             <Text className="text-[22px] font-bold text-gray-800" style={{ letterSpacing: 0.3 }}>Business Profile</Text>
           </View>
         </View>
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#35615D" />
+          <ActivityIndicator size="large" color="#1F4A45" />
         </View>
       </View>
     );
@@ -78,7 +78,7 @@ export default function BusinessProfile({ navigation }) {
       <StatusBar style="dark" />
       {/* Header */}
       <View
-        style={{ paddingTop: Platform.OS === 'ios' ? 60 : 40, shadowColor: '#1F2937', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
+        style={{ paddingTop: Platform.OS === 'ios' ? 60 : 40, shadowColor: '#211F1C', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
         className="px-5 pb-4 bg-white"
       >
         <View className="flex-row items-center justify-between">
@@ -87,7 +87,7 @@ export default function BusinessProfile({ navigation }) {
               className="w-10 h-10 rounded-2xl bg-gray-100 items-center justify-center"
               onPress={() => navigation.goBack()}
             >
-              <Ionicons name="arrow-back" size={20} color="#1F2937" />
+              <Ionicons name="arrow-back" size={20} color="#211F1C" />
             </TouchableOpacity>
             <Text className="text-[22px] font-bold text-gray-800" style={{ letterSpacing: 0.3 }}>Business Profile</Text>
           </View>
@@ -104,7 +104,7 @@ export default function BusinessProfile({ navigation }) {
         {/* Profile Card */}
         <View
           className="items-center mb-6 bg-white rounded-3xl py-6 px-4"
-          style={{ shadowColor: '#1F2937', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
+          style={{ shadowColor: '#211F1C', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
         >
           <View className="w-20 h-20 rounded-full bg-teal items-center justify-center mb-3">
             <Text className="text-white text-2xl font-bold">{business.name.charAt(0)}</Text>
@@ -113,7 +113,7 @@ export default function BusinessProfile({ navigation }) {
           <Text className="text-sm text-gray-400 mt-0.5">{business.category}</Text>
           {business.verified && (
             <View className="flex-row items-center mt-2 gap-1 bg-teal-light px-3 py-1 rounded-full">
-              <Ionicons name="checkmark-circle" size={14} color="#35615D" />
+              <Ionicons name="checkmark-circle" size={14} color="#1F4A45" />
               <Text className="text-xs text-teal font-bold">Verified Provider</Text>
             </View>
           )}
@@ -122,7 +122,7 @@ export default function BusinessProfile({ navigation }) {
         {/* Stats Row */}
         <View
           className="flex-row bg-white rounded-2xl p-4 mb-5"
-          style={{ shadowColor: '#1F2937', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
+          style={{ shadowColor: '#211F1C', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
         >
           <View className="flex-1 items-center">
             <Text className="text-xl font-extrabold text-gray-800">
@@ -141,7 +141,7 @@ export default function BusinessProfile({ navigation }) {
         <Text className="text-[17px] font-bold text-gray-800 mb-2">About</Text>
         <View
           className="bg-white rounded-2xl p-4 mb-5"
-          style={{ shadowColor: '#1F2937', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
+          style={{ shadowColor: '#211F1C', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
         >
           <Text className="text-sm text-gray-600 leading-5">
             {business.bio || 'No bio set. Tap Edit to add a description of your business.'}
@@ -152,7 +152,7 @@ export default function BusinessProfile({ navigation }) {
         <Text className="text-[17px] font-bold text-gray-800 mb-3">Details</Text>
         <View
           className="gap-3 mb-5 bg-white rounded-2xl p-4"
-          style={{ shadowColor: '#1F2937', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
+          style={{ shadowColor: '#211F1C', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
         >
           {[
             { icon: 'location-outline', label: business.location },
@@ -163,7 +163,7 @@ export default function BusinessProfile({ navigation }) {
           ].map((item, i) => (
             <View key={i} className="flex-row items-center gap-3">
               <View className="w-9 h-9 rounded-full bg-teal-light items-center justify-center">
-                <Ionicons name={item.icon} size={16} color="#35615D" />
+                <Ionicons name={item.icon} size={16} color="#1F4A45" />
               </View>
               <Text className="text-sm text-gray-700">{item.label}</Text>
             </View>
@@ -175,9 +175,9 @@ export default function BusinessProfile({ navigation }) {
         {portfolio.length === 0 ? (
           <View
             className="bg-white rounded-2xl p-6 mb-6 items-center"
-            style={{ shadowColor: '#1F2937', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
+            style={{ shadowColor: '#211F1C', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
           >
-            <Ionicons name="images-outline" size={36} color="#9CA3AF" />
+            <Ionicons name="images-outline" size={36} color="#9A948A" />
             <Text className="text-sm text-gray-400 mt-2">No portfolio yet</Text>
           </View>
         ) : (
@@ -186,9 +186,9 @@ export default function BusinessProfile({ navigation }) {
               <View
                 key={i}
                 className="bg-white rounded-2xl items-center justify-center"
-                style={{ width: '31%', aspectRatio: 1, shadowColor: '#1F2937', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
+                style={{ width: '31%', aspectRatio: 1, shadowColor: '#211F1C', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
               >
-                <Ionicons name="image-outline" size={28} color="#9CA3AF" />
+                <Ionicons name="image-outline" size={28} color="#9A948A" />
               </View>
             ))}
           </View>

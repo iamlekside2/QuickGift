@@ -1,8 +1,13 @@
 import React from 'react';
 import { TouchableOpacity, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
+// Tinted icon tile + label. `icon` is an Ionicons (outline) name.
 export default React.memo(function CategoryCard({ label, icon, color, onPress, size = 'md' }) {
   const isSm = size === 'sm';
+  const tint = color || '#1F4A45';
+  const tileSize = isSm ? 48 : 56;
+  const iconSize = isSm ? 20 : 24;
 
   return (
     <TouchableOpacity
@@ -11,20 +16,17 @@ export default React.memo(function CategoryCard({ label, icon, color, onPress, s
       activeOpacity={0.8}
     >
       <View
-        className={`${isSm ? 'w-[56px] h-[56px]' : 'w-[64px] h-[64px]'} rounded-2xl items-center justify-center`}
+        className="items-center justify-center rounded-[16px]"
         style={{
-          backgroundColor: (color || '#35615D') + '12',
-          shadowColor: color || '#35615D',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.1,
-          shadowRadius: 6,
-          elevation: 2,
+          width: tileSize,
+          height: tileSize,
+          backgroundColor: tint + '18',
         }}
       >
-        <Text style={{ fontSize: isSm ? 24 : 28 }}>{icon}</Text>
+        <Ionicons name={icon} size={iconSize} color={tint} />
       </View>
       <Text
-        className={`${isSm ? 'text-[10px]' : 'text-[11px]'} text-gray-700 font-semibold text-center`}
+        className={`${isSm ? 'text-[10.5px]' : 'text-[11.5px]'} text-ink-soft font-semibold text-center`}
         numberOfLines={2}
       >
         {label}

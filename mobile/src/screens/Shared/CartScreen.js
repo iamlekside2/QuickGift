@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Platform, Alert, Modal } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Platform, Alert, Modal, Image } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { ordersAPI, paymentsAPI } from '../../services/api';
@@ -7,6 +7,7 @@ import AppInput from '../../components/common/AppInput';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { useWallet } from '../../context/WalletContext';
+import { iconFor } from '../../utils/categoryIcons';
 
 export default function CartScreen({ navigation }) {
   const { items, removeItem, updateQuantity, clearCart, subtotal, itemCount } = useCart();
@@ -23,7 +24,7 @@ export default function CartScreen({ navigation }) {
   const [personalMessage, setPersonalMessage] = useState('');
 
   const formatPrice = (price) => '₦' + (price || 0).toLocaleString();
-  const deliveryFee = 0; // Delivery fee handled by logistics later
+  const deliveryFee = 0; // Backend DELIVERY_BASE_FEE=0 — delivery currently free
   const total = subtotal + deliveryFee;
 
   const handleCheckout = () => {
@@ -107,34 +108,34 @@ export default function CartScreen({ navigation }) {
 
   if (items.length === 0) {
     return (
-      <View className="flex-1 bg-white">
+      <View className="flex-1 bg-cream">
         <StatusBar style="dark" />
         <View
           className="flex-row items-center justify-between px-5 pb-3"
           style={{ paddingTop: Platform.OS === 'ios' ? 60 : 40 }}
         >
           <TouchableOpacity
-            className="w-10 h-10 rounded-full bg-gray-100 items-center justify-center"
+            className="w-10 h-10 rounded-[14px] bg-sand items-center justify-center"
             onPress={() => navigation.goBack()}
           >
-            <Ionicons name="arrow-back" size={22} color="#1F2937" />
+            <Ionicons name="arrow-back" size={22} color="#211F1C" />
           </TouchableOpacity>
-          <Text className="text-xl font-bold text-gray-800">Cart</Text>
+          <Text className="text-[19px] font-bold text-ink">Cart</Text>
           <View className="w-10" />
         </View>
         <View className="flex-1 items-center justify-center px-8">
-          <View className="w-24 h-24 rounded-full bg-gray-50 items-center justify-center mb-5">
-            <Text style={{ fontSize: 44 }}>🛒</Text>
+          <View className="w-24 h-24 rounded-full bg-sand items-center justify-center mb-5">
+            <Ionicons name="cart-outline" size={44} color="#9A948A" />
           </View>
-          <Text className="text-xl font-bold text-gray-800 mb-2">Your cart is empty</Text>
-          <Text className="text-sm text-gray-500 text-center mb-6">
+          <Text className="text-xl font-bold text-ink mb-2">Your cart is empty</Text>
+          <Text className="text-sm text-ink-soft text-center mb-6">
             Browse our collection and add gifts to your cart
           </Text>
           <TouchableOpacity
-            className="bg-teal px-8 py-3.5 rounded-2xl"
+            className="bg-teal px-8 h-[52px] rounded-[16px] items-center justify-center"
             onPress={() => navigation.goBack()}
           >
-            <Text className="text-sm font-semibold text-white">Start Shopping</Text>
+            <Text className="text-[15px] font-bold text-white">Start Shopping</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -142,89 +143,113 @@ export default function CartScreen({ navigation }) {
   }
 
   return (
-    <View className="flex-1 bg-gray-50">
-      <StatusBar style="dark" />
+    <View className="flex-1 bg-cream">
+      <StatusBar style="light" />
       <View
-        className="flex-row items-center justify-between px-5 pb-3 bg-white"
-        style={{ paddingTop: Platform.OS === 'ios' ? 60 : 40 }}
+        className="flex-row items-center justify-between px-5 bg-teal"
+        style={{ paddingTop: Platform.OS === 'ios' ? 56 : 38, paddingBottom: 18, borderBottomLeftRadius: 28, borderBottomRightRadius: 28 }}
       >
         <TouchableOpacity
-          className="w-10 h-10 rounded-full bg-gray-100 items-center justify-center"
+          className="w-10 h-10 rounded-[14px] bg-white/15 items-center justify-center"
           onPress={() => navigation.goBack()}
         >
-          <Ionicons name="arrow-back" size={22} color="#1F2937" />
+          <Ionicons name="arrow-back" size={22} color="#fff" />
         </TouchableOpacity>
-        <Text className="text-xl font-bold text-gray-800">Cart ({itemCount})</Text>
-        <TouchableOpacity onPress={() => {
-          Alert.alert('Clear Cart', 'Remove all items?', [
-            { text: 'Cancel', style: 'cancel' },
-            { text: 'Clear', style: 'destructive', onPress: clearCart },
-          ]);
-        }}>
-          <Ionicons name="trash-outline" size={22} color="#EF4444" />
+        <Text className="text-[19px] font-bold text-white">Cart ({itemCount})</Text>
+        <TouchableOpacity
+          className="w-10 h-10 rounded-[14px] bg-white/15 items-center justify-center"
+          onPress={() => {
+            Alert.alert('Clear Cart', 'Remove all items?', [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Clear', style: 'destructive', onPress: clearCart },
+            ]);
+          }}
+        >
+          <Ionicons name="trash-outline" size={20} color="#fff" />
         </TouchableOpacity>
       </View>
 
-      <ScrollView className="flex-1 px-5 pt-4" showsVerticalScrollIndicator={false}>
+      <ScrollView className="flex-1 px-5 pt-5" showsVerticalScrollIndicator={false}>
         {items.map((item) => (
-          <View key={item.id} className="bg-white rounded-2xl p-4 mb-3 shadow-sm">
-            <View className="flex-row items-center">
-              <View className="w-14 h-14 rounded-xl bg-cream items-center justify-center">
-                <Text style={{ fontSize: 28 }}>{item.emoji || '🎁'}</Text>
-              </View>
-              <View className="flex-1 ml-3">
-                <Text className="text-sm font-bold text-gray-800" numberOfLines={1}>{item.name}</Text>
-                <Text className="text-xs text-gray-500">{item.vendor_name || 'Gift'}</Text>
-                <Text className="text-base font-bold text-teal mt-1">{formatPrice(item.price * item.quantity)}</Text>
-              </View>
-              <TouchableOpacity className="ml-2" onPress={() => removeItem(item.id)}>
-                <Ionicons name="close-circle" size={22} color="#EF4444" />
-              </TouchableOpacity>
+          <View
+            key={item.id}
+            className="bg-white rounded-[20px] p-4 mb-3 flex-row items-center"
+            style={{ shadowColor: '#211F1C', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.06, shadowRadius: 20, elevation: 3 }}
+          >
+            <View className="w-[72px] h-[72px] rounded-[14px] bg-cream items-center justify-center overflow-hidden">
+              {item.image_url ? (
+                <Image source={{ uri: item.image_url }} className="w-full h-full" resizeMode="cover" />
+              ) : (
+                <Ionicons name={iconFor(item.category || item.category_name)} size={30} color="#B5AFA2" />
+              )}
             </View>
-            <View className="flex-row items-center justify-end mt-3 pt-3 border-t border-gray-100">
-              <TouchableOpacity
-                className="w-8 h-8 rounded-full bg-gray-100 items-center justify-center"
-                onPress={() => updateQuantity(item.id, item.quantity - 1)}
-              >
-                <Ionicons name="remove" size={16} color="#1F2937" />
-              </TouchableOpacity>
-              <Text className="text-base font-bold text-gray-800 mx-4">{item.quantity}</Text>
-              <TouchableOpacity
-                className="w-8 h-8 rounded-full bg-teal items-center justify-center"
-                onPress={() => updateQuantity(item.id, item.quantity + 1)}
-              >
-                <Ionicons name="add" size={16} color="#fff" />
-              </TouchableOpacity>
+            <View className="flex-1 ml-3.5">
+              <Text className="text-[14px] font-bold text-ink" numberOfLines={1}>{item.name}</Text>
+              <Text className="text-[12px] text-ink-caption" numberOfLines={1}>
+                {item.vendor_name || item.variant || 'Gift'}
+              </Text>
+              <View className="flex-row items-center justify-between mt-1.5">
+                <Text className="text-[15px] font-extrabold text-teal">{formatPrice(item.price * item.quantity)}</Text>
+                <View className="flex-row items-center gap-3">
+                  <TouchableOpacity
+                    className="w-7 h-7 rounded-full bg-sand items-center justify-center"
+                    onPress={() => updateQuantity(item.id, item.quantity - 1)}
+                  >
+                    <Ionicons name="remove" size={15} color="#211F1C" />
+                  </TouchableOpacity>
+                  <Text className="text-[14px] font-bold text-ink w-5 text-center">{item.quantity}</Text>
+                  <TouchableOpacity
+                    className="w-7 h-7 rounded-full bg-teal items-center justify-center"
+                    onPress={() => updateQuantity(item.id, item.quantity + 1)}
+                  >
+                    <Ionicons name="add" size={15} color="#fff" />
+                  </TouchableOpacity>
+                </View>
+              </View>
             </View>
+            <TouchableOpacity className="ml-2 self-start" onPress={() => removeItem(item.id)}>
+              <Ionicons name="trash-outline" size={18} color="#D24B4B" />
+            </TouchableOpacity>
           </View>
         ))}
 
-        <View className="bg-white rounded-2xl p-5 mt-2 shadow-sm">
-          <Text className="text-base font-bold text-gray-800 mb-4">Order Summary</Text>
+        <View
+          className="bg-white rounded-[20px] p-5 mt-2"
+          style={{ shadowColor: '#211F1C', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.06, shadowRadius: 20, elevation: 3 }}
+        >
+          <Text className="text-[16px] font-bold text-ink mb-4">Order Summary</Text>
           <View className="gap-3">
             <View className="flex-row justify-between">
-              <Text className="text-sm text-gray-500">Subtotal ({itemCount} items)</Text>
-              <Text className="text-sm font-semibold text-gray-800">{formatPrice(subtotal)}</Text>
+              <Text className="text-[13.5px] text-ink-soft">Subtotal ({itemCount} items)</Text>
+              <Text className="text-[13.5px] font-bold text-ink">{formatPrice(subtotal)}</Text>
             </View>
-            <View className="h-px bg-gray-100" />
             <View className="flex-row justify-between">
-              <Text className="text-base font-bold text-gray-800">Total</Text>
-              <Text className="text-lg font-extrabold text-teal">{formatPrice(total)}</Text>
+              <Text className="text-[13.5px] text-ink-soft">Delivery</Text>
+              <Text className="text-[13.5px] font-bold text-success">Free</Text>
+            </View>
+            <View className="h-px bg-line-divider" />
+            <View className="flex-row justify-between">
+              <Text className="text-[15px] font-bold text-ink">Total</Text>
+              <Text className="text-[18px] font-extrabold text-teal">{formatPrice(total)}</Text>
             </View>
           </View>
         </View>
 
-        <View className="h-[120px]" />
+        <View className="h-[130px]" />
       </ScrollView>
 
-      <View className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-5 pb-8 pt-4">
+      <View
+        className="absolute bottom-0 left-0 right-0 bg-white px-5 pb-8 pt-4"
+        style={{ borderTopWidth: 1, borderTopColor: '#F5F0E7' }}
+      >
         <TouchableOpacity
-          className={`py-4 rounded-2xl items-center ${submitting ? 'bg-gray-300' : 'bg-teal'}`}
+          className={`h-[52px] rounded-[16px] items-center justify-center ${submitting ? 'bg-gray-300' : 'bg-teal'}`}
           onPress={handleCheckout}
           disabled={submitting}
+          activeOpacity={0.85}
         >
-          <Text className="text-base font-semibold text-white">
-            {submitting ? 'Placing Order...' : `Checkout ${formatPrice(total)}`}
+          <Text className="text-[15px] font-bold text-white">
+            {submitting ? 'Placing Order…' : `Checkout · ${formatPrice(total)}`}
           </Text>
         </TouchableOpacity>
       </View>
@@ -238,7 +263,7 @@ export default function CartScreen({ navigation }) {
               className="w-9 h-9 rounded-full bg-gray-100 items-center justify-center"
               onPress={() => setShowRecipient(false)}
             >
-              <Ionicons name="close" size={20} color="#6B7280" />
+              <Ionicons name="close" size={20} color="#6E6A63" />
             </TouchableOpacity>
           </View>
 
@@ -284,7 +309,7 @@ export default function CartScreen({ navigation }) {
                 }`}
                 onPress={() => setPaymentMethod('card')}
               >
-                <Ionicons name="card-outline" size={18} color={paymentMethod === 'card' ? '#35615D' : '#9CA3AF'} />
+                <Ionicons name="card-outline" size={18} color={paymentMethod === 'card' ? '#1F4A45' : '#9A948A'} />
                 <Text className={`text-sm font-bold ${paymentMethod === 'card' ? 'text-teal' : 'text-gray-400'}`}>Card</Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -293,7 +318,7 @@ export default function CartScreen({ navigation }) {
                 }`}
                 onPress={() => setPaymentMethod('wallet')}
               >
-                <Ionicons name="wallet-outline" size={18} color={paymentMethod === 'wallet' ? '#35615D' : '#9CA3AF'} />
+                <Ionicons name="wallet-outline" size={18} color={paymentMethod === 'wallet' ? '#1F4A45' : '#9A948A'} />
                 <View>
                   <Text className={`text-sm font-bold ${paymentMethod === 'wallet' ? 'text-teal' : 'text-gray-400'}`}>Wallet</Text>
                   <Text className="text-[10px] text-gray-400">₦{walletBalance.toLocaleString()}</Text>

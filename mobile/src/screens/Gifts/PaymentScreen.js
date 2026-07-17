@@ -104,7 +104,7 @@ export default function PaymentScreen({ route, navigation }) {
         className="flex-row items-center gap-3 px-5 pb-3 bg-white"
         style={{
           paddingTop: Platform.OS === 'ios' ? 60 : 40,
-          shadowColor: '#1F2937',
+          shadowColor: '#211F1C',
           shadowOffset: { width: 0, height: 2 },
           shadowOpacity: 0.04,
           shadowRadius: 8,
@@ -115,7 +115,7 @@ export default function PaymentScreen({ route, navigation }) {
           className="w-10 h-10 rounded-2xl bg-gray-100 items-center justify-center"
           onPress={() => navigation.goBack()}
         >
-          <Ionicons name="arrow-back" size={20} color="#1F2937" />
+          <Ionicons name="arrow-back" size={20} color="#211F1C" />
         </TouchableOpacity>
         <Text className="text-xl font-bold text-gray-800">Payment</Text>
       </View>
@@ -126,7 +126,7 @@ export default function PaymentScreen({ route, navigation }) {
         <View
           className="bg-white rounded-2xl p-4 mb-5"
           style={{
-            shadowColor: '#1F2937',
+            shadowColor: '#211F1C',
             shadowOffset: { width: 0, height: 2 },
             shadowOpacity: 0.04,
             shadowRadius: 8,
@@ -135,7 +135,7 @@ export default function PaymentScreen({ route, navigation }) {
         >
           <View className="flex-row items-center gap-3 mb-3 pb-3 border-b border-gray-100">
             <View className="w-12 h-12 rounded-xl bg-teal-light items-center justify-center">
-              <Text style={{ fontSize: 24 }}>🎁</Text>
+              <Ionicons name="gift-outline" size={24} color="#1F4A45" />
             </View>
             <View className="flex-1">
               <Text className="text-sm font-bold text-gray-800">{gift.name || 'Gift'}</Text>
@@ -163,7 +163,7 @@ export default function PaymentScreen({ route, navigation }) {
         <View
           className="bg-white rounded-2xl p-4 mb-5 flex-row items-center gap-3"
           style={{
-            shadowColor: '#1F2937',
+            shadowColor: '#211F1C',
             shadowOffset: { width: 0, height: 2 },
             shadowOpacity: 0.04,
             shadowRadius: 8,
@@ -171,7 +171,7 @@ export default function PaymentScreen({ route, navigation }) {
           }}
         >
           <View className="w-10 h-10 rounded-2xl bg-teal-light items-center justify-center">
-            <Ionicons name="location-outline" size={18} color="#35615D" />
+            <Ionicons name="location-outline" size={18} color="#1F4A45" />
           </View>
           <View className="flex-1">
             <Text className="text-sm font-semibold text-gray-800">{recipient.name}</Text>
@@ -188,13 +188,13 @@ export default function PaymentScreen({ route, navigation }) {
               selectedMethod === 'wallet' ? 'border-teal bg-teal-light' : 'border-gray-100 bg-white'
             }`}
             style={selectedMethod === 'wallet' ? {
-              shadowColor: '#35615D',
+              shadowColor: '#1F4A45',
               shadowOffset: { width: 0, height: 2 },
               shadowOpacity: 0.1,
               shadowRadius: 4,
               elevation: 2,
             } : {
-              shadowColor: '#1F2937',
+              shadowColor: '#211F1C',
               shadowOffset: { width: 0, height: 2 },
               shadowOpacity: 0.04,
               shadowRadius: 8,
@@ -203,7 +203,7 @@ export default function PaymentScreen({ route, navigation }) {
             onPress={() => setSelectedMethod('wallet')}
           >
             <View className="w-10 h-10 rounded-2xl bg-teal-light items-center justify-center mr-3">
-              <Ionicons name="wallet" size={20} color="#35615D" />
+              <Ionicons name="wallet" size={20} color="#1F4A45" />
             </View>
             <View className="flex-1">
               <Text className="text-sm font-semibold text-gray-800">QuickGift Wallet</Text>
@@ -222,13 +222,13 @@ export default function PaymentScreen({ route, navigation }) {
               selectedMethod === 'card' ? 'border-teal bg-teal-light' : 'border-gray-100 bg-white'
             }`}
             style={selectedMethod === 'card' ? {
-              shadowColor: '#35615D',
+              shadowColor: '#1F4A45',
               shadowOffset: { width: 0, height: 2 },
               shadowOpacity: 0.1,
               shadowRadius: 4,
               elevation: 2,
             } : {
-              shadowColor: '#1F2937',
+              shadowColor: '#211F1C',
               shadowOffset: { width: 0, height: 2 },
               shadowOpacity: 0.04,
               shadowRadius: 8,
@@ -237,7 +237,7 @@ export default function PaymentScreen({ route, navigation }) {
             onPress={() => setSelectedMethod('card')}
           >
             <View className="w-10 h-10 rounded-2xl bg-blue-50 items-center justify-center mr-3">
-              <Ionicons name="card" size={20} color="#3B82F6" />
+              <Ionicons name="card" size={20} color="#4C7CB0" />
             </View>
             <View className="flex-1">
               <Text className="text-sm font-semibold text-gray-800">Debit/Credit Card</Text>
@@ -258,7 +258,7 @@ export default function PaymentScreen({ route, navigation }) {
       <View
         className="absolute bottom-0 left-0 right-0 bg-white px-5 pb-8 pt-4"
         style={{
-          shadowColor: '#1F2937',
+          shadowColor: '#211F1C',
           shadowOffset: { width: 0, height: -2 },
           shadowOpacity: 0.04,
           shadowRadius: 8,
@@ -268,7 +268,7 @@ export default function PaymentScreen({ route, navigation }) {
         <TouchableOpacity
           className={`py-4 rounded-2xl items-center ${paying ? 'bg-teal/70' : 'bg-teal'}`}
           style={{
-            shadowColor: '#35615D',
+            shadowColor: '#1F4A45',
             shadowOffset: { width: 0, height: 4 },
             shadowOpacity: 0.25,
             shadowRadius: 8,

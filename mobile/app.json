@@ -10,7 +10,7 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#FAF3E9"
     },
     "ios": {
       "supportsTablet": true,
@@ -26,7 +26,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#FAF3E9"
       },
       "edgeToEdgeEnabled": true,
       "package": "com.quickgift.app",
@@ -58,7 +58,8 @@
           "photosPermission": "QuickGift needs access to your photos to upload profile pictures and product images.",
           "cameraPermission": "QuickGift needs camera access to take profile photos."
         }
-      ]
+      ],
+      "expo-font"
     ],
     "extra": {
       "eas": {

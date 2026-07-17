@@ -9,12 +9,12 @@ import { ordersAPI, bookingsAPI } from '../../services/api';
 const TABS = ['All', 'Gifts', 'Beauty'];
 
 const STATUS_CONFIG = {
-  pending: { label: 'Pending', color: '#F59E0B', bg: 'bg-amber-50', icon: 'time-outline' },
-  confirmed: { label: 'Confirmed', color: '#3B82F6', bg: 'bg-blue-50', icon: 'checkmark-circle-outline' },
-  in_transit: { label: 'In Transit', color: '#8B5CF6', bg: 'bg-purple-50', icon: 'bicycle-outline' },
-  delivered: { label: 'Delivered', color: '#10B981', bg: 'bg-green-50', icon: 'checkmark-done-outline' },
-  completed: { label: 'Completed', color: '#10B981', bg: 'bg-green-50', icon: 'checkmark-done-outline' },
-  cancelled: { label: 'Cancelled', color: '#EF4444', bg: 'bg-red-50', icon: 'close-circle-outline' },
+  pending: { label: 'Pending', color: '#B8862E', bg: 'bg-amber-50', icon: 'time-outline' },
+  confirmed: { label: 'Confirmed', color: '#4C7CB0', bg: 'bg-blue-50', icon: 'checkmark-circle-outline' },
+  in_transit: { label: 'In Transit', color: '#7A5FA8', bg: 'bg-purple-50', icon: 'bicycle-outline' },
+  delivered: { label: 'Delivered', color: '#3E8E63', bg: 'bg-green-50', icon: 'checkmark-done-outline' },
+  completed: { label: 'Completed', color: '#3E8E63', bg: 'bg-green-50', icon: 'checkmark-done-outline' },
+  cancelled: { label: 'Cancelled', color: '#D24B4B', bg: 'bg-red-50', icon: 'close-circle-outline' },
 };
 
 const formatDate = (dateStr) => {
@@ -97,62 +97,47 @@ export default function OrdersScreen() {
     : allItems.filter(i => i.type === 'beauty'), [allItems, activeTab]);
 
   return (
-    <View className="flex-1 bg-gray-50">
-      <StatusBar style="dark" />
-      {/* Header */}
+    <View className="flex-1 bg-cream">
+      <StatusBar style="light" />
+      {/* Teal header */}
       <View
-        className="bg-white px-5 pb-4"
-        style={{
-          paddingTop: Platform.OS === 'ios' ? 60 : 40,
-          shadowColor: '#1F2937',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.04,
-          shadowRadius: 8,
-          elevation: 2,
-        }}
+        className="bg-teal px-5"
+        style={{ paddingTop: Platform.OS === 'ios' ? 56 : 38, paddingBottom: 4, borderBottomLeftRadius: 28, borderBottomRightRadius: 28 }}
       >
-        <Text className="text-2xl font-extrabold text-gray-800 mb-4">My Orders</Text>
-        <View className="flex-row bg-gray-100 rounded-2xl p-1">
-          {TABS.map((tab) => (
-            <TouchableOpacity
-              key={tab}
-              className={`flex-1 py-2.5 rounded-xl items-center ${
-                activeTab === tab ? 'bg-teal' : ''
-              }`}
-              style={activeTab === tab ? {
-                shadowColor: '#35615D',
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.2,
-                shadowRadius: 4,
-                elevation: 3,
-              } : {}}
-              onPress={() => setActiveTab(tab)}
-            >
-              <Text className={`text-sm font-semibold ${
-                activeTab === tab ? 'text-white' : 'text-gray-500'
-              }`}>{tab}</Text>
-            </TouchableOpacity>
-          ))}
+        <Text className="text-[19px] font-bold text-white mb-4">My Orders</Text>
+        {/* Underline tabs — active = white text + terracotta underline */}
+        <View className="flex-row gap-6">
+          {TABS.map((tab) => {
+            const active = activeTab === tab;
+            return (
+              <TouchableOpacity key={tab} className="pb-3" onPress={() => setActiveTab(tab)} activeOpacity={0.8}>
+                <Text className={`text-[14px] font-bold ${active ? 'text-white' : 'text-white/55'}`}>{tab}</Text>
+                {active && (
+                  <View style={{ height: 2, borderRadius: 2, backgroundColor: '#E8632F', marginTop: 6 }} />
+                )}
+              </TouchableOpacity>
+            );
+          })}
         </View>
       </View>
 
       <ScrollView
-        className="flex-1 px-5 pt-4"
+        className="flex-1 px-5 pt-5"
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={loading} onRefresh={loadOrders} tintColor="#35615D" />}
+        refreshControl={<RefreshControl refreshing={loading} onRefresh={loadOrders} tintColor="#1F4A45" />}
       >
         {loading ? (
           <View className="items-center mt-20">
-            <ActivityIndicator size="large" color="#35615D" />
+            <ActivityIndicator size="large" color="#1F4A45" />
             <Text className="text-sm text-gray-400 mt-3">Loading orders...</Text>
           </View>
         ) : filtered.length === 0 ? (
           <View className="items-center mt-20">
-            <View className="w-20 h-20 rounded-full bg-gray-100 items-center justify-center mb-4">
-              <Text style={{ fontSize: 36 }}>📦</Text>
+            <View className="w-20 h-20 rounded-full bg-sand items-center justify-center mb-4">
+              <Ionicons name="receipt-outline" size={34} color="#9A948A" />
             </View>
-            <Text className="text-lg font-bold text-gray-800">No orders yet</Text>
-            <Text className="text-sm text-gray-500 mt-1.5 text-center px-8">
+            <Text className="text-lg font-bold text-ink">No orders yet</Text>
+            <Text className="text-sm text-ink-soft mt-1.5 text-center px-8">
               Start shopping to see your orders here
             </Text>
           </View>
@@ -173,25 +158,27 @@ export default function OrdersScreen() {
                 className="bg-white rounded-3xl p-4.5 mb-3.5"
                 style={{
                   padding: 18,
-                  shadowColor: '#1F2937',
+                  shadowColor: '#211F1C',
                   shadowOffset: { width: 0, height: 3 },
                   shadowOpacity: 0.06,
                   shadowRadius: 12,
                   elevation: 3,
                 }}
+                activeOpacity={0.85}
+                onPress={isGift ? () => navigation.navigate('OrderTracking', { order: item }) : undefined}
               >
                 {/* Top row */}
                 <View className="flex-row items-start gap-3 mb-3">
                   <View
-                    className="w-12 h-12 rounded-2xl items-center justify-center"
-                    style={{ backgroundColor: isGift ? '#E8F0EF' : '#FEF0E8' }}
+                    className="w-12 h-12 rounded-[14px] items-center justify-center"
+                    style={{ backgroundColor: isGift ? '#E7EFEC' : '#FBE4D7' }}
                   >
-                    <Text style={{ fontSize: 24 }}>{isGift ? '🎁' : '💅'}</Text>
+                    <Ionicons name={isGift ? 'gift-outline' : 'sparkles-outline'} size={22} color={isGift ? '#1F4A45' : '#E8632F'} />
                   </View>
                   <View className="flex-1">
-                    <Text className="text-[15px] font-bold text-gray-800">{name}</Text>
+                    <Text className="text-[15px] font-bold text-ink">{name}</Text>
                     {recipient ? (
-                      <Text className="text-xs text-gray-400 mt-0.5">
+                      <Text className="text-xs text-ink-caption mt-0.5">
                         {isGift ? 'To' : 'With'} {recipient}
                       </Text>
                     ) : null}
@@ -255,18 +242,15 @@ export default function OrdersScreen() {
                 {(status === 'delivered' || status === 'completed') && (
                   <TouchableOpacity
                     className="mt-2 bg-teal/10 py-2 px-3 rounded-xl self-start flex-row items-center gap-1"
-                    onPress={() => navigation.navigate('Home', {
-                      screen: 'WriteReview',
-                      params: {
-                        targetType: isGift ? 'product' : 'provider',
-                        targetId: isGift ? (item.product_id || item.id) : (item.provider_id || item.id),
-                        targetName: name,
-                        orderId: isGift ? item.id : undefined,
-                        bookingId: !isGift ? item.id : undefined,
-                      },
+                    onPress={() => navigation.navigate('WriteReview', {
+                      targetType: isGift ? 'product' : 'provider',
+                      targetId: isGift ? (item.product_id || item.id) : (item.provider_id || item.id),
+                      targetName: name,
+                      orderId: isGift ? item.id : undefined,
+                      bookingId: !isGift ? item.id : undefined,
                     })}
                   >
-                    <Ionicons name="star-outline" size={14} color="#35615D" />
+                    <Ionicons name="star-outline" size={14} color="#1F4A45" />
                     <Text className="text-xs font-bold text-teal">Leave Review</Text>
                   </TouchableOpacity>
                 )}
@@ -275,12 +259,11 @@ export default function OrdersScreen() {
                 {(status === 'delivered' || status === 'completed') && (
                   <TouchableOpacity
                     className="mt-1 py-2 px-3 rounded-xl self-start flex-row items-center gap-1"
-                    onPress={() => navigation.navigate('Home', {
-                      screen: 'RaiseDispute',
-                      params: { orderId: isGift ? item.id : undefined, bookingId: !isGift ? item.id : undefined, orderNumber: item.order_number || item.booking_number },
+                    onPress={() => navigation.navigate('RaiseDispute', {
+                      orderId: isGift ? item.id : undefined, bookingId: !isGift ? item.id : undefined, orderNumber: item.order_number || item.booking_number,
                     })}
                   >
-                    <Ionicons name="flag-outline" size={14} color="#EF4444" />
+                    <Ionicons name="flag-outline" size={14} color="#D24B4B" />
                     <Text className="text-xs font-bold text-red-500">Report Issue</Text>
                   </TouchableOpacity>
                 )}

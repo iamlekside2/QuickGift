@@ -83,7 +83,7 @@ export default function EditProfileScreen({ navigation }) {
         className="px-5 pb-4 bg-white"
         style={{
           paddingTop: Platform.OS === 'ios' ? 60 : 40,
-          shadowColor: '#1F2937',
+          shadowColor: '#211F1C',
           shadowOffset: { width: 0, height: 2 },
           shadowOpacity: 0.04,
           shadowRadius: 8,
@@ -96,13 +96,13 @@ export default function EditProfileScreen({ navigation }) {
               className="w-10 h-10 rounded-2xl bg-gray-100 items-center justify-center"
               onPress={() => navigation.goBack()}
             >
-              <Ionicons name="arrow-back" size={20} color="#1F2937" />
+              <Ionicons name="arrow-back" size={20} color="#211F1C" />
             </TouchableOpacity>
             <Text className="text-xl font-bold text-gray-800">Edit Profile</Text>
           </View>
           <TouchableOpacity onPress={handleSave} disabled={saving}>
             {saving ? (
-              <ActivityIndicator size="small" color="#35615D" />
+              <ActivityIndicator size="small" color="#1F4A45" />
             ) : (
               <Text className="text-base text-teal font-semibold">Save</Text>
             )}
@@ -117,7 +117,7 @@ export default function EditProfileScreen({ navigation }) {
             <Image
               source={{ uri: avatarUrl }}
               className="w-20 h-20 rounded-full"
-              style={{ backgroundColor: '#E5E7EB' }}
+              style={{ backgroundColor: '#EAE3D8' }}
             />
           ) : (
             <View className="w-20 h-20 rounded-full bg-teal items-center justify-center">
@@ -126,7 +126,7 @@ export default function EditProfileScreen({ navigation }) {
           )}
           <TouchableOpacity className="mt-2" onPress={handlePickImage} disabled={uploading}>
             {uploading ? (
-              <ActivityIndicator size="small" color="#35615D" />
+              <ActivityIndicator size="small" color="#1F4A45" />
             ) : (
               <Text className="text-sm text-teal font-medium">Change Photo</Text>
             )}
@@ -137,7 +137,7 @@ export default function EditProfileScreen({ navigation }) {
         <View
           className="bg-white rounded-2xl p-5 mb-6"
           style={{
-            shadowColor: '#1F2937',
+            shadowColor: '#211F1C',
             shadowOffset: { width: 0, height: 2 },
             shadowOpacity: 0.04,
             shadowRadius: 8,
@@ -181,7 +181,7 @@ export default function EditProfileScreen({ navigation }) {
         <TouchableOpacity
           className={`py-4 rounded-2xl items-center mb-10 ${saving ? 'bg-teal/70' : 'bg-teal'}`}
           style={{
-            shadowColor: '#35615D',
+            shadowColor: '#1F4A45',
             shadowOffset: { width: 0, height: 4 },
             shadowOpacity: 0.25,
             shadowRadius: 8,

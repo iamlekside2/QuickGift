@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import { useLocation } from '../../context/LocationContext';
 import AppInput from '../../components/common/AppInput';
+import { SerifHeadline } from '../../components/common/Typography';
 
 // Precise neighbourhood-level areas (not broad city/LGA names)
 const POPULAR_AREAS = [
@@ -91,7 +92,7 @@ export default function SetLocationScreen() {
 
   return (
     <KeyboardAvoidingView
-      className="flex-1 bg-white"
+      className="flex-1 bg-cream-warm"
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <StatusBar style="dark" />
@@ -108,21 +109,12 @@ export default function SetLocationScreen() {
         {/* Header */}
         <View className="items-center mb-6">
           <View
-            className="w-20 h-20 rounded-3xl bg-teal-light items-center justify-center mb-4"
-            style={{
-              shadowColor: '#35615D',
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.15,
-              shadowRadius: 12,
-              elevation: 4,
-            }}
+            className="w-20 h-20 rounded-[24px] bg-teal-light items-center justify-center mb-4"
           >
-            <Ionicons name="location-outline" size={36} color="#35615D" />
+            <Ionicons name="location-outline" size={36} color="#1F4A45" />
           </View>
-          <Text className="text-2xl font-extrabold text-gray-800 mb-2">
-            Set Your Location
-          </Text>
-          <Text className="text-sm text-gray-400 text-center leading-5 px-4">
+          <SerifHeadline text="Set your location" emphasis="location" size={28} />
+          <Text className="text-[13.5px] text-ink-soft text-center leading-5 px-4 mt-2">
             Hi {user?.full_name?.split(' ')[0]}! We need your location to show nearby providers and gift shops.
           </Text>
         </View>
@@ -131,7 +123,7 @@ export default function SetLocationScreen() {
         <TouchableOpacity
           className="flex-row items-center justify-center gap-2.5 py-4 rounded-2xl bg-teal mb-6"
           style={{
-            shadowColor: '#35615D',
+            shadowColor: '#1F4A45',
             shadowOffset: { width: 0, height: 4 },
             shadowOpacity: 0.25,
             shadowRadius: 8,
@@ -154,7 +146,7 @@ export default function SetLocationScreen() {
         {/* Detected area display */}
         {selectedCoords && area && (
           <View className="flex-row items-center gap-2 bg-teal-light/50 rounded-xl px-4 py-3 mb-5">
-            <Ionicons name="checkmark-circle" size={18} color="#35615D" />
+            <Ionicons name="checkmark-circle" size={18} color="#1F4A45" />
             <Text className="text-sm text-teal font-semibold flex-1">{area}</Text>
           </View>
         )}
@@ -210,7 +202,7 @@ export default function SetLocationScreen() {
         <TouchableOpacity
           className={`py-4 rounded-2xl items-center ${isValid ? 'bg-teal' : 'bg-gray-200'}`}
           style={isValid ? {
-            shadowColor: '#35615D',
+            shadowColor: '#1F4A45',
             shadowOffset: { width: 0, height: 4 },
             shadowOpacity: 0.25,
             shadowRadius: 8,

@@ -13,7 +13,7 @@ export default React.memo(function ProviderCard({ item, onPress }) {
     <TouchableOpacity
       className="flex-row items-center bg-white rounded-2xl p-3.5 gap-3"
       style={{
-        shadowColor: '#1F2937',
+        shadowColor: '#211F1C',
         shadowOffset: { width: 0, height: 3 },
         shadowOpacity: 0.06,
         shadowRadius: 10,
@@ -37,14 +37,14 @@ export default React.memo(function ProviderCard({ item, onPress }) {
         </View>
         <Text className="text-xs text-gray-500">{service}</Text>
         <View className="flex-row items-center gap-3 mt-0.5">
-          <View className="flex-row items-center gap-1">
-            <Ionicons name="star" size={12} color="#F59E0B" />
-            <Text className="text-[11px] text-gray-600 font-semibold">{item.rating || 0}</Text>
-            <Text className="text-[10px] text-gray-400">({reviews})</Text>
+          <View className="flex-row items-center gap-1 bg-orange-light px-2 py-0.5 rounded-full">
+            <Ionicons name="star" size={11} color="#E8632F" />
+            <Text className="text-[11px] text-orange-dark font-bold">{item.rating || 0}</Text>
+            <Text className="text-[10px] text-orange-dark/70">({reviews})</Text>
           </View>
           {item.distance_km != null ? (
             <View className="flex-row items-center gap-0.5">
-              <Ionicons name="navigate-outline" size={11} color="#35615D" />
+              <Ionicons name="navigate-outline" size={11} color="#1F4A45" />
               <Text className="text-[10px] text-teal font-semibold">
                 {item.distance_km < 0.1
                   ? 'Nearby'
@@ -55,7 +55,7 @@ export default React.memo(function ProviderCard({ item, onPress }) {
             </View>
           ) : location ? (
             <View className="flex-row items-center gap-0.5">
-              <Ionicons name="location-outline" size={11} color="#9CA3AF" />
+              <Ionicons name="location-outline" size={11} color="#9A948A" />
               <Text className="text-[10px] text-gray-400">{location}</Text>
             </View>
           ) : null}
@@ -68,7 +68,7 @@ export default React.memo(function ProviderCard({ item, onPress }) {
         </View>
       ) : (
         <View className="w-8 h-8 rounded-full bg-gray-50 items-center justify-center">
-          <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
+          <Ionicons name="chevron-forward" size={16} color="#9A948A" />
         </View>
       )}
     </TouchableOpacity>

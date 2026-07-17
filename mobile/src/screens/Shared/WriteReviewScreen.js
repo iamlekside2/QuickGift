@@ -48,7 +48,7 @@ export default function WriteReviewScreen({ navigation, route }) {
         className="bg-white px-5 pb-4 flex-row items-center gap-3"
         style={{
           paddingTop: Platform.OS === 'ios' ? 60 : 40,
-          shadowColor: '#1F2937',
+          shadowColor: '#211F1C',
           shadowOffset: { width: 0, height: 2 },
           shadowOpacity: 0.04,
           shadowRadius: 8,
@@ -59,7 +59,7 @@ export default function WriteReviewScreen({ navigation, route }) {
           className="w-10 h-10 rounded-2xl bg-gray-100 items-center justify-center"
           onPress={() => navigation.goBack()}
         >
-          <Ionicons name="arrow-back" size={20} color="#1F2937" />
+          <Ionicons name="arrow-back" size={20} color="#211F1C" />
         </TouchableOpacity>
         <Text className="text-lg font-extrabold text-gray-800">Leave a Review</Text>
       </View>
@@ -79,7 +79,7 @@ export default function WriteReviewScreen({ navigation, route }) {
               <Ionicons
                 name={star <= rating ? 'star' : 'star-outline'}
                 size={36}
-                color={star <= rating ? '#FD8950' : '#D1D5DB'}
+                color={star <= rating ? '#E8632F' : '#B5AFA2'}
               />
             </TouchableOpacity>
           ))}
@@ -101,7 +101,7 @@ export default function WriteReviewScreen({ navigation, route }) {
           onPress={handleSubmit}
           disabled={submitting}
           style={{
-            shadowColor: '#35615D',
+            shadowColor: '#1F4A45',
             shadowOffset: { width: 0, height: 4 },
             shadowOpacity: 0.2,
             shadowRadius: 8,

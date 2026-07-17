@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Platform, Image } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { providersAPI, reviewsAPI, chatsAPI } from '../../services/api';
 import Button from '../../components/common/Button';
+import { iconFor } from '../../utils/categoryIcons';
+import { SERIF_FAMILY } from '../../components/common/Typography';
 
 export default function ProviderProfileScreen({ navigation, route }) {
   const { provider } = route.params || {};
@@ -11,7 +13,10 @@ export default function ProviderProfileScreen({ navigation, route }) {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const formatPrice = (price) => '\u20A6' + (price || 0).toLocaleString();
+  const formatPrice = (price) => '₦' + (price || 0).toLocaleString();
+  const name = provider?.business_name || provider?.name || 'Provider';
+  const serviceType = provider?.service_type || provider?.service || '';
+  const area = provider?.city || provider?.location || 'Lagos';
 
   useEffect(() => {
     loadProviderData();
@@ -32,227 +37,138 @@ export default function ProviderProfileScreen({ navigation, route }) {
     }
   };
 
+  const openChat = async () => {
+    try {
+      const res = await chatsAPI.createConversation(provider?.id, name);
+      const conv = res.data;
+      navigation.navigate('ChatScreen', {
+        conversationId: conv.id,
+        otherName: name,
+        otherAvatar: name.charAt(0).toUpperCase(),
+        providerId: provider?.id,
+        buyerId: conv.buyer_id,
+      });
+    } catch (err) {
+      console.log('Error opening chat:', err);
+    }
+  };
+
   return (
-    <View className="flex-1 bg-white">
-      <StatusBar style="dark" />
+    <View className="flex-1 bg-cream">
+      <StatusBar style="light" />
 
-      {/* Fixed Header Bar - stays above scroll */}
-      <View
-        className="flex-row items-center justify-between px-5 bg-white"
-        style={{
-          paddingTop: Platform.OS === 'ios' ? 56 : 36,
-          paddingBottom: 10,
-          borderBottomWidth: 1,
-          borderBottomColor: '#F3F4F6',
-        }}
-      >
-        <TouchableOpacity
-          className="w-11 h-11 rounded-2xl bg-gray-100 items-center justify-center"
-          style={{
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.08,
-            shadowRadius: 4,
-            elevation: 3,
-          }}
-          onPress={() => navigation.goBack()}
-        >
-          <Ionicons name="arrow-back" size={22} color="#1F2937" />
-        </TouchableOpacity>
-        <Text className="text-lg font-bold text-gray-800">Provider Profile</Text>
-        <View style={{ width: 44 }} />
-      </View>
-
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Profile Header */}
-        <View
-          className="items-center pb-8 px-6"
-          style={{ backgroundColor: '#F8FAFA', paddingTop: 24 }}
-        >
-          {/* Avatar */}
-          <View
-            className="w-24 h-24 rounded-3xl items-center justify-center mb-4"
-            style={{ backgroundColor: '#35615D20' }}
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
+        {/* Portfolio hero (260px) with floating back */}
+        <View className="bg-sand items-center justify-center" style={{ height: 260 }}>
+          {provider?.cover_image || provider?.image_url ? (
+            <Image source={{ uri: provider.cover_image || provider.image_url }} className="w-full h-full" resizeMode="cover" />
+          ) : (
+            <Ionicons name={iconFor(serviceType)} size={80} color="#B5AFA2" />
+          )}
+          <TouchableOpacity
+            className="absolute w-10 h-10 rounded-full items-center justify-center"
+            style={{ top: Platform.OS === 'ios' ? 56 : 40, left: 20, backgroundColor: 'rgba(255,255,255,0.92)' }}
+            onPress={() => navigation.goBack()}
           >
-            <Text className="text-4xl font-bold text-teal">
-              {provider?.business_name?.charAt(0) || provider?.name?.charAt(0)}
-            </Text>
-          </View>
-
-          <Text className="text-2xl font-extrabold text-gray-800 tracking-tight">
-            {provider?.business_name || provider?.name}
-          </Text>
-          <Text className="text-base text-gray-400 mt-0.5">
-            {provider?.service_type || provider?.service}
-          </Text>
-
-          {/* Stats Row */}
-          <View
-            className="flex-row items-center mt-6 bg-white rounded-2xl px-6 py-4 gap-6"
-            style={{
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.06,
-              shadowRadius: 12,
-              elevation: 4,
-            }}
-          >
-            <View className="items-center flex-1">
-              <Text className="text-2xl font-extrabold text-gray-800">{provider?.rating || 0}</Text>
-              <Text className="text-xs text-gray-400 mt-0.5">Rating</Text>
-            </View>
-            <View className="w-px h-8 bg-gray-200" />
-            <View className="items-center flex-1">
-              <Text className="text-2xl font-extrabold text-gray-800">{provider?.review_count || provider?.reviews || 0}</Text>
-              <Text className="text-xs text-gray-400 mt-0.5">Reviews</Text>
-            </View>
-            <View className="w-px h-8 bg-gray-200" />
-            <View className="items-center flex-1">
-              <Text className="text-2xl font-extrabold text-gray-800">{provider?.experience || 'N/A'}</Text>
-              <Text className="text-xs text-gray-400 mt-0.5">Experience</Text>
-            </View>
-          </View>
-
-          {/* Badges */}
-          <View className="flex-row gap-2 mt-4 flex-wrap justify-center">
-            {provider?.is_verified && (
-              <View className="flex-row items-center gap-1 bg-emerald-50 px-3.5 py-1.5 rounded-full">
-                <Ionicons name="shield-checkmark" size={14} color="#10B981" />
-                <Text className="text-xs font-semibold text-emerald-600">Verified</Text>
-              </View>
-            )}
-            <View className="flex-row items-center gap-1 bg-teal-light px-3.5 py-1.5 rounded-full">
-              <Ionicons name="location" size={14} color="#35615D" />
-              <Text className="text-xs font-semibold text-teal">{provider?.city || provider?.location || 'Lagos'}</Text>
-            </View>
-            {(provider?.is_available || provider?.available) && (
-              <View className="flex-row items-center gap-1 px-3.5 py-1.5 rounded-full" style={{ backgroundColor: '#10B98115' }}>
-                <View className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                <Text className="text-xs font-semibold text-emerald-600">Available</Text>
-              </View>
-            )}
-          </View>
+            <Ionicons name="arrow-back" size={20} color="#211F1C" />
+          </TouchableOpacity>
         </View>
 
-        {/* Services */}
-        <View className="px-6 mt-7 mb-6">
-          <Text className="text-xl font-bold text-gray-800 mb-4">Services & Pricing</Text>
+        {/* Content sheet */}
+        <View className="bg-cream px-5 pt-6" style={{ marginTop: -24, borderTopLeftRadius: 28, borderTopRightRadius: 28 }}>
+          <View className="flex-row items-start justify-between gap-3">
+            <View className="flex-1">
+              <Text style={{ fontFamily: SERIF_FAMILY, fontSize: 24, color: '#211F1C' }}>{name}</Text>
+              <Text className="text-[13.5px] text-ink-soft mt-1">
+                {serviceType}{serviceType ? ' · ' : ''}{area}
+              </Text>
+            </View>
+            <View className="flex-row items-center gap-1 bg-orange-light px-3 py-1.5 rounded-full mt-1">
+              <Ionicons name="star" size={13} color="#E8632F" />
+              <Text className="text-[13px] text-orange-dark font-bold">{provider?.rating || '—'}</Text>
+            </View>
+          </View>
+
+          {/* Badge chips */}
+          <View className="flex-row gap-2 mt-4 flex-wrap">
+            {provider?.is_verified && (
+              <View className="flex-row items-center gap-1 bg-teal-light px-3 py-1.5 rounded-full">
+                <Ionicons name="shield-checkmark" size={13} color="#1F4A45" />
+                <Text className="text-[12px] font-bold text-teal">Verified</Text>
+              </View>
+            )}
+            <View className="flex-row items-center gap-1 bg-sand px-3 py-1.5 rounded-full">
+              <Ionicons name="time-outline" size={13} color="#6E6A63" />
+              <Text className="text-[12px] font-bold text-ink-soft">{provider?.experience || 'Experienced'}</Text>
+            </View>
+            <View className="flex-row items-center gap-1 bg-sand px-3 py-1.5 rounded-full">
+              <Ionicons name="briefcase-outline" size={13} color="#6E6A63" />
+              <Text className="text-[12px] font-bold text-ink-soft">{provider?.jobs_done || provider?.review_count || 0} jobs</Text>
+            </View>
+          </View>
+
+          {/* Services & pricing */}
+          <Text className="text-[16px] font-bold text-ink mt-7 mb-3">Services & Prices</Text>
           {loading ? (
-            <ActivityIndicator color="#35615D" />
+            <ActivityIndicator color="#1F4A45" />
           ) : services.length > 0 ? (
             services.map((svc, i) => (
-              <View
-                key={svc.id || i}
-                className="flex-row items-center p-4 bg-gray-50 rounded-2xl mb-3"
-                style={{
-                  shadowColor: '#000',
-                  shadowOffset: { width: 0, height: 1 },
-                  shadowOpacity: 0.04,
-                  shadowRadius: 4,
-                  elevation: 1,
-                }}
-              >
-                <View className="w-10 h-10 rounded-xl bg-teal-light items-center justify-center mr-3">
-                  <Ionicons name="cut-outline" size={18} color="#35615D" />
+              <View key={svc.id || i} className="flex-row items-center p-4 bg-white rounded-[16px] mb-2.5 border-[1.5px] border-line-border">
+                <View className="w-10 h-10 rounded-[12px] bg-teal-light items-center justify-center mr-3">
+                  <Ionicons name={iconFor(serviceType)} size={18} color="#1F4A45" />
                 </View>
                 <View className="flex-1">
-                  <Text className="text-sm font-bold text-gray-800">{svc.name}</Text>
-                  <Text className="text-xs text-gray-400 mt-0.5">
-                    {svc.duration_minutes ? `${svc.duration_minutes}min` : svc.duration}
+                  <Text className="text-[14px] font-bold text-ink">{svc.name}</Text>
+                  <Text className="text-[12px] text-ink-caption mt-0.5">
+                    {svc.duration_minutes ? `${svc.duration_minutes} min` : svc.duration || ''}
                   </Text>
                 </View>
-                <Text className="text-base font-extrabold text-teal">{formatPrice(svc.price)}</Text>
+                <Text className="text-[15px] font-extrabold text-teal">{formatPrice(svc.price)}</Text>
               </View>
             ))
           ) : (
-            <Text className="text-sm text-gray-400 text-center py-4">No services listed yet</Text>
+            <Text className="text-sm text-ink-caption py-3">No services listed yet</Text>
           )}
-        </View>
 
-        {/* Portfolio */}
-        <View className="px-6 mb-6">
-          <Text className="text-xl font-bold text-gray-800 mb-4">Portfolio</Text>
-          <View className="bg-gray-50 rounded-2xl py-10 items-center">
-            <Ionicons name="images-outline" size={48} color="#D1D5DB" />
-            <Text className="text-sm font-semibold text-gray-400 mt-3">No portfolio yet</Text>
-          </View>
-        </View>
-
-        {/* Reviews */}
-        <View className="px-6 mb-6">
-          <Text className="text-xl font-bold text-gray-800 mb-4">Reviews</Text>
+          {/* Recent review */}
+          <Text className="text-[16px] font-bold text-ink mt-6 mb-3">Recent Review</Text>
           {reviews.length > 0 ? (
-            reviews.map((review, i) => (
-              <View
-                key={review.id || i}
-                className="bg-gray-50 rounded-2xl p-4 mb-3"
-              >
-                <View className="flex-row justify-between items-center mb-2">
-                  <View className="flex-row items-center gap-2">
-                    <View className="w-8 h-8 rounded-xl bg-orange-light items-center justify-center">
-                      <Text className="text-xs font-bold text-orange">
-                        {review.user_name?.charAt(0) || 'U'}
-                      </Text>
-                    </View>
-                    <Text className="text-sm font-bold text-gray-800">{review.user_name}</Text>
+            <View className="bg-white rounded-[16px] p-4 border-[1.5px] border-line-border">
+              <View className="flex-row justify-between items-center mb-2">
+                <View className="flex-row items-center gap-2">
+                  <View className="w-8 h-8 rounded-full bg-orange-light items-center justify-center">
+                    <Text className="text-xs font-bold text-orange-dark">{reviews[0].user_name?.charAt(0) || 'U'}</Text>
                   </View>
-                  <View className="flex-row gap-0.5">
-                    {Array(Math.round(review.rating)).fill(0).map((_, j) => (
-                      <Ionicons key={j} name="star" size={12} color="#F59E0B" />
-                    ))}
-                  </View>
+                  <Text className="text-[13px] font-bold text-ink">{reviews[0].user_name || 'Customer'}</Text>
                 </View>
-                {review.comment && (
-                  <Text className="text-sm text-gray-500 leading-5">{review.comment}</Text>
-                )}
+                <View className="flex-row gap-0.5">
+                  {Array(Math.round(reviews[0].rating || 5)).fill(0).map((_, j) => (
+                    <Ionicons key={j} name="star" size={12} color="#E8632F" />
+                  ))}
+                </View>
               </View>
-            ))
+              {reviews[0].comment && <Text className="text-[13px] text-ink-soft leading-5">{reviews[0].comment}</Text>}
+            </View>
           ) : (
-            <Text className="text-sm text-gray-400 text-center py-4">No reviews yet</Text>
+            <Text className="text-sm text-ink-caption py-3">No reviews yet</Text>
           )}
         </View>
-
-        <View style={{ height: 120 }} />
       </ScrollView>
 
-      {/* Bottom Bar */}
+      {/* Pinned bottom bar */}
       <View
-        className="flex-row items-center gap-3 px-6 pb-9 pt-5 bg-white"
-        style={{
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: -6 },
-          shadowOpacity: 0.08,
-          shadowRadius: 16,
-          elevation: 12,
-          borderTopLeftRadius: 24,
-          borderTopRightRadius: 24,
-        }}
+        className="flex-row items-center gap-3 px-5 bg-white"
+        style={{ paddingTop: 14, paddingBottom: Platform.OS === 'ios' ? 34 : 18, borderTopWidth: 1, borderTopColor: '#F5F0E7' }}
       >
         <TouchableOpacity
-          className="w-14 h-14 rounded-2xl border-2 border-teal items-center justify-center"
-          onPress={async () => {
-            try {
-              const providerName = provider?.business_name || provider?.name || 'Provider';
-              const res = await chatsAPI.createConversation(provider?.id, providerName);
-              const conv = res.data;
-              navigation.navigate('ChatScreen', {
-                conversationId: conv.id,
-                otherName: providerName,
-                otherAvatar: providerName.charAt(0).toUpperCase(),
-                providerId: provider?.id,
-                buyerId: conv.buyer_id,
-              });
-            } catch (err) {
-              console.log('Error opening chat:', err);
-            }
-          }}
+          className="w-[52px] h-[52px] rounded-[16px] border-[1.5px] border-teal items-center justify-center"
+          onPress={openChat}
         >
-          <Ionicons name="chatbubble-outline" size={22} color="#35615D" />
+          <Ionicons name="chatbubble-outline" size={22} color="#1F4A45" />
         </TouchableOpacity>
         <Button
-          title="Book Now"
+          title="Book Appointment"
           onPress={() => navigation.navigate('Booking', { provider, services })}
-          size="lg"
           style={{ flex: 1 }}
         />
       </View>

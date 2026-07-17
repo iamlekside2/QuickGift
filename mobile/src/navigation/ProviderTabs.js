@@ -119,10 +119,10 @@ function TabIcon({ name, focused, color }) {
           width: 20,
           height: 3,
           borderRadius: 2,
-          backgroundColor: '#35615D',
+          backgroundColor: '#E8632F',
         }} />
       )}
-      <Ionicons name={name} size={22} color={color} />
+      <Ionicons name={name} size={20} color={color} />
     </View>
   );
 }
@@ -141,11 +141,11 @@ export default function ProviderTabs() {
           else if (route.name === 'Profile') iconName = focused ? 'person' : 'person-outline';
           return <TabIcon name={iconName} focused={focused} color={color} />;
         },
-        tabBarActiveTintColor: '#35615D',
-        tabBarInactiveTintColor: '#B0B8C1',
+        tabBarActiveTintColor: '#E8632F',
+        tabBarInactiveTintColor: '#6E6A63',
         tabBarLabelStyle: {
           fontSize: 11,
-          fontWeight: '600',
+          fontWeight: '700',
           marginTop: 2,
           letterSpacing: 0.2,
         },
@@ -156,7 +156,7 @@ export default function ProviderTabs() {
           backgroundColor: '#FFFFFF',
           borderTopWidth: 0,
           elevation: 0,
-          shadowColor: '#1F2937',
+          shadowColor: '#211F1C',
           shadowOffset: { width: 0, height: -6 },
           shadowOpacity: 0.06,
           shadowRadius: 16,

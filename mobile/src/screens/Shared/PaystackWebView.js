@@ -81,7 +81,7 @@ export default function PaystackWebView({ route, navigation }) {
   if (!authorization_url) {
     return (
       <View className="flex-1 bg-white items-center justify-center px-6">
-        <Ionicons name="warning-outline" size={48} color="#EF4444" />
+        <Ionicons name="warning-outline" size={48} color="#D24B4B" />
         <Text className="text-lg font-bold text-gray-800 mt-4 text-center">Payment Error</Text>
         <Text className="text-sm text-gray-500 mt-2 text-center">
           No payment URL was provided. Please try again.
@@ -105,7 +105,7 @@ export default function PaystackWebView({ route, navigation }) {
         className="flex-row items-center justify-between px-5 pb-3 bg-white"
         style={{
           paddingTop: Platform.OS === 'ios' ? 60 : 40,
-          shadowColor: '#1F2937',
+          shadowColor: '#211F1C',
           shadowOffset: { width: 0, height: 2 },
           shadowOpacity: 0.04,
           shadowRadius: 8,
@@ -116,7 +116,7 @@ export default function PaystackWebView({ route, navigation }) {
           className="w-10 h-10 rounded-2xl bg-gray-100 items-center justify-center"
           onPress={handleCancel}
         >
-          <Ionicons name="close" size={20} color="#1F2937" />
+          <Ionicons name="close" size={20} color="#211F1C" />
         </TouchableOpacity>
         <Text className="text-lg font-bold text-gray-800">Paystack Checkout</Text>
         <View style={{ width: 40 }} />
@@ -125,7 +125,7 @@ export default function PaystackWebView({ route, navigation }) {
       {/* Verifying Overlay */}
       {verifying && (
         <View className="absolute inset-0 bg-white/90 items-center justify-center z-50">
-          <ActivityIndicator size="large" color="#35615D" />
+          <ActivityIndicator size="large" color="#1F4A45" />
           <Text className="text-base font-semibold text-gray-800 mt-4">Verifying payment...</Text>
           <Text className="text-sm text-gray-500 mt-1">Please wait</Text>
         </View>
@@ -173,7 +173,7 @@ export default function PaystackWebView({ route, navigation }) {
       {/* Loading Indicator */}
       {loading && !verifying && (
         <View className="absolute inset-0 items-center justify-center bg-white/80" style={{ top: 100 }}>
-          <ActivityIndicator size="large" color="#35615D" />
+          <ActivityIndicator size="large" color="#1F4A45" />
           <Text className="text-sm text-gray-500 mt-3">Loading payment page...</Text>
         </View>
       )}

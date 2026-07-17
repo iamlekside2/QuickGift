@@ -29,7 +29,7 @@ export default function RecipientDetailsScreen({ route, navigation }) {
         className="flex-row items-center gap-3 px-5 pb-3 bg-white"
         style={{
           paddingTop: Platform.OS === 'ios' ? 60 : 40,
-          shadowColor: '#1F2937',
+          shadowColor: '#211F1C',
           shadowOffset: { width: 0, height: 2 },
           shadowOpacity: 0.04,
           shadowRadius: 8,
@@ -40,7 +40,7 @@ export default function RecipientDetailsScreen({ route, navigation }) {
           className="w-10 h-10 rounded-2xl bg-gray-100 items-center justify-center"
           onPress={() => navigation.goBack()}
         >
-          <Ionicons name="arrow-back" size={20} color="#1F2937" />
+          <Ionicons name="arrow-back" size={20} color="#211F1C" />
         </TouchableOpacity>
         <Text className="text-xl font-bold text-gray-800">Recipient Details</Text>
       </View>
@@ -50,7 +50,7 @@ export default function RecipientDetailsScreen({ route, navigation }) {
         <View
           className="bg-white rounded-2xl p-4 flex-row items-center gap-3 mb-6"
           style={{
-            shadowColor: '#1F2937',
+            shadowColor: '#211F1C',
             shadowOffset: { width: 0, height: 2 },
             shadowOpacity: 0.04,
             shadowRadius: 8,
@@ -58,7 +58,7 @@ export default function RecipientDetailsScreen({ route, navigation }) {
           }}
         >
           <View className="w-14 h-14 rounded-xl bg-teal-light items-center justify-center">
-            <Text style={{ fontSize: 28 }}>🎁</Text>
+            <Ionicons name="gift-outline" size={26} color="#1F4A45" />
           </View>
           <View className="flex-1">
             <Text className="text-sm font-bold text-gray-800">{gift.name || 'Gift'}</Text>
@@ -73,7 +73,7 @@ export default function RecipientDetailsScreen({ route, navigation }) {
         <View
           className="bg-white rounded-2xl p-5 mb-6"
           style={{
-            shadowColor: '#1F2937',
+            shadowColor: '#211F1C',
             shadowOffset: { width: 0, height: 2 },
             shadowOpacity: 0.04,
             shadowRadius: 8,
@@ -126,7 +126,7 @@ export default function RecipientDetailsScreen({ route, navigation }) {
       <View
         className="absolute bottom-0 left-0 right-0 bg-white px-5 pb-8 pt-4"
         style={{
-          shadowColor: '#1F2937',
+          shadowColor: '#211F1C',
           shadowOffset: { width: 0, height: -2 },
           shadowOpacity: 0.04,
           shadowRadius: 8,
@@ -136,7 +136,7 @@ export default function RecipientDetailsScreen({ route, navigation }) {
         <TouchableOpacity
           className={`py-4 rounded-2xl items-center ${isValid ? 'bg-teal' : 'bg-gray-300'}`}
           style={isValid ? {
-            shadowColor: '#35615D',
+            shadowColor: '#1F4A45',
             shadowOffset: { width: 0, height: 4 },
             shadowOpacity: 0.25,
             shadowRadius: 8,

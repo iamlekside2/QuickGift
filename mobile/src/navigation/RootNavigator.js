@@ -23,7 +23,7 @@ export default function RootNavigator() {
   if (loading) {
     return (
       <View className="flex-1 items-center justify-center bg-white">
-        <ActivityIndicator size="large" color="#35615D" />
+        <ActivityIndicator size="large" color="#1F4A45" />
       </View>
     );
   }

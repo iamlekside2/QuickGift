@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, Platform, TextInput } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, Platform, TextInput, ScrollView } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { providersAPI } from '../../services/api';
@@ -61,81 +61,85 @@ export default function ProvidersListScreen({ navigation, route }) {
     return filtered;
   })();
 
+  const canGoBack = navigation.canGoBack();
+
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1 bg-cream">
       <StatusBar style="dark" />
       {/* Header */}
       <View
-        className="flex-row items-center justify-between px-6 pb-4"
+        className="flex-row items-center justify-between px-5 pb-4"
         style={{ paddingTop: Platform.OS === 'ios' ? 60 : 40 }}
       >
+        {canGoBack ? (
+          <TouchableOpacity
+            className="w-10 h-10 rounded-[14px] bg-sand items-center justify-center"
+            onPress={() => navigation.goBack()}
+          >
+            <Ionicons name="arrow-back" size={22} color="#211F1C" />
+          </TouchableOpacity>
+        ) : <View style={{ width: 40 }} />}
+        <Text className="text-[19px] font-bold text-ink">{title || 'Providers'}</Text>
         <TouchableOpacity
-          className="w-11 h-11 rounded-2xl bg-gray-100 items-center justify-center"
-          onPress={() => navigation.goBack()}
-        >
-          <Ionicons name="arrow-back" size={22} color="#1F2937" />
-        </TouchableOpacity>
-        <Text className="text-xl font-bold text-gray-800">{title || 'Providers'}</Text>
-        <TouchableOpacity
-          className="w-11 h-11 rounded-2xl bg-gray-100 items-center justify-center"
+          className="w-10 h-10 rounded-[14px] bg-sand items-center justify-center"
           onPress={() => setViewMode(viewMode === 'list' ? 'map' : 'list')}
         >
-          <Ionicons name={viewMode === 'list' ? 'map-outline' : 'list-outline'} size={20} color="#1F2937" />
+          <Ionicons name={viewMode === 'list' ? 'map-outline' : 'list-outline'} size={20} color="#211F1C" />
         </TouchableOpacity>
       </View>
 
       {/* Search Bar */}
-      <View className="px-6 mb-3">
-        <View className="flex-row items-center bg-gray-100 rounded-2xl px-4 h-11">
-          <Ionicons name="search" size={18} color="#9CA3AF" />
+      <View className="px-5 mb-3">
+        <View className="flex-row items-center bg-white border-[1.5px] border-line-border rounded-[16px] px-4 h-[52px]">
+          <Ionicons name="search" size={18} color="#9A948A" />
           <TextInput
             className="flex-1 ml-2.5 text-sm text-gray-900"
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholder="Search providers..."
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor="#9A948A"
             autoFocus={!!showSearch}
           />
           {searchQuery ? (
             <TouchableOpacity onPress={() => setSearchQuery('')}>
-              <Ionicons name="close-circle" size={18} color="#9CA3AF" />
+              <Ionicons name="close-circle" size={18} color="#9A948A" />
             </TouchableOpacity>
           ) : null}
         </View>
       </View>
 
       {/* Filter Row */}
-      <View className="flex-row px-6 gap-2.5 mb-5">
-        {filters.map((filter) => (
-          <TouchableOpacity
-            key={filter}
-            className={`px-4 py-2.5 rounded-full ${
-              activeFilter === filter ? 'bg-teal' : 'bg-gray-100'
-            }`}
-            onPress={() => setActiveFilter(filter)}
-            style={activeFilter === filter ? {
-              shadowColor: '#35615D',
-              shadowOffset: { width: 0, height: 3 },
-              shadowOpacity: 0.2,
-              shadowRadius: 6,
-              elevation: 4,
-            } : undefined}
-          >
-            <Text
-              className={`text-xs font-semibold ${
-                activeFilter === filter ? 'text-white' : 'text-gray-500'
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ paddingHorizontal: 20, gap: 10, paddingBottom: 4 }}
+        className="mb-4"
+        style={{ flexGrow: 0 }}
+      >
+        {filters.map((filter) => {
+          const active = activeFilter === filter;
+          return (
+            <TouchableOpacity
+              key={filter}
+              className={`px-5 rounded-full items-center justify-center border-[1.5px] ${
+                active ? 'bg-teal border-teal' : 'bg-white border-line-border'
               }`}
+              style={{ height: 40 }}
+              onPress={() => setActiveFilter(filter)}
+              activeOpacity={0.85}
             >
-              {filter}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+              <Text className={`text-[13px] font-bold ${active ? 'text-white' : 'text-ink-soft'}`}>
+                {filter}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
 
       {/* Results Count */}
       {!loading && (
-        <View className="px-6 mb-3">
-          <Text className="text-xs font-medium text-gray-400">
+        <View className="px-5 mb-3">
+          <Text className="text-xs font-semibold text-ink-caption">
             {filteredProviders.length} provider{filteredProviders.length !== 1 ? 's' : ''} found
           </Text>
         </View>
@@ -148,7 +152,7 @@ export default function ProvidersListScreen({ navigation, route }) {
         <FlatList
           data={filteredProviders}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={{ paddingHorizontal: 24, gap: 14, paddingBottom: 100 }}
+          contentContainerStyle={{ paddingHorizontal: 20, gap: 14, paddingBottom: 100 }}
           showsVerticalScrollIndicator={false}
           renderItem={({ item }) => (
             <ProviderCard
@@ -157,7 +161,7 @@ export default function ProvidersListScreen({ navigation, route }) {
             />
           )}
           ListEmptyComponent={
-            <EmptyState emoji="💈" title="No providers found" subtitle="Try adjusting your filters" />
+            <EmptyState icon="cut-outline" title="No providers found" subtitle="Try adjusting your filters" />
           }
         />
       )}

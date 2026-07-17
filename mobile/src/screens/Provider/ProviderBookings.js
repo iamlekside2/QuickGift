@@ -60,7 +60,7 @@ export default function ProviderBookings({ navigation }) {
       <StatusBar style="dark" />
       {/* Header */}
       <View
-        style={{ paddingTop: Platform.OS === 'ios' ? 60 : 40, shadowColor: '#1F2937', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
+        style={{ paddingTop: Platform.OS === 'ios' ? 60 : 40, shadowColor: '#211F1C', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
         className="px-5 pb-4 bg-white"
       >
         <Text className="text-[22px] font-bold text-gray-800" style={{ letterSpacing: 0.3 }}>Bookings</Text>
@@ -75,7 +75,7 @@ export default function ProviderBookings({ navigation }) {
               className={`flex-1 py-2.5 rounded-xl items-center ${
                 activeTab === tab ? 'bg-teal' : ''
               }`}
-              style={activeTab === tab ? { shadowColor: '#1F2937', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 4, elevation: 2 } : {}}
+              style={activeTab === tab ? { shadowColor: '#211F1C', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 4, elevation: 2 } : {}}
               onPress={() => setActiveTab(tab)}
             >
               <Text className={`text-sm font-bold ${
@@ -99,7 +99,7 @@ export default function ProviderBookings({ navigation }) {
             <TouchableOpacity
               key={booking.id}
               className="bg-white rounded-2xl p-4 mb-3"
-              style={{ shadowColor: '#1F2937', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
+              style={{ shadowColor: '#211F1C', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
               onPress={() => navigation.navigate('BookingDetail', { booking })}
             >
               <View className="flex-row justify-between items-start mb-2">
@@ -117,11 +117,11 @@ export default function ProviderBookings({ navigation }) {
 
               <View className="flex-row justify-between items-center mt-2 pt-2 border-t border-gray-100">
                 <View className="flex-row items-center gap-1">
-                  <Ionicons name="calendar-outline" size={14} color="#9CA3AF" />
+                  <Ionicons name="calendar-outline" size={14} color="#9A948A" />
                   <Text className="text-xs text-gray-400">{booking.date}</Text>
                 </View>
                 <View className="flex-row items-center gap-1">
-                  <Ionicons name="time-outline" size={14} color="#9CA3AF" />
+                  <Ionicons name="time-outline" size={14} color="#9A948A" />
                   <Text className="text-xs text-gray-400">{booking.time}</Text>
                 </View>
                 {activeTab === 'Pending' && (
@@ -143,7 +143,7 @@ export default function ProviderBookings({ navigation }) {
                       onPress={() => handleUpdateStatus(booking.id, 'declined')}
                     >
                       {updatingId === booking.id ? (
-                        <ActivityIndicator size="small" color="#6B7280" />
+                        <ActivityIndicator size="small" color="#6E6A63" />
                       ) : (
                         <Text className="text-xs text-gray-600 font-bold">Decline</Text>
                       )}

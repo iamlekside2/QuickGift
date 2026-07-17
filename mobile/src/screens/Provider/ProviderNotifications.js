@@ -6,11 +6,11 @@ import { useFocusEffect } from '@react-navigation/native';
 import { notificationsAPI } from '../../services/api';
 
 const ICON_MAP = {
-  booking: { name: 'calendar', bg: 'bg-teal-light', color: '#35615D' },
-  payment: { name: 'wallet', bg: 'bg-green-50', color: '#10B981' },
-  confirmed: { name: 'checkmark-circle', bg: 'bg-blue-50', color: '#3B82F6' },
-  review: { name: 'star', bg: 'bg-orange-light', color: '#FD8950' },
-  system: { name: 'information-circle', bg: 'bg-purple-50', color: '#8B5CF6' },
+  booking: { name: 'calendar', bg: 'bg-teal-light', color: '#1F4A45' },
+  payment: { name: 'wallet', bg: 'bg-green-50', color: '#3E8E63' },
+  confirmed: { name: 'checkmark-circle', bg: 'bg-blue-50', color: '#4C7CB0' },
+  review: { name: 'star', bg: 'bg-orange-light', color: '#E8632F' },
+  system: { name: 'information-circle', bg: 'bg-purple-50', color: '#7A5FA8' },
 };
 
 export default function ProviderNotifications({ navigation }) {
@@ -53,7 +53,7 @@ export default function ProviderNotifications({ navigation }) {
       <StatusBar style="dark" />
       {/* Header */}
       <View
-        style={{ paddingTop: Platform.OS === 'ios' ? 60 : 40, shadowColor: '#1F2937', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
+        style={{ paddingTop: Platform.OS === 'ios' ? 60 : 40, shadowColor: '#211F1C', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
         className="px-5 pb-4 bg-white"
       >
         <View className="flex-row items-center justify-between">
@@ -62,7 +62,7 @@ export default function ProviderNotifications({ navigation }) {
               className="w-10 h-10 rounded-2xl bg-gray-100 items-center justify-center"
               onPress={() => navigation.goBack()}
             >
-              <Ionicons name="arrow-back" size={20} color="#1F2937" />
+              <Ionicons name="arrow-back" size={20} color="#211F1C" />
             </TouchableOpacity>
             <Text className="text-[22px] font-bold text-gray-800" style={{ letterSpacing: 0.3 }}>Notifications</Text>
           </View>
@@ -79,11 +79,11 @@ export default function ProviderNotifications({ navigation }) {
       <ScrollView className="flex-1 px-5 pt-4" showsVerticalScrollIndicator={false}>
         {loading ? (
           <View className="items-center py-16">
-            <ActivityIndicator size="large" color="#35615D" />
+            <ActivityIndicator size="large" color="#1F4A45" />
           </View>
         ) : notifications.length === 0 ? (
           <View className="items-center mt-16">
-            <Ionicons name="notifications-off-outline" size={48} color="#9CA3AF" />
+            <Ionicons name="notifications-off-outline" size={48} color="#9A948A" />
             <Text className="text-base font-bold text-gray-800 mt-3">No notifications yet</Text>
             <Text className="text-sm text-gray-400 mt-1">You'll be notified about bookings and updates</Text>
           </View>
@@ -95,13 +95,13 @@ export default function ProviderNotifications({ navigation }) {
                 key={notif.id || notif._id}
                 className="flex-row p-4 rounded-2xl mb-3 bg-white"
                 style={{
-                  shadowColor: '#1F2937',
+                  shadowColor: '#211F1C',
                   shadowOffset: { width: 0, height: 2 },
                   shadowOpacity: notif.unread ? 0.06 : 0.04,
                   shadowRadius: 8,
                   elevation: notif.unread ? 3 : 2,
                   borderLeftWidth: notif.unread ? 3 : 0,
-                  borderLeftColor: notif.unread ? '#35615D' : 'transparent',
+                  borderLeftColor: notif.unread ? '#1F4A45' : 'transparent',
                 }}
               >
                 <View className={`w-10 h-10 rounded-full items-center justify-center ${icon.bg}`}>

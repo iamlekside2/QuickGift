@@ -225,7 +225,7 @@ export default function ProviderDashboard({ navigation }) {
         className="px-5 pb-5 bg-white"
         style={{
           paddingTop: Platform.OS === 'ios' ? 60 : 40,
-          shadowColor: '#1F2937',
+          shadowColor: '#211F1C',
           shadowOffset: { width: 0, height: 2 },
           shadowOpacity: 0.04,
           shadowRadius: 8,
@@ -234,7 +234,7 @@ export default function ProviderDashboard({ navigation }) {
       >
         <View className="flex-row justify-between items-center">
           <View className="flex-1 mr-3">
-            <Text className="text-sm text-gray-400 font-medium">{greeting}, {personalName} 👋</Text>
+            <Text className="text-sm text-gray-400 font-medium">{greeting}, {personalName}</Text>
             {businessName ? (
               <Text className="text-xl font-extrabold text-gray-800 mt-0.5" numberOfLines={1}>{businessName}</Text>
             ) : (
@@ -245,7 +245,7 @@ export default function ProviderDashboard({ navigation }) {
             className="w-11 h-11 rounded-2xl bg-gray-100 items-center justify-center"
             onPress={() => navigation.navigate('ProviderNotifications')}
           >
-            <Ionicons name="notifications-outline" size={22} color="#1F2937" />
+            <Ionicons name="notifications-outline" size={22} color="#211F1C" />
           </TouchableOpacity>
         </View>
       </View>
@@ -269,7 +269,7 @@ export default function ProviderDashboard({ navigation }) {
         {isSuspended && (
           <View className="mx-5 mt-4 bg-red-50 rounded-2xl p-4 flex-row items-start gap-3 border border-red-200">
             <View className="w-10 h-10 rounded-xl bg-red-100 items-center justify-center">
-              <Ionicons name="ban-outline" size={22} color="#DC2626" />
+              <Ionicons name="ban-outline" size={22} color="#C0392F" />
             </View>
             <View className="flex-1">
               <Text className="text-sm font-bold text-red-800">Account Suspended</Text>
@@ -286,7 +286,7 @@ export default function ProviderDashboard({ navigation }) {
         {isRejected && (
           <View className="mx-5 mt-4 bg-red-50 rounded-2xl p-4 flex-row items-start gap-3 border border-red-200">
             <View className="w-10 h-10 rounded-xl bg-red-100 items-center justify-center">
-              <Ionicons name="close-circle-outline" size={22} color="#DC2626" />
+              <Ionicons name="close-circle-outline" size={22} color="#C0392F" />
             </View>
             <View className="flex-1">
               <Text className="text-sm font-bold text-red-800">Application Rejected</Text>
@@ -304,7 +304,7 @@ export default function ProviderDashboard({ navigation }) {
         {showSetup && (
           <View className="mx-5 mt-4 bg-white rounded-3xl overflow-hidden"
             style={{
-              shadowColor: '#35615D',
+              shadowColor: '#1F4A45',
               shadowOffset: { width: 0, height: 4 },
               shadowOpacity: 0.1,
               shadowRadius: 12,
@@ -361,9 +361,9 @@ export default function ProviderDashboard({ navigation }) {
                 >
                   <View className="w-10 h-10 rounded-xl items-center justify-center bg-teal-light">
                     {step.loading ? (
-                      <ActivityIndicator size="small" color="#35615D" />
+                      <ActivityIndicator size="small" color="#1F4A45" />
                     ) : (
-                      <Ionicons name={step.icon} size={20} color="#35615D" />
+                      <Ionicons name={step.icon} size={20} color="#1F4A45" />
                     )}
                   </View>
                   <View className="flex-1">
@@ -387,7 +387,7 @@ export default function ProviderDashboard({ navigation }) {
         {allStepsDone && !loading && providerData && (
           <View className="mx-5 mt-4 flex-row items-center gap-3 bg-green-50 rounded-2xl p-4 border border-green-200">
             <View className="w-10 h-10 rounded-xl bg-green-100 items-center justify-center">
-              <Ionicons name="checkmark-done" size={22} color="#10B981" />
+              <Ionicons name="checkmark-done" size={22} color="#3E8E63" />
             </View>
             <View className="flex-1">
               <Text className="text-sm font-bold text-green-800">You're all set up!</Text>
@@ -402,7 +402,7 @@ export default function ProviderDashboard({ navigation }) {
         <View
           className="mx-5 mt-4 bg-teal rounded-3xl p-6 overflow-hidden"
           style={{
-            shadowColor: '#35615D',
+            shadowColor: '#1F4A45',
             shadowOffset: { width: 0, height: 8 },
             shadowOpacity: 0.3,
             shadowRadius: 16,
@@ -435,9 +435,9 @@ export default function ProviderDashboard({ navigation }) {
         {/* Quick Stats */}
         <View className="flex-row px-5 mt-5 gap-3">
           {[
-            { value: stats.pendingRequests, label: 'Pending', color: '#FD8950', bg: 'bg-orange-light' },
-            { value: stats.todayBookings, label: 'Today', color: '#35615D', bg: 'bg-teal-light' },
-            { value: stats.completedJobs, label: 'Done', color: '#10B981', bg: 'bg-green-50' },
+            { value: stats.pendingRequests, label: 'Pending', color: '#E8632F', bg: 'bg-orange-light' },
+            { value: stats.todayBookings, label: 'Today', color: '#1F4A45', bg: 'bg-teal-light' },
+            { value: stats.completedJobs, label: 'Done', color: '#3E8E63', bg: 'bg-green-50' },
           ].map((item, i) => (
             <TouchableOpacity
               key={i}
@@ -469,7 +469,7 @@ export default function ProviderDashboard({ navigation }) {
                 key={i}
                 className="flex-1 bg-white rounded-2xl py-4 items-center gap-2"
                 style={{
-                  shadowColor: '#1F2937',
+                  shadowColor: '#211F1C',
                   shadowOffset: { width: 0, height: 2 },
                   shadowOpacity: 0.04,
                   shadowRadius: 8,
@@ -478,7 +478,7 @@ export default function ProviderDashboard({ navigation }) {
                 onPress={() => navigation.navigate(action.screen)}
               >
                 <View className="w-10 h-10 rounded-xl bg-teal-light items-center justify-center">
-                  <Ionicons name={action.icon} size={20} color="#35615D" />
+                  <Ionicons name={action.icon} size={20} color="#1F4A45" />
                 </View>
                 <Text className="text-[11px] font-semibold text-gray-600">{action.label}</Text>
               </TouchableOpacity>
@@ -494,7 +494,7 @@ export default function ProviderDashboard({ navigation }) {
                 key={i}
                 className="flex-1 bg-white rounded-2xl py-4 items-center gap-2"
                 style={{
-                  shadowColor: '#1F2937',
+                  shadowColor: '#211F1C',
                   shadowOffset: { width: 0, height: 2 },
                   shadowOpacity: 0.04,
                   shadowRadius: 8,
@@ -503,7 +503,7 @@ export default function ProviderDashboard({ navigation }) {
                 onPress={() => navigation.navigate(action.screen)}
               >
                 <View className="w-10 h-10 rounded-xl bg-teal-light items-center justify-center">
-                  <Ionicons name={action.icon} size={20} color="#35615D" />
+                  <Ionicons name={action.icon} size={20} color="#1F4A45" />
                 </View>
                 <Text className="text-[11px] font-semibold text-gray-600">{action.label}</Text>
               </TouchableOpacity>
@@ -518,7 +518,7 @@ export default function ProviderDashboard({ navigation }) {
                 className="flex-1 bg-white rounded-2xl py-4 items-center gap-2"
                 style={{
                   maxWidth: '33%',
-                  shadowColor: '#1F2937',
+                  shadowColor: '#211F1C',
                   shadowOffset: { width: 0, height: 2 },
                   shadowOpacity: 0.04,
                   shadowRadius: 8,
@@ -527,7 +527,7 @@ export default function ProviderDashboard({ navigation }) {
                 onPress={() => navigation.navigate(action.screen)}
               >
                 <View className="w-10 h-10 rounded-xl bg-teal-light items-center justify-center">
-                  <Ionicons name={action.icon} size={20} color="#35615D" />
+                  <Ionicons name={action.icon} size={20} color="#1F4A45" />
                 </View>
                 <Text className="text-[11px] font-semibold text-gray-600">{action.label}</Text>
               </TouchableOpacity>
@@ -544,17 +544,17 @@ export default function ProviderDashboard({ navigation }) {
               onPress={() => navigation.getParent()?.navigate('Bookings')}
             >
               <Text className="text-[13px] text-teal font-semibold">See All</Text>
-              <Ionicons name="chevron-forward" size={14} color="#35615D" />
+              <Ionicons name="chevron-forward" size={14} color="#1F4A45" />
             </TouchableOpacity>
           </View>
 
           {loading ? (
             <View className="items-center py-8">
-              <ActivityIndicator size="large" color="#35615D" />
+              <ActivityIndicator size="large" color="#1F4A45" />
             </View>
           ) : upcomingBookings.length === 0 ? (
             <View className="items-center py-8">
-              <Ionicons name="calendar-outline" size={48} color="#9CA3AF" />
+              <Ionicons name="calendar-outline" size={48} color="#9A948A" />
               <Text className="text-base font-bold text-gray-800 mt-3">No upcoming bookings</Text>
               <Text className="text-sm text-gray-400 mt-1">New bookings will appear here</Text>
             </View>
@@ -568,7 +568,7 @@ export default function ProviderDashboard({ navigation }) {
                   key={booking.id || booking._id}
                   className="flex-row items-center bg-white rounded-2xl p-4 mb-3 gap-3"
                   style={{
-                    shadowColor: '#1F2937',
+                    shadowColor: '#211F1C',
                     shadowOffset: { width: 0, height: 2 },
                     shadowOpacity: 0.04,
                     shadowRadius: 8,

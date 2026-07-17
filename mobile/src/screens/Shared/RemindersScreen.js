@@ -5,12 +5,12 @@ import { Ionicons } from '@expo/vector-icons';
 
 
 const OCCASION_PRESETS = [
-  { id: '1', label: 'Birthday', icon: '🎂', color: '#FD8950' },
-  { id: '2', label: 'Anniversary', icon: '💍', color: '#8B5CF6' },
-  { id: '3', label: 'Graduation', icon: '🎓', color: '#3B82F6' },
-  { id: '4', label: 'Wedding', icon: '💒', color: '#EF4444' },
-  { id: '5', label: 'Holiday', icon: '🎄', color: '#10B981' },
-  { id: '6', label: 'Custom', icon: '✨', color: '#F59E0B' },
+  { id: '1', label: 'Birthday', icon: 'balloon-outline', color: '#E8632F' },
+  { id: '2', label: 'Anniversary', icon: 'heart-outline', color: '#7A5FA8' },
+  { id: '3', label: 'Graduation', icon: 'school-outline', color: '#4C7CB0' },
+  { id: '4', label: 'Wedding', icon: 'diamond-outline', color: '#D24B4B' },
+  { id: '5', label: 'Holiday', icon: 'snow-outline', color: '#3E8E63' },
+  { id: '6', label: 'Custom', icon: 'sparkles-outline', color: '#B8862E' },
 ];
 
 export default function RemindersScreen({ navigation }) {
@@ -23,9 +23,9 @@ export default function RemindersScreen({ navigation }) {
   };
 
   const getUrgencyColor = (days) => {
-    if (days <= 7) return { bg: 'bg-red-50', text: 'text-red-600', border: '#EF4444' };
-    if (days <= 30) return { bg: 'bg-orange-light', text: 'text-orange', border: '#FD8950' };
-    return { bg: 'bg-teal-light', text: 'text-teal', border: '#35615D' };
+    if (days <= 7) return { bg: 'bg-red-50', text: 'text-red-600', border: '#D24B4B' };
+    if (days <= 30) return { bg: 'bg-orange-light', text: 'text-orange', border: '#E8632F' };
+    return { bg: 'bg-teal-light', text: 'text-teal', border: '#1F4A45' };
   };
 
   return (
@@ -36,7 +36,7 @@ export default function RemindersScreen({ navigation }) {
         className="bg-white px-5 pb-4"
         style={{
           paddingTop: Platform.OS === 'ios' ? 60 : 40,
-          shadowColor: '#1F2937',
+          shadowColor: '#211F1C',
           shadowOffset: { width: 0, height: 2 },
           shadowOpacity: 0.04,
           shadowRadius: 8,
@@ -49,13 +49,13 @@ export default function RemindersScreen({ navigation }) {
               className="w-10 h-10 rounded-2xl bg-gray-100 items-center justify-center"
               onPress={() => navigation.goBack()}
             >
-              <Ionicons name="arrow-back" size={20} color="#1F2937" />
+              <Ionicons name="arrow-back" size={20} color="#211F1C" />
             </TouchableOpacity>
             <Text className="text-xl font-bold text-gray-800">Reminders</Text>
           </View>
           <TouchableOpacity className="w-10 h-10 rounded-2xl bg-teal items-center justify-center"
             style={{
-              shadowColor: '#35615D',
+              shadowColor: '#1F4A45',
               shadowOffset: { width: 0, height: 2 },
               shadowOpacity: 0.2,
               shadowRadius: 4,
@@ -80,9 +80,9 @@ export default function RemindersScreen({ navigation }) {
               >
                 <View
                   className="w-14 h-14 rounded-2xl items-center justify-center"
-                  style={{ backgroundColor: occ.color + '15' }}
+                  style={{ backgroundColor: occ.color + '18' }}
                 >
-                  <Text style={{ fontSize: 24 }}>{occ.icon}</Text>
+                  <Ionicons name={occ.icon} size={24} color={occ.color} />
                 </View>
                 <Text className="text-[10px] text-gray-500 font-semibold">{occ.label}</Text>
               </TouchableOpacity>
@@ -96,7 +96,7 @@ export default function RemindersScreen({ navigation }) {
           {reminders.length === 0 ? (
             <View className="items-center mt-10 px-8 mb-6">
               <View className="w-24 h-24 rounded-full bg-orange-light items-center justify-center mb-5">
-                <Ionicons name="notifications-outline" size={40} color="#FD8950" />
+                <Ionicons name="notifications-outline" size={40} color="#E8632F" />
               </View>
               <Text className="text-lg font-bold text-gray-800 mb-2">No reminders yet</Text>
               <Text className="text-sm text-gray-400 text-center leading-5">
@@ -112,26 +112,26 @@ export default function RemindersScreen({ navigation }) {
                   key={reminder.id}
                   className="bg-white rounded-2xl p-4"
                   style={{
-                    shadowColor: '#1F2937',
+                    shadowColor: '#211F1C',
                     shadowOffset: { width: 0, height: 2 },
                     shadowOpacity: 0.04,
                     shadowRadius: 8,
                     elevation: 2,
                     borderLeftWidth: 3,
-                    borderLeftColor: reminder.active ? urgency.border : '#E5E7EB',
+                    borderLeftColor: reminder.active ? urgency.border : '#EAE3D8',
                     opacity: reminder.active ? 1 : 0.6,
                   }}
                 >
                   <View className="flex-row items-center">
                     <View className="w-12 h-12 rounded-2xl bg-cream items-center justify-center mr-3.5">
-                      <Text style={{ fontSize: 24 }}>{reminder.icon}</Text>
+                      <Ionicons name={reminder.icon || 'notifications-outline'} size={22} color="#1F4A45" />
                     </View>
                     <View className="flex-1">
                       <Text className="text-[15px] font-bold text-gray-800">{reminder.name}</Text>
                       <Text className="text-xs text-gray-400 mt-0.5">{reminder.person}</Text>
                       <View className="flex-row items-center gap-2 mt-1.5">
                         <View className="flex-row items-center gap-1">
-                          <Ionicons name="calendar-outline" size={12} color="#9CA3AF" />
+                          <Ionicons name="calendar-outline" size={12} color="#9A948A" />
                           <Text className="text-[11px] text-gray-400">{reminder.date}</Text>
                         </View>
                         <View className={`px-2 py-0.5 rounded-full ${urgency.bg}`}>
@@ -145,7 +145,7 @@ export default function RemindersScreen({ navigation }) {
                       <Switch
                         value={reminder.active}
                         onValueChange={() => toggleReminder(reminder.id)}
-                        trackColor={{ false: '#E5E7EB', true: '#35615D' }}
+                        trackColor={{ false: '#EAE3D8', true: '#1F4A45' }}
                         thumbColor="#fff"
                         style={{ transform: [{ scale: 0.75 }] }}
                       />
@@ -167,7 +167,7 @@ export default function RemindersScreen({ navigation }) {
             className="bg-orange-light rounded-2xl p-4 flex-row items-center gap-3.5"
           >
             <View className="w-10 h-10 rounded-xl bg-orange/10 items-center justify-center">
-              <Ionicons name="bulb-outline" size={20} color="#FD8950" />
+              <Ionicons name="bulb-outline" size={20} color="#E8632F" />
             </View>
             <View className="flex-1">
               <Text className="text-sm font-bold text-gray-800">Pro tip</Text>

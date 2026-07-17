@@ -7,8 +7,15 @@ import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import AppInput from '../../components/common/AppInput';
+import Button from '../../components/common/Button';
+import { SerifHeadline } from '../../components/common/Typography';
 
 const logoSmall = require('../../../assets/images/logo-small.png');
+
+const ROLES = [
+  { id: 'user', label: 'Shop & book', icon: 'gift-outline' },
+  { id: 'provider', label: 'Offer services', icon: 'briefcase-outline' },
+];
 
 export default function SignupScreen({ navigation }) {
   const [fullName, setFullName] = useState('');
@@ -37,7 +44,6 @@ export default function SignupScreen({ navigation }) {
     try {
       const fullPhone = normalizePhone(phone);
 
-      // Check if phone is already registered before sending OTP
       const { exists } = await checkPhone(fullPhone);
       if (exists) {
         Alert.alert(
@@ -69,99 +75,50 @@ export default function SignupScreen({ navigation }) {
 
   return (
     <KeyboardAvoidingView
-      className="flex-1 bg-white"
+      className="flex-1 bg-cream-warm"
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <StatusBar style="dark" />
       <ScrollView
-        contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}
+        contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingVertical: 32 }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
-        className="px-6"
+        className="px-5"
       >
         {/* Header */}
-        <View className="items-center mb-8">
-          <View
-            className="w-24 h-24 rounded-3xl bg-teal-light items-center justify-center mb-5"
-            style={{
-              shadowColor: '#35615D',
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.15,
-              shadowRadius: 12,
-              elevation: 4,
-            }}
-          >
-            <Image
-              source={logoSmall}
-              style={{ width: 56, height: 56, resizeMode: 'contain' }}
-            />
-          </View>
-          <Text className="text-3xl font-extrabold text-gray-800 mb-2 tracking-tight">
-            Join QuickGift
-          </Text>
-          <Text className="text-base text-gray-400 font-medium">
-            Create your account in seconds
-          </Text>
+        <View className="items-center mb-7">
+          <Image source={logoSmall} style={{ width: 56, height: 56, resizeMode: 'contain', marginBottom: 18 }} />
+          <SerifHeadline text="Create your account" emphasis="account" size={28} style={{ textAlign: 'center' }} />
+          <Text className="text-[14px] text-ink-soft mt-2">Join QuickGift in seconds</Text>
         </View>
 
         {/* Role Selection */}
-        <View className="mb-5">
-          <Text className="text-sm font-bold text-gray-700 mb-3">I want to join as</Text>
-          <View className="flex-row gap-3">
-            {/* Customer */}
-            <TouchableOpacity
-              className={`flex-1 items-center py-4 rounded-2xl border-2 ${
-                selectedRole === 'user'
-                  ? 'border-teal bg-teal-light'
-                  : 'border-gray-100 bg-white'
-              }`}
-              onPress={() => setSelectedRole('user')}
-            >
-              <View
-                className={`w-12 h-12 rounded-2xl items-center justify-center mb-2 ${
-                  selectedRole === 'user' ? 'bg-teal' : 'bg-teal-light'
+        <Text className="text-[13px] font-bold text-ink-soft mb-2">I want to</Text>
+        <View className="flex-row gap-3 mb-5">
+          {ROLES.map((role) => {
+            const active = selectedRole === role.id;
+            return (
+              <TouchableOpacity
+                key={role.id}
+                className={`flex-1 items-center py-4 rounded-[16px] border-[1.5px] ${
+                  active ? 'border-teal bg-teal-light' : 'border-line-border bg-white'
                 }`}
+                onPress={() => setSelectedRole(role.id)}
+                activeOpacity={0.85}
               >
-                <Ionicons
-                  name="gift-outline"
-                  size={24}
-                  color={selectedRole === 'user' ? '#fff' : '#35615D'}
-                />
-              </View>
-              <Text className={`text-sm font-bold ${
-                selectedRole === 'user' ? 'text-teal' : 'text-gray-600'
-              }`}>
-                Customer
-              </Text>
-            </TouchableOpacity>
-
-            {/* Provider */}
-            <TouchableOpacity
-              className={`flex-1 items-center py-4 rounded-2xl border-2 ${
-                selectedRole === 'provider'
-                  ? 'border-teal bg-teal-light'
-                  : 'border-gray-100 bg-white'
-              }`}
-              onPress={() => setSelectedRole('provider')}
-            >
-              <View
-                className={`w-12 h-12 rounded-2xl items-center justify-center mb-2 ${
-                  selectedRole === 'provider' ? 'bg-teal' : 'bg-orange-light'
-                }`}
-              >
-                <Ionicons
-                  name="cut-outline"
-                  size={24}
-                  color={selectedRole === 'provider' ? '#fff' : '#FD8950'}
-                />
-              </View>
-              <Text className={`text-sm font-bold ${
-                selectedRole === 'provider' ? 'text-teal' : 'text-gray-600'
-              }`}>
-                Provider
-              </Text>
-            </TouchableOpacity>
-          </View>
+                <View
+                  className={`w-12 h-12 rounded-[14px] items-center justify-center mb-2 ${
+                    active ? 'bg-teal' : 'bg-sand'
+                  }`}
+                >
+                  <Ionicons name={role.icon} size={22} color={active ? '#fff' : '#6E6A63'} />
+                </View>
+                <Text className={`text-[13.5px] font-bold ${active ? 'text-teal' : 'text-ink-soft'}`}>
+                  {role.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
 
         {/* Full Name */}
@@ -183,30 +140,20 @@ export default function SignupScreen({ navigation }) {
           type="phone"
         />
 
-        {/* Continue Button */}
-        <TouchableOpacity
-          className={`py-4 rounded-2xl items-center ${isFormValid ? 'bg-teal' : 'bg-gray-200'}`}
-          style={isFormValid ? {
-            shadowColor: '#35615D',
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.25,
-            shadowRadius: 8,
-            elevation: 4,
-          } : undefined}
+        {/* Continue */}
+        <Button
+          title={loading ? 'Sending OTP…' : 'Continue'}
           onPress={handleSignup}
-          disabled={!isFormValid || loading}
-          activeOpacity={0.85}
-        >
-          <Text className={`text-base font-bold ${isFormValid ? 'text-white' : 'text-gray-400'}`}>
-            {loading ? 'Sending OTP...' : 'Continue'}
-          </Text>
-        </TouchableOpacity>
+          disabled={!isFormValid}
+          loading={loading}
+          style={{ marginTop: 4 }}
+        />
 
         {/* Login link */}
         <View className="flex-row justify-center mt-5">
-          <Text className="text-sm text-gray-400">Already have an account? </Text>
+          <Text className="text-[13.5px] text-ink-soft">Already have an account? </Text>
           <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Text className="text-sm text-teal font-bold">Log In</Text>
+            <Text className="text-[13.5px] text-teal font-bold">Log in</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

@@ -2,12 +2,12 @@ import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Animated, ActivityIndicator, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-const TEAL = '#35615D';
-const GRAY_200 = '#E5E7EB';
-const GRAY_400 = '#9CA3AF';
-const GRAY_500 = '#6B7280';
-const RED = '#EF4444';
-const GREEN = '#10B981';
+const TEAL = '#1F4A45';
+const GRAY_200 = '#EAE3D8';
+const GRAY_400 = '#9A948A';
+const GRAY_500 = '#6E6A63';
+const RED = '#D24B4B';
+const GREEN = '#3E8E63';
 
 /**
  * AppInput — unified input component for QuickGift.
@@ -118,7 +118,7 @@ export default function AppInput({
             borderWidth: 1.5,
             borderColor,
             borderRadius: 16,
-            backgroundColor: disabled ? '#F3F4F6' : '#FAFAFA',
+            backgroundColor: disabled ? '#F0ECE3' : '#F5F0E7',
             minHeight: isMultiline ? 100 : 56,
             flexDirection: 'row',
             alignItems: isMultiline ? 'flex-start' : 'center',
@@ -137,9 +137,8 @@ export default function AppInput({
         {/* Phone prefix */}
         {isPhone && (
           <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 8 }}>
-            <Text style={{ fontSize: 16 }}>🇳🇬</Text>
-            <Text style={{ fontSize: 13, fontWeight: '700', color: '#374151', marginLeft: 4 }}>+234</Text>
-            <View style={{ width: 1, height: 24, backgroundColor: '#E5E7EB', marginLeft: 10 }} />
+            <Text style={{ fontSize: 14, fontWeight: '700', color: '#211F1C' }}>+234</Text>
+            <View style={{ width: 1, height: 24, backgroundColor: '#EAE3D8', marginLeft: 10 }} />
           </View>
         )}
 
@@ -175,7 +174,7 @@ export default function AppInput({
             value={value}
             onChangeText={disabled ? undefined : onChangeText}
             placeholder={focused || isSearch ? placeholder : ''}
-            placeholderTextColor="#D1D5DB"
+            placeholderTextColor="#B5AFA2"
             keyboardType={keyboardType}
             autoCapitalize={autoCapitalize}
             secureTextEntry={isPassword && !showPassword}
@@ -189,7 +188,7 @@ export default function AppInput({
             style={{
               fontSize: 14,
               fontWeight: '600',
-              color: '#1F2937',
+              color: '#211F1C',
               paddingTop: label && !isSearch ? 20 : isMultiline ? 12 : 0,
               paddingBottom: isMultiline ? 12 : 0,
               minHeight: isMultiline ? 80 : undefined,

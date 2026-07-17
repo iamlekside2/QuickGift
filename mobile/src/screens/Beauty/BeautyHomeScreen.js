@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { BEAUTY_CATEGORIES } from '../../constants/data';
@@ -10,13 +10,14 @@ import { LoadingState, EmptyState } from '../../components/common/ScreenStates';
 import SectionHeader from '../../components/common/SectionHeader';
 import CategoryCard from '../../components/common/CategoryCard';
 import ProviderCard from '../../components/common/ProviderCard';
+import { iconFor } from '../../utils/categoryIcons';
 
 const FILTERS = [
-  { id: 'all', label: '✨ All' },
-  { id: 'nearest', label: '📍 Nearest' },
-  { id: 'home', label: '🏠 Home Service' },
-  { id: 'salon', label: '💈 Salon Visit' },
-  { id: 'express', label: '⚡ Express (2hrs)' },
+  { id: 'all', label: 'All' },
+  { id: 'nearest', label: 'Nearest' },
+  { id: 'home', label: 'Home Service' },
+  { id: 'salon', label: 'Studio Visit' },
+  { id: 'express', label: 'Express (2h)' },
 ];
 
 export default function BeautyHomeScreen({ navigation }) {
@@ -24,10 +25,9 @@ export default function BeautyHomeScreen({ navigation }) {
   const [allProviders, setAllProviders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState('all');
-  const { coords, refreshLocation, areaName } = useLocation();
+  const { coords, refreshLocation } = useLocation();
   const { user } = useAuth();
 
-  // Use coords from GPS, or from user profile as fallback
   const userLat = coords?.lat || user?.lat;
   const userLng = coords?.lng || user?.lng;
 
@@ -53,31 +53,19 @@ export default function BeautyHomeScreen({ navigation }) {
     try {
       const params = {};
       if (userLat && userLng) {
-        // Tight radius first — show nearby providers (same area/bus stops)
         params.lat = userLat;
         params.lng = userLng;
-        params.radius_km = 5; // ~5km = your area + neighboring bus stops
+        params.radius_km = 5;
         params.sort = 'distance';
 
         let res = await providersAPI.list(params);
         let data = res.data || [];
-
-        // If too few results, expand radius gradually
-        if (data.length < 3) {
-          params.radius_km = 10; // Expand to ~10km
-          res = await providersAPI.list(params);
-          data = res.data || [];
-        }
-        if (data.length < 3) {
-          params.radius_km = 20; // Final expansion ~20km
-          res = await providersAPI.list(params);
-          data = res.data || [];
-        }
+        if (data.length < 3) { params.radius_km = 10; res = await providersAPI.list(params); data = res.data || []; }
+        if (data.length < 3) { params.radius_km = 20; res = await providersAPI.list(params); data = res.data || []; }
 
         setAllProviders(data);
         setProviders(data);
       } else {
-        // No GPS — show all providers sorted by rating (prompt to enable location)
         params.sort = 'rating';
         const res = await providersAPI.list(params);
         const data = res.data || [];
@@ -91,98 +79,100 @@ export default function BeautyHomeScreen({ navigation }) {
     }
   };
 
+  const canGoBack = navigation.canGoBack();
+
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1 bg-cream">
       <StatusBar style="light" />
 
-      {/* Fixed teal header - stays above scroll */}
+      {/* Teal header */}
       <View
-        className="bg-teal px-6 pb-5"
-        style={{ paddingTop: Platform.OS === 'ios' ? 60 : 40 }}
+        className="bg-teal px-5"
+        style={{ paddingTop: Platform.OS === 'ios' ? 56 : 38, paddingBottom: 30, borderBottomLeftRadius: 28, borderBottomRightRadius: 28 }}
       >
-        <View className="flex-row items-center justify-between mb-2">
-          <TouchableOpacity
-            className="w-10 h-10 rounded-2xl bg-white/15 items-center justify-center"
-            onPress={() => navigation.goBack()}
-          >
-            <Ionicons name="arrow-back" size={20} color="#fff" />
-          </TouchableOpacity>
-          <Text className="text-xl font-bold text-white">Beauty Services</Text>
+        <View className="flex-row items-center justify-between">
+          {canGoBack ? (
+            <TouchableOpacity
+              className="w-10 h-10 rounded-[14px] bg-white/15 items-center justify-center"
+              onPress={() => navigation.goBack()}
+            >
+              <Ionicons name="arrow-back" size={20} color="#fff" />
+            </TouchableOpacity>
+          ) : <View style={{ width: 40 }} />}
+          <Text className="text-[19px] font-bold text-white">Book a Pro</Text>
           <View style={{ width: 40 }} />
         </View>
-        <Text className="text-white/60 text-sm text-center">
-          Book top professionals near you
-        </Text>
+      </View>
 
-        {/* Search Bar */}
+      {/* Floating search */}
+      <View className="px-5" style={{ marginTop: -16 }}>
         <TouchableOpacity
-          className="flex-row items-center bg-white/15 rounded-2xl px-4 py-3.5 mt-4 gap-2.5"
+          className="flex-row items-center bg-white gap-3"
+          style={{
+            height: 52, borderRadius: 16, paddingHorizontal: 16,
+            shadowColor: '#1F4A45', shadowOffset: { width: 0, height: 14 },
+            shadowOpacity: 0.1, shadowRadius: 30, elevation: 6,
+          }}
           onPress={() => navigation.navigate('ProvidersList', { title: 'Search Providers', search: true })}
+          activeOpacity={0.85}
         >
-          <Ionicons name="search" size={18} color="rgba(255,255,255,0.6)" />
-          <Text className="text-sm text-white/50">Search services or providers...</Text>
+          <Ionicons name="search" size={19} color="#9A948A" />
+          <Text className="flex-1 text-[14px] text-ink-placeholder">Search services or providers…</Text>
         </TouchableOpacity>
       </View>
 
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        {/* Quick Filters */}
+        {/* Filter chips */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 20, gap: 10, paddingTop: 16, paddingBottom: 8 }}
+          contentContainerStyle={{ paddingHorizontal: 20, gap: 10, paddingTop: 18, paddingBottom: 8 }}
         >
-          {FILTERS.map((item) => (
-            <TouchableOpacity
-              key={item.id}
-              className={`px-5 py-2.5 rounded-full ${
-                activeFilter === item.id ? 'bg-teal' : 'bg-gray-100'
-              }`}
-              style={activeFilter === item.id ? {
-                shadowColor: '#35615D',
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.25,
-                shadowRadius: 8,
-                elevation: 6,
-              } : undefined}
-              onPress={() => setActiveFilter(item.id)}
-            >
-              <Text
-                className={`text-sm font-semibold ${
-                  activeFilter === item.id ? 'text-white' : 'text-gray-500'
+          {FILTERS.map((item) => {
+            const active = activeFilter === item.id;
+            return (
+              <TouchableOpacity
+                key={item.id}
+                className={`px-5 rounded-full items-center justify-center border-[1.5px] ${
+                  active ? 'bg-teal border-teal' : 'bg-white border-line-border'
                 }`}
+                style={{ height: 40 }}
+                onPress={() => setActiveFilter(item.id)}
+                activeOpacity={0.85}
               >
-                {item.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
+                <Text className={`text-[13px] font-bold ${active ? 'text-white' : 'text-ink-soft'}`}>
+                  {item.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </ScrollView>
 
         {/* Location banner */}
         {!userLat && !userLng && (
           <TouchableOpacity
-            className="flex-row items-center gap-2.5 mx-6 mt-3 px-4 py-3 rounded-xl bg-orange-light/30 border border-orange/20"
-            onPress={async () => {
-              await refreshLocation();
-            }}
+            className="flex-row items-center gap-2.5 mx-5 mt-3 px-4 py-3 rounded-[14px] bg-orange-light"
+            onPress={async () => { await refreshLocation(); }}
           >
-            <Ionicons name="location" size={16} color="#FD8950" />
-            <Text className="text-xs text-orange font-semibold flex-1">
+            <Ionicons name="location" size={16} color="#E8632F" />
+            <Text className="text-xs text-orange-dark font-bold flex-1">
               Enable location for nearby results
             </Text>
-            <Text className="text-[10px] text-orange/70 font-medium">Turn On</Text>
+            <Text className="text-[10px] text-orange-dark/70 font-bold">Turn On</Text>
           </TouchableOpacity>
         )}
 
         {/* Categories */}
-        <View className="mt-4">
-          <SectionHeader title="Services" />
+        <View className="mt-5">
+          <SectionHeader title="Categories" />
         </View>
-        <View className="flex-row flex-wrap px-6 gap-4 mb-6 justify-between">
+        <View className="flex-row flex-wrap px-5 gap-y-5 mb-6" style={{ justifyContent: 'space-between' }}>
           {BEAUTY_CATEGORIES.map((cat) => (
             <CategoryCard
               key={cat.id}
               label={cat.label}
-              icon={cat.icon}
+              icon={iconFor(cat)}
+              color={cat.color}
               onPress={() => navigation.navigate('ProvidersList', { category: cat.id, title: cat.label })}
             />
           ))}
@@ -190,13 +180,13 @@ export default function BeautyHomeScreen({ navigation }) {
 
         {/* Top Providers */}
         <SectionHeader
-          title={`Top Rated${activeFilter !== 'all' ? ` (${providers.length})` : ' Providers'}`}
+          title={`Top Rated${activeFilter !== 'all' ? ` (${providers.length})` : ' Pros'}`}
           onAction={() => navigation.navigate('ProvidersList', { title: 'All Providers' })}
         />
         {loading ? (
-          <LoadingState message="Loading providers..." />
+          <LoadingState message="Loading providers…" />
         ) : providers.length > 0 ? (
-          <View className="px-6 gap-3.5">
+          <View className="px-5 gap-3.5">
             {providers.map((item) => (
               <ProviderCard
                 key={item.id}

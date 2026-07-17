@@ -4,8 +4,8 @@ import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 
 const SUPPORT_OPTIONS = [
-  { icon: 'call-outline', label: 'Call us', sub: '+234 810 123 4567', color: '#35615D', action: 'tel:+2348101234567' },
-  { icon: 'mail-outline', label: 'Email us', sub: 'support@quickgift.co', color: '#3B82F6', action: 'mailto:support@quickgift.co' },
+  { icon: 'call-outline', label: 'Call us', sub: '+234 810 123 4567', color: '#1F4A45', action: 'tel:+2348101234567' },
+  { icon: 'mail-outline', label: 'Email us', sub: 'support@quickgift.co', color: '#4C7CB0', action: 'mailto:support@quickgift.co' },
   { icon: 'logo-whatsapp', label: 'WhatsApp', sub: 'Chat with our support team', color: '#25D366', action: 'https://wa.me/2348101234567' },
 ];
 
@@ -25,7 +25,7 @@ export default function HelpSupportScreen({ navigation }) {
         className="px-5 pb-4 bg-white"
         style={{
           paddingTop: Platform.OS === 'ios' ? 60 : 40,
-          shadowColor: '#1F2937',
+          shadowColor: '#211F1C',
           shadowOffset: { width: 0, height: 2 },
           shadowOpacity: 0.04,
           shadowRadius: 8,
@@ -37,7 +37,7 @@ export default function HelpSupportScreen({ navigation }) {
             className="w-10 h-10 rounded-2xl bg-gray-100 items-center justify-center"
             onPress={() => navigation.goBack()}
           >
-            <Ionicons name="arrow-back" size={20} color="#1F2937" />
+            <Ionicons name="arrow-back" size={20} color="#211F1C" />
           </TouchableOpacity>
           <Text className="text-xl font-bold text-gray-800">Help & Support</Text>
         </View>
@@ -52,7 +52,7 @@ export default function HelpSupportScreen({ navigation }) {
               key={i}
               className="flex-row items-center bg-white rounded-2xl p-4 gap-3"
               style={{
-                shadowColor: '#1F2937',
+                shadowColor: '#211F1C',
                 shadowOffset: { width: 0, height: 2 },
                 shadowOpacity: 0.04,
                 shadowRadius: 8,
@@ -70,7 +70,7 @@ export default function HelpSupportScreen({ navigation }) {
                 <Text className="text-sm font-semibold text-gray-800">{opt.label}</Text>
                 <Text className="text-xs text-gray-500 mt-0.5">{opt.sub}</Text>
               </View>
-              <Ionicons name="chevron-forward" size={16} color="#D1D5DB" />
+              <Ionicons name="chevron-forward" size={16} color="#B5AFA2" />
             </TouchableOpacity>
           ))}
         </View>
@@ -83,7 +83,7 @@ export default function HelpSupportScreen({ navigation }) {
               key={i}
               className="bg-white rounded-2xl p-4"
               style={{
-                shadowColor: '#1F2937',
+                shadowColor: '#211F1C',
                 shadowOffset: { width: 0, height: 2 },
                 shadowOpacity: 0.04,
                 shadowRadius: 8,

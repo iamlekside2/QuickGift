@@ -5,28 +5,29 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import { useWallet } from '../../context/WalletContext';
 import { ordersAPI, bookingsAPI, providersAPI } from '../../services/api';
+import { SERIF_FAMILY } from '../../components/common/Typography';
 
 const logoSmall = require('../../../assets/images/logo-small.png');
 
 const BUYER_MENU = [
-  { icon: 'wallet-outline', label: 'Wallet', sub: 'Balance & transactions', color: '#35615D', screen: 'WalletScreen' },
-  { icon: 'heart-outline', label: 'Favourites', sub: 'Saved gifts & providers', color: '#EF4444', screen: 'Favourites' },
-  { icon: 'notifications-outline', label: 'Reminders', sub: 'Birthday & event alerts', color: '#FD8950', screen: 'Reminders' },
-  { icon: 'location-outline', label: 'Addresses', sub: 'Delivery addresses', color: '#3B82F6', screen: 'Addresses' },
-  { icon: 'people-outline', label: 'Refer a Friend', sub: 'Earn \u20A6500 per referral', color: '#8B5CF6', screen: 'ReferFriend' },
-  { icon: 'help-circle-outline', label: 'Help & Support', sub: 'FAQs and chat support', color: '#10B981', screen: 'HelpSupport' },
-  { icon: 'settings-outline', label: 'Settings', sub: 'Account preferences', color: '#6B7280', screen: 'Settings' },
+  { icon: 'wallet-outline', label: 'Wallet', sub: 'Balance & transactions', color: '#1F4A45', screen: 'WalletScreen' },
+  { icon: 'heart-outline', label: 'Favourites', sub: 'Saved gifts & providers', color: '#D24B4B', screen: 'Favourites' },
+  { icon: 'notifications-outline', label: 'Reminders', sub: 'Birthday & event alerts', color: '#E8632F', screen: 'Reminders' },
+  { icon: 'location-outline', label: 'Addresses', sub: 'Delivery addresses', color: '#4C7CB0', screen: 'Addresses' },
+  { icon: 'people-outline', label: 'Refer a Friend', sub: 'Earn \u20A6500 per referral', color: '#7A5FA8', screen: 'ReferFriend' },
+  { icon: 'help-circle-outline', label: 'Help & Support', sub: 'FAQs and chat support', color: '#3E8E63', screen: 'HelpSupport' },
+  { icon: 'settings-outline', label: 'Settings', sub: 'Account preferences', color: '#6E6A63', screen: 'Settings' },
 ];
 
 const PROVIDER_MENU = [
-  { icon: 'briefcase-outline', label: 'Business Profile', sub: 'Your public business page', color: '#35615D', screen: 'BusinessProfile' },
-  { icon: 'time-outline', label: 'Availability', sub: 'Working hours & days off', color: '#3B82F6', screen: 'AvailabilityScreen' },
-  { icon: 'wallet-outline', label: 'Wallet & Earnings', sub: 'Balance, payouts & history', color: '#10B981', screen: 'WalletScreen' },
-  { icon: 'pricetag-outline', label: 'My Services', sub: 'Manage your services', color: '#FD8950', screen: 'ProviderServices' },
-  { icon: 'cube-outline', label: 'My Products', sub: 'Manage gift products', color: '#8B5CF6', screen: 'ProviderProducts' },
-  { icon: 'star-outline', label: 'Reviews', sub: 'Client feedback & ratings', color: '#F59E0B', screen: 'ProviderReviews' },
-  { icon: 'help-circle-outline', label: 'Help & Support', sub: 'FAQs and chat support', color: '#6B7280', screen: 'HelpSupport' },
-  { icon: 'settings-outline', label: 'Settings', sub: 'Account preferences', color: '#6B7280', screen: 'Settings' },
+  { icon: 'briefcase-outline', label: 'Business Profile', sub: 'Your public business page', color: '#1F4A45', screen: 'BusinessProfile' },
+  { icon: 'time-outline', label: 'Availability', sub: 'Working hours & days off', color: '#4C7CB0', screen: 'AvailabilityScreen' },
+  { icon: 'wallet-outline', label: 'Wallet & Earnings', sub: 'Balance, payouts & history', color: '#3E8E63', screen: 'WalletScreen' },
+  { icon: 'pricetag-outline', label: 'My Services', sub: 'Manage your services', color: '#E8632F', screen: 'ProviderServices' },
+  { icon: 'cube-outline', label: 'My Products', sub: 'Manage gift products', color: '#7A5FA8', screen: 'ProviderProducts' },
+  { icon: 'star-outline', label: 'Reviews', sub: 'Client feedback & ratings', color: '#B8862E', screen: 'ProviderReviews' },
+  { icon: 'help-circle-outline', label: 'Help & Support', sub: 'FAQs and chat support', color: '#6E6A63', screen: 'HelpSupport' },
+  { icon: 'settings-outline', label: 'Settings', sub: 'Account preferences', color: '#6E6A63', screen: 'Settings' },
 ];
 
 export default function ProfileScreen({ navigation }) {
@@ -96,15 +97,15 @@ export default function ProfileScreen({ navigation }) {
   const { balance: walletBalance } = useWallet();
 
   return (
-    <View className="flex-1 bg-gray-50">
+    <View className="flex-1 bg-cream">
       <StatusBar style="light" />
 
       {/* Fixed teal header - stays above scroll */}
       <View
         className="bg-teal"
-        style={{ paddingTop: Platform.OS === 'ios' ? 60 : 40 }}
+        style={{ paddingTop: Platform.OS === 'ios' ? 60 : 40, borderBottomLeftRadius: 28, borderBottomRightRadius: 28 }}
       >
-        <View className="px-5 pb-8">
+        <View className="px-5 pb-9">
           <View className="flex-row items-center justify-between mb-6">
             <Text className="text-xl font-extrabold text-white tracking-tight">Profile</Text>
             <Image source={logoSmall} style={{ width: 28, height: 28, resizeMode: 'contain', tintColor: 'rgba(255,255,255,0.4)' }} />
@@ -127,7 +128,7 @@ export default function ProfileScreen({ navigation }) {
               )}
               {isProvider && providerStatus === 'pending' && (
                 <View className="flex-row items-center mt-1.5 bg-amber-400/20 self-start px-2.5 py-1 rounded-full gap-1">
-                  <Ionicons name="hourglass-outline" size={12} color="#FBBF24" />
+                  <Ionicons name="hourglass-outline" size={12} color="#E8B65A" />
                   <Text className="text-[10px] text-amber-200 font-semibold">Pending Approval</Text>
                 </View>
               )}
@@ -154,31 +155,32 @@ export default function ProfileScreen({ navigation }) {
       </View>
 
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        {/* Stats card - overlaps header with negative margin */}
+        {/* Stats card - floats over the header curve */}
         <View
-          className="mx-5 bg-white rounded-3xl p-5 -mt-1 mb-4"
+          className="mx-5 bg-white rounded-[22px] p-5 mb-4"
           style={{
-            shadowColor: '#1F2937',
-            shadowOffset: { width: 0, height: 6 },
-            shadowOpacity: 0.08,
-            shadowRadius: 16,
+            marginTop: -24,
+            shadowColor: '#1F4A45',
+            shadowOffset: { width: 0, height: 14 },
+            shadowOpacity: 0.1,
+            shadowRadius: 30,
             elevation: 6,
           }}
         >
           <View className="flex-row">
             <View className="flex-1 items-center">
-              <Text className="text-2xl font-extrabold text-gray-800">{stats.orders}</Text>
-              <Text className="text-[11px] text-gray-400 mt-1 font-medium">{isProvider ? 'Jobs' : 'Orders'}</Text>
+              <Text style={{ fontFamily: SERIF_FAMILY, fontSize: 28, color: '#211F1C' }}>{stats.orders}</Text>
+              <Text className="text-[11px] text-ink-caption mt-1 font-semibold">{isProvider ? 'Jobs' : 'Orders'}</Text>
             </View>
-            <View className="w-px bg-gray-100" />
+            <View className="w-px bg-line-divider" />
             <View className="flex-1 items-center">
-              <Text className="text-2xl font-extrabold text-gray-800">{stats.gifts}</Text>
-              <Text className="text-[11px] text-gray-400 mt-1 font-medium">{isProvider ? 'Products' : 'Gifts Sent'}</Text>
+              <Text style={{ fontFamily: SERIF_FAMILY, fontSize: 28, color: '#211F1C' }}>{stats.gifts}</Text>
+              <Text className="text-[11px] text-ink-caption mt-1 font-semibold">{isProvider ? 'Products' : 'Gifts Sent'}</Text>
             </View>
-            <View className="w-px bg-gray-100" />
+            <View className="w-px bg-line-divider" />
             <View className="flex-1 items-center">
-              <Text className="text-2xl font-extrabold text-gray-800">{stats.bookings}</Text>
-              <Text className="text-[11px] text-gray-400 mt-1 font-medium">Bookings</Text>
+              <Text style={{ fontFamily: SERIF_FAMILY, fontSize: 28, color: '#211F1C' }}>{stats.bookings}</Text>
+              <Text className="text-[11px] text-ink-caption mt-1 font-semibold">Bookings</Text>
             </View>
           </View>
         </View>
@@ -189,12 +191,12 @@ export default function ProfileScreen({ navigation }) {
             className="flex-row items-center gap-3 mx-5 mb-4 p-4 bg-teal-light rounded-2xl"
             onPress={handleLogout}
           >
-            <Ionicons name="log-in-outline" size={22} color="#35615D" />
+            <Ionicons name="log-in-outline" size={22} color="#1F4A45" />
             <View className="flex-1">
               <Text className="text-sm font-bold text-teal">Sign in to your account</Text>
               <Text className="text-xs text-gray-500 mt-0.5">Access all features and track orders</Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color="#35615D" />
+            <Ionicons name="chevron-forward" size={18} color="#1F4A45" />
           </TouchableOpacity>
         )}
 
@@ -203,7 +205,7 @@ export default function ProfileScreen({ navigation }) {
           <View
             className="mx-5 mb-4 bg-white rounded-2xl p-4 flex-row items-center"
             style={{
-              shadowColor: '#1F2937',
+              shadowColor: '#211F1C',
               shadowOffset: { width: 0, height: 2 },
               shadowOpacity: 0.04,
               shadowRadius: 8,
@@ -211,7 +213,7 @@ export default function ProfileScreen({ navigation }) {
             }}
           >
             <View className="w-12 h-12 rounded-2xl bg-orange-light items-center justify-center mr-3">
-              <Ionicons name="wallet" size={22} color="#FD8950" />
+              <Ionicons name="wallet" size={22} color="#E8632F" />
             </View>
             <View className="flex-1">
               <Text className="text-[11px] text-gray-400 font-medium">Wallet Balance</Text>
@@ -220,7 +222,7 @@ export default function ProfileScreen({ navigation }) {
             <TouchableOpacity
               className="bg-teal px-5 py-2.5 rounded-xl"
               style={{
-                shadowColor: '#35615D',
+                shadowColor: '#1F4A45',
                 shadowOffset: { width: 0, height: 2 },
                 shadowOpacity: 0.2,
                 shadowRadius: 4,
@@ -237,7 +239,7 @@ export default function ProfileScreen({ navigation }) {
         <View
           className="mx-5 bg-white rounded-3xl overflow-hidden mb-4"
           style={{
-            shadowColor: '#1F2937',
+            shadowColor: '#211F1C',
             shadowOffset: { width: 0, height: 3 },
             shadowOpacity: 0.06,
             shadowRadius: 12,
@@ -263,7 +265,7 @@ export default function ProfileScreen({ navigation }) {
                 <Text className="text-[14px] font-semibold text-gray-800">{item.label}</Text>
                 <Text className="text-[11px] text-gray-400 mt-0.5">{item.sub}</Text>
               </View>
-              <Ionicons name="chevron-forward" size={16} color="#D1D5DB" />
+              <Ionicons name="chevron-forward" size={16} color="#B5AFA2" />
             </TouchableOpacity>
           ))}
         </View>
@@ -272,7 +274,7 @@ export default function ProfileScreen({ navigation }) {
         <TouchableOpacity
           className="mx-5 bg-white rounded-2xl flex-row items-center justify-center gap-2 py-4 mb-4"
           style={{
-            shadowColor: '#1F2937',
+            shadowColor: '#211F1C',
             shadowOffset: { width: 0, height: 2 },
             shadowOpacity: 0.04,
             shadowRadius: 8,
@@ -280,7 +282,7 @@ export default function ProfileScreen({ navigation }) {
           }}
           onPress={handleLogout}
         >
-          <Ionicons name="log-out-outline" size={20} color="#EF4444" />
+          <Ionicons name="log-out-outline" size={20} color="#D24B4B" />
           <Text className="text-sm text-red-500 font-bold">
             {isGuest ? 'Exit Guest Mode' : 'Log Out'}
           </Text>

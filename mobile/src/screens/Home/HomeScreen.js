@@ -9,6 +9,7 @@ import SectionHeader from '../../components/common/SectionHeader';
 import CategoryCard from '../../components/common/CategoryCard';
 import GiftCard from '../../components/common/GiftCard';
 import ProviderCard from '../../components/common/ProviderCard';
+import { iconFor, colorFor } from '../../utils/categoryIcons';
 
 const logoSmall = require('../../../assets/images/logo-small.png');
 
@@ -55,7 +56,7 @@ export default function HomeScreen({ navigation }) {
   const userName = user?.full_name?.split(' ')[0] || 'there';
 
   return (
-    <View className="flex-1 bg-gray-50">
+    <View className="flex-1 bg-cream">
       <StatusBar style="light" />
       {/* Premium header with teal accent band */}
       <View
@@ -71,7 +72,7 @@ export default function HomeScreen({ navigation }) {
                 <Image source={logoSmall} style={{ width: 28, height: 28, resizeMode: 'contain' }} />
               </View>
               <View>
-                <Text className="text-lg font-bold text-white">Hi {userName} 👋</Text>
+                <Text className="text-[19px] font-bold text-white">Hi, {userName}</Text>
                 <View className="flex-row items-center gap-1 mt-0.5">
                   <Ionicons name="location" size={11} color="rgba(255,255,255,0.7)" />
                   <Text className="text-xs text-white/70">{user?.city || 'Lagos'}, Nigeria</Text>
@@ -96,51 +97,50 @@ export default function HomeScreen({ navigation }) {
         </View>
 
         {/* Curved transition into content area */}
-        <View className="bg-gray-50 h-5" style={{ borderTopLeftRadius: 24, borderTopRightRadius: 24 }} />
+        <View className="bg-cream h-5" style={{ borderTopLeftRadius: 28, borderTopRightRadius: 28 }} />
       </View>
 
       <ScrollView
         className="flex-1"
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={loading} onRefresh={loadData} tintColor="#35615D" />
+          <RefreshControl refreshing={loading} onRefresh={loadData} tintColor="#1F4A45" />
         }
       >
-        {/* Search Bar - elevated, frosted look */}
-        <View className="px-5 -mt-1 mb-5">
+        {/* Search Bar — 52px, overlapping the header by -16px */}
+        <View className="px-5 mb-6" style={{ marginTop: -16 }}>
           <TouchableOpacity
-            className="flex-row items-center bg-white rounded-3xl px-5 py-4 gap-3"
+            className="flex-row items-center bg-white gap-3"
             style={{
-              shadowColor: '#35615D',
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.08,
-              shadowRadius: 16,
+              height: 52,
+              borderRadius: 16,
+              paddingHorizontal: 16,
+              shadowColor: '#1F4A45',
+              shadowOffset: { width: 0, height: 14 },
+              shadowOpacity: 0.1,
+              shadowRadius: 30,
               elevation: 6,
             }}
             onPress={() => navigation.navigate('GiftsList', { title: 'Search', search: true })}
+            activeOpacity={0.85}
           >
-            <View className="w-9 h-9 rounded-xl bg-teal-light items-center justify-center">
-              <Ionicons name="search" size={18} color="#35615D" />
-            </View>
-            <Text className="flex-1 text-sm text-gray-400">Search gifts, services, vendors...</Text>
-            <View className="w-9 h-9 rounded-xl bg-orange-light items-center justify-center">
-              <Ionicons name="mic-outline" size={18} color="#FD8950" />
-            </View>
+            <Ionicons name="search" size={19} color="#9A948A" />
+            <Text className="flex-1 text-[14px] text-ink-placeholder">Search gifts, services, vendors…</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Quick Actions - hero cards with bold visual hierarchy */}
+        {/* Quick Actions — hero cards */}
         <View className="flex-row px-5 gap-3.5 mb-8">
           <TouchableOpacity
-            className="flex-1 bg-teal rounded-3xl overflow-hidden"
-            onPress={() => navigation.navigate('GiftsHome')}
+            className="flex-1 bg-teal rounded-[22px] overflow-hidden"
+            onPress={() => navigation.navigate('Gifts')}
             activeOpacity={0.85}
           >
             <View className="p-5 pb-4">
-              <View className="w-14 h-14 rounded-2xl bg-white/20 items-center justify-center mb-4">
-                <Text style={{ fontSize: 28 }}>🎁</Text>
+              <View className="w-14 h-14 rounded-[16px] bg-white/20 items-center justify-center mb-4">
+                <Ionicons name="gift-outline" size={26} color="#fff" />
               </View>
-              <Text className="text-white text-xl font-bold tracking-tight">Send a Gift</Text>
+              <Text className="text-white text-[19px] font-bold tracking-tight">Send a Gift</Text>
               <Text className="text-white/60 text-xs mt-1.5">Cakes, flowers & more</Text>
             </View>
             <View className="flex-row justify-end px-5 pb-3">
@@ -151,16 +151,16 @@ export default function HomeScreen({ navigation }) {
           </TouchableOpacity>
 
           <TouchableOpacity
-            className="flex-1 bg-orange rounded-3xl overflow-hidden"
-            onPress={() => navigation.navigate('BeautyHome')}
+            className="flex-1 bg-orange rounded-[22px] overflow-hidden"
+            onPress={() => navigation.navigate('Services')}
             activeOpacity={0.85}
           >
             <View className="p-5 pb-4">
-              <View className="w-14 h-14 rounded-2xl bg-white/20 items-center justify-center mb-4">
-                <Text style={{ fontSize: 28 }}>💅</Text>
+              <View className="w-14 h-14 rounded-[16px] bg-white/20 items-center justify-center mb-4">
+                <Ionicons name="sparkles-outline" size={24} color="#fff" />
               </View>
-              <Text className="text-white text-xl font-bold tracking-tight">Book Beauty</Text>
-              <Text className="text-white/60 text-xs mt-1.5">Nails, hair, makeup</Text>
+              <Text className="text-white text-[19px] font-bold tracking-tight">Hire a Pro</Text>
+              <Text className="text-white/70 text-xs mt-1.5">Beauty, fashion, events</Text>
             </View>
             <View className="flex-row justify-end px-5 pb-3">
               <View className="w-8 h-8 rounded-full bg-white/20 items-center justify-center">
@@ -175,7 +175,7 @@ export default function HomeScreen({ navigation }) {
             <View
               className="w-20 h-20 rounded-3xl bg-teal-light items-center justify-center"
             >
-              <ActivityIndicator size="large" color="#35615D" />
+              <ActivityIndicator size="large" color="#1F4A45" />
             </View>
             <View className="items-center gap-1.5">
               <Text className="text-base font-bold text-gray-700">Loading amazing things...</Text>
@@ -185,9 +185,9 @@ export default function HomeScreen({ navigation }) {
         ) : error ? (
           <View className="items-center mt-16 px-8 gap-4">
             <View
-              className="w-24 h-24 rounded-3xl bg-orange-light items-center justify-center"
+              className="w-24 h-24 rounded-[24px] bg-orange-light items-center justify-center"
             >
-              <Text style={{ fontSize: 40 }}>😕</Text>
+              <Ionicons name="cloud-offline-outline" size={40} color="#E8632F" />
             </View>
             <View className="items-center gap-2">
               <Text className="text-xl font-bold text-gray-800">Couldn't load content</Text>
@@ -199,7 +199,7 @@ export default function HomeScreen({ navigation }) {
               className="flex-row items-center bg-teal px-7 py-3.5 rounded-2xl gap-2.5 mt-2"
               onPress={loadData}
               style={{
-                shadowColor: '#35615D',
+                shadowColor: '#1F4A45',
                 shadowOffset: { width: 0, height: 4 },
                 shadowOpacity: 0.2,
                 shadowRadius: 12,
@@ -222,11 +222,11 @@ export default function HomeScreen({ navigation }) {
                   keyExtractor={(item) => item.id}
                   showsHorizontalScrollIndicator={false}
                   contentContainerStyle={{ paddingHorizontal: 20, gap: 12, marginBottom: 28 }}
-                  renderItem={({ item }) => (
+                  renderItem={({ item, index }) => (
                     <CategoryCard
                       label={item.name}
-                      icon={item.icon}
-                      color={item.color}
+                      icon={iconFor(item)}
+                      color={colorFor(index)}
                       size="sm"
                       onPress={() => navigation.navigate('GiftsList', { occasion: item.id, title: item.name })}
                     />
@@ -238,7 +238,7 @@ export default function HomeScreen({ navigation }) {
             {/* Featured Gifts */}
             {featuredGifts.length > 0 && (
               <View className="mb-2">
-                <SectionHeader title="Popular Gifts" onAction={() => navigation.navigate('GiftsHome')} />
+                <SectionHeader title="Popular Gifts" onAction={() => navigation.navigate('Gifts')} />
                 <FlatList
                   horizontal
                   data={featuredGifts}
@@ -257,7 +257,7 @@ export default function HomeScreen({ navigation }) {
 
             {/* Beauty Categories */}
             <View className="mb-2">
-              <SectionHeader title="Beauty Services" onAction={() => navigation.navigate('BeautyHome')} />
+              <SectionHeader title="Book a Pro" onAction={() => navigation.navigate('Services')} />
               <FlatList
                 horizontal
                 data={BEAUTY_CATEGORIES}
@@ -267,7 +267,8 @@ export default function HomeScreen({ navigation }) {
                 renderItem={({ item }) => (
                   <CategoryCard
                     label={item.label}
-                    icon={item.icon}
+                    icon={iconFor(item)}
+                    color={item.color}
                     onPress={() => navigation.navigate('ProvidersList', { category: item.id })}
                   />
                 )}
@@ -277,7 +278,7 @@ export default function HomeScreen({ navigation }) {
             {/* Top Providers */}
             {providers.length > 0 && (
               <>
-                <SectionHeader title="Top Beauty Pros" onAction={() => navigation.navigate('BeautyHome')} />
+                <SectionHeader title="Top Rated Pros" onAction={() => navigation.navigate('Services')} />
                 <View className="px-5 gap-3.5 mb-4">
                   {providers.slice(0, 3).map((item) => (
                     <ProviderCard

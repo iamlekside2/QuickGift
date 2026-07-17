@@ -147,14 +147,14 @@ export default function WalletScreen({ navigation }) {
         className="flex-1"
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#35615D" />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#1F4A45" />
         }
       >
         {/* Balance Card */}
         <View
           className="mx-5 mt-4 bg-teal rounded-3xl overflow-hidden"
           style={{
-            shadowColor: '#35615D',
+            shadowColor: '#1F4A45',
             shadowOffset: { width: 0, height: 8 },
             shadowOpacity: 0.3,
             shadowRadius: 16,
@@ -197,11 +197,11 @@ export default function WalletScreen({ navigation }) {
 
         {loading ? (
           <View className="mx-5 bg-white rounded-3xl py-12 items-center">
-            <ActivityIndicator size="large" color="#35615D" />
+            <ActivityIndicator size="large" color="#1F4A45" />
           </View>
         ) : transactions.length > 0 ? (
           <View className="mx-5 bg-white rounded-3xl overflow-hidden"
-            style={{ shadowColor: '#1F2937', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.06, shadowRadius: 12, elevation: 3 }}
+            style={{ shadowColor: '#211F1C', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.06, shadowRadius: 12, elevation: 3 }}
           >
             {transactions.map((tx, i) => (
               <View
@@ -209,7 +209,7 @@ export default function WalletScreen({ navigation }) {
                 className={`flex-row items-center px-4 py-4 ${i < transactions.length - 1 ? 'border-b border-gray-50' : ''}`}
               >
                 <View className={`w-11 h-11 rounded-2xl items-center justify-center ${tx.type === 'credit' ? 'bg-green-50' : 'bg-red-50'}`}>
-                  <Ionicons name={tx.type === 'credit' ? 'arrow-down' : 'arrow-up'} size={18} color={tx.type === 'credit' ? '#10B981' : '#EF4444'} />
+                  <Ionicons name={tx.type === 'credit' ? 'arrow-down' : 'arrow-up'} size={18} color={tx.type === 'credit' ? '#3E8E63' : '#D24B4B'} />
                 </View>
                 <View className="flex-1 ml-3">
                   <Text className="text-[13px] font-bold text-gray-800">{tx.description || 'Transaction'}</Text>
@@ -226,9 +226,9 @@ export default function WalletScreen({ navigation }) {
           </View>
         ) : (
           <View className="mx-5 bg-white rounded-3xl py-12 items-center"
-            style={{ shadowColor: '#1F2937', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.06, shadowRadius: 12, elevation: 3 }}
+            style={{ shadowColor: '#211F1C', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.06, shadowRadius: 12, elevation: 3 }}
           >
-            <Ionicons name="receipt-outline" size={48} color="#D1D5DB" />
+            <Ionicons name="receipt-outline" size={48} color="#B5AFA2" />
             <Text className="text-base font-semibold text-gray-400 mt-3">No transactions yet</Text>
             <Text className="text-xs text-gray-300 mt-1">Your transaction history will appear here</Text>
           </View>

@@ -58,7 +58,7 @@ export default function ProviderSchedule({ navigation }) {
       <StatusBar style="dark" />
       {/* Header */}
       <View
-        style={{ paddingTop: Platform.OS === 'ios' ? 60 : 40, shadowColor: '#1F2937', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
+        style={{ paddingTop: Platform.OS === 'ios' ? 60 : 40, shadowColor: '#211F1C', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
         className="px-5 pb-4 bg-white"
       >
         <View className="flex-row items-center gap-3">
@@ -66,7 +66,7 @@ export default function ProviderSchedule({ navigation }) {
             className="w-10 h-10 rounded-2xl bg-gray-100 items-center justify-center"
             onPress={() => navigation.goBack()}
           >
-            <Ionicons name="arrow-back" size={20} color="#1F2937" />
+            <Ionicons name="arrow-back" size={20} color="#211F1C" />
           </TouchableOpacity>
           <Text className="text-[22px] font-bold text-gray-800" style={{ letterSpacing: 0.3 }}>My Schedule</Text>
         </View>
@@ -81,8 +81,8 @@ export default function ProviderSchedule({ navigation }) {
               selectedDate === day.fullDate ? 'bg-teal' : 'bg-white'
             }`}
             style={selectedDate === day.fullDate
-              ? { shadowColor: '#1F2937', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 4, elevation: 2 }
-              : { shadowColor: '#1F2937', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }
+              ? { shadowColor: '#211F1C', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 4, elevation: 2 }
+              : { shadowColor: '#211F1C', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }
             }
             onPress={() => setSelectedDate(day.fullDate)}
           >
@@ -100,11 +100,11 @@ export default function ProviderSchedule({ navigation }) {
       <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false}>
         {loading ? (
           <View className="items-center py-16">
-            <ActivityIndicator size="large" color="#35615D" />
+            <ActivityIndicator size="large" color="#1F4A45" />
           </View>
         ) : daySchedule.length === 0 ? (
           <View className="items-center mt-16">
-            <Ionicons name="sunny-outline" size={48} color="#9CA3AF" />
+            <Ionicons name="sunny-outline" size={48} color="#9A948A" />
             <Text className="text-base font-bold text-gray-800 mt-3">Free day!</Text>
             <Text className="text-sm text-gray-400 mt-1">No appointments scheduled</Text>
           </View>
@@ -126,7 +126,7 @@ export default function ProviderSchedule({ navigation }) {
                 {/* Card */}
                 <View
                   className="flex-1 bg-white rounded-2xl p-4 mb-1"
-                  style={{ shadowColor: '#1F2937', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
+                  style={{ shadowColor: '#211F1C', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
                 >
                   <Text className="text-xs text-gray-400 mb-1">{timeStr}</Text>
                   <Text className="text-sm font-bold text-gray-800">{serviceName}</Text>

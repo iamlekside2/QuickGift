@@ -131,7 +131,7 @@ export default function ChatScreen({ navigation, route }) {
               isMe ? 'bg-teal rounded-br-md' : 'bg-gray-100 rounded-bl-md'
             }`}
             style={isMe ? {
-              shadowColor: '#35615D',
+              shadowColor: '#1F4A45',
               shadowOffset: { width: 0, height: 2 },
               shadowOpacity: 0.15,
               shadowRadius: 4,
@@ -153,7 +153,7 @@ export default function ChatScreen({ navigation, route }) {
                 />
               )}
               {isMe && item.status === 'failed' && (
-                <Ionicons name="alert-circle" size={12} color="#EF4444" />
+                <Ionicons name="alert-circle" size={12} color="#D24B4B" />
               )}
             </View>
           </View>
@@ -210,7 +210,7 @@ export default function ChatScreen({ navigation, route }) {
       >
         {loading ? (
           <View className="flex-1 items-center justify-center">
-            <ActivityIndicator size="large" color="#35615D" />
+            <ActivityIndicator size="large" color="#1F4A45" />
           </View>
         ) : (
           <FlatList
@@ -224,7 +224,7 @@ export default function ChatScreen({ navigation, route }) {
             ListEmptyComponent={
               <View className="flex-1 items-center justify-center px-10">
                 <View className="w-16 h-16 rounded-2xl bg-teal-light items-center justify-center mb-4">
-                  <Ionicons name="chatbubble-outline" size={28} color="#35615D" />
+                  <Ionicons name="chatbubble-outline" size={28} color="#1F4A45" />
                 </View>
                 <Text className="text-base font-bold text-gray-800 mb-1">Start the conversation</Text>
                 <Text className="text-sm text-gray-400 text-center">
@@ -242,14 +242,14 @@ export default function ChatScreen({ navigation, route }) {
             paddingTop: 12,
             paddingBottom: Platform.OS === 'ios' ? 34 : 12,
             borderTopWidth: 1,
-            borderTopColor: '#F3F4F6',
+            borderTopColor: '#F0ECE3',
           }}
         >
           <TouchableOpacity
             className="w-11 h-11 rounded-2xl bg-gray-100 items-center justify-center mb-0.5"
             onPress={() => Alert.alert('Attachments', 'File sharing coming soon!')}
           >
-            <Ionicons name="add" size={22} color="#6B7280" />
+            <Ionicons name="add" size={22} color="#6E6A63" />
           </TouchableOpacity>
 
           <View
@@ -259,7 +259,7 @@ export default function ChatScreen({ navigation, route }) {
             <TextInput
               className="flex-1 text-[15px] text-gray-800"
               placeholder="Type a message..."
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor="#9A948A"
               value={text}
               onChangeText={setText}
               multiline
@@ -275,14 +275,14 @@ export default function ChatScreen({ navigation, route }) {
             onPress={handleSend}
             disabled={!text.trim()}
             style={text.trim() ? {
-              shadowColor: '#35615D',
+              shadowColor: '#1F4A45',
               shadowOffset: { width: 0, height: 2 },
               shadowOpacity: 0.3,
               shadowRadius: 4,
               elevation: 3,
             } : undefined}
           >
-            <Ionicons name="send" size={18} color={text.trim() ? '#fff' : '#9CA3AF'} />
+            <Ionicons name="send" size={18} color={text.trim() ? '#fff' : '#9A948A'} />
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>

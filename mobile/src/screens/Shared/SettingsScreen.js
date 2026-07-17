@@ -82,7 +82,7 @@ export default function SettingsScreen({ navigation }) {
         className="px-5 pb-4 bg-white"
         style={{
           paddingTop: Platform.OS === 'ios' ? 60 : 40,
-          shadowColor: '#1F2937',
+          shadowColor: '#211F1C',
           shadowOffset: { width: 0, height: 2 },
           shadowOpacity: 0.04,
           shadowRadius: 8,
@@ -94,7 +94,7 @@ export default function SettingsScreen({ navigation }) {
             className="w-10 h-10 rounded-2xl bg-gray-100 items-center justify-center"
             onPress={() => navigation.goBack()}
           >
-            <Ionicons name="arrow-back" size={20} color="#1F2937" />
+            <Ionicons name="arrow-back" size={20} color="#211F1C" />
           </TouchableOpacity>
           <Text className="text-xl font-bold text-gray-800">Settings</Text>
         </View>
@@ -106,7 +106,7 @@ export default function SettingsScreen({ navigation }) {
         <View
           className="bg-white rounded-2xl overflow-hidden mb-6"
           style={{
-            shadowColor: '#1F2937',
+            shadowColor: '#211F1C',
             shadowOffset: { width: 0, height: 2 },
             shadowOpacity: 0.04,
             shadowRadius: 8,
@@ -126,7 +126,7 @@ export default function SettingsScreen({ navigation }) {
               <Switch
                 value={item.value}
                 onValueChange={item.set}
-                trackColor={{ false: '#E5E7EB', true: '#35615D' }}
+                trackColor={{ false: '#EAE3D8', true: '#1F4A45' }}
                 thumbColor="#fff"
               />
             </View>
@@ -138,7 +138,7 @@ export default function SettingsScreen({ navigation }) {
         <View
           className="bg-white rounded-2xl overflow-hidden mb-6"
           style={{
-            shadowColor: '#1F2937',
+            shadowColor: '#211F1C',
             shadowOffset: { width: 0, height: 2 },
             shadowOpacity: 0.04,
             shadowRadius: 8,
@@ -151,10 +151,10 @@ export default function SettingsScreen({ navigation }) {
               className={`flex-row items-center p-4 gap-3 ${i < accountItems.length - 1 ? 'border-b border-gray-100' : ''}`}
               onPress={item.onPress}
             >
-              <Ionicons name={item.icon} size={20} color="#6B7280" />
+              <Ionicons name={item.icon} size={20} color="#6E6A63" />
               <Text className="flex-1 text-sm font-medium text-gray-800">{item.label}</Text>
               {item.value && <Text className="text-xs text-gray-500">{item.value}</Text>}
-              <Ionicons name="chevron-forward" size={16} color="#D1D5DB" />
+              <Ionicons name="chevron-forward" size={16} color="#B5AFA2" />
             </TouchableOpacity>
           ))}
         </View>
@@ -165,7 +165,7 @@ export default function SettingsScreen({ navigation }) {
           className="bg-red-50 rounded-2xl p-4 flex-row items-center gap-3 mb-6"
           onPress={handleDeleteAccount}
         >
-          <Ionicons name="trash-outline" size={20} color="#EF4444" />
+          <Ionicons name="trash-outline" size={20} color="#D24B4B" />
           <View className="flex-1">
             <Text className="text-sm font-bold text-red-500">Delete Account</Text>
             <Text className="text-xs text-gray-500 mt-0.5">Permanently delete your account and data</Text>

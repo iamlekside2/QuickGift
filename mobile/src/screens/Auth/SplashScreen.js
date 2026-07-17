@@ -1,9 +1,10 @@
 import React, { useEffect } from 'react';
-import { View, Image } from 'react-native';
+import { View, Text, Image } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { SERIF_FAMILY, SERIF_ITALIC_FAMILY } from '../../components/common/Typography';
 
-const logo = require('../../../assets/images/logo.png');
+const logo = require('../../../assets/images/logo-small.png');
 const ONBOARDING_SEEN_KEY = '@quickgift_onboarding_seen';
 
 export default function SplashScreen({ navigation }) {
@@ -11,23 +12,33 @@ export default function SplashScreen({ navigation }) {
     const checkOnboarding = async () => {
       try {
         const seen = await AsyncStorage.getItem(ONBOARDING_SEEN_KEY);
-        // Skip onboarding if already seen — go straight to login
         navigation.replace(seen === 'true' ? 'Login' : 'Onboarding');
       } catch {
         navigation.replace('Onboarding');
       }
     };
-    const timer = setTimeout(checkOnboarding, 2000);
+    const timer = setTimeout(checkOnboarding, 2200);
     return () => clearTimeout(timer);
   }, []);
 
   return (
-    <View className="flex-1 bg-white items-center justify-center">
+    <View className="flex-1 bg-cream-warm items-center justify-center">
       <StatusBar style="dark" />
-      <Image
-        source={logo}
-        style={{ width: 180, height: 180, resizeMode: 'contain' }}
-      />
+
+      <Image source={logo} style={{ width: 76, height: 76, resizeMode: 'contain' }} />
+
+      {/* Serif italic wordmark — "Gift" in terracotta */}
+      <Text style={{ fontFamily: SERIF_FAMILY, fontSize: 40, color: '#211F1C', marginTop: 18 }}>
+        Quick
+        <Text style={{ fontFamily: SERIF_ITALIC_FAMILY, color: '#E8632F' }}>Gift</Text>
+      </Text>
+
+      <Text
+        className="text-ink-caption font-bold"
+        style={{ fontSize: 12, letterSpacing: 3, marginTop: 10 }}
+      >
+        GIFTS & ARTISANS, SAME DAY
+      </Text>
     </View>
   );
 }

@@ -13,11 +13,11 @@ const FILTER_TABS = [
 ];
 
 const STATUS_CONFIG = {
-  pending: { label: 'Pending', color: '#F59E0B', bg: 'bg-amber-50' },
-  confirmed: { label: 'Confirmed', color: '#3B82F6', bg: 'bg-blue-50' },
-  in_transit: { label: 'In Transit', color: '#8B5CF6', bg: 'bg-purple-50' },
-  delivered: { label: 'Delivered', color: '#10B981', bg: 'bg-green-50' },
-  cancelled: { label: 'Cancelled', color: '#EF4444', bg: 'bg-red-50' },
+  pending: { label: 'Pending', color: '#B8862E', bg: 'bg-amber-50' },
+  confirmed: { label: 'Confirmed', color: '#4C7CB0', bg: 'bg-blue-50' },
+  in_transit: { label: 'In Transit', color: '#7A5FA8', bg: 'bg-purple-50' },
+  delivered: { label: 'Delivered', color: '#3E8E63', bg: 'bg-green-50' },
+  cancelled: { label: 'Cancelled', color: '#D24B4B', bg: 'bg-red-50' },
 };
 
 const formatDate = (dateStr) => {
@@ -88,7 +88,7 @@ export default function ProviderOrdersScreen({ navigation }) {
         className="bg-white px-5 pb-4"
         style={{
           paddingTop: Platform.OS === 'ios' ? 60 : 40,
-          shadowColor: '#1F2937',
+          shadowColor: '#211F1C',
           shadowOffset: { width: 0, height: 2 },
           shadowOpacity: 0.04,
           shadowRadius: 8,
@@ -100,7 +100,7 @@ export default function ProviderOrdersScreen({ navigation }) {
             className="w-10 h-10 rounded-2xl bg-gray-100 items-center justify-center"
             onPress={() => navigation.goBack()}
           >
-            <Ionicons name="arrow-back" size={20} color="#1F2937" />
+            <Ionicons name="arrow-back" size={20} color="#211F1C" />
           </TouchableOpacity>
           <Text className="text-lg font-extrabold text-gray-800">Gift Orders</Text>
         </View>
@@ -126,17 +126,17 @@ export default function ProviderOrdersScreen({ navigation }) {
       <ScrollView
         className="flex-1 px-5 pt-4"
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={loading} onRefresh={fetchOrders} tintColor="#35615D" />}
+        refreshControl={<RefreshControl refreshing={loading} onRefresh={fetchOrders} tintColor="#1F4A45" />}
       >
         {loading ? (
           <View className="items-center mt-20">
-            <ActivityIndicator size="large" color="#35615D" />
+            <ActivityIndicator size="large" color="#1F4A45" />
             <Text className="text-sm text-gray-400 mt-3">Loading orders...</Text>
           </View>
         ) : orders.length === 0 ? (
           <View className="items-center mt-20">
             <View className="w-20 h-20 rounded-full bg-gray-100 items-center justify-center mb-4">
-              <Ionicons name="gift-outline" size={36} color="#9CA3AF" />
+              <Ionicons name="gift-outline" size={36} color="#9A948A" />
             </View>
             <Text className="text-lg font-bold text-gray-800">No orders yet</Text>
             <Text className="text-sm text-gray-500 mt-1.5 text-center px-8">
@@ -158,7 +158,7 @@ export default function ProviderOrdersScreen({ navigation }) {
                 key={order.id}
                 className="bg-white rounded-3xl p-5 mb-3.5"
                 style={{
-                  shadowColor: '#1F2937',
+                  shadowColor: '#211F1C',
                   shadowOffset: { width: 0, height: 3 },
                   shadowOpacity: 0.06,
                   shadowRadius: 12,
@@ -183,7 +183,7 @@ export default function ProviderOrdersScreen({ navigation }) {
                 {/* Recipient + amount */}
                 <View className="flex-row items-center justify-between mb-2">
                   <View className="flex-row items-center gap-2">
-                    <Ionicons name="person-outline" size={14} color="#9CA3AF" />
+                    <Ionicons name="person-outline" size={14} color="#9A948A" />
                     <Text className="text-sm font-semibold text-gray-700">{recipientName}</Text>
                   </View>
                   <Text className="text-[15px] font-extrabold text-teal">
@@ -225,7 +225,7 @@ export default function ProviderOrdersScreen({ navigation }) {
 
                 {status === 'delivered' && (
                   <View className="flex-row items-center gap-1.5 mt-1">
-                    <Ionicons name="checkmark-done" size={16} color="#10B981" />
+                    <Ionicons name="checkmark-done" size={16} color="#3E8E63" />
                     <Text className="text-xs font-semibold text-green-600">Completed</Text>
                   </View>
                 )}

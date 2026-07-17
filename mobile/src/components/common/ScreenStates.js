@@ -9,7 +9,7 @@ export function LoadingState({ message = 'Loading...' }) {
   return (
     <View className="flex-1 items-center justify-center py-20">
       <View className="w-16 h-16 rounded-3xl bg-teal-light items-center justify-center mb-4">
-        <ActivityIndicator size="large" color="#35615D" />
+        <ActivityIndicator size="large" color="#1F4A45" />
       </View>
       <Text className="text-sm text-gray-400 font-medium">{message}</Text>
     </View>
@@ -39,7 +39,7 @@ export function EmptyState({
         {emoji ? (
           <Text style={{ fontSize: 36 }}>{emoji}</Text>
         ) : (
-          <Ionicons name={icon || 'folder-open-outline'} size={32} color="#9CA3AF" />
+          <Ionicons name={icon || 'folder-open-outline'} size={32} color="#9A948A" />
         )}
       </View>
       <Text className="text-lg font-bold text-gray-800 mb-1 text-center">{title}</Text>
@@ -68,7 +68,7 @@ export function ErrorState({
   return (
     <View className="items-center py-16 px-8">
       <View className="w-20 h-20 rounded-full bg-red-50 items-center justify-center mb-4">
-        <Ionicons name="alert-circle-outline" size={36} color="#EF4444" />
+        <Ionicons name="alert-circle-outline" size={36} color="#D24B4B" />
       </View>
       <Text className="text-lg font-bold text-gray-800 mb-1">Oops!</Text>
       <Text className="text-sm text-gray-400 text-center leading-5">{message}</Text>

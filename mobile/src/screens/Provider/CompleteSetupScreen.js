@@ -12,9 +12,9 @@ import AppInput from '../../components/common/AppInput';
 const logoSmall = require('../../../assets/images/logo-small.png');
 
 const BUSINESS_TYPES = [
-  { label: '🛍️ Seller', value: 'Seller', desc: 'I sell gift items (cakes, flowers, hampers, etc.)' },
-  { label: '💅 Service Provider', value: 'Service Provider', desc: 'I offer beauty/personal services' },
-  { label: '🏪 Both', value: 'Both', desc: 'I sell products and offer services' },
+  { label: 'Seller', value: 'Seller', icon: 'bag-handle-outline', desc: 'I sell gift items (cakes, flowers, hampers, etc.)' },
+  { label: 'Service Provider', value: 'Service Provider', icon: 'sparkles-outline', desc: 'I offer beauty/personal services' },
+  { label: 'Both', value: 'Both', icon: 'storefront-outline', desc: 'I sell products and offer services' },
 ];
 
 const SERVICE_TYPES = [
@@ -93,14 +93,14 @@ export default function CompleteSetupScreen() {
           <View
             className="w-20 h-20 rounded-3xl bg-orange-light items-center justify-center mb-4"
             style={{
-              shadowColor: '#FD8950',
+              shadowColor: '#E8632F',
               shadowOffset: { width: 0, height: 4 },
               shadowOpacity: 0.15,
               shadowRadius: 12,
               elevation: 4,
             }}
           >
-            <Ionicons name="storefront-outline" size={36} color="#FD8950" />
+            <Ionicons name="storefront-outline" size={36} color="#E8632F" />
           </View>
           <Text className="text-2xl font-extrabold text-gray-800 mb-2">
             Complete Your Setup
@@ -144,7 +144,7 @@ export default function CompleteSetupScreen() {
             <TouchableOpacity
               className={`py-4 rounded-2xl items-center ${isStep1Valid ? 'bg-teal' : 'bg-gray-200'}`}
               style={isStep1Valid ? {
-                shadowColor: '#35615D',
+                shadowColor: '#1F4A45',
                 shadowOffset: { width: 0, height: 4 },
                 shadowOpacity: 0.25,
                 shadowRadius: 8,
@@ -258,7 +258,7 @@ export default function CompleteSetupScreen() {
               <TouchableOpacity
                 className={`flex-[2] py-4 rounded-2xl items-center ${isStep2Valid ? 'bg-teal' : 'bg-gray-200'}`}
                 style={isStep2Valid ? {
-                  shadowColor: '#35615D',
+                  shadowColor: '#1F4A45',
                   shadowOffset: { width: 0, height: 4 },
                   shadowOpacity: 0.25,
                   shadowRadius: 8,

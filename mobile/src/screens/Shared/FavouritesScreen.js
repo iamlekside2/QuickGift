@@ -15,7 +15,7 @@ export default function FavouritesScreen({ navigation }) {
     <TouchableOpacity
       className="flex-row items-center bg-white rounded-2xl p-3.5 mb-3"
       style={{
-        shadowColor: '#1F2937',
+        shadowColor: '#211F1C',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.04,
         shadowRadius: 8,
@@ -33,13 +33,13 @@ export default function FavouritesScreen({ navigation }) {
         <View className="flex-row items-center gap-2 mt-1">
           <Text className="text-sm font-extrabold text-teal">{formatPrice(item.price)}</Text>
           <View className="flex-row items-center gap-0.5">
-            <Ionicons name="star" size={11} color="#F59E0B" />
+            <Ionicons name="star" size={11} color="#B8862E" />
             <Text className="text-[11px] text-gray-500 font-semibold">{item.rating}</Text>
           </View>
         </View>
       </View>
       <TouchableOpacity className="w-10 h-10 rounded-xl bg-red-50 items-center justify-center">
-        <Ionicons name="heart" size={20} color="#EF4444" />
+        <Ionicons name="heart" size={20} color="#D24B4B" />
       </TouchableOpacity>
     </TouchableOpacity>
   );
@@ -48,7 +48,7 @@ export default function FavouritesScreen({ navigation }) {
     <TouchableOpacity
       className="flex-row items-center bg-white rounded-2xl p-3.5 mb-3"
       style={{
-        shadowColor: '#1F2937',
+        shadowColor: '#211F1C',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.04,
         shadowRadius: 8,
@@ -72,13 +72,13 @@ export default function FavouritesScreen({ navigation }) {
         </View>
         <Text className="text-xs text-gray-400 mt-0.5">{item.service}</Text>
         <View className="flex-row items-center gap-1 mt-1">
-          <Ionicons name="star" size={11} color="#F59E0B" />
+          <Ionicons name="star" size={11} color="#B8862E" />
           <Text className="text-[11px] text-gray-600 font-semibold">{item.rating}</Text>
           <Text className="text-[10px] text-gray-400">({item.reviews} reviews)</Text>
         </View>
       </View>
       <TouchableOpacity className="w-10 h-10 rounded-xl bg-red-50 items-center justify-center">
-        <Ionicons name="heart" size={20} color="#EF4444" />
+        <Ionicons name="heart" size={20} color="#D24B4B" />
       </TouchableOpacity>
     </TouchableOpacity>
   );
@@ -93,7 +93,7 @@ export default function FavouritesScreen({ navigation }) {
         className="bg-white px-5 pb-4"
         style={{
           paddingTop: Platform.OS === 'ios' ? 60 : 40,
-          shadowColor: '#1F2937',
+          shadowColor: '#211F1C',
           shadowOffset: { width: 0, height: 2 },
           shadowOpacity: 0.04,
           shadowRadius: 8,
@@ -105,7 +105,7 @@ export default function FavouritesScreen({ navigation }) {
             className="w-10 h-10 rounded-2xl bg-gray-100 items-center justify-center"
             onPress={() => navigation.goBack()}
           >
-            <Ionicons name="arrow-back" size={20} color="#1F2937" />
+            <Ionicons name="arrow-back" size={20} color="#211F1C" />
           </TouchableOpacity>
           <Text className="text-xl font-bold text-gray-800">Favourites</Text>
         </View>
@@ -115,7 +115,7 @@ export default function FavouritesScreen({ navigation }) {
           <TouchableOpacity
             className={`flex-1 py-2.5 rounded-xl items-center ${activeTab === 'gifts' ? 'bg-teal' : ''}`}
             style={activeTab === 'gifts' ? {
-              shadowColor: '#35615D',
+              shadowColor: '#1F4A45',
               shadowOffset: { width: 0, height: 2 },
               shadowOpacity: 0.15,
               shadowRadius: 4,
@@ -130,7 +130,7 @@ export default function FavouritesScreen({ navigation }) {
           <TouchableOpacity
             className={`flex-1 py-2.5 rounded-xl items-center ${activeTab === 'providers' ? 'bg-teal' : ''}`}
             style={activeTab === 'providers' ? {
-              shadowColor: '#35615D',
+              shadowColor: '#1F4A45',
               shadowOffset: { width: 0, height: 2 },
               shadowOpacity: 0.15,
               shadowRadius: 4,
@@ -155,7 +155,7 @@ export default function FavouritesScreen({ navigation }) {
         ListEmptyComponent={
           <View className="items-center mt-20 px-8">
             <View className="w-24 h-24 rounded-full bg-red-50 items-center justify-center mb-5">
-              <Ionicons name="heart-outline" size={40} color="#EF4444" />
+              <Ionicons name="heart-outline" size={40} color="#D24B4B" />
             </View>
             <Text className="text-lg font-bold text-gray-800 mb-2">No favourites yet</Text>
             <Text className="text-sm text-gray-400 text-center leading-5">

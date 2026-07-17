@@ -6,6 +6,8 @@ import {
 import { StatusBar } from 'expo-status-bar';
 import { useAuth } from '../../context/AuthContext';
 import AppInput from '../../components/common/AppInput';
+import Button from '../../components/common/Button';
+import { SerifHeadline } from '../../components/common/Typography';
 
 const logoSmall = require('../../../assets/images/logo-small.png');
 
@@ -47,7 +49,7 @@ export default function LoginScreen({ navigation }) {
 
   return (
     <KeyboardAvoidingView
-      className="flex-1 bg-white"
+      className="flex-1 bg-cream-warm"
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <StatusBar style="dark" />
@@ -55,30 +57,14 @@ export default function LoginScreen({ navigation }) {
         contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
-        className="px-6"
+        className="px-5"
       >
         {/* Header */}
-        <View className="items-center mb-10">
-          <View
-            className="w-24 h-24 rounded-3xl bg-teal-light items-center justify-center mb-5"
-            style={{
-              shadowColor: '#35615D',
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.15,
-              shadowRadius: 12,
-              elevation: 4,
-            }}
-          >
-            <Image
-              source={logoSmall}
-              style={{ width: 56, height: 56, resizeMode: 'contain' }}
-            />
-          </View>
-          <Text className="text-3xl font-extrabold text-gray-800 mb-2 tracking-tight">
-            Welcome Back
-          </Text>
-          <Text className="text-base text-gray-400 font-medium">
-            Enter your phone number to log in
+        <View className="items-center mb-9">
+          <Image source={logoSmall} style={{ width: 56, height: 56, resizeMode: 'contain', marginBottom: 18 }} />
+          <SerifHeadline text="Welcome back" emphasis="back" size={30} />
+          <Text className="text-[14px] text-ink-soft mt-2">
+            Enter your phone number to continue
           </Text>
         </View>
 
@@ -92,44 +78,38 @@ export default function LoginScreen({ navigation }) {
           autoFocus
         />
 
-        {/* Continue Button */}
-        <TouchableOpacity
-          className={`py-4 rounded-2xl items-center ${isValid ? 'bg-teal' : 'bg-gray-200'}`}
-          style={isValid ? {
-            shadowColor: '#35615D',
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.25,
-            shadowRadius: 8,
-            elevation: 4,
-          } : undefined}
+        {/* Continue */}
+        <Button
+          title={loading ? 'Sending OTP…' : 'Continue'}
           onPress={handleSendOTP}
-          disabled={!isValid || loading}
-          activeOpacity={0.85}
-        >
-          <Text className={`text-base font-bold ${isValid ? 'text-white' : 'text-gray-400'}`}>
-            {loading ? 'Sending OTP...' : 'Continue'}
-          </Text>
-        </TouchableOpacity>
+          disabled={!isValid}
+          loading={loading}
+          style={{ marginTop: 4 }}
+        />
 
         {/* Divider */}
         <View className="flex-row items-center gap-4 my-6">
-          <View className="flex-1 h-px bg-gray-100" />
-          <Text className="text-xs text-gray-300 font-medium">OR</Text>
-          <View className="flex-1 h-px bg-gray-100" />
-        </View>
-
-        {/* Sign up */}
-        <View className="flex-row justify-center">
-          <Text className="text-sm text-gray-400">New here? </Text>
-          <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
-            <Text className="text-sm text-teal font-bold">Create Account</Text>
-          </TouchableOpacity>
+          <View className="flex-1 h-px bg-line-border" />
+          <Text className="text-[12px] text-ink-caption font-semibold">or</Text>
+          <View className="flex-1 h-px bg-line-border" />
         </View>
 
         {/* Guest */}
-        <TouchableOpacity className="items-center py-3 mt-2" onPress={() => guestLogin()}>
-          <Text className="text-sm text-gray-300 font-medium">Skip for now</Text>
+        <TouchableOpacity
+          className="h-[52px] rounded-[16px] border-[1.5px] border-line-border bg-white items-center justify-center"
+          onPress={() => guestLogin()}
+          activeOpacity={0.85}
+        >
+          <Text className="text-[15px] text-ink font-bold">Continue as Guest</Text>
         </TouchableOpacity>
+
+        {/* Sign up */}
+        <View className="flex-row justify-center mt-6">
+          <Text className="text-[13.5px] text-ink-soft">New here? </Text>
+          <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
+            <Text className="text-[13.5px] text-teal font-bold">Create an account</Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );

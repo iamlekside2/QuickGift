@@ -9,9 +9,9 @@ const REFERRAL_CODE = 'QUICKGIFT500';
 const referrals = [];
 
 const HOW_IT_WORKS = [
-  { step: '1', title: 'Share your code', desc: 'Send your unique referral code to friends', icon: 'share-outline', color: '#35615D' },
-  { step: '2', title: 'They sign up', desc: 'Your friend creates an account using your code', icon: 'person-add-outline', color: '#3B82F6' },
-  { step: '3', title: 'You both earn', desc: 'Get ₦500 each when they make their first order', icon: 'gift-outline', color: '#FD8950' },
+  { step: '1', title: 'Share your code', desc: 'Send your unique referral code to friends', icon: 'share-outline', color: '#1F4A45' },
+  { step: '2', title: 'They sign up', desc: 'Your friend creates an account using your code', icon: 'person-add-outline', color: '#4C7CB0' },
+  { step: '3', title: 'You both earn', desc: 'Get ₦500 each when they make their first order', icon: 'gift-outline', color: '#E8632F' },
 ];
 
 export default function ReferFriendScreen({ navigation }) {
@@ -21,7 +21,7 @@ export default function ReferFriendScreen({ navigation }) {
   const handleShare = async () => {
     try {
       await Share.share({
-        message: `Join QuickGift and get ₦500 off your first order! Use my referral code: ${REFERRAL_CODE}\n\nDownload QuickGift now and send amazing gifts to loved ones. 🎁`,
+        message: `Join QuickGift and get ₦500 off your first order! Use my referral code: ${REFERRAL_CODE}\n\nDownload QuickGift now and send amazing gifts to loved ones.`,
       });
     } catch (err) {
       console.log('Share error:', err);
@@ -73,7 +73,7 @@ export default function ReferFriendScreen({ navigation }) {
         <View
           className="mx-5 -mt-1 bg-white rounded-2xl p-5 mb-5"
           style={{
-            shadowColor: '#35615D',
+            shadowColor: '#1F4A45',
             shadowOffset: { width: 0, height: 4 },
             shadowOpacity: 0.08,
             shadowRadius: 16,
@@ -88,7 +88,7 @@ export default function ReferFriendScreen({ navigation }) {
           >
             <Text className="text-2xl font-extrabold text-teal tracking-widest">{REFERRAL_CODE}</Text>
             <View className="flex-row items-center gap-1 mt-1.5">
-              <Ionicons name={copied ? 'checkmark-circle' : 'copy-outline'} size={14} color={copied ? '#10B981' : '#9CA3AF'} />
+              <Ionicons name={copied ? 'checkmark-circle' : 'copy-outline'} size={14} color={copied ? '#3E8E63' : '#9A948A'} />
               <Text className="text-[11px] text-gray-400 font-semibold">
                 {copied ? 'Copied!' : 'Tap to copy'}
               </Text>
@@ -98,7 +98,7 @@ export default function ReferFriendScreen({ navigation }) {
           <TouchableOpacity
             className="bg-teal flex-row items-center justify-center py-4 rounded-2xl gap-2.5"
             style={{
-              shadowColor: '#35615D',
+              shadowColor: '#1F4A45',
               shadowOffset: { width: 0, height: 4 },
               shadowOpacity: 0.25,
               shadowRadius: 8,
@@ -117,7 +117,7 @@ export default function ReferFriendScreen({ navigation }) {
           <View
             className="bg-white rounded-2xl p-4 gap-4"
             style={{
-              shadowColor: '#1F2937',
+              shadowColor: '#211F1C',
               shadowOffset: { width: 0, height: 2 },
               shadowOpacity: 0.04,
               shadowRadius: 8,
@@ -137,7 +137,7 @@ export default function ReferFriendScreen({ navigation }) {
                   <Text className="text-xs text-gray-400 mt-0.5">{item.desc}</Text>
                 </View>
                 {i < HOW_IT_WORKS.length - 1 && (
-                  <Ionicons name="chevron-forward" size={14} color="#D1D5DB" />
+                  <Ionicons name="chevron-forward" size={14} color="#B5AFA2" />
                 )}
               </View>
             ))}
@@ -152,7 +152,7 @@ export default function ReferFriendScreen({ navigation }) {
           {referrals.length === 0 ? (
             <View className="items-center py-8 px-8">
               <View className="w-16 h-16 rounded-full bg-teal-light items-center justify-center mb-4">
-                <Ionicons name="people-outline" size={28} color="#35615D" />
+                <Ionicons name="people-outline" size={28} color="#1F4A45" />
               </View>
               <Text className="text-base font-bold text-gray-800 mb-1">No referrals yet</Text>
               <Text className="text-xs text-gray-400 text-center leading-4">
@@ -163,7 +163,7 @@ export default function ReferFriendScreen({ navigation }) {
           <View
             className="bg-white rounded-2xl overflow-hidden"
             style={{
-              shadowColor: '#1F2937',
+              shadowColor: '#211F1C',
               shadowOffset: { width: 0, height: 2 },
               shadowOpacity: 0.04,
               shadowRadius: 8,
@@ -206,7 +206,7 @@ export default function ReferFriendScreen({ navigation }) {
             className="bg-orange-light rounded-2xl p-4 flex-row items-center gap-3.5"
           >
             <View className="w-14 h-14 rounded-2xl bg-orange/10 items-center justify-center">
-              <Text style={{ fontSize: 28 }}>🎁</Text>
+              <Ionicons name="gift-outline" size={26} color="#E8632F" />
             </View>
             <View className="flex-1">
               <Text className="text-sm font-bold text-gray-800">Earn ₦500 per friend</Text>

@@ -12,44 +12,54 @@ export default function Button({
   style,
   textStyle,
 }) {
-  const baseClasses = 'flex-row items-center justify-center';
+  const baseClasses = 'flex-row items-center justify-center rounded-[16px]';
 
   const variantClasses = {
     primary: 'bg-teal',
-    secondary: 'bg-gray-100',
+    secondary: 'bg-teal-light',
     outline: 'border-[1.5px] border-teal bg-transparent',
     ghost: 'bg-transparent',
+    terracotta: 'bg-orange',
+    danger: 'bg-transparent',
   };
 
+  // Controls: 52px primary / 48px secondary per handoff.
   const sizeClasses = {
-    sm: 'py-2.5 px-5 rounded-xl',
-    md: 'py-3.5 px-6 rounded-xl',
-    lg: 'py-4 px-7 rounded-2xl',
+    sm: 'h-11 px-5',
+    md: 'h-[52px] px-6',
+    lg: 'h-[52px] px-7',
   };
 
   const textVariant = {
     primary: 'text-white',
-    secondary: 'text-gray-800',
+    secondary: 'text-teal',
     outline: 'text-teal',
     ghost: 'text-teal',
+    terracotta: 'text-white',
+    danger: 'text-danger',
   };
 
   const textSizeClasses = {
-    sm: 'text-sm',
+    sm: 'text-[14px]',
     md: 'text-[15px]',
-    lg: 'text-base',
+    lg: 'text-[15px]',
+  };
+
+  const tintedShadow = {
+    primary: { shadowColor: '#1F4A45' },
+    terracotta: { shadowColor: '#E8632F' },
   };
 
   return (
     <TouchableOpacity
       className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${disabled ? 'opacity-50' : ''} gap-2`}
       style={[
-        variant === 'primary' && !disabled ? {
-          shadowColor: '#35615D',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.25,
-          shadowRadius: 8,
-          elevation: 4,
+        (variant === 'primary' || variant === 'terracotta') && !disabled ? {
+          ...tintedShadow[variant],
+          shadowOffset: { width: 0, height: 12 },
+          shadowOpacity: 0.26,
+          shadowRadius: 24,
+          elevation: 6,
         } : {},
         style,
       ]}
@@ -58,12 +68,12 @@ export default function Button({
       activeOpacity={0.85}
     >
       {loading ? (
-        <ActivityIndicator color={variant === 'primary' ? '#fff' : '#35615D'} />
+        <ActivityIndicator color={variant === 'primary' || variant === 'terracotta' ? '#fff' : '#1F4A45'} />
       ) : (
         <>
           {icon}
           <Text
-            className={`font-semibold ${textVariant[variant]} ${textSizeClasses[size]}`}
+            className={`font-bold ${textVariant[variant]} ${textSizeClasses[size]}`}
             style={textStyle}
           >
             {title}

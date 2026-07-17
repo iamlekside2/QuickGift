@@ -74,7 +74,7 @@ export default function ChatListScreen({ navigation }) {
         {/* Avatar */}
         <View
           className="w-14 h-14 rounded-2xl items-center justify-center"
-          style={{ backgroundColor: hasUnread ? '#35615D' : '#35615D15' }}
+          style={{ backgroundColor: hasUnread ? '#1F4A45' : '#1F4A4515' }}
         >
           <Text className={`text-lg font-bold ${hasUnread ? 'text-white' : 'text-teal'}`}>
             {otherInitial}
@@ -112,7 +112,7 @@ export default function ChatListScreen({ navigation }) {
   const EmptyState = () => (
     <View className="flex-1 items-center justify-center px-10 pt-20">
       <View className="w-20 h-20 rounded-3xl bg-teal-light items-center justify-center mb-5">
-        <Ionicons name="chatbubbles-outline" size={36} color="#35615D" />
+        <Ionicons name="chatbubbles-outline" size={36} color="#1F4A45" />
       </View>
       <Text className="text-xl font-bold text-gray-800 mb-2">No messages yet</Text>
       <Text className="text-sm text-gray-400 text-center leading-5">
@@ -169,7 +169,7 @@ export default function ChatListScreen({ navigation }) {
 
       {loading ? (
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#35615D" />
+          <ActivityIndicator size="large" color="#1F4A45" />
         </View>
       ) : (
         <FlatList

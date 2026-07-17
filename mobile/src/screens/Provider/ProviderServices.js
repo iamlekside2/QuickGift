@@ -38,7 +38,7 @@ export default function ProviderServices({ navigation }) {
       <StatusBar style="dark" />
       {/* Header */}
       <View
-        style={{ paddingTop: Platform.OS === 'ios' ? 60 : 40, shadowColor: '#1F2937', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
+        style={{ paddingTop: Platform.OS === 'ios' ? 60 : 40, shadowColor: '#211F1C', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
         className="px-5 pb-4 bg-white"
       >
         <View className="flex-row items-center justify-between">
@@ -47,7 +47,7 @@ export default function ProviderServices({ navigation }) {
               className="w-10 h-10 rounded-2xl bg-gray-100 items-center justify-center"
               onPress={() => navigation.goBack()}
             >
-              <Ionicons name="arrow-back" size={20} color="#1F2937" />
+              <Ionicons name="arrow-back" size={20} color="#211F1C" />
             </TouchableOpacity>
             <Text className="text-[22px] font-bold text-gray-800" style={{ letterSpacing: 0.3 }}>My Services</Text>
           </View>
@@ -65,11 +65,11 @@ export default function ProviderServices({ navigation }) {
       <ScrollView className="flex-1 px-5 pt-4" showsVerticalScrollIndicator={false}>
         {loading ? (
           <View className="items-center py-16">
-            <ActivityIndicator size="large" color="#35615D" />
+            <ActivityIndicator size="large" color="#1F4A45" />
           </View>
         ) : services.length === 0 ? (
           <View className="items-center mt-16">
-            <Ionicons name="pricetag-outline" size={48} color="#9CA3AF" />
+            <Ionicons name="pricetag-outline" size={48} color="#9A948A" />
             <Text className="text-base font-bold text-gray-800 mt-3">No services yet</Text>
             <Text className="text-sm text-gray-400 mt-1">Add your first service!</Text>
             <TouchableOpacity
@@ -85,7 +85,7 @@ export default function ProviderServices({ navigation }) {
               <TouchableOpacity
                 key={service.id || service._id}
                 className="flex-row items-center bg-white rounded-2xl p-4 mb-3"
-                style={{ shadowColor: '#1F2937', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
+                style={{ shadowColor: '#211F1C', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
                 onPress={() => navigation.navigate('ServiceForm', { mode: 'edit', service })}
               >
                 <View className="flex-1">
@@ -100,7 +100,7 @@ export default function ProviderServices({ navigation }) {
                   <View className="flex-row items-center gap-3 mt-1.5">
                     {service.duration ? (
                       <View className="flex-row items-center gap-1">
-                        <Ionicons name="time-outline" size={12} color="#9CA3AF" />
+                        <Ionicons name="time-outline" size={12} color="#9A948A" />
                         <Text className="text-xs text-gray-400">{service.duration}</Text>
                       </View>
                     ) : null}
@@ -109,14 +109,14 @@ export default function ProviderServices({ navigation }) {
                     )}
                   </View>
                 </View>
-                <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
+                <Ionicons name="chevron-forward" size={18} color="#9A948A" />
               </TouchableOpacity>
             ))}
 
             {/* Summary */}
             <View
               className="bg-white rounded-2xl p-4 mt-3 mb-6"
-              style={{ shadowColor: '#1F2937', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
+              style={{ shadowColor: '#211F1C', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
             >
               <View className="flex-row items-center gap-2 mb-1">
                 <View className="w-2 h-2 rounded-full bg-teal" />

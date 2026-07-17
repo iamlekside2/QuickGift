@@ -81,7 +81,7 @@ export default function AvailabilityScreen({ navigation }) {
       <StatusBar style="dark" />
       {/* Header */}
       <View
-        style={{ paddingTop: Platform.OS === 'ios' ? 60 : 40, shadowColor: '#1F2937', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
+        style={{ paddingTop: Platform.OS === 'ios' ? 60 : 40, shadowColor: '#211F1C', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
         className="px-5 pb-4 bg-white"
       >
         <View className="flex-row items-center gap-3">
@@ -89,7 +89,7 @@ export default function AvailabilityScreen({ navigation }) {
             className="w-10 h-10 rounded-2xl bg-gray-100 items-center justify-center"
             onPress={() => navigation.goBack()}
           >
-            <Ionicons name="arrow-back" size={20} color="#1F2937" />
+            <Ionicons name="arrow-back" size={20} color="#211F1C" />
           </TouchableOpacity>
           <Text className="text-[22px] font-bold text-gray-800" style={{ letterSpacing: 0.3 }}>Availability</Text>
         </View>
@@ -105,12 +105,12 @@ export default function AvailabilityScreen({ navigation }) {
               <View
                 key={day.key}
                 className="flex-row items-center rounded-2xl p-3.5 bg-white"
-                style={{ shadowColor: '#1F2937', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2, opacity: daySchedule.active ? 1 : 0.7 }}
+                style={{ shadowColor: '#211F1C', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2, opacity: daySchedule.active ? 1 : 0.7 }}
               >
                 <Switch
                   value={daySchedule.active}
                   onValueChange={() => toggleDay(day.key)}
-                  trackColor={{ false: '#E5E7EB', true: '#35615D' }}
+                  trackColor={{ false: '#EAE3D8', true: '#1F4A45' }}
                   thumbColor="#fff"
                   style={{ transform: [{ scale: 0.8 }] }}
                 />
@@ -152,7 +152,7 @@ export default function AvailabilityScreen({ navigation }) {
               className={`flex-1 py-3 rounded-xl items-center ${
                 buffer === opt ? 'bg-teal' : ''
               }`}
-              style={buffer === opt ? { shadowColor: '#1F2937', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 4, elevation: 2 } : {}}
+              style={buffer === opt ? { shadowColor: '#211F1C', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 4, elevation: 2 } : {}}
               onPress={() => setBuffer(opt)}
             >
               <Text className={`text-sm font-bold ${
@@ -166,7 +166,7 @@ export default function AvailabilityScreen({ navigation }) {
         <Text className="text-[17px] font-bold text-gray-800 mb-3">Blocked Dates</Text>
         <TouchableOpacity
           className="flex-row items-center bg-white rounded-2xl p-4 mb-2 gap-3"
-          style={{ shadowColor: '#1F2937', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
+          style={{ shadowColor: '#211F1C', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
           onPress={() => {
             Alert.alert(
               'Add Blocked Date',
@@ -186,7 +186,7 @@ export default function AvailabilityScreen({ navigation }) {
             );
           }}
         >
-          <Ionicons name="add-circle-outline" size={22} color="#35615D" />
+          <Ionicons name="add-circle-outline" size={22} color="#1F4A45" />
           <Text className="text-sm text-teal font-bold">Add holiday or time off</Text>
         </TouchableOpacity>
 
@@ -199,15 +199,15 @@ export default function AvailabilityScreen({ navigation }) {
             <View
               key={index}
               className="flex-row items-center bg-white rounded-2xl p-4 mb-2 gap-3"
-              style={{ shadowColor: '#1F2937', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2, borderLeftWidth: 3, borderLeftColor: '#FD8950' }}
+              style={{ shadowColor: '#211F1C', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2, borderLeftWidth: 3, borderLeftColor: '#E8632F' }}
             >
-              <Ionicons name="calendar-outline" size={18} color="#FD8950" />
+              <Ionicons name="calendar-outline" size={18} color="#E8632F" />
               <View className="flex-1">
                 <Text className="text-sm font-bold text-gray-800">{blocked.name}</Text>
                 <Text className="text-xs text-gray-400">{blocked.dates}</Text>
               </View>
               <TouchableOpacity onPress={() => removeBlockedDate(index)}>
-                <Ionicons name="close-circle" size={20} color="#9CA3AF" />
+                <Ionicons name="close-circle" size={20} color="#9A948A" />
               </TouchableOpacity>
             </View>
           ))
@@ -243,7 +243,7 @@ export default function AvailabilityScreen({ navigation }) {
                 Select {timePickerTarget.field === 'start' ? 'Start' : 'End'} Time
               </Text>
               <TouchableOpacity onPress={() => setTimePickerVisible(false)}>
-                <Ionicons name="close" size={22} color="#9CA3AF" />
+                <Ionicons name="close" size={22} color="#9A948A" />
               </TouchableOpacity>
             </View>
             <FlatList

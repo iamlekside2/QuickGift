@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, Alert, Platform } from 'react-
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import Button from '../../components/common/Button';
+import { SerifHeadline } from '../../components/common/Typography';
 import { useAuth } from '../../context/AuthContext';
 
 export default function OTPScreen({ navigation, route }) {
@@ -97,37 +98,30 @@ export default function OTPScreen({ navigation, route }) {
 
   return (
     <View
-      className="flex-1 bg-white px-6"
+      className="flex-1 bg-cream-warm px-5"
       style={{ paddingTop: Platform.OS === 'ios' ? 60 : 40 }}
     >
       <StatusBar style="dark" />
 
       {/* Back Button */}
       <TouchableOpacity
-        className="w-11 h-11 rounded-2xl bg-gray-100 items-center justify-center mb-8"
+        className="w-10 h-10 rounded-[14px] bg-sand items-center justify-center mb-8"
         onPress={() => navigation.goBack()}
       >
-        <Ionicons name="arrow-back" size={20} color="#1F2937" />
+        <Ionicons name="arrow-back" size={20} color="#211F1C" />
       </TouchableOpacity>
 
       {/* Header */}
       <View className="items-center mb-10">
         <View
-          className="w-20 h-20 rounded-3xl bg-teal-light items-center justify-center mb-4"
-          style={{
-            shadowColor: '#35615D',
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.1,
-            shadowRadius: 12,
-            elevation: 3,
-          }}
+          className="w-20 h-20 rounded-[24px] bg-teal-light items-center justify-center mb-4"
         >
-          <Ionicons name="shield-checkmark-outline" size={36} color="#35615D" />
+          <Ionicons name="shield-checkmark-outline" size={36} color="#1F4A45" />
         </View>
-        <Text className="text-2xl font-extrabold text-gray-800 mb-2">Verify Phone</Text>
-        <Text className="text-sm text-gray-400 text-center leading-5">
+        <SerifHeadline text="Verify your phone" emphasis="phone" size={28} />
+        <Text className="text-[13.5px] text-ink-soft text-center leading-5 mt-2">
           Enter the 6-digit code sent to{'\n'}
-          <Text className="font-bold text-gray-800">{displayPhone}</Text>
+          <Text className="font-bold text-ink">{displayPhone}</Text>
         </Text>
       </View>
 
@@ -149,7 +143,7 @@ export default function OTPScreen({ navigation, route }) {
             }`}
             style={{
               borderWidth: 2,
-              borderColor: digit ? '#35615D' : 'transparent',
+              borderColor: digit ? '#1F4A45' : 'transparent',
               fontSize: 20,
             }}
             keyboardType="number-pad"

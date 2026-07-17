@@ -78,11 +78,13 @@ export default function BookingScreen({ navigation, route }) {
       }
 
       // Dev mode fallback — no Paystack key configured
-      Alert.alert(
-        'Booking Confirmed!',
-        payData.message || `Your appointment with ${provider?.business_name || provider?.name} has been booked for ${dates[selectedDate].day} ${dates[selectedDate].date} ${dates[selectedDate].month} at ${selectedTime}.`,
-        [{ text: 'View Orders', onPress: () => navigation.getParent()?.navigate('Orders') }]
-      );
+      navigation.replace('BookingConfirmed', {
+        providerName: provider?.business_name || provider?.name,
+        serviceName: selectedService?.name || provider?.service || 'Beauty Service',
+        when: `${dates[selectedDate].day} ${dates[selectedDate].date} ${dates[selectedDate].month}, ${selectedTime}`,
+        location: serviceType === 'home' ? 'Home Service' : 'Salon Visit',
+        bookingId: booking?.booking_number || booking?.id,
+      });
     } catch (err) {
       Alert.alert('Booking Failed', err.response?.data?.detail || 'Something went wrong. Please try again.');
     } finally {
@@ -90,46 +92,27 @@ export default function BookingScreen({ navigation, route }) {
     }
   };
 
+  const providerName = provider?.business_name || provider?.name || 'Provider';
+
   return (
-    <View className="flex-1 bg-white">
-      <StatusBar style="dark" />
-      {/* Fixed Header - stays above scroll */}
+    <View className="flex-1 bg-cream">
+      <StatusBar style="light" />
+      {/* Teal header */}
       <View
-        className="flex-row items-center justify-between px-6 pb-4 bg-white"
-        style={{ paddingTop: Platform.OS === 'ios' ? 60 : 40 }}
+        className="flex-row items-center justify-between px-5 bg-teal"
+        style={{ paddingTop: Platform.OS === 'ios' ? 56 : 38, paddingBottom: 18, borderBottomLeftRadius: 28, borderBottomRightRadius: 28 }}
       >
         <TouchableOpacity
-          className="w-11 h-11 rounded-2xl bg-gray-100 items-center justify-center"
+          className="w-10 h-10 rounded-[14px] bg-white/15 items-center justify-center"
           onPress={() => navigation.goBack()}
         >
-          <Ionicons name="arrow-back" size={22} color="#1F2937" />
+          <Ionicons name="arrow-back" size={22} color="#fff" />
         </TouchableOpacity>
-        <Text className="text-xl font-bold text-gray-800">Book Appointment</Text>
-        <View style={{ width: 44 }} />
+        <Text className="text-[17px] font-bold text-white" numberOfLines={1}>Book {providerName}</Text>
+        <View style={{ width: 40 }} />
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Provider Info Card */}
-        <View
-          className="flex-row items-center gap-3.5 mx-6 p-4 bg-teal-light rounded-2xl mb-7"
-        >
-          <View
-            className="w-12 h-12 rounded-2xl items-center justify-center"
-            style={{ backgroundColor: '#35615D20' }}
-          >
-            <Text className="text-xl font-bold text-teal">
-              {(provider?.business_name || provider?.name || 'P').charAt(0)}
-            </Text>
-          </View>
-          <View>
-            <Text className="text-base font-bold text-gray-800">
-              {provider?.business_name || provider?.name}
-            </Text>
-            <Text className="text-xs text-gray-400 mt-0.5">
-              {provider?.service_type || provider?.service}
-            </Text>
-          </View>
-        </View>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: 20 }}>
 
         {/* Service Selection */}
         {services.length > 0 && (
@@ -158,7 +141,7 @@ export default function BookingScreen({ navigation, route }) {
                   </Text>
                 </View>
                 {selectedService?.id === svc.id && (
-                  <Ionicons name="checkmark-circle" size={24} color="#35615D" />
+                  <Ionicons name="checkmark-circle" size={24} color="#1F4A45" />
                 )}
               </TouchableOpacity>
             ))}
@@ -180,7 +163,7 @@ export default function BookingScreen({ navigation, route }) {
               <Ionicons
                 name="home-outline"
                 size={20}
-                color={serviceType === 'home' ? '#35615D' : '#9CA3AF'}
+                color={serviceType === 'home' ? '#1F4A45' : '#9A948A'}
               />
               <Text
                 className={`text-sm font-bold ${
@@ -201,7 +184,7 @@ export default function BookingScreen({ navigation, route }) {
               <Ionicons
                 name="business-outline"
                 size={20}
-                color={serviceType === 'salon' ? '#35615D' : '#9CA3AF'}
+                color={serviceType === 'salon' ? '#1F4A45' : '#9A948A'}
               />
               <Text
                 className={`text-sm font-bold ${
@@ -226,7 +209,7 @@ export default function BookingScreen({ navigation, route }) {
                 }`}
                 onPress={() => setSelectedDate(i)}
                 style={selectedDate === i ? {
-                  shadowColor: '#35615D',
+                  shadowColor: '#1F4A45',
                   shadowOffset: { width: 0, height: 4 },
                   shadowOpacity: 0.3,
                   shadowRadius: 8,
@@ -271,7 +254,7 @@ export default function BookingScreen({ navigation, route }) {
                 }`}
                 onPress={() => setSelectedTime(time)}
                 style={selectedTime === time ? {
-                  shadowColor: '#35615D',
+                  shadowColor: '#1F4A45',
                   shadowOffset: { width: 0, height: 3 },
                   shadowOpacity: 0.25,
                   shadowRadius: 6,
@@ -293,28 +276,20 @@ export default function BookingScreen({ navigation, route }) {
         <View style={{ height: 120 }} />
       </ScrollView>
 
-      {/* Premium Bottom Bar */}
+      {/* Pinned bottom bar */}
       <View
-        className="flex-row items-center gap-4 px-6 pb-9 pt-5 bg-white"
-        style={{
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: -6 },
-          shadowOpacity: 0.08,
-          shadowRadius: 16,
-          elevation: 12,
-          borderTopLeftRadius: 24,
-          borderTopRightRadius: 24,
-        }}
+        className="flex-row items-center gap-4 px-5 bg-white"
+        style={{ paddingTop: 14, paddingBottom: Platform.OS === 'ios' ? 34 : 18, borderTopWidth: 1, borderTopColor: '#F5F0E7' }}
       >
         <View>
-          <Text className="text-xs text-gray-400 font-medium">Total</Text>
-          <Text className="text-2xl font-extrabold text-gray-800">{formatPrice(servicePrice)}</Text>
+          <Text className="text-xs text-ink-caption font-semibold">Total</Text>
+          <Text className="text-[22px] font-extrabold text-ink">{formatPrice(servicePrice)}</Text>
         </View>
         <Button
-          title={submitting ? 'Booking...' : 'Confirm Booking'}
+          title={submitting ? 'Booking…' : `Confirm · ${formatPrice(servicePrice)}`}
           onPress={handleConfirmBooking}
           disabled={selectedTime === null || submitting}
-          size="lg"
+          variant="terracotta"
           style={{ flex: 1 }}
         />
       </View>

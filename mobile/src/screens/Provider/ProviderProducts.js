@@ -21,7 +21,7 @@ export default function ProviderProducts({ navigation }) {
       <StatusBar style="dark" />
       {/* Header */}
       <View
-        style={{ paddingTop: Platform.OS === 'ios' ? 60 : 40, shadowColor: '#1F2937', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
+        style={{ paddingTop: Platform.OS === 'ios' ? 60 : 40, shadowColor: '#211F1C', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
         className="px-5 pb-4 bg-white"
       >
         <View className="flex-row items-center justify-between">
@@ -30,7 +30,7 @@ export default function ProviderProducts({ navigation }) {
               className="w-10 h-10 rounded-2xl bg-gray-100 items-center justify-center"
               onPress={() => navigation.goBack()}
             >
-              <Ionicons name="arrow-back" size={20} color="#1F2937" />
+              <Ionicons name="arrow-back" size={20} color="#211F1C" />
             </TouchableOpacity>
             <Text className="text-[22px] font-bold text-gray-800" style={{ letterSpacing: 0.3 }}>My Products</Text>
           </View>
@@ -47,11 +47,11 @@ export default function ProviderProducts({ navigation }) {
       <ScrollView className="flex-1 px-5 pt-4" showsVerticalScrollIndicator={false}>
         {loading ? (
           <View className="items-center py-16">
-            <ActivityIndicator size="large" color="#35615D" />
+            <ActivityIndicator size="large" color="#1F4A45" />
           </View>
         ) : products.length === 0 ? (
           <View className="items-center mt-16">
-            <Ionicons name="cube-outline" size={48} color="#9CA3AF" />
+            <Ionicons name="cube-outline" size={48} color="#9A948A" />
             <Text className="text-base font-bold text-gray-800 mt-3">No products yet</Text>
             <Text className="text-sm text-gray-400 mt-1">Add your first product!</Text>
             <TouchableOpacity
@@ -67,11 +67,11 @@ export default function ProviderProducts({ navigation }) {
               <TouchableOpacity
                 key={product.id || product._id}
                 className="flex-row items-center bg-white rounded-2xl p-4 mb-3"
-                style={{ shadowColor: '#1F2937', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
+                style={{ shadowColor: '#211F1C', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
                 onPress={() => navigation.navigate('ProductForm', { mode: 'edit', product })}
               >
                 <View className="w-14 h-14 rounded-2xl bg-teal-light items-center justify-center mr-3">
-                  <Ionicons name="cube-outline" size={24} color="#35615D" />
+                  <Ionicons name="cube-outline" size={24} color="#1F4A45" />
                 </View>
                 <View className="flex-1">
                   <View className="flex-row items-center gap-2">
@@ -89,14 +89,14 @@ export default function ProviderProducts({ navigation }) {
                     <Text className="text-sm font-extrabold text-teal mt-1">{'\u20A6'}{Number(product.price).toLocaleString()}</Text>
                   )}
                 </View>
-                <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
+                <Ionicons name="chevron-forward" size={18} color="#9A948A" />
               </TouchableOpacity>
             ))}
 
             {/* Summary */}
             <View
               className="bg-white rounded-2xl p-4 mt-3"
-              style={{ shadowColor: '#1F2937', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
+              style={{ shadowColor: '#211F1C', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
             >
               <View className="flex-row items-center gap-2 mb-1">
                 <View className="w-2 h-2 rounded-full bg-teal" />

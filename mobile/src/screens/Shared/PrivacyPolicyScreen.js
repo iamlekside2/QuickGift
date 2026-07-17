@@ -16,7 +16,7 @@ export default function PrivacyPolicyScreen({ navigation }) {
           onPress={() => navigation.goBack()}
           accessibilityLabel="Go back"
         >
-          <Ionicons name="arrow-back" size={20} color="#1F2937" />
+          <Ionicons name="arrow-back" size={20} color="#211F1C" />
         </TouchableOpacity>
         <Text className="flex-1 text-center text-lg font-bold text-gray-800">Privacy Policy</Text>
         <View style={{ width: 40 }} />

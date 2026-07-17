@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, Platform, TextInput, ScrollView } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, Platform, TextInput, ScrollView, Image } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { productsAPI } from '../../services/api';
 import { LoadingState, EmptyState } from '../../components/common/ScreenStates';
+import { iconFor } from '../../utils/categoryIcons';
 
 const RECENT_SEARCHES_KEY = '@quickgift_recent_searches';
 
@@ -83,73 +84,79 @@ export default function GiftsListScreen({ navigation, route }) {
 
   const renderGift = ({ item }) => (
     <TouchableOpacity
-      className="flex-1 bg-white rounded-3xl overflow-hidden mb-4"
+      className="flex-1 bg-white rounded-[22px] overflow-hidden mb-4"
       style={{
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
+        shadowColor: '#211F1C',
+        shadowOffset: { width: 0, height: 8 },
         shadowOpacity: 0.06,
-        shadowRadius: 12,
+        shadowRadius: 20,
         elevation: 3,
       }}
       onPress={() => navigation.navigate('GiftDetail', { gift: item })}
       activeOpacity={0.8}
     >
-      <View className="h-32 bg-cream items-center justify-center rounded-t-3xl">
-        <Text className="text-[44px]">{'\uD83C\uDF81'}</Text>
+      <View className="h-32 bg-cream items-center justify-center">
+        {item.image_url ? (
+          <Image source={{ uri: item.image_url }} className="w-full h-full" resizeMode="cover" />
+        ) : (
+          <Ionicons name={iconFor(item.category || item.category_name)} size={40} color="#B5AFA2" />
+        )}
       </View>
       <View className="p-3.5 gap-1">
-        <Text className="text-sm font-bold text-gray-800" numberOfLines={1}>
+        <Text className="text-sm font-bold text-ink" numberOfLines={1}>
           {item.name}
         </Text>
-        <Text className="text-xs text-gray-400">{item.vendor_name}</Text>
+        <Text className="text-xs text-ink-caption" numberOfLines={1}>{item.vendor_name}</Text>
         <View className="flex-row justify-between items-center mt-1.5">
           <Text className="text-sm font-extrabold text-teal">{formatPrice(item.price)}</Text>
-          <View className="flex-row items-center gap-1 bg-amber-50 px-2 py-0.5 rounded-full">
-            <Ionicons name="star" size={11} color="#F59E0B" />
-            <Text className="text-[11px] text-amber-600 font-semibold">{item.rating}</Text>
+          <View className="flex-row items-center gap-1 bg-orange-light px-2 py-0.5 rounded-full">
+            <Ionicons name="star" size={11} color="#E8632F" />
+            <Text className="text-[11px] text-orange-dark font-bold">{item.rating}</Text>
           </View>
         </View>
       </View>
     </TouchableOpacity>
   );
 
+  const canGoBack = navigation.canGoBack();
+
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1 bg-cream">
       <StatusBar style="dark" />
       {/* Header */}
       <View
         className="flex-row items-center justify-between px-5 pb-4"
         style={{ paddingTop: Platform.OS === 'ios' ? 60 : 40 }}
       >
-        <TouchableOpacity
-          className="w-11 h-11 rounded-2xl bg-gray-100 items-center justify-center"
-          onPress={() => navigation.goBack()}
-        >
-          <Ionicons name="arrow-back" size={22} color="#1F2937" />
-        </TouchableOpacity>
-        <Text className="text-xl font-bold text-gray-800">{title || 'Gifts'}</Text>
-        <TouchableOpacity className="w-11 h-11 rounded-2xl bg-gray-100 items-center justify-center">
-          <Ionicons name="options-outline" size={20} color="#1F2937" />
-        </TouchableOpacity>
+        {canGoBack ? (
+          <TouchableOpacity
+            className="w-10 h-10 rounded-[14px] bg-sand items-center justify-center"
+            onPress={() => navigation.goBack()}
+          >
+            <Ionicons name="arrow-back" size={22} color="#211F1C" />
+          </TouchableOpacity>
+        ) : <View style={{ width: 40 }} />}
+        <Text className="text-[19px] font-bold text-ink">{title || 'Gifts'}</Text>
+        <View style={{ width: 40 }} />
       </View>
 
       {/* Search Bar */}
       <View className="px-5 mb-3">
         <View className="flex-row items-center bg-gray-100 rounded-2xl px-4 h-11">
-          <Ionicons name="search" size={18} color="#9CA3AF" />
+          <Ionicons name="search" size={18} color="#9A948A" />
           <TextInput
             className="flex-1 ml-2.5 text-sm text-gray-900"
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholder="Search gifts..."
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor="#9A948A"
             autoFocus={!!showSearch}
             onFocus={() => setSearchFocused(true)}
             onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
           />
           {searchQuery ? (
             <TouchableOpacity onPress={() => setSearchQuery('')}>
-              <Ionicons name="close-circle" size={18} color="#9CA3AF" />
+              <Ionicons name="close-circle" size={18} color="#9A948A" />
             </TouchableOpacity>
           ) : null}
         </View>
@@ -196,11 +203,12 @@ export default function GiftsListScreen({ navigation, route }) {
           </TouchableOpacity>
         ))}
         <TouchableOpacity
-          className={`px-3 py-2 rounded-full ${ratingFilter ? 'bg-orange/10' : 'bg-gray-100'}`}
+          className={`px-3 py-2 rounded-full flex-row items-center gap-1 ${ratingFilter ? 'bg-orange/10' : 'bg-gray-100'}`}
           onPress={() => setRatingFilter(!ratingFilter)}
         >
+          <Ionicons name="star" size={12} color={ratingFilter ? '#E8632F' : '#6E6A63'} />
           <Text className={`text-xs font-semibold ${ratingFilter ? 'text-orange' : 'text-gray-500'}`}>
-            4+ {'\u2B50'}
+            4+
           </Text>
         </TouchableOpacity>
       </ScrollView>
@@ -216,7 +224,7 @@ export default function GiftsListScreen({ navigation, route }) {
             style={
               sortBy === sort.key
                 ? {
-                    shadowColor: '#35615D',
+                    shadowColor: '#1F4A45',
                     shadowOffset: { width: 0, height: 3 },
                     shadowOpacity: 0.2,
                     shadowRadius: 6,
@@ -250,7 +258,7 @@ export default function GiftsListScreen({ navigation, route }) {
           showsVerticalScrollIndicator={false}
           renderItem={renderGift}
           ListEmptyComponent={
-            <EmptyState emoji={'\uD83C\uDF81'} title="No gifts found" subtitle="We couldn't find any gifts matching your criteria. Try a different filter or category." />
+            <EmptyState icon="gift-outline" title="No gifts found" subtitle="We couldn't find any gifts matching your criteria. Try a different filter or category." />
           }
         />
       )}
