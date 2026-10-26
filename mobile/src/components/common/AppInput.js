@@ -1,34 +1,21 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Animated, ActivityIndicator, Platform } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 const TEAL = '#1F4A45';
-const GRAY_200 = '#EAE3D8';
+const GRAY_200 = '#E6E2DB';
 const GRAY_400 = '#9A948A';
-const GRAY_500 = '#6E6A63';
 const RED = '#D24B4B';
 const GREEN = '#3E8E63';
+const LABEL_CHIP = '#FFFFFF'; // chip behind the notched label (matches the white field)
 
 /**
- * AppInput — unified input component for QuickGift.
+ * AppInput — outlined input with the label notched on the top border.
  *
- * Props:
- *   label        — floating label text
- *   value        — controlled value
- *   onChangeText — value change handler
- *   placeholder  — placeholder (shown when focused + empty)
- *   type         — 'text' | 'password' | 'phone' | 'email' | 'number' | 'multiline' | 'search'
- *   error        — error message string (shows red state)
- *   success      — boolean (shows green state + checkmark)
- *   loading      — boolean (shows spinner)
- *   disabled     — boolean
- *   icon         — Ionicons name for left icon
- *   maxLength    — max character count
- *   onBlur       — blur handler
- *   onFocus      — focus handler
- *   autoFocus    — boolean
- *   containerStyle — extra style for outer wrapper
- *   inputRef     — ref forwarding
+ * Props: label, value, onChangeText, placeholder,
+ *   type ('text'|'password'|'phone'|'email'|'number'|'multiline'|'search'),
+ *   error, success, loading, disabled, icon, maxLength, onBlur, onFocus,
+ *   autoFocus, containerStyle, inputRef.
  */
 export default function AppInput({
   label = '',
@@ -51,85 +38,73 @@ export default function AppInput({
 }) {
   const [focused, setFocused] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const labelAnim = useRef(new Animated.Value(value ? 1 : 0)).current;
 
-  const hasValue = value && value.length > 0;
-  const isUp = focused || hasValue;
+  const handleFocus = (e) => { setFocused(true); onFocus?.(e); };
+  const handleBlur = (e) => { setFocused(false); onBlur?.(e); };
 
-  useEffect(() => {
-    Animated.timing(labelAnim, {
-      toValue: isUp ? 1 : 0,
-      duration: 150,
-      useNativeDriver: false,
-    }).start();
-  }, [isUp]);
-
-  const handleFocus = (e) => {
-    setFocused(true);
-    onFocus?.(e);
-  };
-
-  const handleBlur = (e) => {
-    setFocused(false);
-    onBlur?.(e);
-  };
-
-  // Border color
   let borderColor = GRAY_200;
   if (error) borderColor = RED;
   else if (success) borderColor = GREEN;
   else if (focused) borderColor = TEAL;
 
-  // Keyboard type
   let keyboardType = 'default';
   if (type === 'phone') keyboardType = 'phone-pad';
   else if (type === 'email') keyboardType = 'email-address';
   else if (type === 'number') keyboardType = 'numeric';
 
-  // Auto-capitalize
   let autoCapitalize = 'sentences';
-  if (type === 'email') autoCapitalize = 'none';
-  else if (type === 'phone' || type === 'number') autoCapitalize = 'none';
+  if (type === 'email' || type === 'phone' || type === 'number') autoCapitalize = 'none';
 
   const isMultiline = type === 'multiline';
   const isPassword = type === 'password';
   const isPhone = type === 'phone';
   const isSearch = type === 'search';
 
-  // Floating label position
-  const labelTop = labelAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [isMultiline ? 16 : 18, 6],
-  });
-  const labelSize = labelAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [14, 11],
-  });
-  const labelColor = labelAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [GRAY_400, focused ? TEAL : GRAY_500],
-  });
+  const showLabel = !!label && !isSearch;
+  const labelColor = error ? RED : focused ? TEAL : GRAY_400;
+
+  // With a notched label, show the placeholder only while focused (avoids showing
+  // the field's name twice). Search has no label, so it always shows its placeholder.
+  const effPlaceholder = isSearch ? placeholder : showLabel && !focused ? '' : placeholder;
 
   return (
-    <View style={[{ marginBottom: error ? 4 : 16 }, containerStyle]}>
+    <View style={[{ marginBottom: error ? 4 : 16, marginTop: showLabel ? 8 : 0 }, containerStyle]}>
       <View
-        style={[
-          {
-            borderWidth: 1.5,
-            borderColor,
-            borderRadius: 16,
-            backgroundColor: disabled ? '#F0ECE3' : '#F5F0E7',
-            minHeight: isMultiline ? 100 : 56,
-            flexDirection: 'row',
-            alignItems: isMultiline ? 'flex-start' : 'center',
-            paddingHorizontal: 16,
-            opacity: disabled ? 0.6 : 1,
-          },
-        ]}
+        style={{
+          borderWidth: 1.5,
+          borderColor,
+          borderRadius: 14,
+          backgroundColor: disabled ? '#F4F1EB' : '#FFFFFF',
+          minHeight: isMultiline ? 104 : 58,
+          flexDirection: 'row',
+          alignItems: isMultiline ? 'flex-start' : 'center',
+          paddingHorizontal: 16,
+          opacity: disabled ? 0.6 : 1,
+        }}
       >
+        {/* Notched label sitting on the top border */}
+        {showLabel && (
+          <Text
+            style={{
+              position: 'absolute',
+              top: -9,
+              left: 12,
+              backgroundColor: LABEL_CHIP,
+              paddingHorizontal: 6,
+              fontSize: 11.5,
+              fontWeight: '700',
+              color: labelColor,
+              zIndex: 1,
+            }}
+            numberOfLines={1}
+          >
+            {label}
+          </Text>
+        )}
+
         {/* Left icon */}
         {icon && !isPhone && (
-          <View style={{ marginRight: 10, marginTop: isMultiline ? 18 : 0 }}>
+          <View style={{ marginRight: 10, marginTop: isMultiline ? 16 : 0 }}>
             <Ionicons name={icon} size={18} color={focused ? TEAL : GRAY_400} />
           </View>
         )}
@@ -149,63 +124,44 @@ export default function AppInput({
           </View>
         )}
 
-        {/* Input area */}
-        <View style={{ flex: 1, justifyContent: isMultiline ? 'flex-start' : 'center' }}>
-          {/* Floating label */}
-          {label && !isSearch ? (
-            <Animated.Text
-              style={{
-                position: 'absolute',
-                left: 0,
-                top: labelTop,
-                fontSize: labelSize,
-                color: error ? RED : labelColor,
-                fontWeight: '600',
-                zIndex: 1,
-              }}
-              numberOfLines={1}
-            >
-              {label}
-            </Animated.Text>
-          ) : null}
-
-          <TextInput
-            ref={inputRef}
-            value={value}
-            onChangeText={disabled ? undefined : onChangeText}
-            placeholder={focused || isSearch ? placeholder : ''}
-            placeholderTextColor="#B5AFA2"
-            keyboardType={keyboardType}
-            autoCapitalize={autoCapitalize}
-            secureTextEntry={isPassword && !showPassword}
-            editable={!disabled}
-            multiline={isMultiline}
-            maxLength={maxLength}
-            autoFocus={autoFocus}
-            onFocus={handleFocus}
-            onBlur={handleBlur}
-            textAlignVertical={isMultiline ? 'top' : 'center'}
-            style={{
-              fontSize: 14,
-              fontWeight: '600',
-              color: '#211F1C',
-              paddingTop: label && !isSearch ? 20 : isMultiline ? 12 : 0,
-              paddingBottom: isMultiline ? 12 : 0,
-              minHeight: isMultiline ? 80 : undefined,
-              flex: 1,
-            }}
-            accessibilityLabel={label || placeholder}
-            accessibilityHint={error || undefined}
-            {...rest}
-          />
-        </View>
+        <TextInput
+          ref={inputRef}
+          value={value}
+          onChangeText={disabled ? undefined : onChangeText}
+          placeholder={effPlaceholder}
+          placeholderTextColor="#B5AFA2"
+          keyboardType={keyboardType}
+          autoCapitalize={autoCapitalize}
+          secureTextEntry={isPassword && !showPassword}
+          editable={!disabled}
+          multiline={isMultiline}
+          maxLength={maxLength}
+          autoFocus={autoFocus}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+          textAlignVertical={isMultiline ? 'top' : 'center'}
+          style={{
+            flex: 1,
+            fontSize: 14,
+            fontWeight: '600',
+            color: '#211F1C',
+            paddingVertical: isMultiline ? 14 : 0,
+            minHeight: isMultiline ? 80 : undefined,
+          }}
+          accessibilityLabel={label || placeholder}
+          accessibilityHint={error || undefined}
+          {...rest}
+        />
 
         {/* Right side: loading / success / password toggle */}
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginLeft: 6 }}>
           {loading && <ActivityIndicator size="small" color={TEAL} />}
           {success && !loading && <Ionicons name="checkmark-circle" size={20} color={GREEN} />}
           {isPassword && (
-            <TouchableOpacity onPress={() => setShowPassword(!showPassword)} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+            <TouchableOpacity
+              onPress={() => setShowPassword(!showPassword)}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            >
               <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={20} color={GRAY_400} />
             </TouchableOpacity>
           )}
