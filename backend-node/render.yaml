@@ -1,0 +1,62 @@
+# Render Blueprint for the QuickGift NestJS backend.
+# Deploy: push this repo to GitHub, then Render → New → Blueprint → pick the repo.
+# After the service is created, run db/schema.sql + db/seed.sql against your database
+# (see DEPLOY.md), and fill in the `sync: false` secrets in the Render dashboard.
+services:
+  - type: web
+    name: quickgift-node-api
+    runtime: node
+    rootDir: backend-node
+    # 'free' sleeps after ~15 min idle (slow first request). Change to 'starter'
+    # (~$7/mo) for an always-on backend with no cold starts.
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: "22.12.0"
+
+      # Core
+      - key: DATABASE_URL          # paste your Supabase/Neon connection string (direct/session, not the txn pooler)
+        sync: false
+      - key: SECRET_KEY            # Render generates one and keeps it stable across restarts
+        generateValue: true
+      - key: DEBUG                 # "true" during a closed beta = OTP returned in-app (no SMS needed); "false" for public
+        value: "false"
+
+      # Commission
+      - key: GIFT_COMMISSION_PERCENT
+        value: "10.0"
+      - key: BEAUTY_COMMISSION_PERCENT
+        value: "10.0"
+
+      # Paystack (test keys are enough for the beta; live keys need CAC activation)
+      - key: PAYSTACK_LIVE
+        value: "false"
+      - key: PAYSTACK_TEST_SECRET_KEY
+        sync: false
+      - key: PAYSTACK_LIVE_SECRET_KEY
+        sync: false
+
+      # Termii SMS (leave blank + DEBUG=true to skip SMS during the beta)
+      - key: TERMII_API_KEY
+        sync: false
+      - key: TERMII_SENDER_ID
+        value: QuickGift
+
+      # Cloudinary (image uploads)
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+
+      # Kwik delivery
+      - key: KWIK_ENV
+        value: test
+      - key: KWIK_EMAIL
+        sync: false
+      - key: KWIK_PASSWORD
+        sync: false

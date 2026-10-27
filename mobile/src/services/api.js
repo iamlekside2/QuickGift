@@ -26,7 +26,14 @@ import {
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_BASE_URL = 'https://quickgift-api.onrender.com/api/v1';
+// Auto-switch: the local backend while running `expo start` (__DEV__ === true),
+// the Render deployment in any release build (preview APK / production).
+// NOTE: update the Render host if your service name differs from render.yaml
+// (service `quickgift-node-api` → https://quickgift-node-api.onrender.com).
+// For local testing on a PHYSICAL device, swap 127.0.0.1 for this machine's LAN IP.
+const API_BASE_URL = __DEV__
+  ? 'http://127.0.0.1:8001/api/v1'
+  : 'https://quickgift-node-api.onrender.com/api/v1';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -193,5 +200,11 @@ const realDisputesAPI = {
   respond: (id, data) => api.patch(`/disputes/${id}/respond`, data),
 };
 export const disputesAPI = realDisputesAPI;
+
+const realFeedbackAPI = {
+  // { message, category?, rating?, app_version? }
+  submit: (data) => api.post('/feedback', data),
+};
+export const feedbackAPI = realFeedbackAPI;
 
 export default api;
