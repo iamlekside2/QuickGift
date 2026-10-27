@@ -85,7 +85,7 @@ export default function ProvidersListScreen({ navigation, route }) {
       />
 
       {/* Search Bar */}
-      <View className="px-5 mb-3">
+      <View className="px-5 mt-4 mb-3">
         <View className="flex-row items-center bg-white border-[1.5px] border-line-border rounded-[16px] px-4 h-[52px]">
           <Ionicons name="search" size={18} color="#9A948A" />
           <TextInput

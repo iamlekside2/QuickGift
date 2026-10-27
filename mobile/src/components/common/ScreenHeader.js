@@ -1,9 +1,10 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from './IconCompat';
 
-// One status-bar inset for every header in the app (was 55/56/60 ad-hoc).
-const TOP = Platform.select({ ios: 56, android: 38, default: 20 });
+// Fallback status-bar inset when safe-area insets are 0 (e.g. web preview).
+const TOP_FALLBACK = Platform.select({ ios: 56, android: 38, default: 20 });
 
 const TEAL = '#1F4A45';
 const INK = '#211F1C';
@@ -39,6 +40,10 @@ export default function ScreenHeader({
   center = false,
   children,
 }) {
+  const insets = useSafeAreaInsets();
+  // Real status-bar height on device (+ a small gap); fallback on web where it's 0.
+  const topPad = insets.top > 0 ? insets.top + 10 : TOP_FALLBACK;
+
   const light = tone ? tone === 'light' : variant === 'stack';
   const backVisible = showBack ?? variant === 'stack';
   const centered = center;
@@ -72,7 +77,7 @@ export default function ScreenHeader({
   );
 
   return (
-    <View className="px-5" style={[{ paddingTop: TOP, paddingBottom: pb }, bandStyle]}>
+    <View className="px-5" style={[{ paddingTop: topPad, paddingBottom: pb }, bandStyle]}>
       {variant === 'home' ? (
         <View className="flex-row items-center justify-between">
           <View className="flex-1">{left}</View>

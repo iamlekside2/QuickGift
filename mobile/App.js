@@ -1,6 +1,7 @@
 import "./global.css";
 import { useCallback } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { useFonts, InstrumentSerif_400Regular, InstrumentSerif_400Regular_Italic } from '@expo-google-fonts/instrument-serif';
@@ -49,18 +50,20 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-      <AuthProvider>
-        <LocationProvider>
-          <WalletProvider>
-            <CartProvider>
-              <NavigationContainer onReady={onReady}>
-                <StatusBar style="dark" />
-                <RootNavigator />
-              </NavigationContainer>
-            </CartProvider>
-          </WalletProvider>
-        </LocationProvider>
-      </AuthProvider>
+      <SafeAreaProvider>
+        <AuthProvider>
+          <LocationProvider>
+            <WalletProvider>
+              <CartProvider>
+                <NavigationContainer onReady={onReady}>
+                  <StatusBar style="dark" />
+                  <RootNavigator />
+                </NavigationContainer>
+              </CartProvider>
+            </WalletProvider>
+          </LocationProvider>
+        </AuthProvider>
+      </SafeAreaProvider>
     </ErrorBoundary>
   );
 }

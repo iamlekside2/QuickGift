@@ -133,7 +133,7 @@ export default function GiftsListScreen({ navigation, route }) {
       />
 
       {/* Search Bar */}
-      <View className="px-5 mb-3">
+      <View className="px-5 mt-4 mb-3">
         <View className="flex-row items-center bg-gray-100 rounded-2xl px-4 h-11">
           <Ionicons name="search" size={18} color="#9A948A" />
           <TextInput
