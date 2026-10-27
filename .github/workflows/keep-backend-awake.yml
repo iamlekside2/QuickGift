@@ -1,0 +1,20 @@
+name: keep-backend-awake
+
+# Pings the Render free backend so it doesn't spin down after 15 min idle
+# (free instances cold-start ~50s otherwise). Scheduled runs on GitHub are
+# best-effort and can be delayed under load — for tight timing, also add a
+# cron-job.org / UptimeRobot monitor on the same URL. Costs ~nothing.
+on:
+  schedule:
+    - cron: '*/10 * * * *' # every 10 minutes
+  workflow_dispatch: {} # allow manual runs from the Actions tab
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping /health
+        run: |
+          curl -fsS --max-time 90 https://quickgift-node-api.onrender.com/health \
+            && echo " <- backend awake" \
+            || echo "ping failed (will retry next run)"
