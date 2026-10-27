@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Platform, Alert, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '../../components/common/IconCompat';
+import ScreenHeader from '../../components/common/ScreenHeader';
 import { useAuth } from '../../context/AuthContext';
 import { useWallet } from '../../context/WalletContext';
 import { ordersAPI, paymentsAPI } from '../../services/api';
@@ -31,13 +32,14 @@ export default function PaymentScreen({ route, navigation }) {
     try {
       // Step 1: Create the order
       const orderRes = await ordersAPI.create({
-        product_id: gift.id,
+        items: [{ product_id: gift.id, quantity: 1 }],
+        delivery_address: recipient.address,
+        delivery_city: recipient.city || 'Lagos',
+        delivery_lat: recipient.lat,
+        delivery_lng: recipient.lng,
         recipient_name: recipient.name,
         recipient_phone: recipient.phone,
-        recipient_address: recipient.address,
-        delivery_fee: deliveryFee,
-        total_amount: total,
-        payment_method: selectedMethod,
+        personal_message: recipient.note || undefined,
       });
       const order = orderRes.data;
 
@@ -100,25 +102,7 @@ export default function PaymentScreen({ route, navigation }) {
     <View className="flex-1 bg-gray-50">
       <StatusBar style="dark" />
       {/* Header */}
-      <View
-        className="flex-row items-center gap-3 px-5 pb-3 bg-white"
-        style={{
-          paddingTop: Platform.OS === 'ios' ? 60 : 40,
-          shadowColor: '#211F1C',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.04,
-          shadowRadius: 8,
-          elevation: 2,
-        }}
-      >
-        <TouchableOpacity
-          className="w-10 h-10 rounded-2xl bg-gray-100 items-center justify-center"
-          onPress={() => navigation.goBack()}
-        >
-          <Ionicons name="arrow-back" size={20} color="#211F1C" />
-        </TouchableOpacity>
-        <Text className="text-xl font-bold text-gray-800">Payment</Text>
-      </View>
+      <ScreenHeader variant="stack" title="Payment" onBack={() => navigation.goBack()} />
 
       <ScrollView className="flex-1 px-5 pt-6" showsVerticalScrollIndicator={false}>
         {/* Order Summary */}

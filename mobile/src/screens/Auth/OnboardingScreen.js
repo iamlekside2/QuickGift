@@ -3,7 +3,7 @@ import {
   View, Text, FlatList, Dimensions, TouchableOpacity, Image, Platform,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '../../components/common/IconCompat';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ONBOARDING_SLIDES } from '../../constants/data';
 import { SerifHeadline } from '../../components/common/Typography';

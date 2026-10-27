@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, TouchableOpacity, Platform, TextInput, ScrollView } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '../../components/common/IconCompat';
 import { providersAPI } from '../../services/api';
 import { LoadingState, EmptyState } from '../../components/common/ScreenStates';
 import { useLocation } from '../../context/LocationContext';
 import { useAuth } from '../../context/AuthContext';
 import ProviderCard from '../../components/common/ProviderCard';
+import ScreenHeader from '../../components/common/ScreenHeader';
 
 export default function ProvidersListScreen({ navigation, route }) {
   const { category, title, search: showSearch } = route.params || {};
@@ -67,26 +68,21 @@ export default function ProvidersListScreen({ navigation, route }) {
     <View className="flex-1 bg-cream">
       <StatusBar style="dark" />
       {/* Header */}
-      <View
-        className="flex-row items-center justify-between px-5 pb-4"
-        style={{ paddingTop: Platform.OS === 'ios' ? 60 : 40 }}
-      >
-        {canGoBack ? (
+      <ScreenHeader
+        variant="stack"
+        title={title || 'Providers'}
+        showBack={canGoBack}
+        onBack={() => navigation.goBack()}
+        right={(
           <TouchableOpacity
-            className="w-10 h-10 rounded-[14px] bg-sand items-center justify-center"
-            onPress={() => navigation.goBack()}
+            className="w-10 h-10 rounded-[14px] items-center justify-center"
+            style={{ backgroundColor: '#F3F4F6' }}
+            onPress={() => setViewMode(viewMode === 'list' ? 'map' : 'list')}
           >
-            <Ionicons name="arrow-back" size={22} color="#211F1C" />
+            <Ionicons name={viewMode === 'list' ? 'map-outline' : 'list-outline'} size={20} color="#211F1C" />
           </TouchableOpacity>
-        ) : <View style={{ width: 40 }} />}
-        <Text className="text-[19px] font-bold text-ink">{title || 'Providers'}</Text>
-        <TouchableOpacity
-          className="w-10 h-10 rounded-[14px] bg-sand items-center justify-center"
-          onPress={() => setViewMode(viewMode === 'list' ? 'map' : 'list')}
-        >
-          <Ionicons name={viewMode === 'list' ? 'map-outline' : 'list-outline'} size={20} color="#211F1C" />
-        </TouchableOpacity>
-      </View>
+        )}
+      />
 
       {/* Search Bar */}
       <View className="px-5 mb-3">

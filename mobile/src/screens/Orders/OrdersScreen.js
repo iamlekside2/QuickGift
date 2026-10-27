@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Platform, Alert, RefreshControl } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '../../components/common/IconCompat';
+import ScreenHeader from '../../components/common/ScreenHeader';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../context/AuthContext';
 import { ordersAPI, bookingsAPI } from '../../services/api';
@@ -100,13 +101,9 @@ export default function OrdersScreen() {
     <View className="flex-1 bg-cream">
       <StatusBar style="light" />
       {/* Teal header */}
-      <View
-        className="bg-teal px-5"
-        style={{ paddingTop: Platform.OS === 'ios' ? 56 : 38, paddingBottom: 4, borderBottomLeftRadius: 28, borderBottomRightRadius: 28 }}
-      >
-        <Text className="text-[19px] font-bold text-white mb-4">My Orders</Text>
+      <ScreenHeader variant="root" title="My Orders" pb={4}>
         {/* Underline tabs — active = white text + terracotta underline */}
-        <View className="flex-row gap-6">
+        <View className="flex-row gap-6 mt-4">
           {TABS.map((tab) => {
             const active = activeTab === tab;
             return (
@@ -119,7 +116,7 @@ export default function OrdersScreen() {
             );
           })}
         </View>
-      </View>
+      </ScreenHeader>
 
       <ScrollView
         className="flex-1 px-5 pt-5"

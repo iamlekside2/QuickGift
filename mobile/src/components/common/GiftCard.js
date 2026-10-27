@@ -1,6 +1,6 @@
 import React from 'react';
 import { TouchableOpacity, Text, View, Image } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from './IconCompat';
 
 // Line-icon placeholder per category (real photography replaces these slots).
 const ICON_MAP = {

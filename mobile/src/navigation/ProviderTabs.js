@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Platform } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '../components/common/IconCompat';
 
 import ProviderDashboard from '../screens/Provider/ProviderDashboard';
 import ProviderBookings from '../screens/Provider/ProviderBookings';
@@ -22,6 +22,7 @@ import ProfileScreen from '../screens/Profile/ProfileScreen';
 import HelpSupportScreen from '../screens/Shared/HelpSupportScreen';
 import SettingsScreen from '../screens/Shared/SettingsScreen';
 import EditProfileScreen from '../screens/Shared/EditProfileScreen';
+import FeedbackScreen from '../screens/Shared/FeedbackScreen';
 
 import ProviderOrdersScreen from '../screens/Provider/ProviderOrdersScreen';
 import PrivacyPolicyScreen from '../screens/Shared/PrivacyPolicyScreen';
@@ -57,6 +58,7 @@ const PROVIDER_SCREENS = [
   { name: 'ProviderOrders', component: ProviderOrdersScreen },
   { name: 'PrivacyPolicy', component: PrivacyPolicyScreen },
   { name: 'Terms', component: TermsScreen },
+  { name: 'Feedback', component: FeedbackScreen },
 ];
 
 function DashboardStack() {

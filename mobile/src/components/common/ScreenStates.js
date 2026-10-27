@@ -1,6 +1,54 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { View, Text, TouchableOpacity, ActivityIndicator, Animated, Easing } from 'react-native';
+import { Ionicons } from './IconCompat';
+
+/**
+ * Shimmer skeleton block — a soft pulsing placeholder.
+ */
+export function Skeleton({ width = '100%', height = 16, radius = 8, style }) {
+  const opacity = React.useRef(new Animated.Value(0.45)).current;
+  React.useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(opacity, { toValue: 1, duration: 650, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+        Animated.timing(opacity, { toValue: 0.45, duration: 650, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, []);
+  return <Animated.View style={[{ width, height, borderRadius: radius, backgroundColor: '#E7E2D8', opacity }, style]} />;
+}
+
+/**
+ * Home loading skeleton — card-shaped placeholders instead of a spinner.
+ */
+export function HomeSkeleton() {
+  return (
+    <View style={{ paddingHorizontal: 20, marginTop: 8 }}>
+      <Skeleton width={150} height={20} radius={6} style={{ marginBottom: 14 }} />
+      <View style={{ flexDirection: 'row', gap: 14, marginBottom: 28 }}>
+        {[0, 1].map((i) => (
+          <View key={i} style={{ width: 165 }}>
+            <Skeleton width={165} height={120} radius={22} style={{ marginBottom: 10 }} />
+            <Skeleton width={120} height={13} style={{ marginBottom: 8 }} />
+            <Skeleton width={80} height={13} />
+          </View>
+        ))}
+      </View>
+      <Skeleton width={120} height={20} radius={6} style={{ marginBottom: 14 }} />
+      {[0, 1, 2].map((i) => (
+        <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+          <Skeleton width={52} height={52} radius={16} />
+          <View style={{ flex: 1, gap: 8 }}>
+            <Skeleton width="60%" height={14} />
+            <Skeleton width="40%" height={12} />
+          </View>
+        </View>
+      ))}
+    </View>
+  );
+}
 
 /**
  * Unified loading state — replaces plain ActivityIndicator everywhere.

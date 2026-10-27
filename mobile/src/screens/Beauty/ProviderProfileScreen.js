@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Platform, Image } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '../../components/common/IconCompat';
 import { providersAPI, reviewsAPI, chatsAPI } from '../../services/api';
 import Button from '../../components/common/Button';
 import { iconFor } from '../../utils/categoryIcons';
@@ -60,8 +60,8 @@ export default function ProviderProfileScreen({ navigation, route }) {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
         {/* Portfolio hero (260px) with floating back */}
         <View className="bg-sand items-center justify-center" style={{ height: 260 }}>
-          {provider?.cover_image || provider?.image_url ? (
-            <Image source={{ uri: provider.cover_image || provider.image_url }} className="w-full h-full" resizeMode="cover" />
+          {provider?.cover_image || provider?.image_url || provider?.avatar_url ? (
+            <Image source={{ uri: provider.cover_image || provider.image_url || provider.avatar_url }} className="w-full h-full" resizeMode="cover" />
           ) : (
             <Ionicons name={iconFor(serviceType)} size={80} color="#B5AFA2" />
           )}

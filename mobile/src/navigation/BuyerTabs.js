@@ -2,7 +2,8 @@ import React from 'react';
 import { View, Platform } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { Ionicons } from '@expo/vector-icons';
+import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
+import { Ionicons } from '../components/common/IconCompat';
 
 import HomeScreen from '../screens/Home/HomeScreen';
 import OrdersScreen from '../screens/Orders/OrdersScreen';
@@ -30,6 +31,8 @@ import BookingScreen from '../screens/Beauty/BookingScreen';
 import BookingConfirmedScreen from '../screens/Beauty/BookingConfirmedScreen';
 
 import WriteReviewScreen from '../screens/Shared/WriteReviewScreen';
+import FeedbackScreen from '../screens/Shared/FeedbackScreen';
+import LocationPickerScreen from '../screens/Shared/LocationPickerScreen';
 import RaiseDisputeScreen from '../screens/Shared/RaiseDisputeScreen';
 
 import ChatListScreen from '../screens/Chat/ChatListScreen';
@@ -42,6 +45,17 @@ import AddBankAccountScreen from '../screens/Wallet/AddBankAccountScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
+
+// The root (landing) screen inside each tab's stack. The tab bar is only shown
+// on these; any pushed screen (detail, checkout, forms) hides it so its own
+// bottom CTA stands alone instead of stacking on top of the tab bar.
+const TAB_ROOT = {
+  Home: 'HomeMain',
+  Gifts: 'GiftsHome',
+  Services: 'BeautyHome',
+  Orders: 'OrdersMain',
+  Profile: 'ProfileMain',
+};
 
 // Gift purchase flow — reused by the Home and Gifts stacks.
 function giftFlowScreens() {
@@ -80,6 +94,7 @@ function commonScreens() {
       <Stack.Screen name="WriteReview" component={WriteReviewScreen} />
       <Stack.Screen name="RaiseDispute" component={RaiseDisputeScreen} />
       <Stack.Screen name="OrderTracking" component={OrderTrackingScreen} />
+      <Stack.Screen name="LocationPicker" component={LocationPickerScreen} />
     </>
   );
 }
@@ -143,6 +158,7 @@ function ProfileStack() {
       <Stack.Screen name="ReferFriend" component={ReferFriendScreen} />
       <Stack.Screen name="ChatList" component={ChatListScreen} />
       <Stack.Screen name="ChatScreen" component={ChatScreen} />
+      <Stack.Screen name="Feedback" component={FeedbackScreen} />
     </Stack.Navigator>
   );
 }
@@ -168,7 +184,10 @@ function TabIcon({ name, focused, color }) {
 export default function BuyerTabs() {
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({
+      screenOptions={({ route }) => {
+      const focusedRoute = getFocusedRouteNameFromRoute(route) ?? TAB_ROOT[route.name];
+      const atRoot = focusedRoute === TAB_ROOT[route.name];
+      return {
         headerShown: false,
         tabBarIcon: ({ focused, color }) => {
           let iconName;
@@ -188,6 +207,7 @@ export default function BuyerTabs() {
           letterSpacing: 0.2,
         },
         tabBarStyle: {
+          display: atRoot ? 'flex' : 'none',
           height: Platform.OS === 'ios' ? 88 : 68,
           paddingTop: 10,
           paddingBottom: Platform.OS === 'ios' ? 28 : 8,
@@ -199,7 +219,8 @@ export default function BuyerTabs() {
           shadowOpacity: 0.06,
           shadowRadius: 16,
         },
-      })}
+      };
+      }}
     >
       <Tab.Screen name="Home" component={HomeStack} />
       <Tab.Screen name="Gifts" component={GiftsStack} />

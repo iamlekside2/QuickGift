@@ -1,7 +1,7 @@
 import React, { useRef, useState, useCallback } from 'react';
 import { View, Text, TouchableOpacity, TextInput, Platform, ActivityIndicator, FlatList, Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '../../components/common/IconCompat';
 import { WebView } from 'react-native-webview';
 import { getCurrentCoordinates, reverseGeocode } from '../../utils/location';
 

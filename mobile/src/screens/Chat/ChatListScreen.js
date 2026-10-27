@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, FlatList, TouchableOpacity, TextInput, Platform, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '../../components/common/IconCompat';
 import { useAuth } from '../../context/AuthContext';
 import { chatsAPI } from '../../services/api';
 import { useFocusEffect } from '@react-navigation/native';

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Alert, Platform, Image, TextInput } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '../../components/common/IconCompat';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Button from '../../components/common/Button';
 import { useCart } from '../../context/CartContext';

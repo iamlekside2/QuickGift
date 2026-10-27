@@ -1,6 +1,6 @@
 import React from 'react';
 import { TouchableOpacity, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from './IconCompat';
 
 // Tinted icon tile + label. `icon` is an Ionicons (outline) name.
 export default React.memo(function CategoryCard({ label, icon, color, onPress, size = 'md' }) {

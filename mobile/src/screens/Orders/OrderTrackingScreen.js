@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Platform, Linking } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '../../components/common/IconCompat';
 
 const STEPS = [
   { key: 'confirmed', label: 'Order confirmed', sub: 'We received your order' },
@@ -54,6 +54,30 @@ export default function OrderTrackingScreen({ navigation, route }) {
       </View>
 
       <ScrollView className="flex-1 px-5 pt-6" showsVerticalScrollIndicator={false}>
+        {/* Rating prompt — shown once the order is delivered */}
+        {(status === 'delivered' || status === 'completed') && (
+          <TouchableOpacity
+            onPress={() => navigation.navigate('WriteReview', {
+              targetType: 'product',
+              targetId: order?.product_id || order?.id,
+              targetName: order?.product_name || order?.name || 'your order',
+              orderId: order?.id,
+            })}
+            activeOpacity={0.9}
+            className="bg-white rounded-[20px] p-4 mb-4 flex-row items-center"
+            style={{ shadowColor: '#211F1C', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.06, shadowRadius: 20, elevation: 3 }}
+          >
+            <View className="w-12 h-12 rounded-full items-center justify-center" style={{ backgroundColor: 'rgba(232,99,47,0.12)' }}>
+              <Ionicons name="star" size={22} color="#E8632F" />
+            </View>
+            <View className="flex-1 ml-3">
+              <Text className="text-[14px] font-bold text-ink">How was your order?</Text>
+              <Text className="text-[12px] text-ink-caption mt-0.5">Tap to rate — it helps others shop with confidence</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color="#B5AFA2" />
+          </TouchableOpacity>
+        )}
+
         {/* Vertical status timeline */}
         <View
           className="bg-white rounded-[20px] p-5"

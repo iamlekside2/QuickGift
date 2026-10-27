@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Platform, Linking } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '../../components/common/IconCompat';
 
 const SUPPORT_OPTIONS = [
   { icon: 'call-outline', label: 'Call us', sub: '+234 810 123 4567', color: '#1F4A45', action: 'tel:+2348101234567' },

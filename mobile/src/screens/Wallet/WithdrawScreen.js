@@ -4,7 +4,7 @@ import {
   TextInput, Alert, ActivityIndicator,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '../../components/common/IconCompat';
 import { walletAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { useWallet } from '../../context/WalletContext';

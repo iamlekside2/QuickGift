@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Platform, Alert, Modal, Image } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '../../components/common/IconCompat';
 import { ordersAPI, paymentsAPI } from '../../services/api';
 import AppInput from '../../components/common/AppInput';
+import ScreenHeader from '../../components/common/ScreenHeader';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { useWallet } from '../../context/WalletContext';
@@ -11,7 +12,7 @@ import { iconFor } from '../../utils/categoryIcons';
 
 export default function CartScreen({ navigation }) {
   const { items, removeItem, updateQuantity, clearCart, subtotal, itemCount } = useCart();
-  const { user, isAuthenticated, isGuest } = useAuth();
+  const { user, isAuthenticated, isGuest, logout } = useAuth();
   const { balance: walletBalance, debit: walletDebit, refreshBalance } = useWallet();
   const [submitting, setSubmitting] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('card');
@@ -29,7 +30,14 @@ export default function CartScreen({ navigation }) {
 
   const handleCheckout = () => {
     if (isGuest || !isAuthenticated) {
-      Alert.alert('Sign In Required', 'Please sign in to place an order.');
+      Alert.alert(
+        'Sign in to check out',
+        'Create an account or sign in to place your order and track delivery. Your cart will be waiting.',
+        [
+          { text: 'Not now', style: 'cancel' },
+          { text: 'Sign in', onPress: () => logout() },
+        ],
+      );
       return;
     }
     if (items.length === 0) return;
@@ -110,19 +118,7 @@ export default function CartScreen({ navigation }) {
     return (
       <View className="flex-1 bg-cream">
         <StatusBar style="dark" />
-        <View
-          className="flex-row items-center justify-between px-5 pb-3"
-          style={{ paddingTop: Platform.OS === 'ios' ? 60 : 40 }}
-        >
-          <TouchableOpacity
-            className="w-10 h-10 rounded-[14px] bg-sand items-center justify-center"
-            onPress={() => navigation.goBack()}
-          >
-            <Ionicons name="arrow-back" size={22} color="#211F1C" />
-          </TouchableOpacity>
-          <Text className="text-[19px] font-bold text-ink">Cart</Text>
-          <View className="w-10" />
-        </View>
+        <ScreenHeader variant="stack" title="Cart" onBack={() => navigation.goBack()} />
         <View className="flex-1 items-center justify-center px-8">
           <View className="w-24 h-24 rounded-full bg-sand items-center justify-center mb-5">
             <Ionicons name="cart-outline" size={44} color="#9A948A" />
@@ -144,20 +140,15 @@ export default function CartScreen({ navigation }) {
 
   return (
     <View className="flex-1 bg-cream">
-      <StatusBar style="light" />
-      <View
-        className="flex-row items-center justify-between px-5 bg-teal"
-        style={{ paddingTop: Platform.OS === 'ios' ? 56 : 38, paddingBottom: 18, borderBottomLeftRadius: 28, borderBottomRightRadius: 28 }}
-      >
+      <StatusBar style="dark" />
+      <ScreenHeader
+        variant="stack"
+        title={`Cart (${itemCount})`}
+        onBack={() => navigation.goBack()}
+        right={(
         <TouchableOpacity
-          className="w-10 h-10 rounded-[14px] bg-white/15 items-center justify-center"
-          onPress={() => navigation.goBack()}
-        >
-          <Ionicons name="arrow-back" size={22} color="#fff" />
-        </TouchableOpacity>
-        <Text className="text-[19px] font-bold text-white">Cart ({itemCount})</Text>
-        <TouchableOpacity
-          className="w-10 h-10 rounded-[14px] bg-white/15 items-center justify-center"
+          className="w-10 h-10 rounded-[14px] items-center justify-center"
+          style={{ backgroundColor: '#F3F4F6' }}
           onPress={() => {
             Alert.alert('Clear Cart', 'Remove all items?', [
               { text: 'Cancel', style: 'cancel' },
@@ -165,9 +156,10 @@ export default function CartScreen({ navigation }) {
             ]);
           }}
         >
-          <Ionicons name="trash-outline" size={20} color="#fff" />
+          <Ionicons name="trash-outline" size={20} color="#D24B4B" />
         </TouchableOpacity>
-      </View>
+        )}
+      />
 
       <ScrollView className="flex-1 px-5 pt-5" showsVerticalScrollIndicator={false}>
         {items.map((item) => (
@@ -249,7 +241,11 @@ export default function CartScreen({ navigation }) {
           activeOpacity={0.85}
         >
           <Text className="text-[15px] font-bold text-white">
-            {submitting ? 'Placing Order…' : `Checkout · ${formatPrice(total)}`}
+            {submitting
+              ? 'Placing Order…'
+              : isGuest || !isAuthenticated
+                ? 'Sign in to check out'
+                : `Checkout · ${formatPrice(total)}`}
           </Text>
         </TouchableOpacity>
       </View>

@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, TouchableOpacity, Platform, TextInput, ScrollView, Image } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '../../components/common/IconCompat';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { productsAPI } from '../../services/api';
 import { LoadingState, EmptyState } from '../../components/common/ScreenStates';
+import ScreenHeader from '../../components/common/ScreenHeader';
 import { iconFor } from '../../utils/categoryIcons';
 
 const RECENT_SEARCHES_KEY = '@quickgift_recent_searches';
@@ -124,21 +125,12 @@ export default function GiftsListScreen({ navigation, route }) {
     <View className="flex-1 bg-cream">
       <StatusBar style="dark" />
       {/* Header */}
-      <View
-        className="flex-row items-center justify-between px-5 pb-4"
-        style={{ paddingTop: Platform.OS === 'ios' ? 60 : 40 }}
-      >
-        {canGoBack ? (
-          <TouchableOpacity
-            className="w-10 h-10 rounded-[14px] bg-sand items-center justify-center"
-            onPress={() => navigation.goBack()}
-          >
-            <Ionicons name="arrow-back" size={22} color="#211F1C" />
-          </TouchableOpacity>
-        ) : <View style={{ width: 40 }} />}
-        <Text className="text-[19px] font-bold text-ink">{title || 'Gifts'}</Text>
-        <View style={{ width: 40 }} />
-      </View>
+      <ScreenHeader
+        variant="stack"
+        title={title || 'Gifts'}
+        showBack={canGoBack}
+        onBack={() => navigation.goBack()}
+      />
 
       {/* Search Bar */}
       <View className="px-5 mb-3">

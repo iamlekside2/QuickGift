@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '../../components/common/IconCompat';
 import { BEAUTY_CATEGORIES } from '../../constants/data';
 import { providersAPI } from '../../services/api';
 import { useLocation } from '../../context/LocationContext';
@@ -10,6 +10,7 @@ import { LoadingState, EmptyState } from '../../components/common/ScreenStates';
 import SectionHeader from '../../components/common/SectionHeader';
 import CategoryCard from '../../components/common/CategoryCard';
 import ProviderCard from '../../components/common/ProviderCard';
+import ScreenHeader from '../../components/common/ScreenHeader';
 import { iconFor } from '../../utils/categoryIcons';
 
 const FILTERS = [
@@ -79,30 +80,22 @@ export default function BeautyHomeScreen({ navigation }) {
     }
   };
 
-  const canGoBack = navigation.canGoBack();
+  // Show Back only when this screen was PUSHED onto its own stack (e.g. reached
+  // from the Home flow) — not merely because the tab navigator has tab history.
+  const canGoBack = (navigation.getState()?.index ?? 0) > 0;
 
   return (
     <View className="flex-1 bg-cream">
       <StatusBar style="light" />
 
       {/* Teal header */}
-      <View
-        className="bg-teal px-5"
-        style={{ paddingTop: Platform.OS === 'ios' ? 56 : 38, paddingBottom: 30, borderBottomLeftRadius: 28, borderBottomRightRadius: 28 }}
-      >
-        <View className="flex-row items-center justify-between">
-          {canGoBack ? (
-            <TouchableOpacity
-              className="w-10 h-10 rounded-[14px] bg-white/15 items-center justify-center"
-              onPress={() => navigation.goBack()}
-            >
-              <Ionicons name="arrow-back" size={20} color="#fff" />
-            </TouchableOpacity>
-          ) : <View style={{ width: 40 }} />}
-          <Text className="text-[19px] font-bold text-white">Book a Pro</Text>
-          <View style={{ width: 40 }} />
-        </View>
-      </View>
+      <ScreenHeader
+        variant="root"
+        title="Book a Pro"
+        showBack={canGoBack}
+        onBack={() => navigation.goBack()}
+        pb={30}
+      />
 
       {/* Floating search */}
       <View className="px-5" style={{ marginTop: -16 }}>

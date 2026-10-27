@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Alert, Platform, Image } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '../../components/common/IconCompat';
 import { useAuth } from '../../context/AuthContext';
 import { useWallet } from '../../context/WalletContext';
 import { ordersAPI, bookingsAPI, providersAPI } from '../../services/api';
@@ -15,6 +15,7 @@ const BUYER_MENU = [
   { icon: 'notifications-outline', label: 'Reminders', sub: 'Birthday & event alerts', color: '#E8632F', screen: 'Reminders' },
   { icon: 'location-outline', label: 'Addresses', sub: 'Delivery addresses', color: '#4C7CB0', screen: 'Addresses' },
   { icon: 'people-outline', label: 'Refer a Friend', sub: 'Earn \u20A6500 per referral', color: '#7A5FA8', screen: 'ReferFriend' },
+  { icon: 'chatbox-ellipses-outline', label: 'Send Feedback', sub: 'Report an issue or share an idea', color: '#E8632F', screen: 'Feedback' },
   { icon: 'help-circle-outline', label: 'Help & Support', sub: 'FAQs and chat support', color: '#3E8E63', screen: 'HelpSupport' },
   { icon: 'settings-outline', label: 'Settings', sub: 'Account preferences', color: '#6E6A63', screen: 'Settings' },
 ];
@@ -26,6 +27,7 @@ const PROVIDER_MENU = [
   { icon: 'pricetag-outline', label: 'My Services', sub: 'Manage your services', color: '#E8632F', screen: 'ProviderServices' },
   { icon: 'cube-outline', label: 'My Products', sub: 'Manage gift products', color: '#7A5FA8', screen: 'ProviderProducts' },
   { icon: 'star-outline', label: 'Reviews', sub: 'Client feedback & ratings', color: '#B8862E', screen: 'ProviderReviews' },
+  { icon: 'chatbox-ellipses-outline', label: 'Send Feedback', sub: 'Report an issue or share an idea', color: '#E8632F', screen: 'Feedback' },
   { icon: 'help-circle-outline', label: 'Help & Support', sub: 'FAQs and chat support', color: '#6E6A63', screen: 'HelpSupport' },
   { icon: 'settings-outline', label: 'Settings', sub: 'Account preferences', color: '#6E6A63', screen: 'Settings' },
 ];

@@ -1,6 +1,6 @@
 import React from 'react';
-import { TouchableOpacity, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { TouchableOpacity, Text, View, Image } from 'react-native';
+import { Ionicons } from './IconCompat';
 
 export default React.memo(function ProviderCard({ item, onPress }) {
   const name = item.business_name || item.name || 'Provider';
@@ -22,8 +22,12 @@ export default React.memo(function ProviderCard({ item, onPress }) {
       onPress={onPress}
       activeOpacity={0.85}
     >
-      <View className="w-13 h-13 rounded-2xl bg-teal-light items-center justify-center" style={{ width: 52, height: 52 }}>
-        <Text className="text-xl font-bold text-teal">{name.charAt(0)}</Text>
+      <View className="rounded-2xl bg-teal-light items-center justify-center overflow-hidden" style={{ width: 52, height: 52 }}>
+        {item.avatar_url ? (
+          <Image source={{ uri: item.avatar_url }} style={{ width: 52, height: 52 }} resizeMode="cover" />
+        ) : (
+          <Text className="text-xl font-bold text-teal">{name.charAt(0)}</Text>
+        )}
       </View>
       <View className="flex-1 gap-1">
         <View className="flex-row items-center gap-2">

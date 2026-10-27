@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Alert, Platform } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Alert, Platform, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '../../components/common/IconCompat';
 import { bookingsAPI, paymentsAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import Button from '../../components/common/Button';
+import ScreenHeader from '../../components/common/ScreenHeader';
 
 export default function BookingScreen({ navigation, route }) {
   const { user } = useAuth();
@@ -14,6 +15,19 @@ export default function BookingScreen({ navigation, route }) {
   const [selectedService, setSelectedService] = useState(services[0] || null);
   const [serviceType, setServiceType] = useState('home');
   const [submitting, setSubmitting] = useState(false);
+  const [coords, setCoords] = useState(null);   // { lat, lng } for home service
+  const [area, setArea] = useState(null);        // address/area label from the picker
+
+  const openPicker = () => {
+    navigation.navigate('LocationPicker', {
+      title: 'Your location',
+      initial: coords,
+      onPick: ({ lat, lng, address }) => {
+        setCoords({ lat, lng });
+        if (address) setArea(address);
+      },
+    });
+  };
 
   const dates = Array.from({ length: 7 }, (_, i) => {
     const d = new Date();
@@ -53,6 +67,12 @@ export default function BookingScreen({ navigation, route }) {
         service_type: serviceType,
         notes: `${serviceType === 'home' ? 'Home Service' : 'Salon Visit'}`,
       };
+      // Attach the customer's location for home service so the provider knows where to go
+      if (serviceType === 'home' && coords) {
+        bookingData.address = area || undefined;
+        bookingData.lat = coords.lat;
+        bookingData.lng = coords.lng;
+      }
 
       const bookingRes = await bookingsAPI.create(bookingData);
       const booking = bookingRes.data;
@@ -96,21 +116,9 @@ export default function BookingScreen({ navigation, route }) {
 
   return (
     <View className="flex-1 bg-cream">
-      <StatusBar style="light" />
-      {/* Teal header */}
-      <View
-        className="flex-row items-center justify-between px-5 bg-teal"
-        style={{ paddingTop: Platform.OS === 'ios' ? 56 : 38, paddingBottom: 18, borderBottomLeftRadius: 28, borderBottomRightRadius: 28 }}
-      >
-        <TouchableOpacity
-          className="w-10 h-10 rounded-[14px] bg-white/15 items-center justify-center"
-          onPress={() => navigation.goBack()}
-        >
-          <Ionicons name="arrow-back" size={22} color="#fff" />
-        </TouchableOpacity>
-        <Text className="text-[17px] font-bold text-white" numberOfLines={1}>Book {providerName}</Text>
-        <View style={{ width: 40 }} />
-      </View>
+      <StatusBar style="dark" />
+      {/* Header */}
+      <ScreenHeader variant="stack" title={`Book ${providerName}`} onBack={() => navigation.goBack()} />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: 20 }}>
 
@@ -195,6 +203,27 @@ export default function BookingScreen({ navigation, route }) {
               </Text>
             </TouchableOpacity>
           </View>
+
+          {/* Home-service location capture */}
+          {serviceType === 'home' && (
+            <View className="mt-3">
+              <TouchableOpacity
+                onPress={openPicker}
+                activeOpacity={0.8}
+                className="flex-row items-center gap-2 self-start px-3.5 py-2.5 rounded-xl bg-teal/10"
+              >
+                <Ionicons name="map" size={15} color="#1F4A45" />
+                <Text className="text-[12.5px] font-bold text-teal">
+                  {coords ? 'Update my location' : 'Set my location on map'}
+                </Text>
+              </TouchableOpacity>
+              <Text className="text-[11.5px] mt-1.5" style={{ color: area ? '#3E8E63' : '#9A948A' }}>
+                {area
+                  ? `✓ Your stylist will come to ${area}`
+                  : 'Share your location so your stylist knows where to come.'}
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* Date Selection */}

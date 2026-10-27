@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Platform } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Platform, ActivityIndicator, Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '../../components/common/IconCompat';
 import AppInput from '../../components/common/AppInput';
+import ScreenHeader from '../../components/common/ScreenHeader';
 
 export default function RecipientDetailsScreen({ route, navigation }) {
   const gift = route.params?.gift || {};
@@ -11,11 +12,32 @@ export default function RecipientDetailsScreen({ route, navigation }) {
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
   const [note, setNote] = useState('');
+  const [coords, setCoords] = useState(null);     // { lat, lng } chosen on the map
+  const [area, setArea] = useState(null);         // address/area label from the picker
+
+  const openPicker = () => {
+    navigation.navigate('LocationPicker', {
+      title: 'Delivery location',
+      initial: coords,
+      onPick: ({ lat, lng, address: addr }) => {
+        setCoords({ lat, lng });
+        if (addr) {
+          setArea(addr);
+          setAddress(addr);
+        }
+      },
+    });
+  };
 
   const handleNext = () => {
     navigation.navigate('PaymentScreen', {
       gift,
-      recipient: { name, phone, address, note },
+      recipient: {
+        name, phone, address, note,
+        lat: coords?.lat,
+        lng: coords?.lng,
+        city: area || undefined,
+      },
     });
   };
 
@@ -25,25 +47,7 @@ export default function RecipientDetailsScreen({ route, navigation }) {
     <View className="flex-1 bg-gray-50">
       <StatusBar style="dark" />
       {/* Header */}
-      <View
-        className="flex-row items-center gap-3 px-5 pb-3 bg-white"
-        style={{
-          paddingTop: Platform.OS === 'ios' ? 60 : 40,
-          shadowColor: '#211F1C',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.04,
-          shadowRadius: 8,
-          elevation: 2,
-        }}
-      >
-        <TouchableOpacity
-          className="w-10 h-10 rounded-2xl bg-gray-100 items-center justify-center"
-          onPress={() => navigation.goBack()}
-        >
-          <Ionicons name="arrow-back" size={20} color="#211F1C" />
-        </TouchableOpacity>
-        <Text className="text-xl font-bold text-gray-800">Recipient Details</Text>
-      </View>
+      <ScreenHeader variant="stack" title="Recipient Details" onBack={() => navigation.goBack()} />
 
       <ScrollView className="flex-1 px-5 pt-6" showsVerticalScrollIndicator={false}>
         {/* Gift summary */}
@@ -98,6 +102,23 @@ export default function RecipientDetailsScreen({ route, navigation }) {
             placeholder="806 789 1234"
             type="phone"
           />
+
+          {/* Set delivery location on map */}
+          <TouchableOpacity
+            onPress={openPicker}
+            activeOpacity={0.8}
+            className="flex-row items-center gap-2 self-start mb-2 px-3 py-2 rounded-xl bg-teal/10"
+          >
+            <Ionicons name="map" size={15} color="#1F4A45" />
+            <Text className="text-[12.5px] font-bold text-teal">
+              {coords ? 'Change location on map' : 'Set delivery location on map'}
+            </Text>
+          </TouchableOpacity>
+          {area && (
+            <Text className="text-[11.5px] text-green-600 mb-2">
+              <Ionicons name="checkmark-circle" size={12} color="#3E8E63" /> {area}
+            </Text>
+          )}
 
           {/* Address */}
           <AppInput

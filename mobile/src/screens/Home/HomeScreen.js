@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, FlatList, TouchableOpacity, ActivityIndicator, Platform, Image, Alert, RefreshControl } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '../../components/common/IconCompat';
 import { BEAUTY_CATEGORIES } from '../../constants/data';
 import { productsAPI, providersAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import SectionHeader from '../../components/common/SectionHeader';
 import CategoryCard from '../../components/common/CategoryCard';
 import GiftCard from '../../components/common/GiftCard';
+import { HomeSkeleton } from '../../components/common/ScreenStates';
 import ProviderCard from '../../components/common/ProviderCard';
 import { iconFor, colorFor } from '../../utils/categoryIcons';
 
@@ -171,17 +172,7 @@ export default function HomeScreen({ navigation }) {
         </View>
 
         {loading ? (
-          <View className="items-center mt-16 gap-5 px-10">
-            <View
-              className="w-20 h-20 rounded-3xl bg-teal-light items-center justify-center"
-            >
-              <ActivityIndicator size="large" color="#1F4A45" />
-            </View>
-            <View className="items-center gap-1.5">
-              <Text className="text-base font-bold text-gray-700">Loading amazing things...</Text>
-              <Text className="text-xs text-gray-400 text-center">Finding the best gifts and services for you</Text>
-            </View>
-          </View>
+          <HomeSkeleton />
         ) : error ? (
           <View className="items-center mt-16 px-8 gap-4">
             <View

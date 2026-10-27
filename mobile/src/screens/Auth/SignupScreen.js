@@ -4,7 +4,7 @@ import {
   Platform, ScrollView, TouchableOpacity, Image, Alert,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '../../components/common/IconCompat';
 import { useAuth } from '../../context/AuthContext';
 import AppInput from '../../components/common/AppInput';
 import Button from '../../components/common/Button';
