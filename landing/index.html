@@ -4,28 +4,28 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>QuickGift — Same-Day Gifts & Artisans in Nigeria</title>
-  <meta name="description" content="Send same-day gifts and book verified artisans across Lagos & Abuja. Cakes, flowers, hampers, nail techs, stylists, tailors, photographers and more — all from your phone.">
+  <meta name="description" content="Send same-day gifts and book verified artisans across Lagos & Abuja. Bakers, florists, nail techs, stylists and more: apply now to become a founding QuickGift provider.">
   <meta name="theme-color" content="#1F4A45">
   <meta name="author" content="QuickGift">
   <meta name="keywords" content="gifts Nigeria, same day delivery, gift delivery Lagos, artisans, beauty services, cakes, flowers, nail tech, hair stylist, tailor, photographer, QuickGift">
   <link rel="icon" type="image/png" href="logo.png">
-  <link rel="canonical" href="https://quickgift-landing.onrender.com/">
+  <link rel="canonical" href="https://www.quickgift.ng/">
 
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://quickgift-landing.onrender.com/">
+  <meta property="og:url" content="https://www.quickgift.ng/">
   <meta property="og:title" content="QuickGift — Same-Day Gifts & Artisans in Nigeria">
   <meta property="og:description" content="Send same-day gifts and book verified artisans across Lagos & Abuja. Cakes, flowers, hampers, nail techs, stylists and more.">
-  <meta property="og:image" content="https://quickgift-landing.onrender.com/logo.png">
+  <meta property="og:image" content="https://www.quickgift.ng/logo.png">
   <meta property="og:site_name" content="QuickGift">
   <meta property="og:locale" content="en_NG">
 
   <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:url" content="https://quickgift-landing.onrender.com/">
+  <meta name="twitter:url" content="https://www.quickgift.ng/">
   <meta name="twitter:title" content="QuickGift — Same-Day Gifts & Artisans in Nigeria">
   <meta name="twitter:description" content="Send same-day gifts and book verified artisans across Nigeria.">
-  <meta name="twitter:image" content="https://quickgift-landing.onrender.com/logo.png">
+  <meta name="twitter:image" content="https://www.quickgift.ng/logo.png">
 
   <!-- Structured Data -->
   <script type="application/ld+json">
@@ -37,12 +37,11 @@
     "applicationCategory": "ShoppingApplication",
     "description": "Same-day gift delivery and artisan services marketplace in Nigeria",
     "offers": { "@type": "Offer", "price": "0", "priceCurrency": "NGN" },
-    "aggregateRating": { "@type": "AggregateRating", "ratingValue": "4.9", "ratingCount": "2000" },
     "provider": {
       "@type": "Organization",
       "name": "QuickGift",
-      "url": "https://quickgift-landing.onrender.com",
-      "logo": "https://quickgift-landing.onrender.com/logo.png",
+      "url": "https://www.quickgift.ng",
+      "logo": "https://www.quickgift.ng/logo.png",
       "sameAs": [],
       "address": { "@type": "PostalAddress", "addressCountry": "NG", "addressLocality": "Lagos" }
     }
@@ -53,7 +52,7 @@
     "@context": "https://schema.org",
     "@type": "WebSite",
     "name": "QuickGift",
-    "url": "https://quickgift-landing.onrender.com",
+    "url": "https://www.quickgift.ng",
     "description": "Same-day gift delivery and artisan services in Nigeria"
   }
   </script>
@@ -81,6 +80,26 @@
     .providers{display:grid;grid-template-columns:1fr 1fr;gap:70px;align-items:center;padding:110px 24px;max-width:1200px;margin:0 auto;}
     .reviews-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
     .nav-links{display:flex;align-items:center;gap:32px;}
+    .chips{display:flex;flex-wrap:wrap;gap:8px;}
+    .chip{background:#fff;border:1px solid #EAE3D8;border-radius:100px;padding:8px 14px;font-size:12.5px;font-weight:700;color:#4E4A42;}
+    .perks-head{display:grid;grid-template-columns:1fr auto;gap:40px;align-items:center;}
+    .perks{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+    .apply-grid{display:grid;grid-template-columns:0.9fr 1.1fr;gap:64px;align-items:start;}
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+    .fld{display:flex;flex-direction:column;gap:7px;}
+    .fld-wide{grid-column:1 / -1;}
+    .fld span{font-size:13px;font-weight:700;color:#211F1C;}
+    .fld em{font-style:normal;font-weight:500;color:#9A948A;}
+    .fld input,.fld select{padding:14px 16px;border-radius:14px;border:1.5px solid #EAE3D8;background:#FAF3E9;font-size:14.5px;color:#211F1C;font-family:inherit;width:100%;}
+    .fld input:focus,.fld select:focus{outline:none;border-color:#1F4A45;background:#fff;}
+    .faq{border-bottom:1px solid #E2D8C5;padding:18px 0;}
+    .faq summary{cursor:pointer;list-style:none;font-size:15.5px;font-weight:800;color:#211F1C;display:flex;justify-content:space-between;gap:16px;}
+    .faq summary::-webkit-details-marker{display:none;}
+    .faq summary::after{content:'+';color:#E8632F;font-size:20px;line-height:1;}
+    .faq[open] summary::after{content:'\2013';}
+    .faq p{font-size:13.5px;color:#6E6A63;line-height:1.65;margin:10px 0 0;}
+    .topbar a{color:#fff;text-decoration:underline;text-underline-offset:3px;}
+    .gift-art{position:absolute;right:-6px;bottom:-6px;width:150px;height:auto;pointer-events:none;}
 
     @media (max-width:900px){
       .hero{grid-template-columns:1fr;gap:40px;padding:24px 24px 70px;}
@@ -91,12 +110,28 @@
       .reviews-grid{grid-template-columns:1fr;}
       .stats{grid-template-columns:1fr 1fr;gap:32px 16px;}
       h1.hero-title{font-size:46px !important;}
-      .nav-links a:not(.nav-cta){display:none;}
+      .nav-links a:not(.nav-cta):not(.nav-prov){display:none;}
       .dl-cta{padding:56px 26px !important;}
+      .perks-head{grid-template-columns:1fr;}
+      .perks-head img{display:none;}
+      .perks{grid-template-columns:1fr;}
+      .perks-band{padding:40px 24px !important;}
+      .apply-grid{grid-template-columns:1fr;gap:40px;}
+      .form-grid{grid-template-columns:1fr;}
+      .nav-links{gap:10px;}
+      .nav-links a.nav-prov{display:inline-flex !important;}
+      .nav-links a.nav-prov{padding:9px 14px !important;font-size:13px !important;white-space:nowrap;}
+      .nav-links a.nav-cta{display:none;}
+      .gift-art{width:110px;}
     }
   </style>
 </head>
 <body>
+
+  <!-- PROVIDER ANNOUNCEMENT -->
+  <div class="topbar" style="background:#1F4A45;color:#fff;text-align:center;padding:10px 20px;font-size:13px;font-weight:600;">
+    Now onboarding founding providers in Lagos &amp; Abuja — 0% commission at launch. <a href="#apply">Apply now</a>
+  </div>
 
   <!-- NAV -->
   <div class="wrap">
@@ -109,7 +144,8 @@
         <a href="#features" style="color:#4E4A42;font-size:14px;font-weight:600;">Features</a>
         <a href="#how" style="color:#4E4A42;font-size:14px;font-weight:600;">How it Works</a>
         <a href="#providers" style="color:#4E4A42;font-size:14px;font-weight:600;">For Providers</a>
-        <a href="#reviews" style="color:#4E4A42;font-size:14px;font-weight:600;">Reviews</a>
+        <a href="#moments" style="color:#4E4A42;font-size:14px;font-weight:600;">Moments</a>
+        <a href="#apply" class="nav-prov" style="color:#E8632F;font-size:14px;font-weight:800;border:1.5px solid #F6C9A9;padding:9px 16px;border-radius:100px;">Become a provider</a>
         <a href="#waitlist" class="nav-cta" style="background:#1F4A45;color:#fff;padding:11px 22px;border-radius:100px;font-size:13.5px;font-weight:700;">Join Waitlist</a>
       </nav>
     </div>
@@ -138,16 +174,11 @@
         </button>
         <p class="wl-msg" style="width:100%;margin:2px 2px 0;font-size:12.5px;color:#6E6A63;min-height:16px;">Be first to know when we launch. No spam — just one email at go-live.</p>
       </form>
-      <div style="display:flex;align-items:center;gap:18px;margin-top:40px;">
-        <div style="display:flex;">
-          <div style="width:36px;height:36px;border-radius:50%;border:2px solid #FAF3E9;background:#1F4A45;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;">OA</div>
-          <div style="width:36px;height:36px;border-radius:50%;border:2px solid #FAF3E9;background:#E8632F;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-left:-10px;">CN</div>
-          <div style="width:36px;height:36px;border-radius:50%;border:2px solid #FAF3E9;background:#7A5FA8;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-left:-10px;">TO</div>
-          <div style="width:36px;height:36px;border-radius:50%;border:2px solid #FAF3E9;background:#EDE3D8;color:#8A5A3B;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-left:-10px;">+2k</div>
-        </div>
-        <div style="width:1px;height:30px;background:#E5DCC9;"></div>
-        <div style="font-size:14px;font-weight:800;color:#211F1C;">Early access <span style="color:#9A948A;font-weight:600;font-size:13px;">— be among the first</span></div>
-      </div>
+      <a href="#apply" style="display:flex;align-items:center;gap:14px;margin-top:36px;max-width:480px;background:#fff;border:1px solid #EFE9DE;border-radius:20px;padding:14px 18px;box-shadow:0 10px 24px rgba(33,31,28,0.05);color:#211F1C;">
+        <div style="width:42px;height:42px;border-radius:14px;background:#FBE4D7;flex-shrink:0;display:flex;align-items:center;justify-content:center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 10l1.5-5h13L20 10M4 10v9h16v-9M4 10c0 1.7 1.3 3 3 3s3-1.3 3-3c0 1.7 1.3 3 3 3s3-1.3 3-3c0 1.7 1.3 3 3 3" stroke="#E8632F" stroke-width="1.7" stroke-linejoin="round"/></svg></div>
+        <div style="flex:1;"><div style="font-size:14px;font-weight:800;">Baker, florist, nail tech or stylist?</div><div style="font-size:12.5px;color:#6E6A63;margin-top:2px;">Become a founding provider — free shop setup &amp; 0% commission at launch.</div></div>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" stroke="#E8632F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
     </div>
 
     <div style="position:relative;animation:qg-rise 0.8s ease both 0.1s;">
@@ -185,10 +216,10 @@
   <!-- STATS RIBBON -->
   <section style="background:#211F1C;padding:44px 0;">
     <div class="wrap"><div class="stats">
-      <div><div class="serif" style="font-size:36px;color:#fff;">10,000+</div><div style="font-size:12.5px;color:#9A948A;margin-top:4px;">Gifts delivered</div></div>
-      <div><div class="serif" style="font-size:36px;color:#fff;">2,000+</div><div style="font-size:12.5px;color:#9A948A;margin-top:4px;">Happy customers</div></div>
-      <div><div class="serif" style="font-size:36px;color:#fff;">340+</div><div style="font-size:12.5px;color:#9A948A;margin-top:4px;">Verified providers</div></div>
-      <div><div class="serif" style="font-size:36px;color:#fff;">4.9 ★</div><div style="font-size:12.5px;color:#9A948A;margin-top:4px;">App Store rating</div></div>
+      <div><div class="serif" style="font-size:36px;color:#fff;">Before 2pm</div><div style="font-size:12.5px;color:#9A948A;margin-top:4px;">Order for same-day delivery</div></div>
+      <div><div class="serif" style="font-size:36px;color:#fff;">2–4 hrs</div><div style="font-size:12.5px;color:#9A948A;margin-top:4px;">Typical delivery time</div></div>
+      <div><div class="serif" style="font-size:36px;color:#fff;">From ₦5,000</div><div style="font-size:12.5px;color:#9A948A;margin-top:4px;">Gifts for every budget</div></div>
+      <div><div class="serif" style="font-size:36px;color:#fff;">100%</div><div style="font-size:12.5px;color:#9A948A;margin-top:4px;">Providers ID-verified</div></div>
     </div></div>
   </section>
 
@@ -212,10 +243,11 @@
           <div style="background:rgba(255,255,255,0.1);border-radius:100px;padding:8px 16px;font-size:12.5px;font-weight:600;">Live GPS tracking</div>
         </div>
       </div>
-      <div style="background:#FBE4D7;border-radius:28px;padding:36px;min-height:260px;display:flex;flex-direction:column;">
+      <div style="background:#FBE4D7;border-radius:28px;padding:36px;min-height:260px;display:flex;flex-direction:column;position:relative;overflow:hidden;">
+        <img src="add-to-cart.webp" alt="" class="gift-art" width="150" height="150" loading="lazy">
         <div class="serif" style="width:48px;height:48px;background:#F6C9A9;border-radius:16px;display:flex;align-items:center;justify-content:center;margin-bottom:22px;font-size:20px;color:#C94F1F;">G</div>
         <div style="font-size:19px;font-weight:800;color:#211F1C;">200+ Gifts</div>
-        <div style="font-size:13.5px;color:#7A5A45;line-height:1.6;margin-top:8px;flex:1;">Cakes, flowers, chocolates and hampers curated for every budget and occasion.</div>
+        <div style="font-size:13.5px;color:#7A5A45;line-height:1.6;margin-top:8px;flex:1;max-width:60%;">Cakes, flowers, chocolates and hampers curated for every budget and occasion.</div>
         <div style="font-size:12px;font-weight:700;color:#C94F1F;">From ₦5,000</div>
       </div>
     </div>
@@ -270,72 +302,202 @@
   <!-- FOR PROVIDERS -->
   <section id="providers" class="providers">
     <div>
-      <div style="font-size:13px;font-weight:800;color:#E8632F;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;">For Providers</div>
-      <h2 class="serif" style="font-size:38px;color:#211F1C;line-height:1.2;margin:0 0 18px;">Turn your talent into a thriving business</h2>
-      <p style="font-size:15.5px;color:#6E6A63;line-height:1.65;margin-bottom:32px;">Bakers, florists, nail techs, tailors, photographers, caterers — QuickGift connects you with thousands of customers ready to pay for premium services.</p>
+      <div style="display:inline-flex;align-items:center;gap:8px;background:#FBE4D7;border-radius:100px;padding:7px 14px;margin-bottom:18px;">
+        <span style="width:7px;height:7px;border-radius:50%;background:#E8632F;"></span>
+        <span style="font-size:12.5px;font-weight:800;color:#C94F1F;letter-spacing:0.5px;">For Providers · Now onboarding</span>
+      </div>
+      <h2 class="serif" style="font-size:44px;color:#211F1C;line-height:1.1;margin:0 0 18px;">Your craft, booked. <span style="font-style:italic;color:#E8632F;">Your money, upfront.</span></h2>
+      <p style="font-size:16px;color:#6E6A63;line-height:1.65;margin:0 0 22px;">QuickGift puts you in front of people across Lagos &amp; Abuja who are already shopping for a gift — so you spend less time chasing DMs and more time doing what you love.</p>
+      <div class="chips" style="margin-bottom:30px;">
+        <span class="chip">Bakers</span><span class="chip">Florists</span><span class="chip">Nail techs</span><span class="chip">Makeup artists</span><span class="chip">Tailors</span><span class="chip">Photographers</span><span class="chip">Caterers</span><span class="chip">Gift packers</span>
+      </div>
       <div style="display:flex;flex-direction:column;gap:20px;">
         <div style="display:flex;gap:14px;">
-          <div style="width:40px;height:40px;border-radius:12px;background:#E4F0E9;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:800;color:#3E8E63;">₦</div>
-          <div><div style="font-size:14.5px;font-weight:700;color:#211F1C;">Earn consistently</div><div style="font-size:13px;color:#6E6A63;margin-top:2px;">Top providers earn over ₦500,000/month with a steady stream of orders.</div></div>
+          <div style="width:40px;height:40px;border-radius:12px;background:#FBE4D7;flex-shrink:0;display:flex;align-items:center;justify-content:center;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 4h16v12H5.2L4 17.2V4z" stroke="#E8632F" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 9h8M8 12h5" stroke="#E8632F" stroke-width="1.8" stroke-linecap="round"/></svg></div>
+          <div><div style="font-size:14.5px;font-weight:700;color:#211F1C;">Orders come to you</div><div style="font-size:13px;color:#6E6A63;margin-top:2px;line-height:1.55;">Customers find you by occasion, budget and location. Accept the jobs you want.</div></div>
         </div>
         <div style="display:flex;gap:14px;">
-          <div style="width:40px;height:40px;border-radius:12px;background:#E7EEF6;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:800;color:#4C7CB0;">✓</div>
-          <div><div style="font-size:14.5px;font-weight:700;color:#211F1C;">Get verified &amp; trusted</div><div style="font-size:13px;color:#6E6A63;margin-top:2px;">Build credibility with reviews, ratings and a verification badge.</div></div>
+          <div style="width:40px;height:40px;border-radius:12px;background:#E4F0E9;flex-shrink:0;display:flex;align-items:center;justify-content:center;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="6" width="18" height="13" rx="2" stroke="#3E8E63" stroke-width="1.8"/><path d="M3 10h18M7 15h4" stroke="#3E8E63" stroke-width="1.8" stroke-linecap="round"/></svg></div>
+          <div><div style="font-size:14.5px;font-weight:700;color:#211F1C;">Get paid upfront</div><div style="font-size:13px;color:#6E6A63;margin-top:2px;line-height:1.55;">Customers pay when they order — no "I'll send it later". Earnings go straight to your bank account.</div></div>
         </div>
         <div style="display:flex;gap:14px;">
-          <div style="width:40px;height:40px;border-radius:12px;background:#EFE9F6;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:800;color:#7A5FA8;">%</div>
-          <div><div style="font-size:14.5px;font-weight:700;color:#211F1C;">Full dashboard &amp; analytics</div><div style="font-size:13px;color:#6E6A63;margin-top:2px;">Track orders, earnings and customer insights in one place.</div></div>
+          <div style="width:40px;height:40px;border-radius:12px;background:#E7EEF6;flex-shrink:0;display:flex;align-items:center;justify-content:center;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6l7-3z" stroke="#4C7CB0" stroke-width="1.8" stroke-linejoin="round"/><path d="M8.5 12l2.5 2.5 4.5-5" stroke="#4C7CB0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div><div style="font-size:14.5px;font-weight:700;color:#211F1C;">A verified badge customers trust</div><div style="font-size:13px;color:#6E6A63;margin-top:2px;line-height:1.55;">Every review you earn builds the reputation that wins your next order.</div></div>
+        </div>
+        <div style="display:flex;gap:14px;">
+          <div style="width:40px;height:40px;border-radius:12px;background:#EFE9F6;flex-shrink:0;display:flex;align-items:center;justify-content:center;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 19V5M4 19h16" stroke="#7A5FA8" stroke-width="1.8" stroke-linecap="round"/><path d="M8 15l3.5-4 3 2.5L19 8" stroke="#7A5FA8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div><div style="font-size:14.5px;font-weight:700;color:#211F1C;">Run it all from your phone</div><div style="font-size:13px;color:#6E6A63;margin-top:2px;line-height:1.55;">Orders, prices, delivery areas, busy days and earnings — in one dashboard.</div></div>
         </div>
       </div>
-      <a href="#download" style="display:inline-flex;align-items:center;gap:10px;background:#E8632F;color:#fff;padding:15px 26px;border-radius:16px;font-size:14px;font-weight:700;margin-top:34px;box-shadow:0 16px 32px rgba(232,99,47,0.24);">Join as a Provider
+      <a href="#apply" style="display:inline-flex;align-items:center;gap:10px;background:#E8632F;color:#fff;padding:15px 26px;border-radius:16px;font-size:14px;font-weight:700;margin-top:34px;box-shadow:0 16px 32px rgba(232,99,47,0.24);">Apply as a founding provider
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
       </a>
     </div>
     <div style="background:#fff;border-radius:28px;padding:32px;box-shadow:0 30px 60px rgba(33,31,28,0.10);">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
         <div class="serif" style="width:36px;height:36px;border-radius:12px;background:#1F4A45;display:flex;align-items:center;justify-content:center;color:#fff;">Q</div>
-        <div><div style="font-size:13.5px;font-weight:700;color:#211F1C;">Provider Dashboard</div><div style="font-size:11.5px;color:#9A948A;">This month's overview</div></div>
+        <div style="flex:1;"><div style="font-size:13.5px;font-weight:700;color:#211F1C;">Tolu's Cakes</div><div style="font-size:11.5px;color:#9A948A;">Provider dashboard · preview</div></div>
+        <div style="display:inline-flex;align-items:center;gap:5px;background:#E7EEF6;color:#4C7CB0;border-radius:100px;padding:5px 10px;font-size:11px;font-weight:800;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke="#4C7CB0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>Verified</div>
       </div>
-      <div style="background:#F5F0E7;border-radius:18px;padding:20px;margin-bottom:16px;">
-        <div style="font-size:11px;color:#9A948A;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Total Earnings</div>
-        <div class="serif" style="font-size:32px;color:#211F1C;margin-top:4px;">₦520,000</div>
-        <div style="font-size:12px;font-weight:700;color:#3E8E63;margin-top:4px;">+23% from last month</div>
+      <div style="background:#FAF3E9;border:1.5px solid #F6C9A9;border-radius:18px;padding:18px;margin-bottom:16px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div style="font-size:11px;color:#C94F1F;font-weight:800;text-transform:uppercase;letter-spacing:1px;">New order · 2m ago</div>
+          <div style="font-size:11px;color:#9A948A;">Lekki Phase 1</div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px;margin-top:10px;">
+          <div><div style="font-size:15px;font-weight:800;color:#211F1C;">Red Velvet Cake, 8"</div><div style="font-size:12px;color:#6E6A63;margin-top:3px;">"Happy 30th, Ada!" · Sat, 2–4pm</div></div>
+          <div class="serif" style="font-size:24px;color:#211F1C;">₦15,000</div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:14px;">
+          <div style="flex:1;text-align:center;background:#1F4A45;color:#fff;border-radius:12px;padding:11px;font-size:13px;font-weight:700;">Accept</div>
+          <div style="flex:1;text-align:center;background:#fff;border:1px solid #EAE3D8;color:#211F1C;border-radius:12px;padding:11px;font-size:13px;font-weight:700;">Decline</div>
+        </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;">
-        <div style="background:#FBE4D7;border-radius:14px;padding:12px;text-align:center;"><div style="font-size:18px;font-weight:800;color:#C94F1F;">48</div><div style="font-size:10px;color:#8A5A45;margin-top:2px;">Orders</div></div>
+        <div style="background:#FBE4D7;border-radius:14px;padding:12px;text-align:center;"><div style="font-size:18px;font-weight:800;color:#C94F1F;">3</div><div style="font-size:10px;color:#8A5A45;margin-top:2px;">Orders today</div></div>
         <div style="background:#E7EFEC;border-radius:14px;padding:12px;text-align:center;"><div style="font-size:18px;font-weight:800;color:#1F4A45;">4.9</div><div style="font-size:10px;color:#4E6864;margin-top:2px;">Rating</div></div>
-        <div style="background:#E7EEF6;border-radius:14px;padding:12px;text-align:center;"><div style="font-size:18px;font-weight:800;color:#4C7CB0;">97%</div><div style="font-size:10px;color:#5B7897;margin-top:2px;">On-time</div></div>
+        <div style="background:#E4F0E9;border-radius:14px;padding:12px;text-align:center;"><div style="font-size:18px;font-weight:800;color:#3E8E63;">Paid</div><div style="font-size:10px;color:#4E6864;margin-top:2px;">Upfront</div></div>
       </div>
       <div style="display:flex;align-items:center;gap:10px;background:#E4F0E9;border-radius:14px;padding:12px;">
         <div style="width:30px;height:30px;border-radius:10px;background:#C9E3D3;display:flex;align-items:center;justify-content:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#3E8E63" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
-        <div style="flex:1;"><div style="font-size:12px;font-weight:700;color:#211F1C;">New order received</div><div style="font-size:10.5px;color:#6E6A63;">Red Velvet Cake · ₦15,000</div></div>
-        <div style="font-size:10px;color:#9A948A;">2m ago</div>
+        <div style="flex:1;"><div style="font-size:12px;font-weight:700;color:#211F1C;">Payment received</div><div style="font-size:10.5px;color:#6E6A63;">Chocolate Box · ₦9,800</div></div>
+        <div style="font-size:10px;color:#9A948A;">1h ago</div>
+      </div>
+      <div style="font-size:11px;color:#9A948A;text-align:center;margin-top:14px;">Sample data — preview of the provider app</div>
+    </div>
+  </section>
+
+  <!-- FOUNDING PROVIDER PERKS + ONBOARDING STEPS -->
+  <section style="padding:0 0 110px;">
+    <div class="wrap">
+      <div class="perks-band" style="background:#1F4A45;border-radius:36px;padding:56px;color:#fff;position:relative;overflow:hidden;">
+        <div style="position:absolute;top:-80px;left:-80px;width:260px;height:260px;border-radius:50%;background:rgba(255,255,255,0.05);"></div>
+        <div class="perks-head" style="position:relative;">
+          <div>
+            <div style="font-size:13px;font-weight:800;color:#F6C9A9;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;">Founding providers</div>
+            <h2 class="serif" style="font-size:42px;line-height:1.1;margin:0;">Join before launch and get <span style="font-style:italic;color:#F6C9A9;">the best seat in the house.</span></h2>
+            <p style="font-size:15.5px;color:rgba(255,255,255,0.72);line-height:1.65;margin:16px 0 0;max-width:520px;">We're onboarding a limited number of providers in Lagos and Abuja ahead of launch. Free to join — always.</p>
+          </div>
+          <img src="shopping.webp" alt="" width="220" height="220" loading="lazy" style="width:220px;height:auto;background:#FAF3E9;border-radius:28px;padding:10px;">
+        </div>
+        <div class="perks" style="position:relative;margin-top:40px;">
+          <div style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.14);border-radius:22px;padding:26px;">
+            <div class="serif" style="font-size:40px;color:#F6C9A9;line-height:1;">0%</div>
+            <div style="font-size:16px;font-weight:800;margin-top:12px;">Commission at launch</div>
+            <div style="font-size:13.5px;color:rgba(255,255,255,0.7);line-height:1.6;margin-top:6px;">Keep everything you earn on your first orders as a founding provider.</div>
+          </div>
+          <div style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.14);border-radius:22px;padding:26px;">
+            <div style="width:44px;height:44px;border-radius:14px;background:rgba(246,201,169,0.18);display:flex;align-items:center;justify-content:center;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9L12 3z" stroke="#F6C9A9" stroke-width="1.7" stroke-linejoin="round"/></svg></div>
+            <div style="font-size:16px;font-weight:800;margin-top:12px;">Top placement</div>
+            <div style="font-size:13.5px;color:rgba(255,255,255,0.7);line-height:1.6;margin-top:6px;">Founding providers are featured first in their category when customers start shopping.</div>
+          </div>
+          <div style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.14);border-radius:22px;padding:26px;">
+            <div style="width:44px;height:44px;border-radius:14px;background:rgba(246,201,169,0.18);display:flex;align-items:center;justify-content:center;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 7h3l1.5-2h7L17 7h3v12H4V7z" stroke="#F6C9A9" stroke-width="1.7" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.2" stroke="#F6C9A9" stroke-width="1.7"/></svg></div>
+            <div style="font-size:16px;font-weight:800;margin-top:12px;">Free shop setup</div>
+            <div style="font-size:13.5px;color:rgba(255,255,255,0.7);line-height:1.6;margin-top:6px;">We'll help list your products, prices and photos so your shop looks great from day one.</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="max-width:560px;margin:90px auto 48px;text-align:center;">
+        <div style="font-size:13px;font-weight:800;color:#1F4A45;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;">Getting started</div>
+        <h2 class="serif" style="font-size:40px;color:#211F1C;margin:0;">Live in three simple steps</h2>
+      </div>
+      <div class="steps">
+        <div style="background:#fff;border:1px solid #EFE9DE;border-radius:24px;padding:30px;">
+          <div class="serif" style="width:52px;height:52px;border-radius:16px;background:#FBE4D7;display:flex;align-items:center;justify-content:center;font-size:22px;color:#E8632F;">1</div>
+          <div style="font-size:16.5px;font-weight:800;color:#211F1C;margin-top:18px;">Apply in 2 minutes</div>
+          <div style="font-size:13.5px;color:#6E6A63;line-height:1.6;margin-top:8px;">Tell us what you do and where you work. Your Instagram page is all the portfolio we need.</div>
+        </div>
+        <div style="background:#fff;border:1px solid #EFE9DE;border-radius:24px;padding:30px;">
+          <div class="serif" style="width:52px;height:52px;border-radius:16px;background:#E7EFEC;display:flex;align-items:center;justify-content:center;font-size:22px;color:#1F4A45;">2</div>
+          <div style="font-size:16.5px;font-weight:800;color:#211F1C;margin-top:18px;">Get verified</div>
+          <div style="font-size:13.5px;color:#6E6A63;line-height:1.6;margin-top:8px;">We reach out on WhatsApp, confirm your ID and work, and set up your shop with you — free.</div>
+        </div>
+        <div style="background:#fff;border:1px solid #EFE9DE;border-radius:24px;padding:30px;">
+          <div class="serif" style="width:52px;height:52px;border-radius:16px;background:#E4F0E9;display:flex;align-items:center;justify-content:center;font-size:22px;color:#3E8E63;">3</div>
+          <div style="font-size:16.5px;font-weight:800;color:#211F1C;margin-top:18px;">Start getting orders</div>
+          <div style="font-size:13.5px;color:#6E6A63;line-height:1.6;margin-top:8px;">Go live at launch with top placement, accept the orders you want, and get paid.</div>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- TESTIMONIALS -->
-  <section id="reviews" style="background:#211F1C;padding:110px 0;">
+  <!-- PROVIDER APPLICATION -->
+  <section id="apply" style="background:#F0E9DA;padding:110px 0;">
+    <div class="wrap apply-grid">
+      <div>
+        <div style="font-size:13px;font-weight:800;color:#E8632F;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;">Provider application</div>
+        <h2 class="serif" style="font-size:42px;color:#211F1C;line-height:1.1;margin:0 0 16px;">Ready to grow? <span style="font-style:italic;color:#E8632F;">Apply now.</span></h2>
+        <p style="font-size:15.5px;color:#6E6A63;line-height:1.65;margin:0 0 30px;">It takes about two minutes. We'll be in touch on WhatsApp to get you verified and set up.</p>
+        <div style="display:flex;flex-direction:column;">
+          <details class="faq" open>
+            <summary>Who can join?</summary>
+            <p>Bakers, florists, nail techs, makeup artists, tailors, photographers, caterers, gift packers — any gifting or personal-service business in Lagos or Abuja that does great work.</p>
+          </details>
+          <details class="faq">
+            <summary>How much does it cost?</summary>
+            <p>Joining is free. Founding providers pay 0% commission at launch, and you'll always see our fees clearly before you accept any order.</p>
+          </details>
+          <details class="faq">
+            <summary>How do I get paid?</summary>
+            <p>Customers pay through QuickGift when they place an order, so the money is secured before you start. Your earnings are paid out to your Nigerian bank account.</p>
+          </details>
+          <details class="faq">
+            <summary>What happens after I apply?</summary>
+            <p>Our team reviews your application, then contacts you on WhatsApp to verify your ID and work and set up your shop for free.</p>
+          </details>
+        </div>
+      </div>
+
+      <form class="wl-form provider-form" data-waitlist data-success-title="Application received!" data-success-text="We'll reach out on WhatsApp to get you verified and set up." style="background:#fff;border-radius:28px;padding:34px;box-shadow:0 30px 60px rgba(33,31,28,0.10);">
+        <input type="hidden" name="role" value="provider">
+        <div class="form-grid">
+          <label class="fld"><span>Your name</span><input type="text" name="name" required autocomplete="name" placeholder="e.g. Tolu Adebayo"></label>
+          <label class="fld"><span>Business name</span><input type="text" name="business" required placeholder="e.g. Tolu's Cakes"></label>
+          <label class="fld"><span>What do you offer?</span>
+            <select name="category" required>
+              <option value="">Choose one</option>
+              <option>Cakes &amp; baking</option><option>Flowers</option><option>Chocolates &amp; hampers</option><option>Nails</option><option>Makeup</option><option>Hair</option><option>Tailoring &amp; fashion</option><option>Photography</option><option>Catering &amp; small chops</option><option>Other</option>
+            </select>
+          </label>
+          <label class="fld"><span>City</span>
+            <select name="city" required>
+              <option value="">Choose one</option><option>Lagos</option><option>Abuja</option><option>Other (tell us later)</option>
+            </select>
+          </label>
+          <label class="fld"><span>WhatsApp number</span><input type="tel" name="whatsapp" required autocomplete="tel" placeholder="080..."></label>
+          <label class="fld"><span>Email</span><input type="email" name="email" required autocomplete="email" placeholder="you@email.com"></label>
+          <label class="fld fld-wide"><span>Instagram or portfolio link <em>(optional)</em></span><input type="text" name="instagram" placeholder="@yourbusiness"></label>
+        </div>
+        <button type="submit" style="width:100%;margin-top:22px;background:#E8632F;color:#fff;padding:17px 28px;border-radius:16px;font-size:15px;font-weight:700;border:none;cursor:pointer;box-shadow:0 16px 32px rgba(232,99,47,0.24);">Apply as a founding provider</button>
+        <p class="wl-msg" style="margin:12px 2px 0;font-size:12.5px;color:#6E6A63;text-align:center;min-height:16px;">Free to join. We'll only use your details to contact you about QuickGift.</p>
+      </form>
+    </div>
+  </section>
+
+  <!-- MOMENTS (swap back to real testimonials after launch) -->
+  <section id="moments" style="background:#211F1C;padding:110px 0;">
     <div class="wrap">
       <div style="max-width:560px;margin:0 auto 60px;text-align:center;">
-        <div style="font-size:13px;font-weight:800;color:#E8632F;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;">Testimonials</div>
-        <h2 class="serif" style="font-size:40px;color:#fff;margin:0;">Loved by thousands across Nigeria</h2>
+        <div style="font-size:13px;font-weight:800;color:#E8632F;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;">Made for moments like these</div>
+        <h2 class="serif" style="font-size:40px;color:#fff;margin:0;">When it has to be today, QuickGift has you covered</h2>
       </div>
       <div class="reviews-grid">
         <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:22px;padding:28px;">
-          <div style="color:#E8B65A;font-size:14px;margin-bottom:14px;">★★★★★</div>
-          <p style="font-size:14px;color:#D8D2C4;line-height:1.65;margin:0 0 20px;">"Ordered a cake and flowers at 10am for my wife's anniversary. Delivered by 1pm — she was in tears."</p>
-          <div style="display:flex;align-items:center;gap:10px;"><div style="width:34px;height:34px;border-radius:50%;background:#1F4A45;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;">OA</div><div><div style="font-size:13px;font-weight:700;color:#fff;">Oluwaseun A.</div><div style="font-size:11px;color:#9A948A;">Lekki, Lagos</div></div></div>
+          <div style="color:#E8B65A;font-size:12px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:14px;">The forgotten anniversary</div>
+          <p style="font-size:14px;color:#D8D2C4;line-height:1.65;margin:0 0 20px;">Order a cake and flowers at 10am, and they're at her door by 1pm — with a note in your words.</p>
+          <div style="font-size:12px;font-weight:700;color:#9A948A;">Gifts · Same-day delivery</div>
         </div>
         <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:22px;padding:28px;">
-          <div style="color:#E8B65A;font-size:14px;margin-bottom:14px;">★★★★★</div>
-          <p style="font-size:14px;color:#D8D2C4;line-height:1.65;margin:0 0 20px;">"As a nail tech, QuickGift changed my business — I went from 3-4 clients a week to fully booked."</p>
-          <div style="display:flex;align-items:center;gap:10px;"><div style="width:34px;height:34px;border-radius:50%;background:#E8632F;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;">CN</div><div><div style="font-size:13px;font-weight:700;color:#fff;">Chiamaka N.</div><div style="font-size:11px;color:#9A948A;">Ikeja, Lagos · Provider</div></div></div>
+          <div style="color:#E8B65A;font-size:12px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:14px;">The fully booked artisan</div>
+          <p style="font-size:14px;color:#D8D2C4;line-height:1.65;margin:0 0 20px;">Nail techs, makeup artists and tailors get bookings from people nearby, without chasing DMs all day.</p>
+          <div style="font-size:12px;font-weight:700;color:#9A948A;">For providers</div>
         </div>
         <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:22px;padding:28px;">
-          <div style="color:#E8B65A;font-size:14px;margin-bottom:14px;">★★★★★</div>
-          <p style="font-size:14px;color:#D8D2C4;line-height:1.65;margin:0 0 20px;">"Booked a makeup artist for my sister's bridal shower with two days' notice. Flawless, on time."</p>
-          <div style="display:flex;align-items:center;gap:10px;"><div style="width:34px;height:34px;border-radius:50%;background:#7A5FA8;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;">TO</div><div><div style="font-size:13px;font-weight:700;color:#fff;">Tolu O.</div><div style="font-size:11px;color:#9A948A;">Wuse, Abuja</div></div></div>
+          <div style="color:#E8B65A;font-size:12px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:14px;">The last-minute bridal shower</div>
+          <p style="font-size:14px;color:#D8D2C4;line-height:1.65;margin:0 0 20px;">Need a makeup artist with two days' notice? Book a verified pro who comes to you.</p>
+          <div style="font-size:12px;font-weight:700;color:#9A948A;">Artisans on demand</div>
         </div>
       </div>
     </div>
@@ -344,6 +506,7 @@
   <!-- WAITLIST CTA -->
   <div class="wrap">
     <section id="waitlist" class="dl-cta" style="margin:60px auto;padding:70px 60px;background:#1F4A45;border-radius:40px;text-align:center;">
+      <img src="celebration.webp" alt="" width="150" height="150" style="width:150px;height:auto;display:block;margin:0 auto 18px;background:#FAF3E9;border-radius:50%;padding:8px;">
       <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);border-radius:100px;padding:7px 14px;margin-bottom:20px;">
         <span style="width:7px;height:7px;border-radius:50%;background:#7CE0AE;"></span>
         <span style="font-size:12.5px;font-weight:700;color:#fff;">Launching soon</span>
@@ -351,7 +514,7 @@
       <h2 class="serif" style="font-size:42px;color:#fff;margin:0 0 16px;">Be first in line</h2>
       <p style="font-size:16px;color:rgba(255,255,255,0.65);margin:0 auto 32px;max-width:440px;">Join the waitlist and we'll let you know the moment QuickGift goes live — plus early-access perks for our first members.</p>
 
-      <form class="wl-form" data-waitlist style="max-width:440px;margin:0 auto;text-align:left;">
+      <form class="wl-form" data-waitlist data-success-color="#fff" style="max-width:440px;margin:0 auto;text-align:left;">
         <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;justify-content:center;">
           <label class="wl-role" style="flex:1;min-width:160px;">
             <input type="radio" name="role" value="customer" checked style="position:absolute;opacity:0;">
@@ -369,6 +532,7 @@
             style="background:#E8632F;color:#fff;padding:16px 30px;border-radius:16px;font-size:14.5px;font-weight:700;border:none;cursor:pointer;white-space:nowrap;box-shadow:0 16px 32px rgba(232,99,47,0.28);">Join the waitlist</button>
         </div>
         <p class="wl-msg" style="margin:14px 2px 0;font-size:13px;color:rgba(255,255,255,0.7);text-align:center;min-height:18px;">No spam. We'll only email you when we launch.</p>
+        <p style="margin:10px 2px 0;font-size:13px;color:rgba(255,255,255,0.7);text-align:center;">Vendor or artisan? <a href="#apply" style="color:#F6C9A9;font-weight:700;">Fill the provider application</a> to get onboarded first.</p>
       </form>
     </section>
   </div>
@@ -379,17 +543,21 @@
       <img src="logo.png" alt="QuickGift logo" style="width:26px;height:26px;object-fit:contain;">
       <span class="serif" style="font-size:17px;color:#211F1C;">QuickGift</span>
     </div>
+    <div style="display:flex;gap:22px;flex-wrap:wrap;font-size:13px;font-weight:600;">
+      <a href="#features" style="color:#6E6A63;">Features</a>
+      <a href="#how" style="color:#6E6A63;">How it Works</a>
+      <a href="#apply" style="color:#E8632F;">Become a provider</a>
+      <a href="#waitlist" style="color:#6E6A63;">Join Waitlist</a>
+    </div>
     <div style="font-size:12.5px;color:#9A948A;">© 2026 QuickGift. Lagos, Nigeria.</div>
   </footer>
 
   <!-- ============ WAITLIST ============ -->
   <script>
   (function () {
-    // STEP 1 (you): create a free capture destination and paste its POST URL below.
-    //   • Brevo (recommended): Contacts → Forms → build a form → copy its action URL
-    //   • or Formspree / Getform / Tally — any endpoint that accepts a POST
-    // Empty string = demo mode: shows success but stores nothing.
-    var WAITLIST_ENDPOINT = '';
+    // Submissions post straight to the QuickGift backend and show up in the
+    // admin dashboard (Applications tab). No third-party form service.
+    var API_BASE = 'https://quickgift-node-api.onrender.com/api/v1';
 
     var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -407,46 +575,70 @@
       paint();
     });
 
+    // "Join as a Provider" button preselects the vendor option
+    Array.prototype.forEach.call(document.querySelectorAll('[data-pick-role]'), function (a) {
+      a.addEventListener('click', function () {
+        var r = document.querySelector('.wl-role input[value="' + a.getAttribute('data-pick-role') + '"]');
+        if (r) { r.checked = true; r.dispatchEvent(new Event('change')); }
+      });
+    });
+
     function setMsg(form, text, color) {
       var el = form.querySelector('.wl-msg');
       if (el) { el.textContent = text; el.style.color = color; }
     }
 
     function showSuccess(form) {
+      var title = form.getAttribute('data-success-title') || 'You&rsquo;re on the list! &#127881;';
+      var text = form.getAttribute('data-success-text') || 'We&rsquo;ll email you the moment QuickGift launches.';
+      var color = form.getAttribute('data-success-color') || '#211F1C';
       form.innerHTML =
-        '<div style="text-align:center;padding:6px 0;">' +
+        '<div style="text-align:center;padding:6px 0;color:' + color + ';">' +
           '<div style="width:48px;height:48px;margin:0 auto 14px;border-radius:50%;background:#3E8E63;display:flex;align-items:center;justify-content:center;">' +
             '<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
           '</div>' +
-          '<div style="font-size:17px;font-weight:800;">You&rsquo;re on the list! &#127881;</div>' +
-          '<div style="font-size:13.5px;opacity:0.75;margin-top:6px;">We&rsquo;ll email you the moment QuickGift launches.</div>' +
+          '<div style="font-size:17px;font-weight:800;">' + title + '</div>' +
+          '<div style="font-size:13.5px;opacity:0.75;margin-top:6px;">' + text + '</div>' +
         '</div>';
     }
 
+    function serialize(form) {
+      var o = {};
+      Array.prototype.forEach.call(form.querySelectorAll('input, select, textarea'), function (el) {
+        if (!el.name) return;
+        if ((el.type === 'radio' || el.type === 'checkbox') && !el.checked) return;
+        o[el.name] = (el.value || '').trim();
+      });
+      return o;
+    }
+
     Array.prototype.forEach.call(document.querySelectorAll('form[data-waitlist]'), function (form) {
+      var isProvider = form.classList.contains('provider-form') || !!form.querySelector('[name="whatsapp"]');
       form.addEventListener('submit', function (e) {
         e.preventDefault();
-        var email = (form.querySelector('input[name="email"]').value || '').trim();
-        if (!EMAIL_RE.test(email)) { setMsg(form, 'Please enter a valid email address.', '#E8632F'); return; }
+        var data = serialize(form);
+        if (!isProvider && !EMAIL_RE.test(data.email || '')) { setMsg(form, 'Please enter a valid email address.', '#E8632F'); return; }
+        var missing = form.querySelector('[required]:invalid');
+        if (missing) { setMsg(form, 'Please fill in all the required fields.', '#E8632F'); missing.focus(); return; }
 
         var btn = form.querySelector('button[type="submit"]');
         var original = btn ? btn.textContent : '';
-        if (btn) { btn.disabled = true; btn.style.opacity = '0.7'; btn.textContent = 'Joining…'; }
+        if (btn) { btn.disabled = true; btn.style.opacity = '0.7'; btn.textContent = (isProvider ? 'Submitting' : 'Joining') + '\u2026'; }
 
         function done() { showSuccess(form); }
         function fail() {
           if (btn) { btn.disabled = false; btn.style.opacity = '1'; btn.textContent = original; }
-          setMsg(form, 'Something went wrong. Please try again.', '#E8632F');
+          setMsg(form, 'Something went wrong. Please check your connection and try again.', '#E8632F');
         }
 
-        if (WAITLIST_ENDPOINT) {
-          fetch(WAITLIST_ENDPOINT, { method: 'POST', headers: { 'Accept': 'application/json' }, body: new FormData(form) })
-            .then(function (res) { if (!res.ok) throw new Error('bad status'); done(); })
-            .catch(fail);
-        } else {
-          console.warn('[waitlist] WAITLIST_ENDPOINT is empty — signup NOT stored. Paste your form URL in index.html.');
-          setTimeout(done, 500);
-        }
+        var url = API_BASE + (isProvider ? '/provider-applications' : '/waitlist');
+        fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify(data)
+        })
+          .then(function (res) { if (!res.ok) throw new Error('bad status'); done(); })
+          .catch(fail);
       });
     });
   })();

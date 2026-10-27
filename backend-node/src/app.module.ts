@@ -18,6 +18,7 @@ import { ChatsModule } from './modules/chats/chats.module';
 import { DeliveryModule } from './modules/delivery/delivery.module';
 import { UploadModule } from './modules/upload/upload.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { ApplicationsModule } from './modules/applications/applications.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { AdminModule } from './modules/admin/admin.module';
     DeliveryModule,
     UploadModule,
     AdminModule,
+    ApplicationsModule,
   ],
   controllers: [HealthController],
 })

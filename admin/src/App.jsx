@@ -16,6 +16,7 @@ const TransactionsPage = lazy(() => import('./pages/TransactionsPage'))
 const PayoutsPage = lazy(() => import('./pages/PayoutsPage'))
 const SettingsPage = lazy(() => import('./pages/SettingsPage'))
 const DisputesPage = lazy(() => import('./pages/DisputesPage'))
+const ApplicationsPage = lazy(() => import('./pages/ApplicationsPage'))
 
 function ProtectedRoute({ children }) {
   const isAuthenticated = useSelector(selectIsAuthenticated)
@@ -45,6 +46,7 @@ function App() {
         <Route path="transactions" element={<Suspense fallback={<PageLoader />}><TransactionsPage /></Suspense>} />
         <Route path="payouts" element={<Suspense fallback={<PageLoader />}><PayoutsPage /></Suspense>} />
         <Route path="disputes" element={<Suspense fallback={<PageLoader />}><DisputesPage /></Suspense>} />
+        <Route path="applications" element={<Suspense fallback={<PageLoader />}><ApplicationsPage /></Suspense>} />
         <Route path="settings" element={<Suspense fallback={<PageLoader />}><SettingsPage /></Suspense>} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

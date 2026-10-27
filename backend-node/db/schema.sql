@@ -1221,3 +1221,31 @@ ALTER TABLE ONLY public.transactions
 
 \unrestrict 0uJaSgDsBOfkiKOEugkzmv7DvxMaUkEZHgsUM2M3KzJeXVS6IAMXboV5IKIAiud
 
+
+--
+-- Landing-page captures (provider_applications + waitlist_signups)
+-- Created idempotently at boot by ApplicationsService; declared here for
+-- fresh installs / documentation.
+--
+
+CREATE TABLE IF NOT EXISTS public.provider_applications (
+    id            uuid PRIMARY KEY,
+    full_name     text NOT NULL,
+    business_name text,
+    service_type  text,
+    city          text,
+    phone         text NOT NULL,
+    email         text,
+    portfolio_url text,
+    message       text,
+    status        text NOT NULL DEFAULT 'new',
+    created_at    timestamp without time zone NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.waitlist_signups (
+    id         uuid PRIMARY KEY,
+    email      text NOT NULL UNIQUE,
+    role       text NOT NULL DEFAULT 'customer',
+    source     text,
+    created_at timestamp without time zone NOT NULL DEFAULT now()
+);

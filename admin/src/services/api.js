@@ -26,7 +26,7 @@ const baseQueryWithReauth = async (args, api, extraOptions) => {
 export const api = createApi({
   reducerPath: 'api',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['Dashboard', 'Orders', 'Products', 'Providers', 'Users', 'Bookings', 'Payments', 'Transactions', 'Payouts', 'Disputes'],
+  tagTypes: ['Dashboard', 'Orders', 'Products', 'Providers', 'Users', 'Bookings', 'Payments', 'Transactions', 'Payouts', 'Disputes', 'Applications', 'Waitlist'],
   endpoints: (builder) => ({
     // ── Auth ─────────────────────────────────────────
     login: builder.mutation({
@@ -261,6 +261,38 @@ export const api = createApi({
       }),
       invalidatesTags: ['Payouts', 'Dashboard'],
     }),
+
+    // ── Provider Applications (from the landing page) ───────────
+    getProviderApplications: builder.query({
+      query: ({ status, page = 1, per_page = 20 } = {}) => {
+        const params = new URLSearchParams()
+        if (status) params.append('status', status)
+        params.append('page', page)
+        params.append('per_page', per_page)
+        return `/admin/provider-applications?${params.toString()}`
+      },
+      providesTags: ['Applications'],
+    }),
+    updateApplicationStatus: builder.mutation({
+      query: ({ id, status }) => ({
+        url: `/admin/provider-applications/${id}`,
+        method: 'PATCH',
+        body: { status },
+      }),
+      invalidatesTags: ['Applications'],
+    }),
+
+    // ── Waitlist signups (from the landing page) ────────────────
+    getWaitlist: builder.query({
+      query: ({ role, page = 1, per_page = 20 } = {}) => {
+        const params = new URLSearchParams()
+        if (role) params.append('role', role)
+        params.append('page', page)
+        params.append('per_page', per_page)
+        return `/admin/waitlist?${params.toString()}`
+      },
+      providesTags: ['Waitlist'],
+    }),
   }),
 })
 
@@ -294,4 +326,7 @@ export const {
   useGetExtendedAnalyticsQuery,
   useGetAdminDisputesQuery,
   useResolveDisputeMutation,
+  useGetProviderApplicationsQuery,
+  useUpdateApplicationStatusMutation,
+  useGetWaitlistQuery,
 } = api
