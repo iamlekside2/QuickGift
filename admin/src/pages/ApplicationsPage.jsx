@@ -1,9 +1,11 @@
 import { useState } from 'react'
-import { Loader2, UserPlus, Mail, ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react'
+import { Loader2, UserPlus, Mail, ChevronLeft, ChevronRight, ExternalLink, Trash2 } from 'lucide-react'
 import {
   useGetProviderApplicationsQuery,
   useUpdateApplicationStatusMutation,
+  useDeleteApplicationMutation,
   useGetWaitlistQuery,
+  useDeleteWaitlistSignupMutation,
 } from '../services/api'
 
 const STATUS_STYLES = {
@@ -88,6 +90,7 @@ function ApplicationsTab() {
     per_page: 20,
   })
   const [updateStatus, { isLoading: isUpdating }] = useUpdateApplicationStatusMutation()
+  const [deleteApplication] = useDeleteApplicationMutation()
   const [busyId, setBusyId] = useState(null)
 
   const items = data?.items || []
@@ -100,6 +103,18 @@ function ApplicationsTab() {
       await updateStatus({ id, status }).unwrap()
     } catch (err) {
       alert(err?.data?.message || 'Failed to update application')
+    } finally {
+      setBusyId(null)
+    }
+  }
+
+  const handleDelete = async (app) => {
+    if (!window.confirm(`Remove the application from ${app.full_name || 'this applicant'}? This cannot be undone.`)) return
+    setBusyId(app.id)
+    try {
+      await deleteApplication(app.id).unwrap()
+    } catch (err) {
+      alert(err?.data?.message || 'Failed to remove application')
     } finally {
       setBusyId(null)
     }
@@ -194,12 +209,12 @@ function ApplicationsTab() {
                       {app.created_at ? new Date(app.created_at).toLocaleDateString() : '—'}
                     </td>
                     <td className="table-cell">
-                      <div className="flex flex-wrap gap-1.5">
+                      <div className="flex flex-wrap items-center gap-1.5">
                         {(NEXT_ACTIONS[app.status] || []).map((a) => (
                           <button
                             key={a.status}
                             onClick={() => handleAction(app.id, a.status)}
-                            disabled={isUpdating && busyId === app.id}
+                            disabled={busyId === app.id}
                             className={`px-2.5 py-1.5 text-xs font-medium rounded-lg transition-colors disabled:opacity-50 ${
                               a.status === 'rejected'
                                 ? 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -209,9 +224,14 @@ function ApplicationsTab() {
                             {a.label}
                           </button>
                         ))}
-                        {(NEXT_ACTIONS[app.status] || []).length === 0 && (
-                          <span className="text-xs text-gray-300">{'—'}</span>
-                        )}
+                        <button
+                          onClick={() => handleDelete(app)}
+                          disabled={busyId === app.id}
+                          title="Remove application"
+                          className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -236,9 +256,23 @@ function ApplicationsTab() {
 function WaitlistTab() {
   const [page, setPage] = useState(1)
   const { data, isLoading, isFetching } = useGetWaitlistQuery({ page, per_page: 20 })
+  const [deleteSignup] = useDeleteWaitlistSignupMutation()
+  const [busyId, setBusyId] = useState(null)
   const items = data?.items || []
   const total = data?.total || 0
   const totalPages = Math.ceil(total / 20)
+
+  const handleDelete = async (row) => {
+    if (!window.confirm(`Remove ${row.email} from the waitlist? This cannot be undone.`)) return
+    setBusyId(row.id)
+    try {
+      await deleteSignup(row.id).unwrap()
+    } catch (err) {
+      alert(err?.data?.message || 'Failed to remove signup')
+    } finally {
+      setBusyId(null)
+    }
+  }
 
   return (
     <div className="card overflow-hidden">
@@ -250,12 +284,13 @@ function WaitlistTab() {
               <th className="table-header">Interested as</th>
               <th className="table-header">Source</th>
               <th className="table-header">Date</th>
+              <th className="table-header w-[80px]">Actions</th>
             </tr>
           </thead>
           <tbody>
             {isLoading ? (
               <tr>
-                <td colSpan={4} className="px-6 py-16 text-center">
+                <td colSpan={5} className="px-6 py-16 text-center">
                   <div className="flex flex-col items-center gap-2">
                     <Loader2 className="w-6 h-6 text-teal-500 animate-spin" />
                     <span className="text-sm text-gray-400">Loading waitlist...</span>
@@ -264,7 +299,7 @@ function WaitlistTab() {
               </tr>
             ) : items.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-6 py-16 text-center">
+                <td colSpan={5} className="px-6 py-16 text-center">
                   <div className="flex flex-col items-center gap-2">
                     <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
                       <Mail className="w-6 h-6 text-gray-400" />
@@ -286,6 +321,16 @@ function WaitlistTab() {
                   <td className="table-cell text-gray-500 text-sm">{row.source || '—'}</td>
                   <td className="table-cell text-gray-500">
                     {row.created_at ? new Date(row.created_at).toLocaleDateString() : '—'}
+                  </td>
+                  <td className="table-cell">
+                    <button
+                      onClick={() => handleDelete(row)}
+                      disabled={busyId === row.id}
+                      title="Remove signup"
+                      className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </td>
                 </tr>
               ))

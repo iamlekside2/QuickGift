@@ -281,6 +281,13 @@ export const api = createApi({
       }),
       invalidatesTags: ['Applications'],
     }),
+    deleteApplication: builder.mutation({
+      query: (id) => ({
+        url: `/admin/provider-applications/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Applications'],
+    }),
 
     // ── Waitlist signups (from the landing page) ────────────────
     getWaitlist: builder.query({
@@ -292,6 +299,13 @@ export const api = createApi({
         return `/admin/waitlist?${params.toString()}`
       },
       providesTags: ['Waitlist'],
+    }),
+    deleteWaitlistSignup: builder.mutation({
+      query: (id) => ({
+        url: `/admin/waitlist/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Waitlist'],
     }),
   }),
 })
@@ -328,5 +342,7 @@ export const {
   useResolveDisputeMutation,
   useGetProviderApplicationsQuery,
   useUpdateApplicationStatusMutation,
+  useDeleteApplicationMutation,
   useGetWaitlistQuery,
+  useDeleteWaitlistSignupMutation,
 } = api

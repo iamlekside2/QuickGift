@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -30,8 +31,18 @@ export class ApplicationsAdminController {
     return this.applications.updateApplicationStatus(id, body?.status);
   }
 
+  @Delete('provider-applications/:id')
+  deleteApplication(@Param('id') id: string) {
+    return this.applications.deleteApplication(id);
+  }
+
   @Get('waitlist')
   listWaitlist(@Query() q: Record<string, string>) {
     return this.applications.listWaitlist(q);
+  }
+
+  @Delete('waitlist/:id')
+  deleteWaitlist(@Param('id') id: string) {
+    return this.applications.deleteWaitlist(id);
   }
 }

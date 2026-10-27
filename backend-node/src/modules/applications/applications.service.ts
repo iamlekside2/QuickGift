@@ -151,6 +151,26 @@ export class ApplicationsService implements OnModuleInit {
     return row;
   }
 
+  // ── Admin: delete a provider application ────────────────────────────
+  async deleteApplication(id: string) {
+    const row = await this.db.queryOne(
+      `DELETE FROM provider_applications WHERE id = $1 RETURNING id`,
+      [id],
+    );
+    if (!row) throw new BadRequestException('Application not found');
+    return { ok: true };
+  }
+
+  // ── Admin: delete a waitlist signup ─────────────────────────────────
+  async deleteWaitlist(id: string) {
+    const row = await this.db.queryOne(
+      `DELETE FROM waitlist_signups WHERE id = $1 RETURNING id`,
+      [id],
+    );
+    if (!row) throw new BadRequestException('Signup not found');
+    return { ok: true };
+  }
+
   // ── Admin: list waitlist signups ────────────────────────────────────
   async listWaitlist(q: any) {
     const where: string[] = [];
