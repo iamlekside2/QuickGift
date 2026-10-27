@@ -123,6 +123,9 @@
       .nav-links a.nav-prov{padding:9px 14px !important;font-size:13px !important;white-space:nowrap;}
       .nav-links a.nav-cta{display:none;}
       .gift-art{width:110px;}
+      .wl-join{flex-direction:column !important;}
+      .wl-join input{flex:0 0 auto !important;width:100%;}
+      .wl-join-btn{width:100% !important;}
     }
   </style>
 </head>
@@ -505,35 +508,39 @@
 
   <!-- WAITLIST CTA -->
   <div class="wrap">
-    <section id="waitlist" class="dl-cta" style="margin:60px auto;padding:70px 60px;background:#1F4A45;border-radius:40px;text-align:center;">
-      <img src="celebration.webp" alt="" width="150" height="150" style="width:150px;height:auto;display:block;margin:0 auto 18px;background:#FAF3E9;border-radius:50%;padding:8px;">
-      <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);border-radius:100px;padding:7px 14px;margin-bottom:20px;">
-        <span style="width:7px;height:7px;border-radius:50%;background:#7CE0AE;"></span>
-        <span style="font-size:12.5px;font-weight:700;color:#fff;">Launching soon</span>
-      </div>
-      <h2 class="serif" style="font-size:42px;color:#fff;margin:0 0 16px;">Be first in line</h2>
-      <p style="font-size:16px;color:rgba(255,255,255,0.65);margin:0 auto 32px;max-width:440px;">Join the waitlist and we'll let you know the moment QuickGift goes live, plus early-access perks for our first members.</p>
+    <section id="waitlist" class="dl-cta" style="position:relative;overflow:hidden;margin:60px auto;padding:72px 56px;background:#1F4A45;border-radius:40px;text-align:center;border:1px solid rgba(255,255,255,0.08);">
+      <div aria-hidden="true" style="position:absolute;top:-90px;right:-70px;width:340px;height:340px;border-radius:50%;background:radial-gradient(circle,rgba(232,99,47,0.30),transparent 70%);"></div>
+      <div aria-hidden="true" style="position:absolute;bottom:-120px;left:-90px;width:380px;height:380px;border-radius:50%;background:radial-gradient(circle,rgba(124,224,174,0.16),transparent 70%);"></div>
+      <div style="position:relative;z-index:1;max-width:520px;margin:0 auto;">
+        <img src="celebration.webp" alt="" width="112" height="112" style="width:112px;height:112px;object-fit:contain;display:block;margin:0 auto 22px;background:#FAF3E9;border-radius:50%;padding:10px;box-shadow:0 16px 34px rgba(0,0,0,0.24);">
+        <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);border-radius:100px;padding:7px 15px;margin-bottom:20px;">
+          <span style="width:7px;height:7px;border-radius:50%;background:#7CE0AE;box-shadow:0 0 0 4px rgba(124,224,174,0.22);"></span>
+          <span style="font-size:12.5px;font-weight:700;color:#fff;letter-spacing:0.3px;">Launching soon</span>
+        </div>
+        <h2 class="serif" style="font-size:44px;line-height:1.05;color:#fff;margin:0 0 14px;">Be first in line</h2>
+        <p style="font-size:16px;color:rgba(255,255,255,0.68);margin:0 auto 30px;max-width:420px;line-height:1.6;">Join the waitlist and we'll tell you the moment QuickGift goes live. Early members get first access and launch-day perks.</p>
 
-      <form class="wl-form" data-waitlist data-success-color="#fff" style="max-width:440px;margin:0 auto;text-align:left;">
-        <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;justify-content:center;">
-          <label class="wl-role" style="flex:1;min-width:160px;">
-            <input type="radio" name="role" value="customer" checked style="position:absolute;opacity:0;">
-            <span style="display:block;text-align:center;padding:12px;border-radius:14px;border:1.5px solid rgba(255,255,255,0.25);background:rgba(255,255,255,0.06);color:#fff;font-size:13.5px;font-weight:700;cursor:pointer;">I want to send gifts</span>
-          </label>
-          <label class="wl-role" style="flex:1;min-width:160px;">
-            <input type="radio" name="role" value="provider" style="position:absolute;opacity:0;">
-            <span style="display:block;text-align:center;padding:12px;border-radius:14px;border:1.5px solid rgba(255,255,255,0.25);background:rgba(255,255,255,0.06);color:#fff;font-size:13.5px;font-weight:700;cursor:pointer;">I'm an artisan / vendor</span>
-          </label>
-        </div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;">
-          <input type="email" name="email" required placeholder="Enter your email" aria-label="Email address"
-            style="flex:1;min-width:220px;padding:16px 20px;border-radius:16px;border:1.5px solid rgba(255,255,255,0.25);background:#fff;font-size:14.5px;color:#211F1C;font-family:inherit;">
-          <button type="submit"
-            style="background:#E8632F;color:#fff;padding:16px 30px;border-radius:16px;font-size:14.5px;font-weight:700;border:none;cursor:pointer;white-space:nowrap;box-shadow:0 16px 32px rgba(232,99,47,0.28);">Join the waitlist</button>
-        </div>
-        <p class="wl-msg" style="margin:14px 2px 0;font-size:13px;color:rgba(255,255,255,0.7);text-align:center;min-height:18px;">No spam. We'll only email you when we launch.</p>
-        <p style="margin:10px 2px 0;font-size:13px;color:rgba(255,255,255,0.7);text-align:center;">Vendor or artisan? <a href="#apply" style="color:#F6C9A9;font-weight:700;">Fill the provider application</a> to get onboarded first.</p>
-      </form>
+        <form class="wl-form" data-waitlist data-success-color="#fff" style="max-width:440px;margin:0 auto;text-align:left;">
+          <div style="display:flex;gap:6px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:16px;padding:6px;margin-bottom:12px;">
+            <label class="wl-role" style="flex:1;min-width:0;">
+              <input type="radio" name="role" value="customer" checked style="position:absolute;opacity:0;">
+              <span style="display:block;text-align:center;padding:12px 8px;border-radius:11px;border:1px solid transparent;background:#ffffff;color:#1F4A45;font-size:13.5px;font-weight:700;cursor:pointer;transition:all .18s ease;box-shadow:0 6px 14px rgba(0,0,0,0.20);">I want to send gifts</span>
+            </label>
+            <label class="wl-role" style="flex:1;min-width:0;">
+              <input type="radio" name="role" value="provider" style="position:absolute;opacity:0;">
+              <span style="display:block;text-align:center;padding:12px 8px;border-radius:11px;border:1px solid transparent;background:transparent;color:rgba(255,255,255,0.78);font-size:13.5px;font-weight:700;cursor:pointer;transition:all .18s ease;">I'm an artisan / vendor</span>
+            </label>
+          </div>
+          <div class="wl-join" style="display:flex;gap:8px;background:#fff;border-radius:18px;padding:7px;box-shadow:0 20px 44px rgba(0,0,0,0.20);">
+            <input type="email" name="email" required placeholder="Enter your email" aria-label="Email address"
+              style="flex:1;min-width:0;padding:14px 16px;border-radius:12px;border:none;background:transparent;font-size:14.5px;color:#211F1C;font-family:inherit;outline:none;">
+            <button type="submit" class="wl-join-btn"
+              style="background:#E8632F;color:#fff;padding:14px 26px;border-radius:12px;font-size:14.5px;font-weight:700;border:none;cursor:pointer;white-space:nowrap;">Join the waitlist</button>
+          </div>
+          <p class="wl-msg" style="margin:14px 2px 0;font-size:13px;color:rgba(255,255,255,0.65);text-align:center;min-height:18px;">No spam. We'll only email you when we launch.</p>
+          <p style="margin:8px 2px 0;font-size:13px;color:rgba(255,255,255,0.65);text-align:center;">Vendor or artisan? <a href="#apply" style="color:#F6C9A9;font-weight:700;">Fill the provider application</a> to get onboarded first.</p>
+        </form>
+      </div>
     </section>
   </div>
 
@@ -567,8 +574,9 @@
         Array.prototype.forEach.call(document.querySelectorAll('.wl-role'), function (lbl) {
           var on = lbl.querySelector('input').checked;
           var box = lbl.querySelector('span');
-          box.style.background = on ? '#E8632F' : 'rgba(255,255,255,0.06)';
-          box.style.borderColor = on ? '#E8632F' : 'rgba(255,255,255,0.25)';
+          box.style.background = on ? '#ffffff' : 'transparent';
+          box.style.color = on ? '#1F4A45' : 'rgba(255,255,255,0.78)';
+          box.style.boxShadow = on ? '0 6px 14px rgba(0,0,0,0.20)' : 'none';
         });
       }
       radio.addEventListener('change', paint);
