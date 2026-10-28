@@ -16,6 +16,7 @@ import { MailService } from '../../common/mail.service';
 const DEBUG = process.env.DEBUG === 'true';
 const INVALID_PHONE =
   'Invalid phone number. Please use a valid Nigerian number (e.g. +2348012345678, 08012345678).';
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 interface UserRow {
   id: string;
@@ -101,7 +102,7 @@ export class AuthService {
     return { exists: !!user && user.full_name !== 'QuickGift User' };
   }
 
-  async sendOtp(phone: string) {
+  async sendOtp(phone: string, email?: string) {
     if (!this.security.validateNigerianPhone(phone)) {
       throw new BadRequestException(INVALID_PHONE);
     }
@@ -122,9 +123,26 @@ export class AuthService {
        VALUES ($1, $2, $3, false, NOW(), NOW() + interval '10 minutes')`,
       [randomUUID(), phone, code],
     );
+
     const smsSent = await this.sms.sendOtpSms(phone, code);
+
+    // Free email OTP via Brevo: use the email the client supplied (e.g. on the
+    // sign-up screen), else the user's on-file email for existing accounts.
+    // SMS (Termii) stays the primary channel once it's funded.
+    let emailTarget: string | null =
+      email && EMAIL_RE.test(email.trim()) ? email.trim() : null;
+    if (!emailTarget) {
+      const existing = await this.loadUserByPhone(phone);
+      if (existing?.email) emailTarget = existing.email;
+    }
+    let emailSent = false;
+    if (emailTarget) emailSent = await this.mail.sendOtp(emailTarget, code);
+
     const response: Record<string, any> = { message: 'OTP sent successfully' };
-    if (DEBUG || !smsSent) response.otp_dev = code;
+    if (emailSent) response.sent_to = 'email';
+    else if (smsSent) response.sent_to = 'sms';
+    // Keep the in-app code during the beta or when no channel delivered it.
+    if (DEBUG || (!smsSent && !emailSent)) response.otp_dev = code;
     return response;
   }
 

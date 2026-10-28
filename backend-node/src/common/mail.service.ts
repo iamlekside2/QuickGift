@@ -107,6 +107,36 @@ export class MailService {
       ),
     );
   }
+
+  /** One-time passcode email (free alternative to SMS for users with an email). */
+  async sendOtp(to: string, code: string): Promise<boolean> {
+    return this.send(to, `${code} is your QuickGift code`, otpHtml(code));
+  }
+}
+
+/** One-time passcode email with a large, copyable code. */
+function otpHtml(code: string): string {
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="color-scheme" content="light only"></head>
+<body style="margin:0;padding:0;background-color:#F4ECDD;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F4ECDD;">
+    <tr><td align="center" style="padding:32px 16px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background:#ffffff;border-radius:20px;overflow:hidden;border:1px solid #ECE3D2;">
+        <tr><td style="background-color:#1F4A45;padding:20px 32px;font-family:Georgia,'Times New Roman',serif;font-size:20px;font-weight:bold;color:#ffffff;">QuickGift</td></tr>
+        <tr><td align="center" style="padding:34px 32px 10px;">
+          <p style="margin:0 0 6px;font-family:Helvetica,Arial,sans-serif;font-size:15px;color:#4E4A42;">Your verification code</p>
+          <p style="margin:0 0 6px;font-family:'Courier New',monospace;font-size:40px;font-weight:bold;letter-spacing:10px;color:#1F4A45;">${code}</p>
+          <p style="margin:12px 0 0;font-family:Helvetica,Arial,sans-serif;font-size:13.5px;line-height:1.6;color:#9A948A;">Enter this code in the QuickGift app to continue. It expires in 10 minutes. If you did not request it, you can ignore this email.</p>
+        </td></tr>
+        <tr><td style="padding:20px 32px 30px;">
+          <p style="margin:0;font-family:Helvetica,Arial,sans-serif;font-size:12px;color:#B6B0A6;">&copy; 2026 QuickGift &middot; Lagos, Nigeria</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
 }
 
 /** Branded transactional email to an end user. */
