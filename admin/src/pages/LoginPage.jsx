@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import { Gift, Loader2, Eye, EyeOff, ArrowRight } from 'lucide-react'
+import logo from '../assets/logo.png'
 import { selectIsAuthenticated } from '../features/authSlice'
 import { useLoginMutation } from '../services/api'
 
@@ -44,8 +45,8 @@ export default function LoginPage() {
       <div className="w-full max-w-[400px] relative z-10 animate-scale-in">
         {/* Logo + heading */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-br from-teal-400 to-teal-600 rounded-2xl mb-5 shadow-lg shadow-teal-500/20">
-            <Gift className="w-7 h-7 text-white" />
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-white rounded-2xl mb-5 shadow-lg shadow-black/20 p-2.5">
+            <img src={logo} alt="QuickGift" className="w-full h-full object-contain" />
           </div>
           <h1 className="text-2xl font-bold text-white tracking-tight">Welcome back</h1>
           <p className="text-gray-400 mt-1.5 text-sm">Sign in to your admin console</p>

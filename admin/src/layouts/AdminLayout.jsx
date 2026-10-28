@@ -7,6 +7,7 @@ import {
   Settings, Search, ChevronRight, Wallet, Banknote, AlertTriangle, UserPlus
 } from 'lucide-react'
 import { logout, selectCurrentUser } from '../features/authSlice'
+import logo from '../assets/logo.png'
 
 const NAV_ITEMS = [
   { path: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -78,8 +79,8 @@ export default function AdminLayout() {
       `}>
         {/* Logo */}
         <div className="flex items-center gap-3 px-5 h-16 border-b border-white/10 shrink-0">
-          <div className="w-8 h-8 bg-gradient-to-br from-orange-400 to-orange-600 rounded-lg flex items-center justify-center shadow-sm shadow-black/20">
-            <Gift className="w-4 h-4 text-white" />
+          <div className="w-9 h-9 bg-white rounded-lg flex items-center justify-center shadow-sm shadow-black/20 shrink-0 p-1">
+            <img src={logo} alt="QuickGift" className="w-full h-full object-contain" />
           </div>
           <div className="flex-1 min-w-0">
             <h1 className="text-sm font-bold text-white tracking-tight">QuickGift</h1>
