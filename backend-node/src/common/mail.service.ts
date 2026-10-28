@@ -80,6 +80,87 @@ export class MailService {
     const to = process.env.ADMIN_NOTIFY_EMAIL || 'admin@quickgift.ng';
     return this.send(to, `[QuickGift] ${subject}`, adminHtml(subject, lines));
   }
+
+  /**
+   * Transactional email to an end user (order/booking/dispute/status updates).
+   * Fired best-effort from NotifyService when the user has an email on file.
+   */
+  async sendUserNotification(
+    to: string,
+    name: string,
+    title: string,
+    body: string,
+  ): Promise<boolean> {
+    return this.send(to, `${title} · QuickGift`, userHtml(name, title, body, null));
+  }
+
+  /** Welcome email on sign-up (only when the user provided an email). */
+  async sendWelcome(to: string, name: string): Promise<boolean> {
+    return this.send(
+      to,
+      'Welcome to QuickGift \u{1F381}',
+      userHtml(
+        name,
+        'Welcome to QuickGift',
+        'Your account is ready. Send same-day gifts and book verified artisans across Lagos and Abuja, right from the app. We are glad to have you.',
+        'https://www.quickgift.ng',
+      ),
+    );
+  }
+}
+
+/** Branded transactional email to an end user. */
+function userHtml(
+  name: string,
+  title: string,
+  body: string,
+  ctaUrl: string | null,
+): string {
+  const greeting =
+    name && name !== 'QuickGift User' ? `Hi ${name},` : 'Hi there,';
+  const cta = ctaUrl
+    ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:24px 0 0;"><tr><td align="center" bgcolor="#E8632F" style="border-radius:12px;"><a href="${ctaUrl}" style="display:inline-block;padding:13px 28px;font-family:Helvetica,Arial,sans-serif;font-size:14px;font-weight:bold;color:#ffffff;text-decoration:none;border-radius:12px;">Open QuickGift</a></td></tr></table>`
+    : '';
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="color-scheme" content="light only"></head>
+<body style="margin:0;padding:0;background-color:#F4ECDD;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F4ECDD;">
+    <tr><td align="center" style="padding:32px 16px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:20px;overflow:hidden;border:1px solid #ECE3D2;">
+        <tr>
+          <td style="background-color:#1F4A45;padding:20px 32px;">
+            <table role="presentation" cellpadding="0" cellspacing="0"><tr>
+              <td style="padding-right:10px;" valign="middle">
+                <table role="presentation" cellpadding="0" cellspacing="0"><tr>
+                  <td style="background-color:#ffffff;border-radius:9px;padding:5px 6px;line-height:0;" valign="middle">
+                    <img src="https://www.quickgift.ng/logo.png" width="24" height="25" alt="QuickGift" style="display:block;width:24px;height:25px;border:0;">
+                  </td>
+                </tr></table>
+              </td>
+              <td valign="middle" style="font-family:Georgia,'Times New Roman',serif;font-size:20px;font-weight:bold;color:#ffffff;">QuickGift</td>
+            </tr></table>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:32px 32px 28px;">
+            <p style="margin:0 0 16px;font-family:Helvetica,Arial,sans-serif;font-size:15px;color:#4E4A42;">${greeting}</p>
+            <h1 style="margin:0 0 14px;font-family:Georgia,'Times New Roman',serif;font-size:24px;line-height:1.25;color:#211F1C;font-weight:normal;">${title}</h1>
+            <p style="margin:0;font-family:Helvetica,Arial,sans-serif;font-size:15.5px;line-height:1.65;color:#4E4A42;">${body}</p>
+            ${cta}
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:20px 32px 30px;border-top:1px solid #EFE7D8;">
+            <p style="margin:0;font-family:Helvetica,Arial,sans-serif;font-size:12px;color:#9A948A;">You are receiving this because you have a QuickGift account.</p>
+            <p style="margin:10px 0 0;font-family:Helvetica,Arial,sans-serif;font-size:12px;color:#B6B0A6;">&copy; 2026 QuickGift &middot; Lagos, Nigeria</p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
 }
 
 /** Simple branded internal alert for the admin inbox. */

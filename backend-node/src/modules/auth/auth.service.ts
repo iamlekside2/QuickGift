@@ -11,6 +11,7 @@ import { randomUUID } from 'crypto';
 import { DatabaseService } from '../../database/database.service';
 import { SecurityService } from '../../common/security.service';
 import { SmsService } from '../../common/sms.service';
+import { MailService } from '../../common/mail.service';
 
 const DEBUG = process.env.DEBUG === 'true';
 const INVALID_PHONE =
@@ -34,6 +35,7 @@ export class AuthService {
     private readonly db: DatabaseService,
     private readonly security: SecurityService,
     private readonly sms: SmsService,
+    private readonly mail: MailService,
   ) {}
 
   private async providerExists(userId: string): Promise<boolean> {
@@ -212,6 +214,11 @@ export class AuthService {
 
     const profileComplete =
       user.role === 'provider' ? await this.providerExists(user.id) : true;
+
+    // Welcome email, best-effort, only when the user signed up with an email.
+    if (user.email) {
+      void this.mail.sendWelcome(user.email, user.full_name);
+    }
 
     return {
       access_token: this.token(user),
