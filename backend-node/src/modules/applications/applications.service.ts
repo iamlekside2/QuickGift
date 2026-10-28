@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { DatabaseService } from '../../database/database.service';
+import { MailService } from '../../common/mail.service';
 
 // Columns selected back to the admin dashboard.
 const APP_FIELDS = `id, full_name, business_name, service_type, city, phone, email,
@@ -30,7 +31,10 @@ const str = (v: unknown, max = 200) => String(v ?? '').trim().slice(0, max);
 export class ApplicationsService implements OnModuleInit {
   private readonly logger = new Logger(ApplicationsService.name);
 
-  constructor(private readonly db: DatabaseService) {}
+  constructor(
+    private readonly db: DatabaseService,
+    private readonly mail: MailService,
+  ) {}
 
   async onModuleInit() {
     await this.db.query(`
@@ -122,14 +126,22 @@ export class ApplicationsService implements OnModuleInit {
     if (email) {
       // Idempotent on email: a repeat keeps the first signup, refreshes role
       // and backfills a phone number if one is supplied this time.
-      await this.db.query(
+      // `xmax = 0` in the RETURNING row is true only for a fresh INSERT (not an
+      // ON CONFLICT update), so we email a confirmation just once per address.
+      const row = await this.db.queryOne<{ inserted: boolean }>(
         `INSERT INTO waitlist_signups (id, email, phone, role, source, created_at)
          VALUES ($1,$2,$3,$4,$5,NOW())
          ON CONFLICT (email) DO UPDATE SET
            role = EXCLUDED.role,
-           phone = COALESCE(EXCLUDED.phone, waitlist_signups.phone)`,
+           phone = COALESCE(EXCLUDED.phone, waitlist_signups.phone)
+         RETURNING (xmax = 0) AS inserted`,
         [id, email, phone || null, role, source],
       );
+      if (row?.inserted) {
+        // Fire-and-forget: send() never throws, so the signup response is not
+        // blocked on the mail provider and a mail failure can't fail the join.
+        void this.mail.sendWaitlistConfirmation(email, role);
+      }
     } else {
       // Phone-only signup (no email to dedupe on).
       await this.db.query(

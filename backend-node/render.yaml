@@ -60,3 +60,13 @@ services:
         sync: false
       - key: KWIK_PASSWORD
         sync: false
+
+      # Brevo transactional email (waitlist confirmations). Leave BREVO_API_KEY
+      # blank and no email is sent — signups still work. To enable: verify a
+      # sender in Brevo, create an API key, and paste it here.
+      - key: BREVO_API_KEY
+        sync: false
+      - key: MAIL_FROM_EMAIL
+        value: hello@quickgift.ng
+      - key: MAIL_FROM_NAME
+        value: QuickGift
