@@ -97,7 +97,7 @@ export const api = createApi({
     }),
     createProduct: builder.mutation({
       query: (body) => ({
-        url: '/products',
+        url: '/admin/products',
         method: 'POST',
         body,
       }),
@@ -105,7 +105,7 @@ export const api = createApi({
     }),
     updateProduct: builder.mutation({
       query: ({ id, ...body }) => ({
-        url: `/products/${id}`,
+        url: `/admin/products/${id}`,
         method: 'PATCH',
         body,
       }),

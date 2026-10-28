@@ -315,6 +315,79 @@ export class AdminService {
     return { ok: true, deleted: n };
   }
 
+  // ---- create / edit products ----
+  async createProduct(data: any) {
+    const name = String(data?.name ?? '').trim();
+    if (!name) throw new BadRequestException('Product name is required');
+    const price = Number(data?.price);
+    if (!Number.isFinite(price) || price < 0) {
+      throw new BadRequestException('A valid price is required');
+    }
+    const category_id = String(data?.category_id ?? '').trim();
+    if (!category_id) throw new BadRequestException('Category is required');
+    const cat = await this.db.queryOne(`SELECT 1 FROM categories WHERE id = $1`, [category_id]);
+    if (!cat) throw new BadRequestException('Invalid category');
+
+    const id = randomUUID();
+    const compare = data?.compare_price !== undefined && data?.compare_price !== '' && data?.compare_price !== null
+      ? Number(data.compare_price) : null;
+    const status = ['active', 'inactive', 'draft'].includes(data?.status) ? data.status : 'active';
+
+    await this.db.query(
+      `INSERT INTO products
+         (id, name, description, price, compare_price, category_id, vendor_name, vendor_id,
+          image_url, images, rating, review_count, order_count, status, is_featured, tags, city, created_at, updated_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,NULL,$8,NULL,0,0,0,$9,$10,$11,$12,NOW(),NOW())`,
+      [
+        id, name,
+        String(data?.description ?? '').trim() || null,
+        price,
+        compare,
+        category_id,
+        String(data?.vendor_name ?? '').trim() || 'QuickGift',
+        String(data?.image_url ?? '').trim() || null,
+        status,
+        !!data?.is_featured,
+        String(data?.tags ?? '').trim() || null,
+        String(data?.city ?? '').trim() || null,
+      ],
+    );
+    return this.db.queryOne(`SELECT * FROM products WHERE id = $1`, [id]);
+  }
+
+  async updateProduct(id: string, data: any) {
+    const p = await this.db.queryOne(`SELECT id FROM products WHERE id = $1`, [id]);
+    if (!p) throw new NotFoundException('Product not found');
+    if (data?.category_id) {
+      const cat = await this.db.queryOne(`SELECT 1 FROM categories WHERE id = $1`, [data.category_id]);
+      if (!cat) throw new BadRequestException('Invalid category');
+    }
+    const allowed = [
+      'name', 'description', 'price', 'compare_price', 'category_id',
+      'vendor_name', 'image_url', 'status', 'is_featured', 'tags', 'city',
+    ];
+    const sets: string[] = [];
+    const params: any[] = [];
+    for (const k of allowed) {
+      if (data && data[k] !== undefined) {
+        let v: any = data[k];
+        if (k === 'price' || k === 'compare_price') v = v === '' || v === null ? null : Number(v);
+        else if (k === 'is_featured') v = !!v;
+        else if (v === '') v = null;
+        params.push(v);
+        sets.push(`${k} = $${params.length}`);
+      }
+    }
+    if (sets.length) {
+      params.push(id);
+      await this.db.query(
+        `UPDATE products SET ${sets.join(', ')}, updated_at = NOW() WHERE id = $${params.length}`,
+        params,
+      );
+    }
+    return this.db.queryOne(`SELECT * FROM products WHERE id = $1`, [id]);
+  }
+
   listProviders(q: any) {
     const where: string[] = [];
     const params: any[] = [];

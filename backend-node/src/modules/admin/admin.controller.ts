@@ -63,6 +63,16 @@ export class AdminController {
     return this.admin.clearProducts();
   }
 
+  @Post('products')
+  createProduct(@Body() body: any) {
+    return this.admin.createProduct(body);
+  }
+
+  @Patch('products/:id')
+  updateProduct(@Param('id') id: string, @Body() body: any) {
+    return this.admin.updateProduct(id, body);
+  }
+
   @Delete('products/:id')
   deleteProduct(@Param('id') id: string) {
     return this.admin.deleteProduct(id);

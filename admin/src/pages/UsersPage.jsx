@@ -107,6 +107,25 @@ export default function UsersPage() {
     }
   }
 
+  const handleExport = () => {
+    if (!users.length) return
+    const header = ['Name', 'Phone', 'Email', 'Role', 'City', 'Wallet', 'Joined']
+    const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`
+    const lines = users.map((u) => [
+      u.full_name, u.phone, u.email, u.role, u.city,
+      u.wallet_balance || 0,
+      u.created_at ? new Date(u.created_at).toISOString().slice(0, 10) : '',
+    ].map(esc).join(','))
+    const csv = [header.join(','), ...lines].join('\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `quickgift-users-${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   const formatPrice = (price) => '₦' + (price || 0).toLocaleString()
 
   const ROLE_STYLES = {
@@ -123,7 +142,7 @@ export default function UsersPage() {
           <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Users</h1>
           <p className="text-sm text-gray-500 mt-1">Manage platform users and their accounts</p>
         </div>
-        <button className="btn-secondary">
+        <button className="btn-secondary" onClick={handleExport} disabled={!users.length}>
           <Download className="w-4 h-4" />
           Export
         </button>

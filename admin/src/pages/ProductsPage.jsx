@@ -36,7 +36,7 @@ function ProductModal({ product, categories, onClose }) {
       }
       onClose()
     } catch (err) {
-      setError(err?.data?.detail || 'Something went wrong')
+      setError(err?.data?.message || err?.data?.detail || 'Something went wrong')
     }
   }
 
@@ -145,7 +145,7 @@ export default function ProductsPage() {
     try {
       await deleteProduct(product.id).unwrap()
     } catch (err) {
-      alert(err?.data?.detail || 'Failed to delete product')
+      alert(err?.data?.message || err?.data?.detail || 'Failed to delete product')
     }
   }
 
