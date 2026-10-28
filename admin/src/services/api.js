@@ -169,6 +169,21 @@ export const api = createApi({
       },
       providesTags: ['Users'],
     }),
+    deleteAdminUser: builder.mutation({
+      query: (id) => ({
+        url: `/admin/users/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Users', 'Dashboard'],
+    }),
+    bulkDeleteAdminUsers: builder.mutation({
+      query: (ids) => ({
+        url: '/admin/users/bulk-delete',
+        method: 'POST',
+        body: { ids },
+      }),
+      invalidatesTags: ['Users', 'Dashboard'],
+    }),
 
     // ── Reviews ──────────────────────────────────────
     getReviews: builder.query({
@@ -328,6 +343,8 @@ export const {
   useSuspendProviderMutation,
   useReactivateProviderMutation,
   useGetAdminUsersQuery,
+  useDeleteAdminUserMutation,
+  useBulkDeleteAdminUsersMutation,
   useGetReviewsQuery,
   useGetAdminPaymentsQuery,
   useGetAdminTransactionsQuery,

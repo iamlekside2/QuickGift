@@ -24,7 +24,7 @@
   --color-orange-900: #60280d;
 
   --color-cream: #FFF8F0;
-  --color-surface: #FAFBFC;
+  --color-surface: #EAEDF1;
   --color-surface-raised: #FFFFFF;
   --color-border: #E5E7EB;
   --color-border-subtle: #F3F4F6;
@@ -92,7 +92,7 @@
   }
 
   .card {
-    @apply bg-white rounded-xl border border-gray-100 shadow-sm;
+    @apply bg-white rounded-xl border border-gray-200/80 shadow-sm shadow-gray-900/5;
   }
 
   .badge {

@@ -1,14 +1,18 @@
 import {
+  Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
+  Post,
   Query,
   UseGuards,
 } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { AuthGuard } from '../../common/auth.guard';
 import { AdminGuard } from '../../common/admin.guard';
+import { CurrentUser, AuthUser } from '../../common/current-user.decorator';
 
 @UseGuards(AuthGuard, AdminGuard)
 @Controller('admin')
@@ -28,6 +32,20 @@ export class AdminController {
   @Get('users')
   users(@Query() q: Record<string, string>) {
     return this.admin.listUsers(q);
+  }
+
+  // Bulk delete must be declared before the ':id' route so it isn't swallowed.
+  @Post('users/bulk-delete')
+  bulkDeleteUsers(
+    @Body() body: { ids: string[] },
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.admin.bulkDeleteUsers(body?.ids || [], user?.user_id);
+  }
+
+  @Delete('users/:id')
+  deleteUser(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.admin.deleteUser(id, user?.user_id);
   }
 
   @Get('providers')

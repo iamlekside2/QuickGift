@@ -123,6 +123,112 @@ export class AdminService {
     return { items, total, page, per_page: perPage };
   }
 
+  // ---- delete users (for clearing out test/fake accounts) ----
+  async deleteUser(id: string, actingUserId?: string) {
+    const res = await this.removeUser(id, actingUserId);
+    if (!res.ok) throw new BadRequestException(res.reason);
+    return { ok: true };
+  }
+
+  async bulkDeleteUsers(ids: string[], actingUserId?: string) {
+    if (!Array.isArray(ids) || ids.length === 0) {
+      throw new BadRequestException('No user ids provided');
+    }
+    if (ids.length > 200) {
+      throw new BadRequestException('Too many at once (max 200 per request)');
+    }
+    let deleted = 0;
+    const skipped: Array<{ id: string; reason: string }> = [];
+    for (const uid of ids) {
+      const res = await this.removeUser(uid, actingUserId);
+      if (res.ok) deleted++;
+      else skipped.push({ id: uid, reason: res.reason! });
+    }
+    return { ok: true, deleted, skipped };
+  }
+
+  /**
+   * Hard-deletes a user and ALL their dependent rows in one transaction.
+   * Guards against deleting admin accounts or the acting admin's own account.
+   * Covers every table with a FK to users(id) plus the provider sub-tree, so a
+   * fake/test account with orders, bookings, chats etc. can be fully removed.
+   */
+  private async removeUser(
+    id: string,
+    actingUserId?: string,
+  ): Promise<{ ok: boolean; reason?: string }> {
+    if (actingUserId && id === actingUserId) {
+      return { ok: false, reason: 'You cannot delete your own account' };
+    }
+    const u = await this.db.queryOne<{ id: string; role: string }>(
+      `SELECT id, role FROM users WHERE id = $1`,
+      [id],
+    );
+    if (!u) return { ok: false, reason: 'User not found' };
+    if (u.role === 'admin') {
+      return { ok: false, reason: 'Admin accounts cannot be deleted' };
+    }
+    try {
+      await this.db.transaction(async (client) => {
+        const prov = (
+          await client.query(`SELECT id FROM providers WHERE user_id = $1`, [id])
+        ).rows[0];
+
+        // Conversations (as buyer or provider) and their messages
+        await client.query(
+          `DELETE FROM messages WHERE conversation_id IN
+             (SELECT id FROM conversations WHERE buyer_id = $1 OR provider_id = $1)`,
+          [id],
+        );
+        await client.query(
+          `DELETE FROM conversations WHERE buyer_id = $1 OR provider_id = $1`,
+          [id],
+        );
+
+        // Order chain (as the customer)
+        await client.query(
+          `DELETE FROM deliveries WHERE user_id = $1
+             OR order_id IN (SELECT id FROM orders WHERE user_id = $1)`,
+          [id],
+        );
+        await client.query(`DELETE FROM disputes WHERE buyer_id = $1`, [id]);
+        await client.query(
+          `DELETE FROM order_items WHERE order_id IN (SELECT id FROM orders WHERE user_id = $1)`,
+          [id],
+        );
+        await client.query(`DELETE FROM orders WHERE user_id = $1`, [id]);
+
+        // Bookings made by the user, money + notifications, audit authored
+        await client.query(`DELETE FROM bookings WHERE user_id = $1`, [id]);
+        await client.query(`DELETE FROM payouts WHERE user_id = $1`, [id]);
+        await client.query(`DELETE FROM transactions WHERE user_id = $1`, [id]);
+        await client.query(`DELETE FROM bank_accounts WHERE user_id = $1`, [id]);
+        await client.query(`DELETE FROM notifications WHERE user_id = $1`, [id]);
+        await client.query(`DELETE FROM status_logs WHERE changed_by = $1`, [id]);
+
+        // Provider sub-tree (if this user is also a provider)
+        if (prov) {
+          await client.query(`DELETE FROM bookings WHERE provider_id = $1`, [prov.id]);
+          await client.query(`DELETE FROM payouts WHERE provider_id = $1`, [prov.id]);
+          await client.query(`DELETE FROM status_logs WHERE provider_id = $1`, [prov.id]);
+          await client.query(`DELETE FROM portfolios WHERE provider_id = $1`, [prov.id]);
+          await client.query(`DELETE FROM services WHERE provider_id = $1`, [prov.id]);
+          await client.query(`DELETE FROM providers WHERE id = $1`, [prov.id]);
+        }
+
+        // OTPs tied to the phone, then the user
+        await client.query(
+          `DELETE FROM otps WHERE phone = (SELECT phone FROM users WHERE id = $1)`,
+          [id],
+        );
+        await client.query(`DELETE FROM users WHERE id = $1`, [id]);
+      });
+      return { ok: true };
+    } catch {
+      return { ok: false, reason: 'Could not remove — user has linked records' };
+    }
+  }
+
   listProviders(q: any) {
     const where: string[] = [];
     const params: any[] = [];

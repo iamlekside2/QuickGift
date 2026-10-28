@@ -52,8 +52,8 @@ export default function AdminLayout() {
   const navLinkClass = ({ isActive }) =>
     `group flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium transition-all duration-150 ${
       isActive
-        ? 'bg-teal-500/10 text-teal-600'
-        : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100/80'
+        ? 'bg-white/12 text-white shadow-sm'
+        : 'text-white/55 hover:text-white hover:bg-white/8'
     }`
 
   const breadcrumb = getBreadcrumb()
@@ -71,22 +71,22 @@ export default function AdminLayout() {
       {/* Sidebar */}
       <aside className={`
         fixed lg:static inset-y-0 left-0 z-50
-        w-[260px] bg-white border-r border-gray-100
+        w-[260px] bg-[#1F4A45] border-r border-black/20
         flex flex-col
         transform transition-transform duration-200 ease-out
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
         {/* Logo */}
-        <div className="flex items-center gap-3 px-5 h-16 border-b border-gray-100 shrink-0">
-          <div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-teal-700 rounded-lg flex items-center justify-center shadow-sm shadow-teal-500/20">
+        <div className="flex items-center gap-3 px-5 h-16 border-b border-white/10 shrink-0">
+          <div className="w-8 h-8 bg-gradient-to-br from-orange-400 to-orange-600 rounded-lg flex items-center justify-center shadow-sm shadow-black/20">
             <Gift className="w-4 h-4 text-white" />
           </div>
           <div className="flex-1 min-w-0">
-            <h1 className="text-sm font-bold text-gray-900 tracking-tight">QuickGift</h1>
-            <p className="text-[11px] text-gray-400 font-medium">Admin Console</p>
+            <h1 className="text-sm font-bold text-white tracking-tight">QuickGift</h1>
+            <p className="text-[11px] text-white/45 font-medium">Admin Console</p>
           </div>
           <button
-            className="lg:hidden p-1 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100"
+            className="lg:hidden p-1 text-white/60 hover:text-white rounded-md hover:bg-white/10"
             onClick={() => setSidebarOpen(false)}
           >
             <X className="w-4 h-4" />
@@ -112,7 +112,7 @@ export default function AdminLayout() {
         </nav>
 
         {/* Bottom section */}
-        <div className="px-3 pb-3 space-y-0.5 border-t border-gray-100 pt-3 shrink-0">
+        <div className="px-3 pb-3 space-y-0.5 border-t border-white/10 pt-3 shrink-0">
           {BOTTOM_NAV.map((item) => (
             <NavLink
               key={item.path}
@@ -126,20 +126,20 @@ export default function AdminLayout() {
           ))}
           <button
             onClick={handleLogout}
-            className="group flex items-center gap-3 w-full px-3 py-2 rounded-lg text-[13px] font-medium text-gray-500 hover:text-red-600 hover:bg-red-50 transition-all duration-150"
+            className="group flex items-center gap-3 w-full px-3 py-2 rounded-lg text-[13px] font-medium text-white/55 hover:text-white hover:bg-red-500/25 transition-all duration-150"
           >
             <LogOut className="w-[18px] h-[18px] shrink-0" />
             <span>Log Out</span>
           </button>
 
           {/* User profile pill */}
-          <div className="flex items-center gap-3 px-3 py-2.5 mt-2 rounded-lg bg-gray-50/80">
-            <div className="w-8 h-8 bg-gradient-to-br from-teal-400 to-teal-600 rounded-full flex items-center justify-center shadow-sm">
+          <div className="flex items-center gap-3 px-3 py-2.5 mt-2 rounded-lg bg-white/5">
+            <div className="w-8 h-8 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full flex items-center justify-center shadow-sm">
               <span className="text-xs font-bold text-white">{user?.full_name?.charAt(0) || 'A'}</span>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[13px] font-semibold text-gray-900 truncate">{user?.full_name || 'Admin'}</p>
-              <p className="text-[11px] text-gray-400 truncate">{user?.email || 'admin@quickgift.ng'}</p>
+              <p className="text-[13px] font-semibold text-white truncate">{user?.full_name || 'Admin'}</p>
+              <p className="text-[11px] text-white/45 truncate">{user?.email || 'admin@quickgift.ng'}</p>
             </div>
           </div>
         </div>
