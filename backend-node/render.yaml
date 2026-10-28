@@ -72,3 +72,6 @@ services:
         value: admin@quickgift.ng
       - key: MAIL_FROM_NAME
         value: QuickGift
+      # Where internal alerts (new order, booking, application, dispute) are sent.
+      - key: ADMIN_NOTIFY_EMAIL
+        value: admin@quickgift.ng

@@ -70,6 +70,46 @@ export class MailService {
       : "You're on the QuickGift waitlist \u{1F381}";
     return this.send(to, subject, waitlistHtml(isProvider));
   }
+
+  /**
+   * Internal alert to the QuickGift team when something happens in the app
+   * (new order, booking, provider application, dispute, ...). Goes to
+   * ADMIN_NOTIFY_EMAIL (default admin@quickgift.ng). Fire-and-forget safe.
+   */
+  async sendAdminNotification(subject: string, lines: string[]): Promise<boolean> {
+    const to = process.env.ADMIN_NOTIFY_EMAIL || 'admin@quickgift.ng';
+    return this.send(to, `[QuickGift] ${subject}`, adminHtml(subject, lines));
+  }
+}
+
+/** Simple branded internal alert for the admin inbox. */
+function adminHtml(title: string, lines: string[]): string {
+  const rows = lines
+    .map(
+      (l) =>
+        `<tr><td style="padding:7px 0;font-family:Helvetica,Arial,sans-serif;font-size:14.5px;line-height:1.5;color:#211F1C;border-bottom:1px solid #F0EADF;">${l}</td></tr>`,
+    )
+    .join('');
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="color-scheme" content="light only"></head>
+<body style="margin:0;padding:0;background-color:#F4ECDD;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F4ECDD;">
+    <tr><td align="center" style="padding:32px 16px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:18px;overflow:hidden;border:1px solid #ECE3D2;">
+        <tr><td style="background:#1F4A45;padding:18px 28px;font-family:Georgia,'Times New Roman',serif;font-size:18px;font-weight:bold;color:#ffffff;">QuickGift &middot; Admin</td></tr>
+        <tr><td style="padding:26px 28px 8px;">
+          <h1 style="margin:0 0 16px;font-family:Helvetica,Arial,sans-serif;font-size:19px;color:#211F1C;">${title}</h1>
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows}</table>
+        </td></tr>
+        <tr><td style="padding:16px 28px 26px;">
+          <a href="https://admin.quickgift.ng" style="font-family:Helvetica,Arial,sans-serif;font-size:13px;color:#0F7F69;font-weight:bold;text-decoration:none;">Open the admin dashboard &#8594;</a>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
 }
 
 /**

@@ -7,6 +7,7 @@ import {
 import { randomUUID } from 'crypto';
 import { DatabaseService } from '../../database/database.service';
 import { NotifyService } from '../../common/notify.service';
+import { MailService } from '../../common/mail.service';
 
 // Config mirrors app/core/config.py
 const DELIVERY_BASE_FEE = 0;
@@ -32,6 +33,7 @@ export class OrdersService {
   constructor(
     private readonly db: DatabaseService,
     private readonly notifier: NotifyService,
+    private readonly mail: MailService,
   ) {}
 
   private orderNumber(): string {
@@ -139,7 +141,14 @@ export class OrdersService {
       }
     });
 
-    return this.reload(orderId);
+    const order = await this.reload(orderId);
+    void this.mail.sendAdminNotification('New order placed', [
+      `Order: ${(order as any)?.order_number ?? '—'}`,
+      `Total: ${this.naira((order as any)?.total ?? total)}`,
+      `Items: ${itemsData.length}`,
+      `Status: pending`,
+    ]);
+    return order;
   }
 
   async listOrders(userId: string, q: any) {

@@ -7,12 +7,14 @@ import {
 import { randomUUID } from 'crypto';
 import { DatabaseService } from '../../database/database.service';
 import { NotifyService } from '../../common/notify.service';
+import { MailService } from '../../common/mail.service';
 
 @Injectable()
 export class DisputesService {
   constructor(
     private readonly db: DatabaseService,
     private readonly notifier: NotifyService,
+    private readonly mail: MailService,
   ) {}
 
   private naira(n: number): string {
@@ -89,6 +91,10 @@ export class DisputesService {
       }
     }
 
+    void this.mail.sendAdminNotification('New dispute raised', [
+      `Reason: ${req.reason}`,
+      req.order_id ? `Order ID: ${req.order_id}` : `Booking ID: ${req.booking_id}`,
+    ]);
     return this.db.queryOne(`SELECT * FROM disputes WHERE id = $1`, [id]);
   }
 

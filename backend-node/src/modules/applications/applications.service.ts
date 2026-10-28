@@ -107,6 +107,14 @@ export class ApplicationsService implements OnModuleInit {
         str(req?.message, 1000) || null,
       ],
     );
+    void this.mail.sendAdminNotification('New provider application', [
+      `Name: ${full_name}`,
+      `Business: ${str(req?.business_name ?? req?.business, 160) || '—'}`,
+      `Service: ${str(req?.service_type ?? req?.category, 80) || '—'}`,
+      `City: ${str(req?.city, 80) || '—'}`,
+      `Phone: ${phone}`,
+      `Email: ${email || '—'}`,
+    ]);
     return { ok: true, id };
   }
 
@@ -141,6 +149,11 @@ export class ApplicationsService implements OnModuleInit {
         // Fire-and-forget: send() never throws, so the signup response is not
         // blocked on the mail provider and a mail failure can't fail the join.
         void this.mail.sendWaitlistConfirmation(email, role);
+        void this.mail.sendAdminNotification('New waitlist signup', [
+          `Email: ${email}`,
+          `Role: ${role}`,
+          `Source: ${source}`,
+        ]);
       }
     } else {
       // Phone-only signup (no email to dedupe on).
@@ -149,6 +162,11 @@ export class ApplicationsService implements OnModuleInit {
          VALUES ($1,NULL,$2,$3,$4,NOW())`,
         [id, phone, role, source],
       );
+      void this.mail.sendAdminNotification('New waitlist signup', [
+        `Phone: ${phone}`,
+        `Role: ${role}`,
+        `Source: ${source}`,
+      ]);
     }
     return { ok: true };
   }

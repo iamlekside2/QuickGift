@@ -7,6 +7,7 @@ import {
 import { randomUUID } from 'crypto';
 import { DatabaseService } from '../../database/database.service';
 import { NotifyService } from '../../common/notify.service';
+import { MailService } from '../../common/mail.service';
 
 const BEAUTY_COMMISSION_PERCENT = Number(
   process.env.BEAUTY_COMMISSION_PERCENT ?? '10.0',
@@ -37,6 +38,7 @@ export class BookingsService {
   constructor(
     private readonly db: DatabaseService,
     private readonly notifier: NotifyService,
+    private readonly mail: MailService,
   ) {}
 
   private bookingNumber(): string {
@@ -117,7 +119,15 @@ export class BookingsService {
       'booking',
     );
 
-    return this.reload(id);
+    const booking = await this.reload(id);
+    void this.mail.sendAdminNotification('New booking request', [
+      `Booking: ${(booking as any)?.booking_number ?? '—'}`,
+      `Service: ${service.name}`,
+      `Customer: ${buyerName}`,
+      `Amount: ${this.naira(service.price)}`,
+      `Status: pending`,
+    ]);
+    return booking;
   }
 
   async listBookings(user: AuthUser, q: any) {
