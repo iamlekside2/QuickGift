@@ -169,12 +169,28 @@ export const api = createApi({
       },
       providesTags: ['Users'],
     }),
+    updateAdminUser: builder.mutation({
+      query: ({ id, ...body }) => ({
+        url: `/admin/users/${id}`,
+        method: 'PATCH',
+        body,
+      }),
+      invalidatesTags: ['Users'],
+    }),
     deleteAdminUser: builder.mutation({
       query: (id) => ({
         url: `/admin/users/${id}`,
         method: 'DELETE',
       }),
       invalidatesTags: ['Users', 'Dashboard'],
+    }),
+    updateAdminProvider: builder.mutation({
+      query: ({ id, ...body }) => ({
+        url: `/admin/providers/${id}`,
+        method: 'PATCH',
+        body,
+      }),
+      invalidatesTags: ['Providers'],
     }),
     bulkDeleteAdminUsers: builder.mutation({
       query: (ids) => ({
@@ -343,8 +359,10 @@ export const {
   useSuspendProviderMutation,
   useReactivateProviderMutation,
   useGetAdminUsersQuery,
+  useUpdateAdminUserMutation,
   useDeleteAdminUserMutation,
   useBulkDeleteAdminUsersMutation,
+  useUpdateAdminProviderMutation,
   useGetReviewsQuery,
   useGetAdminPaymentsQuery,
   useGetAdminTransactionsQuery,

@@ -229,6 +229,72 @@ export class AdminService {
     }
   }
 
+  // ---- edit user ----
+  async updateUser(id: string, data: any) {
+    const u = await this.db.queryOne(`SELECT id FROM users WHERE id = $1`, [id]);
+    if (!u) throw new NotFoundException('User not found');
+
+    if (data?.role !== undefined && !['user', 'provider', 'admin'].includes(data.role)) {
+      throw new BadRequestException('Invalid role');
+    }
+    if (data?.email) {
+      const dup = await this.db.queryOne(
+        `SELECT 1 FROM users WHERE email = $1 AND id <> $2`, [data.email, id]);
+      if (dup) throw new BadRequestException('Email already in use by another user');
+    }
+    if (data?.phone) {
+      const dup = await this.db.queryOne(
+        `SELECT 1 FROM users WHERE phone = $1 AND id <> $2`, [data.phone, id]);
+      if (dup) throw new BadRequestException('Phone already in use by another user');
+    }
+
+    const allowed = ['full_name', 'email', 'phone', 'city', 'address', 'role', 'is_active'];
+    const sets: string[] = [];
+    const params: any[] = [];
+    for (const k of allowed) {
+      if (data && data[k] !== undefined) {
+        params.push(data[k] === '' ? null : data[k]);
+        sets.push(`${k} = $${params.length}`);
+      }
+    }
+    if (sets.length) {
+      params.push(id);
+      await this.db.query(
+        `UPDATE users SET ${sets.join(', ')}, updated_at = NOW() WHERE id = $${params.length}`,
+        params,
+      );
+    }
+    return this.db.queryOne(`SELECT ${USER_SAFE_FIELDS} FROM users WHERE id = $1`, [id]);
+  }
+
+  // ---- edit provider ----
+  async updateProvider(id: string, data: any) {
+    const p = await this.db.queryOne(`SELECT id FROM providers WHERE id = $1`, [id]);
+    if (!p) throw new NotFoundException('Provider not found');
+
+    const allowed = [
+      'business_name', 'service_type', 'bio', 'location', 'city',
+      'experience_years', 'plan', 'is_available',
+      'offers_home_service', 'offers_salon_service',
+    ];
+    const sets: string[] = [];
+    const params: any[] = [];
+    for (const k of allowed) {
+      if (data && data[k] !== undefined) {
+        params.push(data[k] === '' ? null : data[k]);
+        sets.push(`${k} = $${params.length}`);
+      }
+    }
+    if (sets.length) {
+      params.push(id);
+      await this.db.query(
+        `UPDATE providers SET ${sets.join(', ')}, updated_at = NOW() WHERE id = $${params.length}`,
+        params,
+      );
+    }
+    return this.db.queryOne(`SELECT * FROM providers WHERE id = $1`, [id]);
+  }
+
   listProviders(q: any) {
     const where: string[] = [];
     const params: any[] = [];

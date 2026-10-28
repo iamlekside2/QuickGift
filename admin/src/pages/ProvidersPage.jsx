@@ -1,12 +1,14 @@
 import { useState } from 'react'
-import { Search, Star, MapPin, Check, X, Shield, Loader2, Sparkles, UserCheck, Clock, Ban, RotateCcw, AlertTriangle } from 'lucide-react'
+import { Search, Star, MapPin, Check, X, Shield, Loader2, Sparkles, UserCheck, Clock, Ban, RotateCcw, AlertTriangle, Pencil } from 'lucide-react'
 import {
   useGetAdminProvidersQuery,
   useApproveProviderMutation,
   useRejectProviderMutation,
   useSuspendProviderMutation,
   useReactivateProviderMutation,
+  useUpdateAdminProviderMutation,
 } from '../services/api'
+import { FormModal, FieldGrid, TextField, TextAreaField, SelectField, ToggleField } from '../components/FormModal'
 
 const STATUS_STYLES = {
   verified: 'badge-green',
@@ -39,7 +41,32 @@ export default function ProvidersPage() {
   const [rejectProvider, { isLoading: rejecting }] = useRejectProviderMutation()
   const [suspendProvider, { isLoading: suspending }] = useSuspendProviderMutation()
   const [reactivateProvider, { isLoading: reactivating }] = useReactivateProviderMutation()
+  const [updateProvider, { isLoading: savingEdit }] = useUpdateAdminProviderMutation()
+  const [edit, setEdit] = useState(null)
   const updating = approving || rejecting || suspending || reactivating
+
+  const openEdit = (p) => setEdit({
+    id: p.id,
+    business_name: p.business_name || '',
+    service_type: p.service_type || '',
+    city: p.city || '',
+    location: p.location || '',
+    bio: p.bio || '',
+    experience_years: p.experience_years ?? 0,
+    plan: p.plan || 'Free',
+    is_available: p.is_available !== false,
+    offers_home_service: !!p.offers_home_service,
+    offers_salon_service: !!p.offers_salon_service,
+  })
+
+  const saveEdit = async () => {
+    try {
+      await updateProvider({ ...edit, experience_years: Number(edit.experience_years) || 0 }).unwrap()
+      setEdit(null)
+    } catch (e) {
+      alert(e?.data?.message || 'Could not save changes.')
+    }
+  }
 
   const allProviders = Array.isArray(providers) ? providers : []
   const filtered = allProviders.filter(p => {
@@ -239,7 +266,7 @@ export default function ProvidersPage() {
                   <th className="table-header">Rating</th>
                   <th className="table-header">Status</th>
                   <th className="table-header">Registered</th>
-                  <th className="table-header w-[140px]">Actions</th>
+                  <th className="table-header w-[180px]">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -289,7 +316,16 @@ export default function ProvidersPage() {
                         {provider.created_at ? new Date(provider.created_at).toLocaleDateString() : '\u2014'}
                       </td>
                       <td className="table-cell">
-                        {getActions(provider)}
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => openEdit(provider)}
+                            title="Edit provider"
+                            className="p-1.5 rounded-lg text-gray-400 hover:text-teal-600 hover:bg-teal-50 transition-colors"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                          {getActions(provider)}
+                        </div>
                       </td>
                     </tr>
                   )
@@ -349,6 +385,39 @@ export default function ProvidersPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Edit Provider Modal */}
+      {edit && (
+        <FormModal
+          title="Edit provider"
+          subtitle={edit.business_name}
+          onClose={() => setEdit(null)}
+          onSave={saveEdit}
+          saving={savingEdit}
+        >
+          <FieldGrid>
+            <TextField label="Business name" value={edit.business_name} onChange={(v) => setEdit({ ...edit, business_name: v })} full />
+            <TextField label="Service type" value={edit.service_type} onChange={(v) => setEdit({ ...edit, service_type: v })} />
+            <SelectField
+              label="Plan"
+              value={edit.plan}
+              onChange={(v) => setEdit({ ...edit, plan: v })}
+              options={[
+                { value: 'Free', label: 'Free' },
+                { value: 'Pro', label: 'Pro' },
+                { value: 'Elite', label: 'Elite' },
+              ]}
+            />
+            <TextField label="City" value={edit.city} onChange={(v) => setEdit({ ...edit, city: v })} />
+            <TextField label="Experience (years)" type="number" value={edit.experience_years} onChange={(v) => setEdit({ ...edit, experience_years: v })} />
+            <TextField label="Location / address" value={edit.location} onChange={(v) => setEdit({ ...edit, location: v })} full />
+            <TextAreaField label="Bio" value={edit.bio} onChange={(v) => setEdit({ ...edit, bio: v })} placeholder="Short description of the business" />
+            <ToggleField label="Available for bookings" checked={edit.is_available} onChange={(v) => setEdit({ ...edit, is_available: v })} />
+            <ToggleField label="Offers home service" checked={edit.offers_home_service} onChange={(v) => setEdit({ ...edit, offers_home_service: v })} />
+            <ToggleField label="Offers salon service" checked={edit.offers_salon_service} onChange={(v) => setEdit({ ...edit, offers_salon_service: v })} />
+          </FieldGrid>
+        </FormModal>
       )}
     </div>
   )

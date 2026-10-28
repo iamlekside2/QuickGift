@@ -1,10 +1,12 @@
 import { useState } from 'react'
-import { Search, Download, MapPin, Loader2, Wallet, Users as UsersIcon, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react'
+import { Search, Download, MapPin, Loader2, Wallet, Users as UsersIcon, ChevronLeft, ChevronRight, Trash2, Pencil } from 'lucide-react'
 import {
   useGetAdminUsersQuery,
+  useUpdateAdminUserMutation,
   useDeleteAdminUserMutation,
   useBulkDeleteAdminUsersMutation,
 } from '../services/api'
+import { FormModal, FieldGrid, TextField, SelectField, ToggleField } from '../components/FormModal'
 
 export default function UsersPage() {
   const [search, setSearch] = useState('')
@@ -19,7 +21,28 @@ export default function UsersPage() {
   })
   const [deleteUser, { isLoading: deletingOne }] = useDeleteAdminUserMutation()
   const [bulkDelete, { isLoading: deletingBulk }] = useBulkDeleteAdminUsersMutation()
+  const [updateUser, { isLoading: savingEdit }] = useUpdateAdminUserMutation()
+  const [edit, setEdit] = useState(null) // editable copy of a user, or null
   const busy = deletingOne || deletingBulk
+
+  const openEdit = (user) => setEdit({
+    id: user.id,
+    full_name: user.full_name || '',
+    email: user.email || '',
+    phone: user.phone || '',
+    city: user.city || '',
+    role: user.role || 'user',
+    is_active: user.is_active !== false,
+  })
+
+  const saveEdit = async () => {
+    try {
+      await updateUser(edit).unwrap()
+      setEdit(null)
+    } catch (e) {
+      alert(e?.data?.message || 'Could not save changes.')
+    }
+  }
 
   const users = data?.items || []
   const total = data?.total || 0
@@ -167,7 +190,7 @@ export default function UsersPage() {
                 <th className="table-header">City</th>
                 <th className="table-header">Wallet</th>
                 <th className="table-header">Joined</th>
-                <th className="table-header w-16 text-right">Actions</th>
+                <th className="table-header w-24 text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -237,16 +260,25 @@ export default function UsersPage() {
                     </td>
                     <td className="table-cell text-gray-500">{user.created_at ? new Date(user.created_at).toLocaleDateString() : '—'}</td>
                     <td className="table-cell text-right">
-                      {!isAdmin && (
+                      <div className="flex items-center justify-end gap-0.5">
                         <button
-                          onClick={() => handleDeleteOne(user)}
-                          disabled={busy}
-                          title="Delete user"
-                          className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors disabled:opacity-40"
+                          onClick={() => openEdit(user)}
+                          title="Edit user"
+                          className="p-1.5 rounded-lg text-gray-400 hover:text-teal-600 hover:bg-teal-50 transition-colors"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Pencil className="w-4 h-4" />
                         </button>
-                      )}
+                        {!isAdmin && (
+                          <button
+                            onClick={() => handleDeleteOne(user)}
+                            disabled={busy}
+                            title="Delete user"
+                            className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors disabled:opacity-40"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                   )
@@ -295,6 +327,39 @@ export default function UsersPage() {
           )}
         </div>
       </div>
+
+      {edit && (
+        <FormModal
+          title="Edit user"
+          subtitle={edit.full_name || edit.phone}
+          onClose={() => setEdit(null)}
+          onSave={saveEdit}
+          saving={savingEdit}
+        >
+          <FieldGrid>
+            <TextField label="Full name" value={edit.full_name} onChange={(v) => setEdit({ ...edit, full_name: v })} full />
+            <TextField label="Phone" value={edit.phone} onChange={(v) => setEdit({ ...edit, phone: v })} />
+            <TextField label="Email" type="email" value={edit.email} onChange={(v) => setEdit({ ...edit, email: v })} />
+            <TextField label="City" value={edit.city} onChange={(v) => setEdit({ ...edit, city: v })} />
+            <SelectField
+              label="Role"
+              value={edit.role}
+              onChange={(v) => setEdit({ ...edit, role: v })}
+              options={[
+                { value: 'user', label: 'User' },
+                { value: 'provider', label: 'Provider' },
+                { value: 'admin', label: 'Admin' },
+              ]}
+            />
+            <ToggleField
+              label="Active account"
+              hint="Inactive users can't sign in"
+              checked={edit.is_active}
+              onChange={(v) => setEdit({ ...edit, is_active: v })}
+            />
+          </FieldGrid>
+        </FormModal>
+      )}
     </div>
   )
 }

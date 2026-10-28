@@ -43,9 +43,19 @@ export class AdminController {
     return this.admin.bulkDeleteUsers(body?.ids || [], user?.user_id);
   }
 
+  @Patch('users/:id')
+  updateUser(@Param('id') id: string, @Body() body: any) {
+    return this.admin.updateUser(id, body);
+  }
+
   @Delete('users/:id')
   deleteUser(@Param('id') id: string, @CurrentUser() user: AuthUser) {
     return this.admin.deleteUser(id, user?.user_id);
+  }
+
+  @Patch('providers/:id')
+  updateProvider(@Param('id') id: string, @Body() body: any) {
+    return this.admin.updateProvider(id, body);
   }
 
   @Get('providers')
