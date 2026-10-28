@@ -10,18 +10,18 @@ import { Injectable, Logger } from '@nestjs/common';
  *
  * To switch it on in production (Render dashboard):
  *   1. Create a free Brevo account. Under Senders, verify a sender address
- *      (e.g. hello@quickgift.ng) — a single-sender verification is enough to
- *      start; add domain authentication (SPF/DKIM) later for best delivery.
+ *      (e.g. admin@quickgift.ng) — a single-sender verification is enough to
+ *      start; add domain authentication (SPF/DKIM) for best deliverability.
  *   2. Create an API key (SMTP & API -> API Keys) and set BREVO_API_KEY = xkeysib-...
  *   3. (optional) Set MAIL_FROM_EMAIL / MAIL_FROM_NAME — must match a verified
- *      sender. Defaults to "QuickGift <hello@quickgift.ng>".
+ *      sender. Defaults to "QuickGift <admin@quickgift.ng>".
  */
 @Injectable()
 export class MailService {
   private readonly logger = new Logger(MailService.name);
   private readonly apiKey = process.env.BREVO_API_KEY || '';
   private readonly fromEmail =
-    process.env.MAIL_FROM_EMAIL || 'hello@quickgift.ng';
+    process.env.MAIL_FROM_EMAIL || 'admin@quickgift.ng';
   private readonly fromName = process.env.MAIL_FROM_NAME || 'QuickGift';
 
   get enabled(): boolean {
@@ -72,44 +72,104 @@ export class MailService {
   }
 }
 
-/** Branded, email-client-safe HTML (all styles inline). */
+/**
+ * Branded, email-client-safe HTML (table layout, all styles inline). Light
+ * only: a color-scheme hint discourages dark-mode inversion, and every surface
+ * sets an explicit background so it stays on-brand where the hint is ignored.
+ */
 function waitlistHtml(isProvider: boolean): string {
+  const preheader = isProvider
+    ? "You're on the QuickGift founding-provider waitlist."
+    : "You're on the QuickGift waitlist. We'll tell you the moment we launch.";
   const lead = isProvider
-    ? 'Thanks for your interest in becoming a founding QuickGift provider. You are on the list.'
-    : 'Thanks for joining the QuickGift waitlist. You are on the list.';
+    ? 'Thanks for your interest in becoming a founding QuickGift provider. Your spot is saved.'
+    : 'Thanks for joining the QuickGift waitlist. Your spot is saved.';
   const body = isProvider
-    ? 'When founding-provider onboarding opens, we will reach out on WhatsApp to help you set up your shop, verify your details and start taking orders, all inside the QuickGift app. Founding providers pay 0% commission at launch.'
-    : 'We are launching same-day gifts and verified artisan services in Lagos and Abuja very soon. You will be among the first to know the moment we go live, with early-access perks for our first members.';
+    ? 'When founding-provider onboarding opens, we’ll reach out on WhatsApp to help you set up your shop and start taking orders, all inside the QuickGift app. Founding providers pay 0% commission at launch.'
+    : 'We’re launching same-day gifts and verified artisan services in Lagos and Abuja very soon. You’ll be among the first to know the moment we go live, with early-access perks for our first members.';
+  const perks = isProvider
+    ? ['0% commission at launch', 'Free shop setup on WhatsApp', 'Featured first in your category']
+    : ['Same-day gifts & hampers', 'Verified artisans on demand', 'Early-access launch perks'];
+
+  const perkRows = perks
+    .map(
+      (p) => `
+                <tr>
+                  <td width="24" valign="top" style="padding:5px 0;font-size:15px;color:#E8632F;">&#10003;</td>
+                  <td valign="top" style="padding:5px 0;font-family:Helvetica,Arial,sans-serif;font-size:14.5px;line-height:1.5;color:#4E4A42;">${p}</td>
+                </tr>`,
+    )
+    .join('');
+
   return `<!DOCTYPE html>
-<html>
-  <body style="margin:0;padding:0;background:#FAF3E9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#FAF3E9;padding:32px 16px;">
-      <tr>
-        <td align="center">
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 10px 30px rgba(33,31,28,0.08);">
-            <tr>
-              <td style="background:#1F4A45;padding:28px 32px;">
-                <span style="font-size:22px;font-weight:800;color:#ffffff;letter-spacing:-0.3px;">QuickGift</span>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding:36px 32px 8px;">
-                <h1 style="margin:0 0 14px;font-size:24px;line-height:1.25;color:#211F1C;">You're on the list! &#127881;</h1>
-                <p style="margin:0 0 16px;font-size:15px;line-height:1.65;color:#4E4A42;">${lead}</p>
-                <p style="margin:0 0 24px;font-size:15px;line-height:1.65;color:#4E4A42;">${body}</p>
-                <a href="https://www.quickgift.ng" style="display:inline-block;background:#E8632F;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:13px 24px;border-radius:12px;">Visit QuickGift</a>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding:28px 32px 36px;">
-                <p style="margin:0;font-size:12px;line-height:1.6;color:#9A948A;">You are receiving this because you joined the QuickGift waitlist at quickgift.ng. If this wasn't you, you can ignore this email.</p>
-                <p style="margin:12px 0 0;font-size:12px;color:#9A948A;">&copy; 2026 QuickGift &middot; Lagos, Nigeria</p>
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
-    </table>
-  </body>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light only">
+  <meta name="supported-color-schemes" content="light">
+  <title>You're on the list!</title>
+</head>
+<body style="margin:0;padding:0;background-color:#F4ECDD;-webkit-text-size-adjust:100%;">
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;">${preheader}</div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F4ECDD;">
+    <tr>
+      <td align="center" style="padding:36px 16px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:544px;width:100%;background-color:#ffffff;border-radius:24px;overflow:hidden;border:1px solid #ECE3D2;">
+
+          <tr>
+            <td style="background-color:#1F4A45;padding:22px 36px;">
+              <table role="presentation" cellpadding="0" cellspacing="0"><tr>
+                <td style="padding-right:12px;" valign="middle">
+                  <table role="presentation" cellpadding="0" cellspacing="0"><tr>
+                    <td style="background-color:#ffffff;border-radius:11px;padding:6px 7px;line-height:0;" valign="middle">
+                      <img src="https://www.quickgift.ng/logo.png" width="28" height="29" alt="QuickGift" style="display:block;width:28px;height:29px;border:0;">
+                    </td>
+                  </tr></table>
+                </td>
+                <td valign="middle" style="font-family:Georgia,'Times New Roman',serif;font-size:23px;font-weight:bold;color:#ffffff;letter-spacing:0.2px;">QuickGift</td>
+              </tr></table>
+            </td>
+          </tr>
+
+          <tr>
+            <td align="center" style="background-color:#FBF5EA;padding:34px 36px 28px;">
+              <img src="https://www.quickgift.ng/celebration.png" width="96" height="96" alt="Celebration" style="display:block;width:96px;height:96px;border:0;margin-bottom:18px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto;"><tr>
+                <td style="background-color:#E7EFEC;border-radius:100px;padding:7px 16px;font-family:Helvetica,Arial,sans-serif;font-size:12px;font-weight:bold;color:#1F4A45;letter-spacing:0.4px;text-transform:uppercase;">&#9679;&nbsp; Launching soon</td>
+              </tr></table>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:34px 36px 8px;">
+              <h1 style="margin:0 0 14px;font-family:Georgia,'Times New Roman',serif;font-size:28px;line-height:1.2;color:#211F1C;font-weight:normal;">You're on the list! <span style="color:#E8632F;">&#127881;</span></h1>
+              <p style="margin:0 0 16px;font-family:Helvetica,Arial,sans-serif;font-size:15.5px;line-height:1.65;color:#4E4A42;">${lead}</p>
+              <p style="margin:0 0 22px;font-family:Helvetica,Arial,sans-serif;font-size:15.5px;line-height:1.65;color:#4E4A42;">${body}</p>
+
+              <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 26px;">${perkRows}
+              </table>
+
+              <table role="presentation" cellpadding="0" cellspacing="0"><tr>
+                <td align="center" bgcolor="#E8632F" style="border-radius:12px;">
+                  <a href="https://www.quickgift.ng" style="display:inline-block;padding:14px 30px;font-family:Helvetica,Arial,sans-serif;font-size:15px;font-weight:bold;color:#ffffff;text-decoration:none;border-radius:12px;">Visit QuickGift &#8594;</a>
+                </td>
+              </tr></table>
+            </td>
+          </tr>
+
+          <tr><td style="padding:28px 36px 0;"><div style="border-top:1px solid #EFE7D8;font-size:0;line-height:0;">&nbsp;</div></td></tr>
+          <tr>
+            <td style="padding:18px 36px 34px;">
+              <p style="margin:0 0 6px;font-family:Helvetica,Arial,sans-serif;font-size:12px;line-height:1.6;color:#9A948A;">You&#8217;re receiving this because you joined the QuickGift waitlist at quickgift.ng. If this wasn&#8217;t you, you can safely ignore this email.</p>
+              <p style="margin:0;font-family:Helvetica,Arial,sans-serif;font-size:12px;color:#B6B0A6;">&copy; 2026 QuickGift &nbsp;&middot;&nbsp; Lagos, Nigeria</p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
 </html>`;
 }

@@ -66,10 +66,9 @@ services:
       # sender in Brevo, create an API key, and paste it here.
       - key: BREVO_API_KEY
         sync: false
-      # Must be a VERIFIED Brevo sender. Currently the verified sender is the
-      # Gmail account; switch this to an address on quickgift.ng once that
-      # domain/sender is authenticated in Brevo (better deliverability).
+      # Must be a VERIFIED Brevo sender (verify admin@quickgift.ng in Brevo, or
+      # authenticate the quickgift.ng domain, before mail will send).
       - key: MAIL_FROM_EMAIL
-        value: horllyk12@gmail.com
+        value: admin@quickgift.ng
       - key: MAIL_FROM_NAME
         value: QuickGift
