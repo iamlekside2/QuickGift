@@ -67,26 +67,25 @@ All free. **Phone-only users** still can't be messaged until Termii (SMS) is fun
 
 ---
 
-## 4. What's left to do
+## 4. Status
 
-### Needs money / an account (your call)
-- [ ] **Termii SMS** — fund + configure so phone-only users get OTP and the waitlist phone signups can be reached. Flip `DEBUG=false`.
-- [ ] **Paystack live keys** — real payments (needs CAC/business activation).
-- [ ] **Cloudinary keys** — so product photos / avatars can be uploaded.
-- [ ] **Kwik live creds** — real delivery dispatch.
-- [ ] **Render Starter plan** (optional) — kill cold starts for production.
+### Done (this build)
+- Admin **create / edit products** (`POST` + `PATCH /admin/products`) — working.
+- Admin **delete users and products** (single + bulk) — working.
+- Users **"Export"** button → CSV download — working.
+- **Email collection** at sign-up + profile — done (so email OTP + transactional emails reach users who add an email).
+- **Cloudinary** image uploads — keys configured in Render.
+- **Paystack** — business **activated (Live / Pre-Approved)**; the **live secret key is added** to Render. App is still safely on **TEST** (`PAYSTACK_LIVE=false`).
+- De-whitened admin UI, real logo, modern edit modals.
 
-### Product/engineering gaps
-- [ ] **Admin: create/edit products** — the backend currently supports **delete** only; there is no create/update product endpoint, so products can't be added from the admin yet. (Add `POST/PATCH /admin/products`.)
-- [ ] **Collect email at checkout / profile** — so user transactional emails + email OTP reach more people (app is phone-first; email optional today).
-- [ ] **Admin "Export" buttons** — currently non-functional placeholders.
-- [ ] **Re-seed demo data** (optional) — the catalog + demo providers were cleared for go-live; add clearly-labeled samples back if needed for screenshots.
+### Still to do
+- [ ] **Go live on Paystack** — change `PAYSTACK_LIVE` from `false` to `true` in Render when ready for real charges.
+- [ ] **Termii SMS** — fund + set `TERMII_API_KEY`, then `DEBUG=false`, so phone-only users get OTP and phone waitlist signups can be reached (SMS is paid).
+- [ ] **Kwik** live credentials — real delivery dispatch.
+- [ ] **iOS build** — needs an **Apple Developer account** ($99/yr) + TestFlight.
+- [ ] **Render Starter plan** (optional) — removes free-tier cold starts for production.
+- [ ] Re-seed demo data (optional) — the catalog + demo providers were cleared for go-live.
 
 ### Mobile
-- [x] **Android build** — `preview` APK building on EAS now (prod backend baked in).
-- [ ] **iOS build** — blocked: needs an **Apple Developer account** ($99/yr) + TestFlight. Not possible until that's set up.
-- [ ] Rebuild & submit once SMS/payments go live.
-
-### Nice-to-have
-- [ ] Verify a `quickgift.ng` **sender in Brevo** is used as the from-address (done: domain authenticated).
-- [ ] WhatsApp notifications (paid, needs Meta business verification) — alternative to SMS.
+- **Android** `preview` APK built on EAS (production backend baked in).
+- **iOS** blocked on the Apple Developer account above.
