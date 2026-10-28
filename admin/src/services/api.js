@@ -113,8 +113,15 @@ export const api = createApi({
     }),
     deleteProduct: builder.mutation({
       query: (id) => ({
-        url: `/products/${id}`,
+        url: `/admin/products/${id}`,
         method: 'DELETE',
+      }),
+      invalidatesTags: ['Products', 'Dashboard'],
+    }),
+    clearProducts: builder.mutation({
+      query: () => ({
+        url: '/admin/products/clear',
+        method: 'POST',
       }),
       invalidatesTags: ['Products', 'Dashboard'],
     }),
@@ -353,6 +360,7 @@ export const {
   useCreateProductMutation,
   useUpdateProductMutation,
   useDeleteProductMutation,
+  useClearProductsMutation,
   useGetAdminProvidersQuery,
   useApproveProviderMutation,
   useRejectProviderMutation,

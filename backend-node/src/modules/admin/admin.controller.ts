@@ -58,6 +58,16 @@ export class AdminController {
     return this.admin.updateProvider(id, body);
   }
 
+  @Post('products/clear')
+  clearProducts() {
+    return this.admin.clearProducts();
+  }
+
+  @Delete('products/:id')
+  deleteProduct(@Param('id') id: string) {
+    return this.admin.deleteProduct(id);
+  }
+
   @Get('providers')
   providers(@Query() q: Record<string, string>) {
     return this.admin.listProviders(q);

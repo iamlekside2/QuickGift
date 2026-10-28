@@ -295,6 +295,26 @@ export class AdminService {
     return this.db.queryOne(`SELECT * FROM providers WHERE id = $1`, [id]);
   }
 
+  // ---- delete products ----
+  async deleteProduct(id: string) {
+    const p = await this.db.queryOne(`SELECT id FROM products WHERE id = $1`, [id]);
+    if (!p) throw new NotFoundException('Product not found');
+    await this.db.transaction(async (client) => {
+      await client.query(`DELETE FROM order_items WHERE product_id = $1`, [id]);
+      await client.query(`DELETE FROM products WHERE id = $1`, [id]);
+    });
+    return { ok: true };
+  }
+
+  async clearProducts() {
+    const n = await this.num(`SELECT count(*)::int AS v FROM products`);
+    await this.db.transaction(async (client) => {
+      await client.query(`DELETE FROM order_items WHERE product_id IN (SELECT id FROM products)`);
+      await client.query(`DELETE FROM products`);
+    });
+    return { ok: true, deleted: n };
+  }
+
   listProviders(q: any) {
     const where: string[] = [];
     const params: any[] = [];
