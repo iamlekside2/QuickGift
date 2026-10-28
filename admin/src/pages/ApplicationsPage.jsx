@@ -263,7 +263,7 @@ function WaitlistTab() {
   const totalPages = Math.ceil(total / 20)
 
   const handleDelete = async (row) => {
-    if (!window.confirm(`Remove ${row.email} from the waitlist? This cannot be undone.`)) return
+    if (!window.confirm(`Remove ${row.email || row.phone} from the waitlist? This cannot be undone.`)) return
     setBusyId(row.id)
     try {
       await deleteSignup(row.id).unwrap()
@@ -280,7 +280,7 @@ function WaitlistTab() {
         <table className="w-full">
           <thead>
             <tr className="border-b border-gray-100 bg-gray-50/50">
-              <th className="table-header">Email</th>
+              <th className="table-header">Contact</th>
               <th className="table-header">Interested as</th>
               <th className="table-header">Source</th>
               <th className="table-header">Date</th>
@@ -305,14 +305,19 @@ function WaitlistTab() {
                       <Mail className="w-6 h-6 text-gray-400" />
                     </div>
                     <p className="text-sm font-medium text-gray-500">No signups yet</p>
-                    <p className="text-xs text-gray-400">Waitlist emails from quickgift.ng show up here</p>
+                    <p className="text-xs text-gray-400">Waitlist signups from quickgift.ng show up here</p>
                   </div>
                 </td>
               </tr>
             ) : (
               items.map((row) => (
                 <tr key={row.id} className="table-row">
-                  <td className="table-cell font-medium text-gray-900">{row.email}</td>
+                  <td className="table-cell font-medium text-gray-900">
+                    {row.email || row.phone || '—'}
+                    {row.email && row.phone && (
+                      <div className="text-xs text-gray-400 mt-0.5">{row.phone}</div>
+                    )}
+                  </td>
                   <td className="table-cell">
                     <span className={`badge ${row.role === 'provider' ? 'badge-blue' : 'badge-gray'}`}>
                       {row.role === 'provider' ? 'Provider' : 'Customer'}

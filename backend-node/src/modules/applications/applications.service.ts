@@ -10,7 +10,7 @@ import { DatabaseService } from '../../database/database.service';
 // Columns selected back to the admin dashboard.
 const APP_FIELDS = `id, full_name, business_name, service_type, city, phone, email,
   portfolio_url, message, status, created_at`;
-const WAITLIST_FIELDS = `id, email, role, source, created_at`;
+const WAITLIST_FIELDS = `id, email, phone, role, source, created_at`;
 
 const VALID_APP_STATUS = new Set(['new', 'contacted', 'approved', 'rejected']);
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -51,12 +51,26 @@ export class ApplicationsService implements OnModuleInit {
     await this.db.query(`
       CREATE TABLE IF NOT EXISTS waitlist_signups (
         id         UUID PRIMARY KEY,
-        email      TEXT NOT NULL UNIQUE,
+        email      TEXT,
+        phone      TEXT,
         role       TEXT NOT NULL DEFAULT 'customer',
         source     TEXT,
         created_at TIMESTAMP NOT NULL DEFAULT NOW()
       )
     `);
+    // People can now join with an email OR a phone/WhatsApp number, so email is
+    // no longer mandatory. Bring existing (production) tables up to date.
+    await this.db.query(
+      `ALTER TABLE waitlist_signups ADD COLUMN IF NOT EXISTS phone TEXT`,
+    );
+    await this.db.query(
+      `ALTER TABLE waitlist_signups ALTER COLUMN email DROP NOT NULL`,
+    );
+    // Unique index (not a NOT NULL constraint) dedupes real emails while
+    // allowing many phone-only rows, which carry a NULL email.
+    await this.db.query(
+      `CREATE UNIQUE INDEX IF NOT EXISTS waitlist_email_uniq ON waitlist_signups(email)`,
+    );
     this.logger.log('provider_applications + waitlist_signups tables ready');
   }
 
@@ -94,19 +108,36 @@ export class ApplicationsService implements OnModuleInit {
 
   // ── Public: waitlist signup from the landing page ───────────────────
   async joinWaitlist(req: any) {
-    const email = str(req?.email, 160);
-    if (!email || !EMAIL_RE.test(email)) {
+    const email = str(req?.email, 160).toLowerCase();
+    const phone = str(req?.phone ?? req?.whatsapp ?? req?.contact, 40);
+    if (email && !EMAIL_RE.test(email)) {
       throw new BadRequestException('Please enter a valid email address');
+    }
+    if (!email && !phone) {
+      throw new BadRequestException('Please enter an email address or phone number');
     }
     const role = req?.role === 'provider' ? 'provider' : 'customer';
     const id = randomUUID();
-    // Idempotent: a repeat email keeps the first signup, just refreshes role.
-    await this.db.query(
-      `INSERT INTO waitlist_signups (id, email, role, source, created_at)
-       VALUES ($1,$2,$3,$4,NOW())
-       ON CONFLICT (email) DO UPDATE SET role = EXCLUDED.role`,
-      [id, email.toLowerCase(), role, str(req?.source, 80) || 'landing'],
-    );
+    const source = str(req?.source, 80) || 'landing';
+    if (email) {
+      // Idempotent on email: a repeat keeps the first signup, refreshes role
+      // and backfills a phone number if one is supplied this time.
+      await this.db.query(
+        `INSERT INTO waitlist_signups (id, email, phone, role, source, created_at)
+         VALUES ($1,$2,$3,$4,$5,NOW())
+         ON CONFLICT (email) DO UPDATE SET
+           role = EXCLUDED.role,
+           phone = COALESCE(EXCLUDED.phone, waitlist_signups.phone)`,
+        [id, email, phone || null, role, source],
+      );
+    } else {
+      // Phone-only signup (no email to dedupe on).
+      await this.db.query(
+        `INSERT INTO waitlist_signups (id, email, phone, role, source, created_at)
+         VALUES ($1,NULL,$2,$3,$4,NOW())`,
+        [id, phone, role, source],
+      );
+    }
     return { ok: true };
   }
 
