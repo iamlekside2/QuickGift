@@ -20,6 +20,7 @@ const ROLES = [
 export default function SignupScreen({ navigation }) {
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
   const [selectedRole, setSelectedRole] = useState('user');
   const [loading, setLoading] = useState(false);
   const { checkPhone, sendOTP } = useAuth();
@@ -33,7 +34,8 @@ export default function SignupScreen({ navigation }) {
   };
 
   const isValidPhone = phone.replace(/[^0-9]/g, '').length >= 7;
-  const isFormValid = fullName.trim().length >= 2 && isValidPhone;
+  const emailOk = !email.trim() || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+  const isFormValid = fullName.trim().length >= 2 && isValidPhone && emailOk;
 
   const handleSignup = async () => {
     if (!isFormValid) {
@@ -58,10 +60,13 @@ export default function SignupScreen({ navigation }) {
         return;
       }
 
-      const data = await sendOTP(fullPhone);
+      const cleanEmail = email.trim() || undefined;
+      const data = await sendOTP(fullPhone, cleanEmail);
       navigation.navigate('OTP', {
         phone: fullPhone,
+        email: cleanEmail,
         otpDev: data?.otp_dev,
+        sentTo: data?.sent_to,
         fullName: fullName.trim(),
         role: selectedRole,
         isRegistration: true,
@@ -139,6 +144,19 @@ export default function SignupScreen({ navigation }) {
           onChangeText={setPhone}
           type="phone"
         />
+
+        {/* Email (optional) */}
+        <AppInput
+          label="Email (optional)"
+          placeholder="you@email.com"
+          value={email}
+          onChangeText={setEmail}
+          type="email"
+          icon="mail-outline"
+        />
+        <Text className="text-[12px] text-ink-soft -mt-2 mb-3">
+          Add your email to get your code and order updates by email.
+        </Text>
 
         {/* Continue */}
         <Button

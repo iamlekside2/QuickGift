@@ -7,7 +7,7 @@ import { SerifHeadline } from '../../components/common/Typography';
 import { useAuth } from '../../context/AuthContext';
 
 export default function OTPScreen({ navigation, route }) {
-  const { phone, otpDev, fullName, role, isRegistration } = route.params || {};
+  const { phone, email, sentTo, otpDev, fullName, role, isRegistration } = route.params || {};
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [timer, setTimer] = useState(60);
   const [loading, setLoading] = useState(false);
@@ -57,6 +57,7 @@ export default function OTPScreen({ navigation, route }) {
         await register({
           full_name: fullName,
           phone,
+          email,
           role: role || 'user',
           otp: code,
         });
@@ -84,17 +85,17 @@ export default function OTPScreen({ navigation, route }) {
 
   const handleResend = async () => {
     try {
-      await sendOTP(phone);
+      await sendOTP(phone, email);
       setTimer(60);
       setOtp(['', '', '', '', '', '']);
-      Alert.alert('OTP Sent', 'A new code has been sent to your phone');
+      Alert.alert('OTP Sent', email ? `A new code has been sent to ${email}` : 'A new code has been sent to your phone');
     } catch (err) {
       Alert.alert('Error', 'Failed to resend OTP');
     }
   };
 
-  // Format phone for display
-  const displayPhone = phone || '+234 ****';
+  // Where the code was delivered (email is free; falls back to phone)
+  const destination = sentTo === 'email' && email ? email : (phone || '+234 ****');
 
   return (
     <View
@@ -121,7 +122,7 @@ export default function OTPScreen({ navigation, route }) {
         <SerifHeadline text="Verify your phone" emphasis="phone" size={28} />
         <Text className="text-[13.5px] text-ink-soft text-center leading-5 mt-2">
           Enter the 6-digit code sent to{'\n'}
-          <Text className="font-bold text-ink">{displayPhone}</Text>
+          <Text className="font-bold text-ink">{destination}</Text>
         </Text>
       </View>
 

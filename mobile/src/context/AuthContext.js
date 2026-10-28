@@ -50,8 +50,8 @@ export const AuthProvider = ({ children }) => {
     return res.data;
   };
 
-  const sendOTP = async (phone) => {
-    const res = await authAPI.sendOTP(phone);
+  const sendOTP = async (phone, email) => {
+    const res = await authAPI.sendOTP(phone, email);
     return res.data;
   };
 
