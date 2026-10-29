@@ -12,6 +12,8 @@ import {
 import { OrdersService } from './orders.service';
 import { AuthGuard } from '../../common/auth.guard';
 import { AdminGuard } from '../../common/admin.guard';
+import { PermGuard } from '../../common/perm.guard';
+import { Perm } from '../../common/perm.decorator';
 import { CurrentUser, AuthUser } from '../../common/current-user.decorator';
 
 // All order routes require auth. 'my-vendor-orders' is declared before ':id'.
@@ -54,7 +56,8 @@ export class OrdersController {
     return this.orders.providerUpdateStatus(id, user.user_id, body?.status);
   }
 
-  @UseGuards(AdminGuard)
+  @UseGuards(AdminGuard, PermGuard)
+  @Perm('orders.manage')
   @Patch(':id/status')
   updateStatus(@Param('id') id: string, @Body() body: { status: string }) {
     return this.orders.updateStatus(id, body?.status);

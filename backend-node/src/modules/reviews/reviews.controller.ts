@@ -12,6 +12,8 @@ import {
 import { ReviewsService } from './reviews.service';
 import { AuthGuard } from '../../common/auth.guard';
 import { AdminGuard } from '../../common/admin.guard';
+import { PermGuard } from '../../common/perm.guard';
+import { Perm } from '../../common/perm.decorator';
 import { CurrentUser, AuthUser } from '../../common/current-user.decorator';
 
 @Controller('reviews')
@@ -34,7 +36,8 @@ export class ReviewsController {
     return this.reviews.list(targetType, targetId, q);
   }
 
-  @UseGuards(AuthGuard, AdminGuard)
+  @UseGuards(AuthGuard, AdminGuard, PermGuard)
+  @Perm('providers.manage')
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.reviews.remove(id);

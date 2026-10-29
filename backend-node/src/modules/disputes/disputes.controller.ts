@@ -12,6 +12,8 @@ import {
 import { DisputesService } from './disputes.service';
 import { AuthGuard } from '../../common/auth.guard';
 import { AdminGuard } from '../../common/admin.guard';
+import { PermGuard } from '../../common/perm.guard';
+import { Perm } from '../../common/perm.decorator';
 import { CurrentUser, AuthUser } from '../../common/current-user.decorator';
 
 @Controller('disputes')
@@ -32,19 +34,22 @@ export class DisputesController {
   }
 
   // admin routes declared before ':id/respond' param route (distinct, but kept tidy)
-  @UseGuards(AuthGuard, AdminGuard)
+  @UseGuards(AuthGuard, AdminGuard, PermGuard)
+  @Perm('disputes.view')
   @Get('admin/all')
   adminList(@Query() q: Record<string, string>) {
     return this.disputes.adminList(q);
   }
 
-  @UseGuards(AuthGuard, AdminGuard)
+  @UseGuards(AuthGuard, AdminGuard, PermGuard)
+  @Perm('disputes.view')
   @Get('admin/:id')
   adminGet(@Param('id') id: string) {
     return this.disputes.adminGet(id);
   }
 
-  @UseGuards(AuthGuard, AdminGuard)
+  @UseGuards(AuthGuard, AdminGuard, PermGuard)
+  @Perm('disputes.manage')
   @Patch('admin/:id/resolve')
   adminResolve(
     @CurrentUser() user: AuthUser,

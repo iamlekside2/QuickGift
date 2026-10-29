@@ -12,6 +12,11 @@ import { DatabaseService } from '../../database/database.service';
 import { SecurityService } from '../../common/security.service';
 import { SmsService } from '../../common/sms.service';
 import { MailService } from '../../common/mail.service';
+import {
+  isAdminRole,
+  permissionsForRole,
+  ROLE_LABELS,
+} from '../../common/permissions';
 
 const DEBUG = process.env.DEBUG === 'true';
 const INVALID_PHONE =
@@ -52,6 +57,7 @@ export class AuthService {
   }
 
   private userPayload(user: UserRow, extra: Record<string, any> = {}) {
+    const isStaff = isAdminRole(user.role);
     return {
       id: user.id,
       full_name: user.full_name,
@@ -60,6 +66,11 @@ export class AuthService {
       role: user.role,
       city: user.city,
       wallet_balance: user.wallet_balance,
+      // Admin console RBAC: the permission list + friendly role label. Empty
+      // for ordinary app users (role 'user'/'provider').
+      is_staff: isStaff,
+      role_label: isStaff ? ROLE_LABELS[user.role as keyof typeof ROLE_LABELS] : null,
+      permissions: permissionsForRole(user.role),
       ...extra,
     };
   }
@@ -276,13 +287,19 @@ export class AuthService {
 
   /** GET /auth/me → UserResponse shape. */
   async getMe(userId: string) {
-    const user = await this.db.queryOne(
+    const user = await this.db.queryOne<{ role: string }>(
       `SELECT id, full_name, email, phone, city, lat, lng, avatar_url, role, wallet_balance
        FROM users WHERE id = $1`,
       [userId],
     );
     if (!user) throw new NotFoundException('User not found');
-    return user;
+    const isStaff = isAdminRole(user.role);
+    return {
+      ...user,
+      is_staff: isStaff,
+      role_label: isStaff ? ROLE_LABELS[user.role as keyof typeof ROLE_LABELS] : null,
+      permissions: permissionsForRole(user.role),
+    };
   }
 
   async updateMe(userId: string, data: any) {

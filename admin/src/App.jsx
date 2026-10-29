@@ -1,7 +1,8 @@
 import { lazy, Suspense } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useSelector } from 'react-redux'
-import { selectIsAuthenticated } from './features/authSlice'
+import { selectIsAuthenticated, selectCurrentUser } from './features/authSlice'
+import { hasPerm } from './lib/permissions'
 import AdminLayout from './layouts/AdminLayout'
 import LoginPage from './pages/LoginPage'
 
@@ -17,12 +18,26 @@ const PayoutsPage = lazy(() => import('./pages/PayoutsPage'))
 const SettingsPage = lazy(() => import('./pages/SettingsPage'))
 const DisputesPage = lazy(() => import('./pages/DisputesPage'))
 const ApplicationsPage = lazy(() => import('./pages/ApplicationsPage'))
+const TeamPage = lazy(() => import('./pages/TeamPage'))
 
 function ProtectedRoute({ children }) {
   const isAuthenticated = useSelector(selectIsAuthenticated)
   if (!isAuthenticated) return <Navigate to="/login" replace />
   return children
 }
+
+// Gates a route by permission; a worker without it is bounced to the dashboard.
+function PermRoute({ perm, children }) {
+  const user = useSelector(selectCurrentUser)
+  if (perm && !hasPerm(user, perm)) return <Navigate to="/" replace />
+  return children
+}
+
+const page = (perm, El) => (
+  <PermRoute perm={perm}>
+    <Suspense fallback={<PageLoader />}><El /></Suspense>
+  </PermRoute>
+)
 
 function PageLoader() {
   return (
@@ -38,16 +53,17 @@ function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
         <Route index element={<Suspense fallback={<PageLoader />}><DashboardPage /></Suspense>} />
-        <Route path="orders" element={<Suspense fallback={<PageLoader />}><OrdersPage /></Suspense>} />
-        <Route path="bookings" element={<Suspense fallback={<PageLoader />}><BookingsPage /></Suspense>} />
-        <Route path="products" element={<Suspense fallback={<PageLoader />}><ProductsPage /></Suspense>} />
-        <Route path="providers" element={<Suspense fallback={<PageLoader />}><ProvidersPage /></Suspense>} />
-        <Route path="users" element={<Suspense fallback={<PageLoader />}><UsersPage /></Suspense>} />
-        <Route path="transactions" element={<Suspense fallback={<PageLoader />}><TransactionsPage /></Suspense>} />
-        <Route path="payouts" element={<Suspense fallback={<PageLoader />}><PayoutsPage /></Suspense>} />
-        <Route path="disputes" element={<Suspense fallback={<PageLoader />}><DisputesPage /></Suspense>} />
-        <Route path="applications" element={<Suspense fallback={<PageLoader />}><ApplicationsPage /></Suspense>} />
-        <Route path="settings" element={<Suspense fallback={<PageLoader />}><SettingsPage /></Suspense>} />
+        <Route path="orders" element={page('orders.view', OrdersPage)} />
+        <Route path="bookings" element={page('bookings.view', BookingsPage)} />
+        <Route path="products" element={page('products.view', ProductsPage)} />
+        <Route path="providers" element={page('providers.view', ProvidersPage)} />
+        <Route path="users" element={page('users.view', UsersPage)} />
+        <Route path="transactions" element={page('finance.view', TransactionsPage)} />
+        <Route path="payouts" element={page('finance.view', PayoutsPage)} />
+        <Route path="disputes" element={page('disputes.view', DisputesPage)} />
+        <Route path="applications" element={page('applications.view', ApplicationsPage)} />
+        <Route path="team" element={page('team.manage', TeamPage)} />
+        <Route path="settings" element={page('settings.manage', SettingsPage)} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

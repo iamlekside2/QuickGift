@@ -4,26 +4,30 @@ import { useDispatch, useSelector } from 'react-redux'
 import {
   LayoutDashboard, ShoppingCart, Package, Sparkles,
   Users, Menu, X, LogOut, Gift, Bell, CalendarCheck,
-  Settings, Search, ChevronRight, Wallet, Banknote, AlertTriangle, UserPlus
+  Settings, Search, ChevronRight, Wallet, Banknote, AlertTriangle, UserPlus,
+  ShieldCheck
 } from 'lucide-react'
 import { logout, selectCurrentUser } from '../features/authSlice'
+import { hasPerm, roleLabel } from '../lib/permissions'
 import logo from '../assets/logo.png'
 
+// `perm` gates visibility; items with no perm (Dashboard) show for all staff.
 const NAV_ITEMS = [
   { path: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { path: '/orders', label: 'Orders', icon: ShoppingCart },
-  { path: '/bookings', label: 'Bookings', icon: CalendarCheck },
-  { path: '/products', label: 'Products', icon: Package },
-  { path: '/providers', label: 'Providers', icon: Sparkles },
-  { path: '/applications', label: 'Applications', icon: UserPlus },
-  { path: '/users', label: 'Users', icon: Users },
-  { path: '/transactions', label: 'Transactions', icon: Wallet },
-  { path: '/payouts', label: 'Payouts', icon: Banknote },
-  { path: '/disputes', label: 'Disputes', icon: AlertTriangle },
+  { path: '/orders', label: 'Orders', icon: ShoppingCart, perm: 'orders.view' },
+  { path: '/bookings', label: 'Bookings', icon: CalendarCheck, perm: 'bookings.view' },
+  { path: '/products', label: 'Products', icon: Package, perm: 'products.view' },
+  { path: '/providers', label: 'Providers', icon: Sparkles, perm: 'providers.view' },
+  { path: '/applications', label: 'Applications', icon: UserPlus, perm: 'applications.view' },
+  { path: '/users', label: 'Users', icon: Users, perm: 'users.view' },
+  { path: '/transactions', label: 'Transactions', icon: Wallet, perm: 'finance.view' },
+  { path: '/payouts', label: 'Payouts', icon: Banknote, perm: 'finance.view' },
+  { path: '/disputes', label: 'Disputes', icon: AlertTriangle, perm: 'disputes.view' },
+  { path: '/team', label: 'Team', icon: ShieldCheck, perm: 'team.manage' },
 ]
 
 const BOTTOM_NAV = [
-  { path: '/settings', label: 'Settings', icon: Settings },
+  { path: '/settings', label: 'Settings', icon: Settings, perm: 'settings.manage' },
 ]
 
 export default function AdminLayout() {
@@ -32,6 +36,9 @@ export default function AdminLayout() {
   const navigate = useNavigate()
   const dispatch = useDispatch()
   const user = useSelector(selectCurrentUser)
+
+  const navItems = NAV_ITEMS.filter((i) => !i.perm || hasPerm(user, i.perm))
+  const bottomNav = BOTTOM_NAV.filter((i) => !i.perm || hasPerm(user, i.perm))
 
   const handleLogout = () => {
     dispatch(logout())
@@ -97,7 +104,7 @@ export default function AdminLayout() {
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto px-3 py-4">
           <div className="space-y-0.5">
-            {NAV_ITEMS.map((item) => (
+            {navItems.map((item) => (
               <NavLink
                 key={item.path}
                 to={item.path}
@@ -114,7 +121,7 @@ export default function AdminLayout() {
 
         {/* Bottom section */}
         <div className="px-3 pb-3 space-y-0.5 border-t border-white/10 pt-3 shrink-0">
-          {BOTTOM_NAV.map((item) => (
+          {bottomNav.map((item) => (
             <NavLink
               key={item.path}
               to={item.path}
@@ -140,7 +147,9 @@ export default function AdminLayout() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[13px] font-semibold text-white truncate">{user?.full_name || 'Admin'}</p>
-              <p className="text-[11px] text-white/45 truncate">{user?.email || 'admin@quickgift.ng'}</p>
+              <p className="text-[11px] text-white/45 truncate">
+                {user?.role_label || (user?.role ? roleLabel(user.role) : user?.email || 'admin@quickgift.ng')}
+              </p>
             </div>
           </div>
         </div>

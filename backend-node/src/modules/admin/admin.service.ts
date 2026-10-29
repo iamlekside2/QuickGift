@@ -2,18 +2,31 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { DatabaseService } from '../../database/database.service';
 import { SecurityService } from '../../common/security.service';
 import { NotifyService } from '../../common/notify.service';
+import {
+  ADMIN_ROLES,
+  ELEVATED_ROLES,
+  ROLE_DESCRIPTIONS,
+  ROLE_LABELS,
+  isAdminRole,
+} from '../../common/permissions';
+import { AuthUser } from '../../common/current-user.decorator';
 
 const USER_SAFE_FIELDS = `id, full_name, email, phone, avatar_url, city, address, lat, lng, role, is_active, wallet_balance, created_at, push_token, updated_at`;
+const STAFF_SAFE_FIELDS = `id, full_name, email, phone, role, is_active, created_at, updated_at`;
 const PAID_PAYOUT_STATUSES = ['held', 'released', 'paid'];
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 @Injectable()
 export class AdminService {
+  private readonly logger = new Logger(AdminService.name);
+
   constructor(
     private readonly db: DatabaseService,
     private readonly security: SecurityService,
@@ -51,12 +64,22 @@ export class AdminService {
     if (!admin) {
       await this.db.query(
         `INSERT INTO users (id, full_name, phone, email, password_hash, role, city, is_active, wallet_balance, created_at, updated_at)
-         VALUES ($1,'QuickGift Admin','+2348000000000','admin@quickgift.ng',$2,'admin','Lagos',true,0,NOW(),NOW())`,
+         VALUES ($1,'QuickGift Admin','+2348000000000','admin@quickgift.ng',$2,'owner','Lagos',true,0,NOW(),NOW())`,
         [randomUUID(), this.security.hashPassword('admin123')],
       );
-      results.push('Admin user created');
+      results.push('Owner account created');
     } else {
       results.push('Admin user: already exists');
+    }
+    // Promote the founding account to Owner so it can manage the full team,
+    // but only if nobody is an Owner yet (don't override an existing hierarchy).
+    const owners = await this.num(`SELECT count(*)::int AS v FROM users WHERE role = 'owner'`);
+    if (owners === 0) {
+      const promoted = await this.db.queryOne(
+        `UPDATE users SET role = 'owner', updated_at = NOW()
+         WHERE email = 'admin@quickgift.ng' AND role = 'admin' RETURNING id`,
+      );
+      if (promoted) results.push('Founding admin promoted to Owner');
     }
     for (const [label, table] of [
       ['Categories', 'categories'],
@@ -104,8 +127,9 @@ export class AdminService {
   }
 
   async listUsers(q: any) {
-    const where: string[] = [];
-    const params: any[] = [];
+    // Staff/admin accounts live on the Team screen, not in the customer list.
+    const where: string[] = [`role NOT IN (${ADMIN_ROLES.map((_, i) => `$${i + 1}`).join(', ')})`];
+    const params: any[] = [...ADMIN_ROLES];
     if (q.search) {
       params.push(`%${q.search}%`);
       const i = params.length;
@@ -156,6 +180,7 @@ export class AdminService {
   private async removeUser(
     id: string,
     actingUserId?: string,
+    allowStaff = false,
   ): Promise<{ ok: boolean; reason?: string }> {
     if (actingUserId && id === actingUserId) {
       return { ok: false, reason: 'You cannot delete your own account' };
@@ -165,55 +190,72 @@ export class AdminService {
       [id],
     );
     if (!u) return { ok: false, reason: 'User not found' };
-    if (u.role === 'admin') {
-      return { ok: false, reason: 'Admin accounts cannot be deleted' };
+    // Staff/admin accounts are only removable via the Team screen (allowStaff),
+    // never through the general Users list.
+    if (!allowStaff && isAdminRole(u.role)) {
+      return { ok: false, reason: 'Staff accounts can only be removed from the Team screen' };
     }
     try {
       await this.db.transaction(async (client) => {
+        // Only touch tables that actually exist in this database, so a schema
+        // that lacks an optional table (e.g. a fresh/dev DB) doesn't abort the
+        // whole delete. Missing tables simply have nothing to clean up.
+        const del = async (table: string, clause: string) => {
+          const reg = await client.query(
+            `SELECT to_regclass($1) AS t`,
+            [`public.${table}`],
+          );
+          if (!reg.rows[0]?.t) return;
+          await client.query(`DELETE FROM ${table} WHERE ${clause}`, [id]);
+        };
+
         const prov = (
           await client.query(`SELECT id FROM providers WHERE user_id = $1`, [id])
         ).rows[0];
 
         // Conversations (as buyer or provider) and their messages
-        await client.query(
-          `DELETE FROM messages WHERE conversation_id IN
-             (SELECT id FROM conversations WHERE buyer_id = $1 OR provider_id = $1)`,
-          [id],
+        await del(
+          'messages',
+          `conversation_id IN (SELECT id FROM conversations WHERE buyer_id = $1 OR provider_id = $1)`,
         );
-        await client.query(
-          `DELETE FROM conversations WHERE buyer_id = $1 OR provider_id = $1`,
-          [id],
-        );
+        await del('conversations', `buyer_id = $1 OR provider_id = $1`);
 
         // Order chain (as the customer)
-        await client.query(
-          `DELETE FROM deliveries WHERE user_id = $1
-             OR order_id IN (SELECT id FROM orders WHERE user_id = $1)`,
-          [id],
+        await del(
+          'deliveries',
+          `user_id = $1 OR order_id IN (SELECT id FROM orders WHERE user_id = $1)`,
         );
-        await client.query(`DELETE FROM disputes WHERE buyer_id = $1`, [id]);
-        await client.query(
-          `DELETE FROM order_items WHERE order_id IN (SELECT id FROM orders WHERE user_id = $1)`,
-          [id],
+        await del('disputes', `buyer_id = $1`);
+        await del(
+          'order_items',
+          `order_id IN (SELECT id FROM orders WHERE user_id = $1)`,
         );
-        await client.query(`DELETE FROM orders WHERE user_id = $1`, [id]);
+        await del('orders', `user_id = $1`);
 
         // Bookings made by the user, money + notifications, audit authored
-        await client.query(`DELETE FROM bookings WHERE user_id = $1`, [id]);
-        await client.query(`DELETE FROM payouts WHERE user_id = $1`, [id]);
-        await client.query(`DELETE FROM transactions WHERE user_id = $1`, [id]);
-        await client.query(`DELETE FROM bank_accounts WHERE user_id = $1`, [id]);
-        await client.query(`DELETE FROM notifications WHERE user_id = $1`, [id]);
-        await client.query(`DELETE FROM status_logs WHERE changed_by = $1`, [id]);
+        await del('bookings', `user_id = $1`);
+        await del('payouts', `user_id = $1`);
+        await del('transactions', `user_id = $1`);
+        await del('bank_accounts', `user_id = $1`);
+        await del('notifications', `user_id = $1`);
+        await del('status_logs', `changed_by = $1`);
 
         // Provider sub-tree (if this user is also a provider)
         if (prov) {
-          await client.query(`DELETE FROM bookings WHERE provider_id = $1`, [prov.id]);
-          await client.query(`DELETE FROM payouts WHERE provider_id = $1`, [prov.id]);
-          await client.query(`DELETE FROM status_logs WHERE provider_id = $1`, [prov.id]);
-          await client.query(`DELETE FROM portfolios WHERE provider_id = $1`, [prov.id]);
-          await client.query(`DELETE FROM services WHERE provider_id = $1`, [prov.id]);
-          await client.query(`DELETE FROM providers WHERE id = $1`, [prov.id]);
+          const pdel = async (table: string, clause: string) => {
+            const reg = await client.query(
+              `SELECT to_regclass($1) AS t`,
+              [`public.${table}`],
+            );
+            if (!reg.rows[0]?.t) return;
+            await client.query(`DELETE FROM ${table} WHERE ${clause}`, [prov.id]);
+          };
+          await pdel('bookings', `provider_id = $1`);
+          await pdel('payouts', `provider_id = $1`);
+          await pdel('status_logs', `provider_id = $1`);
+          await pdel('portfolios', `provider_id = $1`);
+          await pdel('services', `provider_id = $1`);
+          await pdel('providers', `id = $1`);
         }
 
         // OTPs tied to the phone, then the user
@@ -224,17 +266,25 @@ export class AdminService {
         await client.query(`DELETE FROM users WHERE id = $1`, [id]);
       });
       return { ok: true };
-    } catch {
+    } catch (err) {
+      this.logger.error(`removeUser(${id}) failed: ${(err as Error)?.message}`);
       return { ok: false, reason: 'Could not remove — user has linked records' };
     }
   }
 
   // ---- edit user ----
   async updateUser(id: string, data: any) {
-    const u = await this.db.queryOne(`SELECT id FROM users WHERE id = $1`, [id]);
+    const u = await this.db.queryOne<{ id: string; role: string }>(
+      `SELECT id, role FROM users WHERE id = $1`,
+      [id],
+    );
     if (!u) throw new NotFoundException('User not found');
-
-    if (data?.role !== undefined && !['user', 'provider', 'admin'].includes(data.role)) {
+    // Staff accounts are managed only from the Team screen (team.manage), never
+    // through the general Users list, so one can't be edited or minted here.
+    if (isAdminRole(u.role)) {
+      throw new BadRequestException('Manage staff accounts from the Team screen');
+    }
+    if (data?.role !== undefined && !['user', 'provider'].includes(data.role)) {
       throw new BadRequestException('Invalid role');
     }
     if (data?.email) {
@@ -265,6 +315,171 @@ export class AdminService {
       );
     }
     return this.db.queryOne(`SELECT ${USER_SAFE_FIELDS} FROM users WHERE id = $1`, [id]);
+  }
+
+  // ======================================================================
+  //  Team (workers) — staff accounts that can sign into the admin console.
+  //  A worker is just a users row whose role is one of ADMIN_ROLES. They log
+  //  in with email + password at /auth/login. Only team.manage holders
+  //  (owner/admin) reach these; assigning or touching an elevated role
+  //  (owner/admin) additionally requires the actor to be an owner.
+  // ======================================================================
+
+  /** Roles an admin can assign, with labels/descriptions for the UI. */
+  staffRoles() {
+    return ADMIN_ROLES.map((value) => ({
+      value,
+      label: ROLE_LABELS[value],
+      description: ROLE_DESCRIPTIONS[value],
+      elevated: ELEVATED_ROLES.includes(value),
+    }));
+  }
+
+  async listStaff() {
+    const roles = ADMIN_ROLES.map((_, i) => `$${i + 1}`).join(', ');
+    const items = await this.db.query(
+      `SELECT ${STAFF_SAFE_FIELDS} FROM users WHERE role IN (${roles})
+       ORDER BY
+         CASE role WHEN 'owner' THEN 0 WHEN 'admin' THEN 1 ELSE 2 END,
+         created_at DESC`,
+      [...ADMIN_ROLES],
+    );
+    return { items, total: items.length };
+  }
+
+  private assertCanTouchRole(actorRole: string | undefined, targetRole: string) {
+    // Only an owner may create, change to, or act on an owner/admin account.
+    if (ELEVATED_ROLES.includes(targetRole) && actorRole !== 'owner') {
+      throw new ForbiddenException(
+        'Only an Owner can manage Owner or Administrator accounts',
+      );
+    }
+  }
+
+  async createStaff(data: any, actorRole?: string) {
+    const full_name = String(data?.full_name ?? '').trim();
+    const email = String(data?.email ?? '').trim().toLowerCase();
+    const phone = String(data?.phone ?? '').trim();
+    const password = String(data?.password ?? '');
+    const role = String(data?.role ?? '').trim();
+
+    if (!full_name) throw new BadRequestException('Full name is required');
+    if (!EMAIL_RE.test(email)) {
+      throw new BadRequestException('A valid email is required');
+    }
+    if (!phone) throw new BadRequestException('A phone number is required');
+    if (password.length < 6) {
+      throw new BadRequestException('Password must be at least 6 characters');
+    }
+    if (!isAdminRole(role)) throw new BadRequestException('Invalid role');
+    this.assertCanTouchRole(actorRole, role);
+
+    const emailDup = await this.db.queryOne(`SELECT 1 FROM users WHERE email = $1`, [email]);
+    if (emailDup) throw new BadRequestException('That email is already in use');
+    const phoneDup = await this.db.queryOne(`SELECT 1 FROM users WHERE phone = $1`, [phone]);
+    if (phoneDup) throw new BadRequestException('That phone number is already in use');
+
+    const id = randomUUID();
+    await this.db.query(
+      `INSERT INTO users (id, full_name, phone, email, password_hash, role, is_active, wallet_balance, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, true, 0, NOW(), NOW())`,
+      [id, full_name, phone, email, this.security.hashPassword(password), role],
+    );
+    return this.db.queryOne(`SELECT ${STAFF_SAFE_FIELDS} FROM users WHERE id = $1`, [id]);
+  }
+
+  private async loadStaff(id: string) {
+    const u = await this.db.queryOne<{ id: string; role: string; is_active: boolean }>(
+      `SELECT id, role, is_active FROM users WHERE id = $1`,
+      [id],
+    );
+    if (!u || !isAdminRole(u.role)) throw new NotFoundException('Staff member not found');
+    return u;
+  }
+
+  private async countOwners(excludeId?: string): Promise<number> {
+    return this.num(
+      `SELECT count(*)::int AS v FROM users WHERE role = 'owner'${excludeId ? ' AND id <> $1' : ''}`,
+      excludeId ? [excludeId] : [],
+    );
+  }
+
+  async updateStaff(id: string, data: any, actor: AuthUser) {
+    const target = await this.loadStaff(id);
+    const isSelf = actor?.user_id === id;
+
+    // Guard the current role, then the new role if it's changing.
+    this.assertCanTouchRole(actor?.role, target.role);
+
+    const sets: string[] = [];
+    const params: any[] = [];
+
+    if (data?.full_name !== undefined) {
+      const name = String(data.full_name).trim();
+      if (!name) throw new BadRequestException('Full name cannot be empty');
+      params.push(name);
+      sets.push(`full_name = $${params.length}`);
+    }
+
+    if (data?.role !== undefined && data.role !== target.role) {
+      const newRole = String(data.role).trim();
+      if (!isAdminRole(newRole)) throw new BadRequestException('Invalid role');
+      if (isSelf) throw new BadRequestException('You cannot change your own role');
+      this.assertCanTouchRole(actor?.role, newRole);
+      if (target.role === 'owner' && (await this.countOwners(id)) === 0) {
+        throw new BadRequestException('There must be at least one Owner');
+      }
+      params.push(newRole);
+      sets.push(`role = $${params.length}`);
+    }
+
+    if (data?.is_active !== undefined) {
+      const active = !!data.is_active;
+      if (!active && isSelf) {
+        throw new BadRequestException('You cannot deactivate your own account');
+      }
+      if (!active && target.role === 'owner' && (await this.countOwners(id)) === 0) {
+        throw new BadRequestException('There must be at least one active Owner');
+      }
+      params.push(active);
+      sets.push(`is_active = $${params.length}`);
+    }
+
+    if (sets.length) {
+      params.push(id);
+      await this.db.query(
+        `UPDATE users SET ${sets.join(', ')}, updated_at = NOW() WHERE id = $${params.length}`,
+        params,
+      );
+    }
+    return this.db.queryOne(`SELECT ${STAFF_SAFE_FIELDS} FROM users WHERE id = $1`, [id]);
+  }
+
+  async resetStaffPassword(id: string, password: string, actor: AuthUser) {
+    const target = await this.loadStaff(id);
+    this.assertCanTouchRole(actor?.role, target.role);
+    if (!password || String(password).length < 6) {
+      throw new BadRequestException('Password must be at least 6 characters');
+    }
+    await this.db.query(
+      `UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2`,
+      [this.security.hashPassword(String(password)), id],
+    );
+    return { ok: true };
+  }
+
+  async deleteStaff(id: string, actor: AuthUser) {
+    const target = await this.loadStaff(id);
+    if (actor?.user_id === id) {
+      throw new BadRequestException('You cannot remove your own account');
+    }
+    this.assertCanTouchRole(actor?.role, target.role);
+    if (target.role === 'owner' && (await this.countOwners(id)) === 0) {
+      throw new BadRequestException('There must be at least one Owner');
+    }
+    const res = await this.removeUser(id, actor?.user_id, true);
+    if (!res.ok) throw new BadRequestException(res.reason);
+    return { ok: true };
   }
 
   // ---- edit provider ----

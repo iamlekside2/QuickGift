@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useSelector } from 'react-redux'
+import { useSelector, useDispatch } from 'react-redux'
 import { Gift, Loader2, Eye, EyeOff, ArrowRight } from 'lucide-react'
 import logo from '../assets/logo.png'
-import { selectIsAuthenticated } from '../features/authSlice'
+import { selectIsAuthenticated, logout } from '../features/authSlice'
+import { isStaff } from '../lib/permissions'
 import { useLoginMutation } from '../services/api'
 
 export default function LoginPage() {
   const navigate = useNavigate()
+  const dispatch = useDispatch()
   const isAuthenticated = useSelector(selectIsAuthenticated)
   const [login, { isLoading }] = useLoginMutation()
 
@@ -26,7 +28,13 @@ export default function LoginPage() {
     e.preventDefault()
     setError('')
     try {
-      await login({ email, password }).unwrap()
+      const res = await login({ email, password }).unwrap()
+      if (!isStaff(res?.user)) {
+        // A valid app account, but not a staff member — deny console access.
+        dispatch(logout())
+        setError('This account does not have admin access.')
+        return
+      }
       navigate('/')
     } catch (err) {
       setError(err?.data?.detail || err?.data?.message || 'Invalid email or password')

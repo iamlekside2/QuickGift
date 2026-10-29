@@ -367,7 +367,6 @@ export default function UsersPage() {
               options={[
                 { value: 'user', label: 'User' },
                 { value: 'provider', label: 'Provider' },
-                { value: 'admin', label: 'Admin' },
               ]}
             />
             <ToggleField

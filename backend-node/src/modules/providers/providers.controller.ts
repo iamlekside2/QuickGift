@@ -13,6 +13,8 @@ import {
 import { ProvidersService } from './providers.service';
 import { AuthGuard } from '../../common/auth.guard';
 import { AdminGuard } from '../../common/admin.guard';
+import { PermGuard } from '../../common/perm.guard';
+import { Perm } from '../../common/perm.decorator';
 import { CurrentUser, AuthUser } from '../../common/current-user.decorator';
 
 const num = (v?: string) =>
@@ -110,25 +112,29 @@ export class ProvidersController {
     return this.providers.addService(id, user.user_id, body);
   }
 
-  @UseGuards(AuthGuard, AdminGuard)
+  @UseGuards(AuthGuard, AdminGuard, PermGuard)
+  @Perm('providers.manage')
   @Patch(':id/approve')
   approve(@Param('id') id: string) {
     return this.providers.approve(id);
   }
 
-  @UseGuards(AuthGuard, AdminGuard)
+  @UseGuards(AuthGuard, AdminGuard, PermGuard)
+  @Perm('providers.manage')
   @Patch(':id/reject')
   reject(@Param('id') id: string, @Body() body: { reason?: string }) {
     return this.providers.reject(id, body?.reason ?? '');
   }
 
-  @UseGuards(AuthGuard, AdminGuard)
+  @UseGuards(AuthGuard, AdminGuard, PermGuard)
+  @Perm('providers.manage')
   @Patch(':id/suspend')
   suspend(@Param('id') id: string, @Body() body: { reason?: string }) {
     return this.providers.suspend(id, body?.reason ?? '');
   }
 
-  @UseGuards(AuthGuard, AdminGuard)
+  @UseGuards(AuthGuard, AdminGuard, PermGuard)
+  @Perm('providers.manage')
   @Patch(':id/reactivate')
   reactivate(@Param('id') id: string) {
     return this.providers.reactivate(id);

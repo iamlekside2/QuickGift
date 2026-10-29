@@ -26,7 +26,7 @@ const baseQueryWithReauth = async (args, api, extraOptions) => {
 export const api = createApi({
   reducerPath: 'api',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['Dashboard', 'Orders', 'Products', 'Providers', 'Users', 'Bookings', 'Payments', 'Transactions', 'Payouts', 'Disputes', 'Applications', 'Waitlist'],
+  tagTypes: ['Dashboard', 'Orders', 'Products', 'Providers', 'Users', 'Bookings', 'Payments', 'Transactions', 'Payouts', 'Disputes', 'Applications', 'Waitlist', 'Team'],
   endpoints: (builder) => ({
     // ── Auth ─────────────────────────────────────────
     login: builder.mutation({
@@ -327,6 +327,45 @@ export const api = createApi({
       invalidatesTags: ['Applications'],
     }),
 
+    // ── Team / workers (admin accounts) ─────────────────────────
+    getStaff: builder.query({
+      query: () => '/admin/team',
+      providesTags: ['Team'],
+    }),
+    getStaffRoles: builder.query({
+      query: () => '/admin/team/roles',
+    }),
+    createStaff: builder.mutation({
+      query: (body) => ({
+        url: '/admin/team',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['Team'],
+    }),
+    updateStaff: builder.mutation({
+      query: ({ id, ...body }) => ({
+        url: `/admin/team/${id}`,
+        method: 'PATCH',
+        body,
+      }),
+      invalidatesTags: ['Team'],
+    }),
+    resetStaffPassword: builder.mutation({
+      query: ({ id, password }) => ({
+        url: `/admin/team/${id}/password`,
+        method: 'POST',
+        body: { password },
+      }),
+    }),
+    deleteStaff: builder.mutation({
+      query: (id) => ({
+        url: `/admin/team/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Team'],
+    }),
+
     // ── Waitlist signups (from the landing page) ────────────────
     getWaitlist: builder.query({
       query: ({ role, page = 1, per_page = 20 } = {}) => {
@@ -388,4 +427,10 @@ export const {
   useDeleteApplicationMutation,
   useGetWaitlistQuery,
   useDeleteWaitlistSignupMutation,
+  useGetStaffQuery,
+  useGetStaffRolesQuery,
+  useCreateStaffMutation,
+  useUpdateStaffMutation,
+  useResetStaffPasswordMutation,
+  useDeleteStaffMutation,
 } = api
