@@ -26,6 +26,13 @@ export class AdminController {
     return this.admin.dashboard();
   }
 
+  // Full audit log across sensitive actions (team, payouts, users, products).
+  @Get('audit')
+  @Perm('team.manage')
+  audit(@Query() q: Record<string, string>) {
+    return this.admin.listAudit(q);
+  }
+
   @Get('orders')
   @Perm('orders.view')
   orders(@Query() q: Record<string, string>) {
@@ -120,8 +127,8 @@ export class AdminController {
 
   @Post('products/clear')
   @Perm('products.manage')
-  clearProducts() {
-    return this.admin.clearProducts();
+  clearProducts(@CurrentUser() user: AuthUser) {
+    return this.admin.clearProducts(user);
   }
 
   @Post('products')
@@ -138,8 +145,8 @@ export class AdminController {
 
   @Delete('products/:id')
   @Perm('products.manage')
-  deleteProduct(@Param('id') id: string) {
-    return this.admin.deleteProduct(id);
+  deleteProduct(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.admin.deleteProduct(id, user);
   }
 
   @Get('providers')
@@ -181,14 +188,14 @@ export class AdminController {
 
   @Patch('payouts/:id/release')
   @Perm('finance.manage')
-  releasePayout(@Param('id') id: string) {
-    return this.admin.releasePayout(id);
+  releasePayout(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.admin.releasePayout(id, user);
   }
 
   @Patch('payouts/:id/cancel')
   @Perm('finance.manage')
-  cancelPayout(@Param('id') id: string) {
-    return this.admin.cancelPayout(id);
+  cancelPayout(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.admin.cancelPayout(id, user);
   }
 
   @Get('deliveries')
@@ -221,13 +228,13 @@ export class AdminController {
 
   @Patch('withdrawals/:id/complete')
   @Perm('finance.manage')
-  completeWithdrawal(@Param('id') id: string) {
-    return this.admin.completeWithdrawal(id);
+  completeWithdrawal(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.admin.completeWithdrawal(id, user);
   }
 
   @Patch('withdrawals/:id/fail')
   @Perm('finance.manage')
-  failWithdrawal(@Param('id') id: string) {
-    return this.admin.failWithdrawal(id);
+  failWithdrawal(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.admin.failWithdrawal(id, user);
   }
 }

@@ -19,6 +19,7 @@ const SettingsPage = lazy(() => import('./pages/SettingsPage'))
 const DisputesPage = lazy(() => import('./pages/DisputesPage'))
 const ApplicationsPage = lazy(() => import('./pages/ApplicationsPage'))
 const TeamPage = lazy(() => import('./pages/TeamPage'))
+const AuditLogPage = lazy(() => import('./pages/AuditLogPage'))
 
 function ProtectedRoute({ children }) {
   const isAuthenticated = useSelector(selectIsAuthenticated)
@@ -63,6 +64,7 @@ function App() {
         <Route path="disputes" element={page('disputes.view', DisputesPage)} />
         <Route path="applications" element={page('applications.view', ApplicationsPage)} />
         <Route path="team" element={page('team.manage', TeamPage)} />
+        <Route path="audit" element={page('team.manage', AuditLogPage)} />
         <Route path="settings" element={page('settings.manage', SettingsPage)} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

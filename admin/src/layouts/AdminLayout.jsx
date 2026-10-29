@@ -5,7 +5,7 @@ import {
   LayoutDashboard, ShoppingCart, Package, Sparkles,
   Users, Menu, X, LogOut, Gift, Bell, CalendarCheck,
   Settings, Search, ChevronRight, Wallet, Banknote, AlertTriangle, UserPlus,
-  ShieldCheck
+  ShieldCheck, ScrollText
 } from 'lucide-react'
 import { logout, selectCurrentUser } from '../features/authSlice'
 import { hasPerm, roleLabel } from '../lib/permissions'
@@ -24,6 +24,7 @@ const NAV_ITEMS = [
   { path: '/payouts', label: 'Payouts', icon: Banknote, perm: 'finance.view' },
   { path: '/disputes', label: 'Disputes', icon: AlertTriangle, perm: 'disputes.view' },
   { path: '/team', label: 'Team', icon: ShieldCheck, perm: 'team.manage' },
+  { path: '/audit', label: 'Audit log', icon: ScrollText, perm: 'team.manage' },
 ]
 
 const BOTTOM_NAV = [

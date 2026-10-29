@@ -35,7 +35,9 @@ export class AdminService implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
-    // Audit trail for team/worker changes (who did what, to whom, when).
+    // Audit trail for sensitive admin actions (who did what, to what, when).
+    // Started as team-only (hence the table name); `entity` widens it to cover
+    // payouts, withdrawals, users and products too.
     await this.db.query(`
       CREATE TABLE IF NOT EXISTS staff_audit_logs (
         id          UUID PRIMARY KEY,
@@ -50,6 +52,14 @@ export class AdminService implements OnModuleInit {
         created_at  TIMESTAMP NOT NULL DEFAULT NOW()
       )
     `);
+    await this.db.query(
+      `ALTER TABLE staff_audit_logs ADD COLUMN IF NOT EXISTS entity TEXT NOT NULL DEFAULT 'staff'`,
+    );
+    // target_id was UUID; non-staff targets (e.g. a product id) are also UUIDs,
+    // but widen to TEXT so any id format is safe to log.
+    await this.db.query(
+      `ALTER TABLE staff_audit_logs ALTER COLUMN target_id TYPE TEXT USING target_id::text`,
+    );
     await this.db.query(
       `CREATE INDEX IF NOT EXISTS ix_staff_audit_created ON staff_audit_logs(created_at DESC)`,
     );
@@ -171,8 +181,19 @@ export class AdminService implements OnModuleInit {
 
   // ---- delete users (for clearing out test/fake accounts) ----
   async deleteUser(id: string, actingUserId?: string) {
+    const victim = await this.db.queryOne<{ full_name: string; email: string | null }>(
+      `SELECT full_name, email FROM users WHERE id = $1`,
+      [id],
+    );
     const res = await this.removeUser(id, actingUserId);
     if (!res.ok) throw new BadRequestException(res.reason);
+    await this.writeAudit(
+      { user_id: actingUserId, role: '' } as AuthUser,
+      'deleted',
+      { id, full_name: victim?.full_name, email: victim?.email },
+      `Removed user ${victim?.full_name || ''}`.trim(),
+      'user',
+    );
     return { ok: true };
   }
 
@@ -190,6 +211,14 @@ export class AdminService implements OnModuleInit {
       if (res.ok) deleted++;
       else skipped.push({ id: uid, reason: res.reason! });
     }
+    await this.writeAudit(
+      { user_id: actingUserId, role: '' } as AuthUser,
+      'bulk_deleted',
+      {},
+      `Bulk removed ${deleted} user${deleted === 1 ? '' : 's'}` +
+        (skipped.length ? ` (${skipped.length} skipped)` : ''),
+      'user',
+    );
     return { ok: true, deleted, skipped };
   }
 
@@ -438,6 +467,7 @@ export class AdminService implements OnModuleInit {
     action: string,
     target: { id?: string; full_name?: string | null; email?: string | null },
     details: string,
+    entity = 'staff',
   ) {
     try {
       let actorName: string | null = null;
@@ -452,10 +482,11 @@ export class AdminService implements OnModuleInit {
       }
       await this.db.query(
         `INSERT INTO staff_audit_logs
-           (id, actor_id, actor_name, actor_email, action, target_id, target_name, target_email, details, created_at)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,NOW())`,
+           (id, entity, actor_id, actor_name, actor_email, action, target_id, target_name, target_email, details, created_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,NOW())`,
         [
           randomUUID(),
+          entity,
           actor?.user_id ?? null,
           actorName,
           actorEmail,
@@ -471,17 +502,45 @@ export class AdminService implements OnModuleInit {
     }
   }
 
+  private readonly AUDIT_FIELDS = `id, entity, actor_id, actor_name, actor_email, action,
+              target_id, target_name, target_email, details, created_at`;
+
+  /** Team-only audit feed (Team page Activity tab). */
   async listStaffAudit(q: any) {
     const page = Math.max(1, Number(q?.page ?? 1));
     const perPage = Math.min(100, Math.max(1, Number(q?.per_page ?? 30)));
-    const total = await this.num(`SELECT count(*)::int AS v FROM staff_audit_logs`);
+    const total = await this.num(
+      `SELECT count(*)::int AS v FROM staff_audit_logs WHERE entity = 'staff'`,
+    );
     const items = await this.db.query(
-      `SELECT id, actor_id, actor_name, actor_email, action,
-              target_id, target_name, target_email, details, created_at
-       FROM staff_audit_logs
-       ORDER BY created_at DESC
-       LIMIT $1 OFFSET $2`,
+      `SELECT ${this.AUDIT_FIELDS} FROM staff_audit_logs
+       WHERE entity = 'staff'
+       ORDER BY created_at DESC LIMIT $1 OFFSET $2`,
       [perPage, (page - 1) * perPage],
+    );
+    return { items, total, page, per_page: perPage };
+  }
+
+  /** All sensitive admin actions, optionally filtered by entity. */
+  async listAudit(q: any) {
+    const page = Math.max(1, Number(q?.page ?? 1));
+    const perPage = Math.min(100, Math.max(1, Number(q?.per_page ?? 40)));
+    const where: string[] = [];
+    const params: any[] = [];
+    if (q?.entity) {
+      params.push(q.entity);
+      where.push(`entity = $${params.length}`);
+    }
+    const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+    const total = await this.num(
+      `SELECT count(*)::int AS v FROM staff_audit_logs ${whereSql}`,
+      params,
+    );
+    const p = [...params, perPage, (page - 1) * perPage];
+    const items = await this.db.query(
+      `SELECT ${this.AUDIT_FIELDS} FROM staff_audit_logs ${whereSql}
+       ORDER BY created_at DESC LIMIT $${p.length - 1} OFFSET $${p.length}`,
+      p,
     );
     return { items, total, page, per_page: perPage };
   }
@@ -624,22 +683,29 @@ export class AdminService implements OnModuleInit {
   }
 
   // ---- delete products ----
-  async deleteProduct(id: string) {
-    const p = await this.db.queryOne(`SELECT id FROM products WHERE id = $1`, [id]);
+  async deleteProduct(id: string, actor?: AuthUser) {
+    const p = await this.db.queryOne<{ id: string; name: string }>(
+      `SELECT id, name FROM products WHERE id = $1`,
+      [id],
+    );
     if (!p) throw new NotFoundException('Product not found');
     await this.db.transaction(async (client) => {
       await client.query(`DELETE FROM order_items WHERE product_id = $1`, [id]);
       await client.query(`DELETE FROM products WHERE id = $1`, [id]);
     });
+    await this.writeAudit(actor, 'deleted', { id, full_name: p.name },
+      `Removed product "${p.name}"`, 'product');
     return { ok: true };
   }
 
-  async clearProducts() {
+  async clearProducts(actor?: AuthUser) {
     const n = await this.num(`SELECT count(*)::int AS v FROM products`);
     await this.db.transaction(async (client) => {
       await client.query(`DELETE FROM order_items WHERE product_id IN (SELECT id FROM products)`);
       await client.query(`DELETE FROM products`);
     });
+    await this.writeAudit(actor, 'cleared', {},
+      `Cleared all products (${n} removed)`, 'product');
     return { ok: true, deleted: n };
   }
 
@@ -760,7 +826,7 @@ export class AdminService implements OnModuleInit {
   }
 
   // ---- payouts ----
-  async releasePayout(payoutId: string) {
+  async releasePayout(payoutId: string, actor?: AuthUser) {
     const payout = await this.db.queryOne<any>(`SELECT * FROM payouts WHERE id = $1`, [payoutId]);
     if (!payout) throw new NotFoundException('Payout not found');
     if (payout.status !== 'held') {
@@ -792,16 +858,22 @@ export class AdminService implements OnModuleInit {
         .notify(providerUserId, 'Payment Received!', `₦${Math.round(payout.amount).toLocaleString('en-US')} has been credited to your wallet.`, 'payment')
         .catch(() => undefined);
     }
+    const amt = `₦${Math.round(payout.amount).toLocaleString('en-US')}`;
+    await this.writeAudit(actor, 'released', { id: payoutId, full_name: amt },
+      `Released ${amt} payout`, 'payout');
     return { status: 'ok', payout_id: payoutId, amount: payout.amount };
   }
 
-  async cancelPayout(payoutId: string) {
-    const payout = await this.db.queryOne<any>(`SELECT status FROM payouts WHERE id = $1`, [payoutId]);
+  async cancelPayout(payoutId: string, actor?: AuthUser) {
+    const payout = await this.db.queryOne<any>(`SELECT status, amount FROM payouts WHERE id = $1`, [payoutId]);
     if (!payout) throw new NotFoundException('Payout not found');
     if (payout.status === 'paid') {
       throw new BadRequestException('Cannot cancel an already paid payout');
     }
     await this.db.query(`UPDATE payouts SET status = 'cancelled', updated_at = NOW() WHERE id = $1`, [payoutId]);
+    const amt = `₦${Math.round(Number(payout.amount) || 0).toLocaleString('en-US')}`;
+    await this.writeAudit(actor, 'cancelled', { id: payoutId, full_name: amt },
+      `Cancelled ${amt} payout`, 'payout');
     return { status: 'ok', payout_id: payoutId };
   }
 
@@ -856,16 +928,19 @@ export class AdminService implements OnModuleInit {
     return this.list('transactions', where, params, Number(q.page ?? 1), Number(q.per_page ?? 20));
   }
 
-  async completeWithdrawal(txId: string) {
-    const tx = await this.db.queryOne<any>(`SELECT status FROM transactions WHERE id = $1`, [txId]);
+  async completeWithdrawal(txId: string, actor?: AuthUser) {
+    const tx = await this.db.queryOne<any>(`SELECT status, amount FROM transactions WHERE id = $1`, [txId]);
     if (!tx) throw new NotFoundException('Transaction not found');
     if (tx.status !== 'pending') throw new BadRequestException(`Transaction is already ${tx.status}`);
     await this.db.query(`UPDATE transactions SET status = 'completed' WHERE id = $1`, [txId]);
+    const amt = `₦${Math.round(Number(tx.amount) || 0).toLocaleString('en-US')}`;
+    await this.writeAudit(actor, 'completed', { id: txId, full_name: amt },
+      `Marked ${amt} withdrawal completed`, 'withdrawal');
     return { status: 'completed', transaction_id: txId };
   }
 
-  async failWithdrawal(txId: string) {
-    return this.db.transaction(async (client) => {
+  async failWithdrawal(txId: string, actor?: AuthUser) {
+    const result = await this.db.transaction(async (client) => {
       const tx = (await client.query(`SELECT user_id, amount, status FROM transactions WHERE id = $1`, [txId])).rows[0];
       if (!tx) throw new NotFoundException('Transaction not found');
       if (tx.status !== 'pending') throw new BadRequestException(`Transaction is already ${tx.status}`);
@@ -874,8 +949,12 @@ export class AdminService implements OnModuleInit {
         await client.query(`UPDATE users SET wallet_balance = wallet_balance + $1 WHERE id = $2`, [tx.amount, user.id]);
       }
       await client.query(`UPDATE transactions SET status = 'failed' WHERE id = $1`, [txId]);
-      return { status: 'failed', transaction_id: txId, refunded: true };
+      return { status: 'failed', transaction_id: txId, refunded: true, amount: tx.amount };
     });
+    const amt = `₦${Math.round(Number(result.amount) || 0).toLocaleString('en-US')}`;
+    await this.writeAudit(actor, 'failed', { id: txId, full_name: amt },
+      `Marked ${amt} withdrawal failed (refunded to wallet)`, 'withdrawal');
+    return { status: result.status, transaction_id: result.transaction_id, refunded: result.refunded };
   }
 
   async extendedAnalytics() {

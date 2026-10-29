@@ -101,7 +101,7 @@ export const api = createApi({
         method: 'POST',
         body,
       }),
-      invalidatesTags: ['Products', 'Dashboard'],
+      invalidatesTags: ['Products', 'Dashboard', 'TeamAudit'],
     }),
     updateProduct: builder.mutation({
       query: ({ id, ...body }) => ({
@@ -116,14 +116,14 @@ export const api = createApi({
         url: `/admin/products/${id}`,
         method: 'DELETE',
       }),
-      invalidatesTags: ['Products', 'Dashboard'],
+      invalidatesTags: ['Products', 'Dashboard', 'TeamAudit'],
     }),
     clearProducts: builder.mutation({
       query: () => ({
         url: '/admin/products/clear',
         method: 'POST',
       }),
-      invalidatesTags: ['Products', 'Dashboard'],
+      invalidatesTags: ['Products', 'Dashboard', 'TeamAudit'],
     }),
 
     // ── Providers (Admin) ────────────────────────────
@@ -189,7 +189,7 @@ export const api = createApi({
         url: `/admin/users/${id}`,
         method: 'DELETE',
       }),
-      invalidatesTags: ['Users', 'Dashboard'],
+      invalidatesTags: ['Users', 'Dashboard', 'TeamAudit'],
     }),
     updateAdminProvider: builder.mutation({
       query: ({ id, ...body }) => ({
@@ -205,7 +205,7 @@ export const api = createApi({
         method: 'POST',
         body: { ids },
       }),
-      invalidatesTags: ['Users', 'Dashboard'],
+      invalidatesTags: ['Users', 'Dashboard', 'TeamAudit'],
     }),
 
     // ── Reviews ──────────────────────────────────────
@@ -290,14 +290,14 @@ export const api = createApi({
         url: `/admin/payouts/${id}/release`,
         method: 'PATCH',
       }),
-      invalidatesTags: ['Payouts', 'Dashboard'],
+      invalidatesTags: ['Payouts', 'Dashboard', 'TeamAudit'],
     }),
     cancelPayout: builder.mutation({
       query: (id) => ({
         url: `/admin/payouts/${id}/cancel`,
         method: 'PATCH',
       }),
-      invalidatesTags: ['Payouts', 'Dashboard'],
+      invalidatesTags: ['Payouts', 'Dashboard', 'TeamAudit'],
     }),
 
     // ── Provider Applications (from the landing page) ───────────
@@ -338,6 +338,16 @@ export const api = createApi({
     getStaffAudit: builder.query({
       query: ({ page = 1, per_page = 30 } = {}) =>
         `/admin/team/audit?page=${page}&per_page=${per_page}`,
+      providesTags: ['TeamAudit'],
+    }),
+    getAuditLog: builder.query({
+      query: ({ entity, page = 1, per_page = 40 } = {}) => {
+        const params = new URLSearchParams()
+        if (entity) params.append('entity', entity)
+        params.append('page', page)
+        params.append('per_page', per_page)
+        return `/admin/audit?${params.toString()}`
+      },
       providesTags: ['TeamAudit'],
     }),
     createStaff: builder.mutation({
@@ -436,6 +446,7 @@ export const {
   useGetStaffQuery,
   useGetStaffRolesQuery,
   useGetStaffAuditQuery,
+  useGetAuditLogQuery,
   useCreateStaffMutation,
   useUpdateStaffMutation,
   useResetStaffPasswordMutation,
