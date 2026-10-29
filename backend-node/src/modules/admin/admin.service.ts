@@ -4,6 +4,7 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  OnModuleInit,
 } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { DatabaseService } from '../../database/database.service';
@@ -24,7 +25,7 @@ const PAID_PAYOUT_STATUSES = ['held', 'released', 'paid'];
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 @Injectable()
-export class AdminService {
+export class AdminService implements OnModuleInit {
   private readonly logger = new Logger(AdminService.name);
 
   constructor(
@@ -32,6 +33,27 @@ export class AdminService {
     private readonly security: SecurityService,
     private readonly notifier: NotifyService,
   ) {}
+
+  async onModuleInit() {
+    // Audit trail for team/worker changes (who did what, to whom, when).
+    await this.db.query(`
+      CREATE TABLE IF NOT EXISTS staff_audit_logs (
+        id          UUID PRIMARY KEY,
+        actor_id    UUID,
+        actor_name  TEXT,
+        actor_email TEXT,
+        action      TEXT NOT NULL,
+        target_id   UUID,
+        target_name TEXT,
+        target_email TEXT,
+        details     TEXT,
+        created_at  TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+    await this.db.query(
+      `CREATE INDEX IF NOT EXISTS ix_staff_audit_created ON staff_audit_logs(created_at DESC)`,
+    );
+  }
 
   private async num(sql: string, params: any[] = []): Promise<number> {
     const row = await this.db.queryOne<{ v: number }>(sql, params);
@@ -356,7 +378,7 @@ export class AdminService {
     }
   }
 
-  async createStaff(data: any, actorRole?: string) {
+  async createStaff(data: any, actor?: AuthUser) {
     const full_name = String(data?.full_name ?? '').trim();
     const email = String(data?.email ?? '').trim().toLowerCase();
     const phone = String(data?.phone ?? '').trim();
@@ -372,7 +394,7 @@ export class AdminService {
       throw new BadRequestException('Password must be at least 6 characters');
     }
     if (!isAdminRole(role)) throw new BadRequestException('Invalid role');
-    this.assertCanTouchRole(actorRole, role);
+    this.assertCanTouchRole(actor?.role, role);
 
     const emailDup = await this.db.queryOne(`SELECT 1 FROM users WHERE email = $1`, [email]);
     if (emailDup) throw new BadRequestException('That email is already in use');
@@ -385,16 +407,83 @@ export class AdminService {
        VALUES ($1, $2, $3, $4, $5, $6, true, 0, NOW(), NOW())`,
       [id, full_name, phone, email, this.security.hashPassword(password), role],
     );
+    await this.writeAudit(actor, 'created', { id, full_name, email },
+      `Created worker as ${this.roleName(role)}`);
     return this.db.queryOne(`SELECT ${STAFF_SAFE_FIELDS} FROM users WHERE id = $1`, [id]);
   }
 
   private async loadStaff(id: string) {
-    const u = await this.db.queryOne<{ id: string; role: string; is_active: boolean }>(
-      `SELECT id, role, is_active FROM users WHERE id = $1`,
+    const u = await this.db.queryOne<{
+      id: string;
+      role: string;
+      is_active: boolean;
+      full_name: string;
+      email: string | null;
+    }>(
+      `SELECT id, role, is_active, full_name, email FROM users WHERE id = $1`,
       [id],
     );
     if (!u || !isAdminRole(u.role)) throw new NotFoundException('Staff member not found');
     return u;
+  }
+
+  // ---- audit trail ----
+  private roleName(role: string) {
+    return ROLE_LABELS[role as keyof typeof ROLE_LABELS] || role;
+  }
+
+  /** Best-effort audit write — never throws, so it can't fail the real action. */
+  private async writeAudit(
+    actor: AuthUser | undefined,
+    action: string,
+    target: { id?: string; full_name?: string | null; email?: string | null },
+    details: string,
+  ) {
+    try {
+      let actorName: string | null = null;
+      let actorEmail: string | null = null;
+      if (actor?.user_id) {
+        const a = await this.db.queryOne<{ full_name: string; email: string | null }>(
+          `SELECT full_name, email FROM users WHERE id = $1`,
+          [actor.user_id],
+        );
+        actorName = a?.full_name ?? null;
+        actorEmail = a?.email ?? null;
+      }
+      await this.db.query(
+        `INSERT INTO staff_audit_logs
+           (id, actor_id, actor_name, actor_email, action, target_id, target_name, target_email, details, created_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,NOW())`,
+        [
+          randomUUID(),
+          actor?.user_id ?? null,
+          actorName,
+          actorEmail,
+          action,
+          target.id ?? null,
+          target.full_name ?? null,
+          target.email ?? null,
+          details,
+        ],
+      );
+    } catch (err) {
+      this.logger.error(`writeAudit failed: ${(err as Error)?.message}`);
+    }
+  }
+
+  async listStaffAudit(q: any) {
+    const page = Math.max(1, Number(q?.page ?? 1));
+    const perPage = Math.min(100, Math.max(1, Number(q?.per_page ?? 30)));
+    const total = await this.num(`SELECT count(*)::int AS v FROM staff_audit_logs`);
+    const items = await this.db.query(
+      `SELECT id, actor_id, actor_name, actor_email, action,
+              target_id, target_name, target_email, details, created_at
+       FROM staff_audit_logs
+       ORDER BY created_at DESC
+       LIMIT $1 OFFSET $2`,
+      [perPage, (page - 1) * perPage],
+    );
+    return { items, total, page, per_page: perPage };
   }
 
   private async countOwners(excludeId?: string): Promise<number> {
@@ -413,12 +502,14 @@ export class AdminService {
 
     const sets: string[] = [];
     const params: any[] = [];
+    const changes: string[] = [];
 
     if (data?.full_name !== undefined) {
       const name = String(data.full_name).trim();
       if (!name) throw new BadRequestException('Full name cannot be empty');
       params.push(name);
       sets.push(`full_name = $${params.length}`);
+      if (name !== target.full_name) changes.push(`Name: ${target.full_name} → ${name}`);
     }
 
     if (data?.role !== undefined && data.role !== target.role) {
@@ -431,18 +522,22 @@ export class AdminService {
       }
       params.push(newRole);
       sets.push(`role = $${params.length}`);
+      changes.push(`Role: ${this.roleName(target.role)} → ${this.roleName(newRole)}`);
     }
 
     if (data?.is_active !== undefined) {
       const active = !!data.is_active;
-      if (!active && isSelf) {
-        throw new BadRequestException('You cannot deactivate your own account');
+      if (active !== target.is_active) {
+        if (!active && isSelf) {
+          throw new BadRequestException('You cannot deactivate your own account');
+        }
+        if (!active && target.role === 'owner' && (await this.countOwners(id)) === 0) {
+          throw new BadRequestException('There must be at least one active Owner');
+        }
+        params.push(active);
+        sets.push(`is_active = $${params.length}`);
+        changes.push(active ? 'Activated' : 'Deactivated');
       }
-      if (!active && target.role === 'owner' && (await this.countOwners(id)) === 0) {
-        throw new BadRequestException('There must be at least one active Owner');
-      }
-      params.push(active);
-      sets.push(`is_active = $${params.length}`);
     }
 
     if (sets.length) {
@@ -450,6 +545,12 @@ export class AdminService {
       await this.db.query(
         `UPDATE users SET ${sets.join(', ')}, updated_at = NOW() WHERE id = $${params.length}`,
         params,
+      );
+      await this.writeAudit(
+        actor,
+        'updated',
+        { id, full_name: target.full_name, email: target.email },
+        changes.join('; ') || 'Updated',
       );
     }
     return this.db.queryOne(`SELECT ${STAFF_SAFE_FIELDS} FROM users WHERE id = $1`, [id]);
@@ -465,6 +566,12 @@ export class AdminService {
       `UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2`,
       [this.security.hashPassword(String(password)), id],
     );
+    await this.writeAudit(
+      actor,
+      'password_reset',
+      { id, full_name: target.full_name, email: target.email },
+      'Reset the sign-in password',
+    );
     return { ok: true };
   }
 
@@ -479,6 +586,12 @@ export class AdminService {
     }
     const res = await this.removeUser(id, actor?.user_id, true);
     if (!res.ok) throw new BadRequestException(res.reason);
+    await this.writeAudit(
+      actor,
+      'deleted',
+      { id, full_name: target.full_name, email: target.email },
+      `Removed worker (${this.roleName(target.role)})`,
+    );
     return { ok: true };
   }
 

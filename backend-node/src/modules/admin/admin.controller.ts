@@ -52,10 +52,16 @@ export class AdminController {
     return this.admin.staffRoles();
   }
 
+  @Get('team/audit')
+  @Perm('team.manage')
+  teamAudit(@Query() q: Record<string, string>) {
+    return this.admin.listStaffAudit(q);
+  }
+
   @Post('team')
   @Perm('team.manage')
   createStaff(@Body() body: any, @CurrentUser() user: AuthUser) {
-    return this.admin.createStaff(body, user?.role);
+    return this.admin.createStaff(body, user);
   }
 
   @Patch('team/:id')

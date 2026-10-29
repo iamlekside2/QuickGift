@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react'
 import { useSelector } from 'react-redux'
 import {
-  Loader2, UserPlus, Trash2, Pencil, KeyRound, ShieldCheck, Mail, Phone,
+  Loader2, UserPlus, Trash2, Pencil, KeyRound, ShieldCheck, Mail, Phone, History,
 } from 'lucide-react'
 import {
   useGetStaffQuery,
+  useGetStaffAuditQuery,
   useCreateStaffMutation,
   useUpdateStaffMutation,
   useResetStaffPasswordMutation,
@@ -28,6 +29,7 @@ export default function TeamPage() {
   const [resetPassword, { isLoading: resetting }] = useResetStaffPasswordMutation()
   const [deleteStaff] = useDeleteStaffMutation()
 
+  const [tab, setTab] = useState('members')
   const [createOpen, setCreateOpen] = useState(false)
   const [editRow, setEditRow] = useState(null)
   const [pwdRow, setPwdRow] = useState(null)
@@ -113,6 +115,30 @@ export default function TeamPage() {
         </button>
       </div>
 
+      {/* Tabs */}
+      <div className="flex gap-1 p-1 bg-gray-100 rounded-xl w-fit">
+        <button
+          onClick={() => setTab('members')}
+          className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+            tab === 'members' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          Members
+        </button>
+        <button
+          onClick={() => setTab('activity')}
+          className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors inline-flex items-center gap-1.5 ${
+            tab === 'activity' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          <History className="w-4 h-4" />
+          Activity
+        </button>
+      </div>
+
+      {tab === 'activity' && <ActivityTab />}
+
+      {tab === 'members' && (
       <div className="card overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -225,6 +251,7 @@ export default function TeamPage() {
           </span>
         </div>
       </div>
+      )}
 
       {/* Create */}
       {createOpen && (
@@ -305,5 +332,74 @@ function RoleHint({ role, options }) {
     <p className="text-[12px] text-gray-500 bg-gray-50 border border-gray-100 rounded-lg px-3 py-2">
       <span className="font-semibold text-gray-700">{opt.label}:</span> {opt.description}
     </p>
+  )
+}
+
+const ACTION_META = {
+  created: { label: 'Created', badge: 'badge-green' },
+  updated: { label: 'Updated', badge: 'badge-blue' },
+  password_reset: { label: 'Password reset', badge: 'badge-yellow' },
+  deleted: { label: 'Removed', badge: 'badge-gray' },
+}
+
+function timeAgo(iso) {
+  if (!iso) return ''
+  const d = new Date(iso)
+  const diff = (Date.now() - d.getTime()) / 1000
+  if (diff < 60) return 'just now'
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`
+  if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`
+  return d.toLocaleDateString()
+}
+
+function ActivityTab() {
+  const { data, isLoading } = useGetStaffAuditQuery()
+  const items = data?.items || []
+
+  if (isLoading) {
+    return (
+      <div className="card p-16 flex flex-col items-center gap-2">
+        <Loader2 className="w-6 h-6 text-teal-500 animate-spin" />
+        <span className="text-sm text-gray-400">Loading activity...</span>
+      </div>
+    )
+  }
+  if (items.length === 0) {
+    return (
+      <div className="card p-16 flex flex-col items-center gap-2 text-center">
+        <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+          <History className="w-6 h-6 text-gray-400" />
+        </div>
+        <p className="text-sm font-medium text-gray-500">No activity yet</p>
+        <p className="text-xs text-gray-400">Team changes (added, edited, removed) will show up here</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="card p-5">
+      <ol className="relative border-l border-gray-200 ml-2 space-y-5">
+        {items.map((row) => {
+          const meta = ACTION_META[row.action] || { label: row.action, badge: 'badge-gray' }
+          return (
+            <li key={row.id} className="ml-5">
+              <span className="absolute -left-[7px] w-3.5 h-3.5 rounded-full bg-white border-2 border-teal-400" />
+              <div className="flex flex-wrap items-center gap-2">
+                <span className={`badge ${meta.badge}`}>{meta.label}</span>
+                <span className="text-sm font-medium text-gray-900">{row.target_name || '—'}</span>
+                <span className="text-xs text-gray-400" title={row.created_at ? new Date(row.created_at).toLocaleString() : ''}>
+                  {timeAgo(row.created_at)}
+                </span>
+              </div>
+              {row.details && <p className="text-[13px] text-gray-600 mt-1">{row.details}</p>}
+              <p className="text-[11px] text-gray-400 mt-1">
+                by {row.actor_name || 'System'}{row.actor_email ? ` · ${row.actor_email}` : ''}
+              </p>
+            </li>
+          )
+        })}
+      </ol>
+    </div>
   )
 }

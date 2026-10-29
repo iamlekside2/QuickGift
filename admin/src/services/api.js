@@ -26,7 +26,7 @@ const baseQueryWithReauth = async (args, api, extraOptions) => {
 export const api = createApi({
   reducerPath: 'api',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['Dashboard', 'Orders', 'Products', 'Providers', 'Users', 'Bookings', 'Payments', 'Transactions', 'Payouts', 'Disputes', 'Applications', 'Waitlist', 'Team'],
+  tagTypes: ['Dashboard', 'Orders', 'Products', 'Providers', 'Users', 'Bookings', 'Payments', 'Transactions', 'Payouts', 'Disputes', 'Applications', 'Waitlist', 'Team', 'TeamAudit'],
   endpoints: (builder) => ({
     // ── Auth ─────────────────────────────────────────
     login: builder.mutation({
@@ -335,13 +335,18 @@ export const api = createApi({
     getStaffRoles: builder.query({
       query: () => '/admin/team/roles',
     }),
+    getStaffAudit: builder.query({
+      query: ({ page = 1, per_page = 30 } = {}) =>
+        `/admin/team/audit?page=${page}&per_page=${per_page}`,
+      providesTags: ['TeamAudit'],
+    }),
     createStaff: builder.mutation({
       query: (body) => ({
         url: '/admin/team',
         method: 'POST',
         body,
       }),
-      invalidatesTags: ['Team'],
+      invalidatesTags: ['Team', 'TeamAudit'],
     }),
     updateStaff: builder.mutation({
       query: ({ id, ...body }) => ({
@@ -349,7 +354,7 @@ export const api = createApi({
         method: 'PATCH',
         body,
       }),
-      invalidatesTags: ['Team'],
+      invalidatesTags: ['Team', 'TeamAudit'],
     }),
     resetStaffPassword: builder.mutation({
       query: ({ id, password }) => ({
@@ -357,13 +362,14 @@ export const api = createApi({
         method: 'POST',
         body: { password },
       }),
+      invalidatesTags: ['TeamAudit'],
     }),
     deleteStaff: builder.mutation({
       query: (id) => ({
         url: `/admin/team/${id}`,
         method: 'DELETE',
       }),
-      invalidatesTags: ['Team'],
+      invalidatesTags: ['Team', 'TeamAudit'],
     }),
 
     // ── Waitlist signups (from the landing page) ────────────────
@@ -429,6 +435,7 @@ export const {
   useDeleteWaitlistSignupMutation,
   useGetStaffQuery,
   useGetStaffRolesQuery,
+  useGetStaffAuditQuery,
   useCreateStaffMutation,
   useUpdateStaffMutation,
   useResetStaffPasswordMutation,
