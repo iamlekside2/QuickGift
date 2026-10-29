@@ -280,7 +280,7 @@ function WaitlistTab() {
         <table className="w-full">
           <thead>
             <tr className="border-b border-gray-100 bg-gray-50/50">
-              <th className="table-header">Contact</th>
+              <th className="table-header">Email</th>
               <th className="table-header">Interested as</th>
               <th className="table-header">Skill</th>
               <th className="table-header">Source</th>
@@ -315,9 +315,6 @@ function WaitlistTab() {
                 <tr key={row.id} className="table-row">
                   <td className="table-cell font-medium text-gray-900">
                     {row.email || row.phone || '—'}
-                    {row.email && row.phone && (
-                      <div className="text-xs text-gray-400 mt-0.5">{row.phone}</div>
-                    )}
                   </td>
                   <td className="table-cell">
                     <span className={`badge ${row.role === 'provider' ? 'badge-blue' : 'badge-gray'}`}>
