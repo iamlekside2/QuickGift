@@ -282,6 +282,7 @@ function WaitlistTab() {
             <tr className="border-b border-gray-100 bg-gray-50/50">
               <th className="table-header">Contact</th>
               <th className="table-header">Interested as</th>
+              <th className="table-header">Skill</th>
               <th className="table-header">Source</th>
               <th className="table-header">Date</th>
               <th className="table-header w-[80px]">Actions</th>
@@ -290,7 +291,7 @@ function WaitlistTab() {
           <tbody>
             {isLoading ? (
               <tr>
-                <td colSpan={5} className="px-6 py-16 text-center">
+                <td colSpan={6} className="px-6 py-16 text-center">
                   <div className="flex flex-col items-center gap-2">
                     <Loader2 className="w-6 h-6 text-teal-500 animate-spin" />
                     <span className="text-sm text-gray-400">Loading waitlist...</span>
@@ -299,7 +300,7 @@ function WaitlistTab() {
               </tr>
             ) : items.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-6 py-16 text-center">
+                <td colSpan={6} className="px-6 py-16 text-center">
                   <div className="flex flex-col items-center gap-2">
                     <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
                       <Mail className="w-6 h-6 text-gray-400" />
@@ -323,6 +324,7 @@ function WaitlistTab() {
                       {row.role === 'provider' ? 'Provider' : 'Customer'}
                     </span>
                   </td>
+                  <td className="table-cell text-gray-600 text-sm">{row.skill || '—'}</td>
                   <td className="table-cell text-gray-500 text-sm">{row.source || '—'}</td>
                   <td className="table-cell text-gray-500">
                     {row.created_at ? new Date(row.created_at).toLocaleDateString() : '—'}

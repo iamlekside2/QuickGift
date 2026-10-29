@@ -533,18 +533,21 @@
         <p style="font-size:16px;color:rgba(255,255,255,0.68);margin:0 auto 30px;max-width:420px;line-height:1.6;">Join the waitlist and we'll tell you the moment QuickGift goes live. Early members get first access and launch-day perks.</p>
 
         <form class="wl-form" data-waitlist data-success-color="#fff" style="max-width:440px;margin:0 auto;text-align:left;">
-          <!-- Role toggle removed: providers join the same waitlist (email or WhatsApp number) and register in the app.
+          <p style="margin:0 0 8px;font-size:12.5px;font-weight:600;color:rgba(255,255,255,0.62);text-align:center;letter-spacing:0.3px;">I'm interested as a&hellip;</p>
           <div style="display:flex;gap:6px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:16px;padding:6px;margin-bottom:12px;">
             <label class="wl-role" style="flex:1;min-width:0;">
               <input type="radio" name="role" value="customer" checked style="position:absolute;opacity:0;">
-              <span style="display:block;text-align:center;padding:12px 8px;border-radius:11px;border:1px solid transparent;background:#ffffff;color:#1F4A45;font-size:13.5px;font-weight:700;cursor:pointer;transition:all .18s ease;box-shadow:0 6px 14px rgba(0,0,0,0.20);">I want to send gifts</span>
+              <span style="display:block;text-align:center;padding:12px 8px;border-radius:11px;border:1px solid transparent;background:#ffffff;color:#1F4A45;font-size:13.5px;font-weight:700;cursor:pointer;transition:all .18s ease;box-shadow:0 6px 14px rgba(0,0,0,0.20);">Buyer</span>
             </label>
             <label class="wl-role" style="flex:1;min-width:0;">
               <input type="radio" name="role" value="provider" style="position:absolute;opacity:0;">
-              <span style="display:block;text-align:center;padding:12px 8px;border-radius:11px;border:1px solid transparent;background:transparent;color:rgba(255,255,255,0.78);font-size:13.5px;font-weight:700;cursor:pointer;transition:all .18s ease;">I'm an artisan / vendor</span>
+              <span style="display:block;text-align:center;padding:12px 8px;border-radius:11px;border:1px solid transparent;background:transparent;color:rgba(255,255,255,0.78);font-size:13.5px;font-weight:700;cursor:pointer;transition:all .18s ease;">Provider</span>
             </label>
           </div>
-          -->
+          <div class="wl-skill" style="display:none;margin-bottom:12px;">
+            <input type="text" name="skill" placeholder="Your skill or service (e.g. baker, florist, nail tech)" aria-label="Your skill or service"
+              style="width:100%;box-sizing:border-box;padding:14px 16px;border-radius:14px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.1);color:#fff;font-size:14px;font-family:inherit;outline:none;">
+          </div>
           <div class="wl-join" style="display:flex;gap:8px;background:#fff;border-radius:18px;padding:7px;box-shadow:0 20px 44px rgba(0,0,0,0.20);">
             <input type="text" name="contact" required placeholder="Email or phone number" aria-label="Email or phone number"
               style="flex:1;min-width:0;padding:14px 16px;border-radius:12px;border:none;background:transparent;font-size:14.5px;color:#211F1C;font-family:inherit;outline:none;">
@@ -552,7 +555,7 @@
               style="background:#E8632F;color:#fff;padding:14px 26px;border-radius:12px;font-size:14.5px;font-weight:700;border:none;cursor:pointer;white-space:nowrap;">Join the waitlist</button>
           </div>
           <p class="wl-msg" style="margin:14px 2px 0;font-size:13px;color:rgba(255,255,255,0.65);text-align:center;min-height:18px;">No spam. We'll only reach out when we launch.</p>
-          <p style="margin:8px 2px 0;font-size:13px;color:rgba(255,255,255,0.65);text-align:center;">Baker, florist or artisan? Join above with your WhatsApp number, then register in the QuickGift app at launch.</p>
+          <p style="margin:8px 2px 0;font-size:13px;color:rgba(255,255,255,0.65);text-align:center;">Providers (vendors & artisans) get first access and 0% commission at launch. We'll reach out to set you up.</p>
         </form>
       </div>
     </section>
@@ -592,6 +595,9 @@
           box.style.color = on ? '#1F4A45' : 'rgba(255,255,255,0.78)';
           box.style.boxShadow = on ? '0 6px 14px rgba(0,0,0,0.20)' : 'none';
         });
+        var prov = document.querySelector('.wl-role input[value="provider"]');
+        var skillBox = document.querySelector('.wl-skill');
+        if (skillBox) skillBox.style.display = prov && prov.checked ? 'block' : 'none';
       }
       radio.addEventListener('change', paint);
       paint();
