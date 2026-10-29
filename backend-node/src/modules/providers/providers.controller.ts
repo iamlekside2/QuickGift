@@ -115,28 +115,28 @@ export class ProvidersController {
   @UseGuards(AuthGuard, AdminGuard, PermGuard)
   @Perm('providers.manage')
   @Patch(':id/approve')
-  approve(@Param('id') id: string) {
-    return this.providers.approve(id);
+  approve(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.providers.approve(id, user);
   }
 
   @UseGuards(AuthGuard, AdminGuard, PermGuard)
   @Perm('providers.manage')
   @Patch(':id/reject')
-  reject(@Param('id') id: string, @Body() body: { reason?: string }) {
-    return this.providers.reject(id, body?.reason ?? '');
+  reject(@Param('id') id: string, @Body() body: { reason?: string }, @CurrentUser() user: AuthUser) {
+    return this.providers.reject(id, body?.reason ?? '', user);
   }
 
   @UseGuards(AuthGuard, AdminGuard, PermGuard)
   @Perm('providers.manage')
   @Patch(':id/suspend')
-  suspend(@Param('id') id: string, @Body() body: { reason?: string }) {
-    return this.providers.suspend(id, body?.reason ?? '');
+  suspend(@Param('id') id: string, @Body() body: { reason?: string }, @CurrentUser() user: AuthUser) {
+    return this.providers.suspend(id, body?.reason ?? '', user);
   }
 
   @UseGuards(AuthGuard, AdminGuard, PermGuard)
   @Perm('providers.manage')
   @Patch(':id/reactivate')
-  reactivate(@Param('id') id: string) {
-    return this.providers.reactivate(id);
+  reactivate(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.providers.reactivate(id, user);
   }
 }

@@ -4,12 +4,12 @@ import {
   Injectable,
   Logger,
   NotFoundException,
-  OnModuleInit,
 } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { DatabaseService } from '../../database/database.service';
 import { SecurityService } from '../../common/security.service';
 import { NotifyService } from '../../common/notify.service';
+import { AuditService } from '../../common/audit.service';
 import {
   ADMIN_ROLES,
   ELEVATED_ROLES,
@@ -25,45 +25,15 @@ const PAID_PAYOUT_STATUSES = ['held', 'released', 'paid'];
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 @Injectable()
-export class AdminService implements OnModuleInit {
+export class AdminService {
   private readonly logger = new Logger(AdminService.name);
 
   constructor(
     private readonly db: DatabaseService,
     private readonly security: SecurityService,
     private readonly notifier: NotifyService,
+    private readonly audit: AuditService,
   ) {}
-
-  async onModuleInit() {
-    // Audit trail for sensitive admin actions (who did what, to what, when).
-    // Started as team-only (hence the table name); `entity` widens it to cover
-    // payouts, withdrawals, users and products too.
-    await this.db.query(`
-      CREATE TABLE IF NOT EXISTS staff_audit_logs (
-        id          UUID PRIMARY KEY,
-        actor_id    UUID,
-        actor_name  TEXT,
-        actor_email TEXT,
-        action      TEXT NOT NULL,
-        target_id   UUID,
-        target_name TEXT,
-        target_email TEXT,
-        details     TEXT,
-        created_at  TIMESTAMP NOT NULL DEFAULT NOW()
-      )
-    `);
-    await this.db.query(
-      `ALTER TABLE staff_audit_logs ADD COLUMN IF NOT EXISTS entity TEXT NOT NULL DEFAULT 'staff'`,
-    );
-    // target_id was UUID; non-staff targets (e.g. a product id) are also UUIDs,
-    // but widen to TEXT so any id format is safe to log.
-    await this.db.query(
-      `ALTER TABLE staff_audit_logs ALTER COLUMN target_id TYPE TEXT USING target_id::text`,
-    );
-    await this.db.query(
-      `CREATE INDEX IF NOT EXISTS ix_staff_audit_created ON staff_audit_logs(created_at DESC)`,
-    );
-  }
 
   private async num(sql: string, params: any[] = []): Promise<number> {
     const row = await this.db.queryOne<{ v: number }>(sql, params);
@@ -461,88 +431,25 @@ export class AdminService implements OnModuleInit {
     return ROLE_LABELS[role as keyof typeof ROLE_LABELS] || role;
   }
 
-  /** Best-effort audit write — never throws, so it can't fail the real action. */
-  private async writeAudit(
+  /** Delegate to the shared audit writer (kept as a thin wrapper for call sites). */
+  private writeAudit(
     actor: AuthUser | undefined,
     action: string,
     target: { id?: string; full_name?: string | null; email?: string | null },
     details: string,
     entity = 'staff',
   ) {
-    try {
-      let actorName: string | null = null;
-      let actorEmail: string | null = null;
-      if (actor?.user_id) {
-        const a = await this.db.queryOne<{ full_name: string; email: string | null }>(
-          `SELECT full_name, email FROM users WHERE id = $1`,
-          [actor.user_id],
-        );
-        actorName = a?.full_name ?? null;
-        actorEmail = a?.email ?? null;
-      }
-      await this.db.query(
-        `INSERT INTO staff_audit_logs
-           (id, entity, actor_id, actor_name, actor_email, action, target_id, target_name, target_email, details, created_at)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,NOW())`,
-        [
-          randomUUID(),
-          entity,
-          actor?.user_id ?? null,
-          actorName,
-          actorEmail,
-          action,
-          target.id ?? null,
-          target.full_name ?? null,
-          target.email ?? null,
-          details,
-        ],
-      );
-    } catch (err) {
-      this.logger.error(`writeAudit failed: ${(err as Error)?.message}`);
-    }
+    return this.audit.log(actor, action, target, details, entity);
   }
 
-  private readonly AUDIT_FIELDS = `id, entity, actor_id, actor_name, actor_email, action,
-              target_id, target_name, target_email, details, created_at`;
-
   /** Team-only audit feed (Team page Activity tab). */
-  async listStaffAudit(q: any) {
-    const page = Math.max(1, Number(q?.page ?? 1));
-    const perPage = Math.min(100, Math.max(1, Number(q?.per_page ?? 30)));
-    const total = await this.num(
-      `SELECT count(*)::int AS v FROM staff_audit_logs WHERE entity = 'staff'`,
-    );
-    const items = await this.db.query(
-      `SELECT ${this.AUDIT_FIELDS} FROM staff_audit_logs
-       WHERE entity = 'staff'
-       ORDER BY created_at DESC LIMIT $1 OFFSET $2`,
-      [perPage, (page - 1) * perPage],
-    );
-    return { items, total, page, per_page: perPage };
+  listStaffAudit(q: any) {
+    return this.audit.list(q, { staffOnly: true });
   }
 
   /** All sensitive admin actions, optionally filtered by entity. */
-  async listAudit(q: any) {
-    const page = Math.max(1, Number(q?.page ?? 1));
-    const perPage = Math.min(100, Math.max(1, Number(q?.per_page ?? 40)));
-    const where: string[] = [];
-    const params: any[] = [];
-    if (q?.entity) {
-      params.push(q.entity);
-      where.push(`entity = $${params.length}`);
-    }
-    const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
-    const total = await this.num(
-      `SELECT count(*)::int AS v FROM staff_audit_logs ${whereSql}`,
-      params,
-    );
-    const p = [...params, perPage, (page - 1) * perPage];
-    const items = await this.db.query(
-      `SELECT ${this.AUDIT_FIELDS} FROM staff_audit_logs ${whereSql}
-       ORDER BY created_at DESC LIMIT $${p.length - 1} OFFSET $${p.length}`,
-      p,
-    );
-    return { items, total, page, per_page: perPage };
+  listAudit(q: any) {
+    return this.audit.list(q);
   }
 
   private async countOwners(excludeId?: string): Promise<number> {

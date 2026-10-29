@@ -15,6 +15,10 @@ const ACTION_META = {
   cancelled: { label: 'Cancelled', badge: 'badge-gray' },
   completed: { label: 'Completed', badge: 'badge-green' },
   failed: { label: 'Failed', badge: 'badge-gray' },
+  approved: { label: 'Approved', badge: 'badge-green' },
+  rejected: { label: 'Rejected', badge: 'badge-gray' },
+  suspended: { label: 'Suspended', badge: 'badge-gray' },
+  reactivated: { label: 'Reactivated', badge: 'badge-blue' },
 }
 
 const ENTITY_META = {
@@ -23,11 +27,13 @@ const ENTITY_META = {
   product: { label: 'Product', color: 'text-amber-700 bg-amber-50' },
   payout: { label: 'Payout', color: 'text-green-700 bg-green-50' },
   withdrawal: { label: 'Withdrawal', color: 'text-rose-700 bg-rose-50' },
+  provider: { label: 'Provider', color: 'text-purple-700 bg-purple-50' },
 }
 
 const FILTERS = [
   { value: '', label: 'All activity' },
   { value: 'staff', label: 'Team' },
+  { value: 'provider', label: 'Providers' },
   { value: 'payout', label: 'Payouts' },
   { value: 'withdrawal', label: 'Withdrawals' },
   { value: 'user', label: 'Users' },

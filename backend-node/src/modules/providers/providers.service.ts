@@ -7,6 +7,8 @@ import {
 import { randomUUID } from 'crypto';
 import { DatabaseService } from '../../database/database.service';
 import { haversineKm } from '../../common/geo';
+import { AuditService } from '../../common/audit.service';
+import { AuthUser } from '../../common/current-user.decorator';
 
 const PROVIDER_FIELDS = `id, user_id, business_name, service_type, bio, location, city,
   lat, lng, rating, review_count, booking_count, experience_years, status,
@@ -45,7 +47,30 @@ export interface ProviderListQuery {
 
 @Injectable()
 export class ProvidersService {
-  constructor(private readonly db: DatabaseService) {}
+  constructor(
+    private readonly db: DatabaseService,
+    private readonly audit: AuditService,
+  ) {}
+
+  /** Record an admin status change against the provider in the audit log. */
+  private async auditStatus(
+    actor: AuthUser | undefined,
+    providerId: string,
+    action: string,
+    details: string,
+  ) {
+    const p = await this.db.queryOne<{ business_name: string }>(
+      `SELECT business_name FROM providers WHERE id = $1`,
+      [providerId],
+    );
+    await this.audit.log(
+      actor,
+      action,
+      { id: providerId, full_name: p?.business_name || 'Provider' },
+      details,
+      'provider',
+    );
+  }
 
   private withDistance<T>(row: T, distance: number | null = null) {
     return { ...row, distance_km: distance };
@@ -224,7 +249,7 @@ export class ProvidersService {
 
   // --- Admin status actions ---
 
-  async approve(providerId: string) {
+  async approve(providerId: string, actor?: AuthUser) {
     await this.setStatus(
       providerId,
       'verified',
@@ -232,10 +257,11 @@ export class ProvidersService {
       'Account Approved!',
       'Congratulations! Your account has been approved. You can now start receiving orders.',
     );
+    await this.auditStatus(actor, providerId, 'approved', 'Approved & verified the provider');
     return { message: 'Provider approved', status: 'verified' };
   }
 
-  async reject(providerId: string, reason: string) {
+  async reject(providerId: string, reason: string, actor?: AuthUser) {
     await this.setStatus(
       providerId,
       'rejected',
@@ -243,10 +269,12 @@ export class ProvidersService {
       'Application Rejected',
       `Your application has been rejected.${reason ? ' Reason: ' + reason : ''} Please contact support.`,
     );
+    await this.auditStatus(actor, providerId, 'rejected',
+      `Rejected the provider${reason ? ` — ${reason}` : ''}`);
     return { message: 'Provider rejected', status: 'rejected' };
   }
 
-  async suspend(providerId: string, reason: string) {
+  async suspend(providerId: string, reason: string, actor?: AuthUser) {
     await this.setStatus(
       providerId,
       'suspended',
@@ -254,10 +282,12 @@ export class ProvidersService {
       'Account Suspended',
       `Your account has been suspended.${reason ? ' Reason: ' + reason : ''} Please contact support.`,
     );
+    await this.auditStatus(actor, providerId, 'suspended',
+      `Suspended the provider${reason ? ` — ${reason}` : ''}`);
     return { message: 'Provider suspended', status: 'suspended' };
   }
 
-  async reactivate(providerId: string) {
+  async reactivate(providerId: string, actor?: AuthUser) {
     await this.setStatus(
       providerId,
       'verified',
@@ -265,6 +295,7 @@ export class ProvidersService {
       'Account Reactivated!',
       'Great news! Your account has been reactivated. You can now start receiving orders again.',
     );
+    await this.auditStatus(actor, providerId, 'reactivated', 'Reactivated the provider');
     return { message: 'Provider reactivated', status: 'verified' };
   }
 

@@ -139,7 +139,7 @@ export const api = createApi({
         url: `/providers/${id}/approve`,
         method: 'PATCH',
       }),
-      invalidatesTags: ['Providers', 'Dashboard'],
+      invalidatesTags: ['Providers', 'Dashboard', 'TeamAudit'],
     }),
     rejectProvider: builder.mutation({
       query: ({ id, reason }) => ({
@@ -147,7 +147,7 @@ export const api = createApi({
         method: 'PATCH',
         body: { reason },
       }),
-      invalidatesTags: ['Providers', 'Dashboard'],
+      invalidatesTags: ['Providers', 'Dashboard', 'TeamAudit'],
     }),
     suspendProvider: builder.mutation({
       query: ({ id, reason }) => ({
@@ -155,14 +155,14 @@ export const api = createApi({
         method: 'PATCH',
         body: { reason },
       }),
-      invalidatesTags: ['Providers', 'Dashboard'],
+      invalidatesTags: ['Providers', 'Dashboard', 'TeamAudit'],
     }),
     reactivateProvider: builder.mutation({
       query: (id) => ({
         url: `/providers/${id}/reactivate`,
         method: 'PATCH',
       }),
-      invalidatesTags: ['Providers', 'Dashboard'],
+      invalidatesTags: ['Providers', 'Dashboard', 'TeamAudit'],
     }),
 
     // ── Users (Admin) ────────────────────────────────

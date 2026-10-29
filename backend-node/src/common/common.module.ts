@@ -6,11 +6,12 @@ import { MailService } from './mail.service';
 import { AuthGuard } from './auth.guard';
 import { AdminGuard } from './admin.guard';
 import { PermGuard } from './perm.guard';
+import { AuditService } from './audit.service';
 
 /** Shared, app-wide providers (security, SMS, email, notifications, guards). */
 @Global()
 @Module({
-  providers: [SecurityService, SmsService, NotifyService, MailService, AuthGuard, AdminGuard, PermGuard],
-  exports: [SecurityService, SmsService, NotifyService, MailService, AuthGuard, AdminGuard, PermGuard],
+  providers: [SecurityService, SmsService, NotifyService, MailService, AuthGuard, AdminGuard, PermGuard, AuditService],
+  exports: [SecurityService, SmsService, NotifyService, MailService, AuthGuard, AdminGuard, PermGuard, AuditService],
 })
 export class CommonModule {}
