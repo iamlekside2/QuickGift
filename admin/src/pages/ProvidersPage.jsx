@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Search, Star, MapPin, Check, X, Shield, Loader2, Sparkles, UserCheck, Clock, Ban, RotateCcw, AlertTriangle, Pencil } from 'lucide-react'
+import { Search, Star, MapPin, Check, X, Shield, Loader2, Sparkles, UserCheck, Clock, Ban, RotateCcw, AlertTriangle, Pencil, ChevronLeft, ChevronRight } from 'lucide-react'
 import {
   useGetAdminProvidersQuery,
   useApproveProviderMutation,
@@ -33,8 +33,10 @@ const PLAN_STYLES = {
 export default function ProvidersPage() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
+  const [page, setPage] = useState(1)
   const [reasonModal, setReasonModal] = useState(null) // { action: 'reject'|'suspend', providerId, name }
   const [reason, setReason] = useState('')
+  const PER_PAGE = 15
 
   const { data: providers = [], isLoading } = useGetAdminProvidersQuery(statusFilter || undefined)
   const [approveProvider, { isLoading: approving }] = useApproveProviderMutation()
@@ -77,6 +79,12 @@ export default function ProvidersPage() {
   const verifiedCount = allProviders.filter(p => p.status === 'verified').length
   const pendingCount = allProviders.filter(p => p.status === 'pending').length
   const suspendedCount = allProviders.filter(p => p.status === 'suspended' || p.status === 'rejected').length
+
+  // Client-side pagination (the backend returns all providers; stats above need
+  // the full list, so we page the filtered rows here rather than server-side).
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE))
+  const currentPage = Math.min(page, totalPages)
+  const paged = filtered.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE)
 
   const handleApprove = async (id, name) => {
     if (!confirm(`Approve "${name}"? They will gain full access to the platform.`)) return
@@ -226,9 +234,9 @@ export default function ProvidersPage() {
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input type="text" placeholder="Search providers..." value={search} onChange={(e) => setSearch(e.target.value)} className="input pl-10" />
+          <input type="text" placeholder="Search providers..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(1) }} className="input pl-10" />
         </div>
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="select">
+        <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1) }} className="select">
           <option value="">All Status</option>
           <option value="verified">Active</option>
           <option value="pending">Pending</option>
@@ -270,7 +278,7 @@ export default function ProvidersPage() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((provider) => {
+                {paged.map((provider) => {
                   const providerStatus = provider.status || 'pending'
                   return (
                     <tr key={provider.id} className="table-row">
@@ -332,6 +340,30 @@ export default function ProvidersPage() {
                 })}
               </tbody>
             </table>
+          </div>
+          <div className="px-5 py-3.5 border-t border-gray-100 flex items-center justify-between">
+            <span className="text-xs text-gray-500">
+              {filtered.length} {filtered.length === 1 ? 'provider' : 'providers'}
+            </span>
+            {totalPages > 1 && (
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage <= 1}
+                  className="p-1.5 rounded-lg hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronLeft className="w-4 h-4 text-gray-600" />
+                </button>
+                <span className="text-xs text-gray-500 px-2">{currentPage} / {totalPages}</span>
+                <button
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage >= totalPages}
+                  className="p-1.5 rounded-lg hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronRight className="w-4 h-4 text-gray-600" />
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
