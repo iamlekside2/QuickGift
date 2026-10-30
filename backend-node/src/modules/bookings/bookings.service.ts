@@ -8,10 +8,7 @@ import { randomUUID } from 'crypto';
 import { DatabaseService } from '../../database/database.service';
 import { NotifyService } from '../../common/notify.service';
 import { MailService } from '../../common/mail.service';
-
-const BEAUTY_COMMISSION_PERCENT = Number(
-  process.env.BEAUTY_COMMISSION_PERCENT ?? '10.0',
-);
+import { SettingsService } from '../../common/settings.service';
 
 // BookingResponse = curated subset (no commission, lat, lng, payment_ref, updated_at).
 const BOOKING_FIELDS = `id, booking_number, user_id, provider_id, service_id,
@@ -39,6 +36,7 @@ export class BookingsService {
     private readonly db: DatabaseService,
     private readonly notifier: NotifyService,
     private readonly mail: MailService,
+    private readonly settings: SettingsService,
   ) {}
 
   private bookingNumber(): string {
@@ -77,7 +75,8 @@ export class BookingsService {
     if (!service) throw new NotFoundException('Service not found');
 
     const deposit = service.price;
-    const commission = service.price * (BEAUTY_COMMISSION_PERCENT / 100);
+    const beautyCommissionPct = await this.settings.getBeautyCommission();
+    const commission = service.price * (beautyCommissionPct / 100);
     const id = randomUUID();
 
     await this.db.query(

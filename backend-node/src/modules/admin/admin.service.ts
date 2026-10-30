@@ -794,17 +794,6 @@ export class AdminService {
     };
   }
 
-  // ---- settings ----
-  settings() {
-    return {
-      gift_commission: Number(process.env.GIFT_COMMISSION_PERCENT ?? '10.0'),
-      beauty_commission: Number(process.env.BEAUTY_COMMISSION_PERCENT ?? '10.0'),
-      paystack_live: (process.env.PAYSTACK_LIVE || 'false').toLowerCase() === 'true',
-      kwik_env: process.env.KWIK_ENV || 'test',
-      payout_hold_hours: 24,
-    };
-  }
-
   // ---- analytics ----
   async revenueAnalytics() {
     const rows: any[] = [];

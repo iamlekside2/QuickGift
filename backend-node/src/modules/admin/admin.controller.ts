@@ -14,12 +14,16 @@ import { AuthGuard } from '../../common/auth.guard';
 import { AdminGuard } from '../../common/admin.guard';
 import { PermGuard } from '../../common/perm.guard';
 import { Perm } from '../../common/perm.decorator';
+import { SettingsService } from '../../common/settings.service';
 import { CurrentUser, AuthUser } from '../../common/current-user.decorator';
 
 @UseGuards(AuthGuard, AdminGuard, PermGuard)
 @Controller('admin')
 export class AdminController {
-  constructor(private readonly admin: AdminService) {}
+  constructor(
+    private readonly admin: AdminService,
+    private readonly settings: SettingsService,
+  ) {}
 
   @Get('dashboard')
   dashboard() {
@@ -205,8 +209,14 @@ export class AdminController {
   }
 
   @Get('settings')
-  settings() {
-    return this.admin.settings();
+  getSettings() {
+    return this.settings.adminView();
+  }
+
+  @Patch('settings')
+  @Perm('settings.manage')
+  updateSettings(@Body() body: any) {
+    return this.settings.update(body);
   }
 
   @Get('analytics/revenue')

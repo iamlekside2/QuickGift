@@ -26,7 +26,7 @@ const baseQueryWithReauth = async (args, api, extraOptions) => {
 export const api = createApi({
   reducerPath: 'api',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['Dashboard', 'Orders', 'Products', 'Providers', 'Users', 'Bookings', 'Payments', 'Transactions', 'Payouts', 'Disputes', 'Applications', 'Waitlist', 'Team', 'TeamAudit'],
+  tagTypes: ['Dashboard', 'Orders', 'Products', 'Providers', 'Users', 'Bookings', 'Payments', 'Transactions', 'Payouts', 'Disputes', 'Applications', 'Waitlist', 'Team', 'TeamAudit', 'Settings'],
   endpoints: (builder) => ({
     // ── Auth ─────────────────────────────────────────
     login: builder.mutation({
@@ -216,6 +216,15 @@ export const api = createApi({
     // ── Settings (Admin) ────────────────────────────
     getAdminSettings: builder.query({
       query: () => '/admin/settings',
+      providesTags: ['Settings'],
+    }),
+    updateAdminSettings: builder.mutation({
+      query: (body) => ({
+        url: '/admin/settings',
+        method: 'PATCH',
+        body,
+      }),
+      invalidatesTags: ['Settings'],
     }),
 
     // ── Analytics (Admin) ───────────────────────────
@@ -434,6 +443,7 @@ export const {
   useReleasePayoutMutation,
   useCancelPayoutMutation,
   useGetAdminSettingsQuery,
+  useUpdateAdminSettingsMutation,
   useGetRevenueAnalyticsQuery,
   useGetExtendedAnalyticsQuery,
   useGetAdminDisputesQuery,

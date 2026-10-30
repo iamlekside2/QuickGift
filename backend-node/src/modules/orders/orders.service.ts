@@ -8,13 +8,10 @@ import { randomUUID } from 'crypto';
 import { DatabaseService } from '../../database/database.service';
 import { NotifyService } from '../../common/notify.service';
 import { MailService } from '../../common/mail.service';
+import { SettingsService } from '../../common/settings.service';
 
-// Config mirrors app/core/config.py
 const DELIVERY_BASE_FEE = 0;
 const EXPRESS_MULTIPLIER = 1.0;
-const GIFT_COMMISSION_PERCENT = Number(
-  process.env.GIFT_COMMISSION_PERCENT ?? '10.0',
-);
 
 // OrderResponse = curated subset of the orders table.
 const ORDER_FIELDS = `id, order_number, user_id, order_type, status, subtotal,
@@ -34,6 +31,7 @@ export class OrdersService {
     private readonly db: DatabaseService,
     private readonly notifier: NotifyService,
     private readonly mail: MailService,
+    private readonly settings: SettingsService,
   ) {}
 
   private orderNumber(): string {
@@ -89,9 +87,17 @@ export class OrdersService {
       });
     }
 
+    const minOrder = await this.settings.getMinOrderAmount();
+    if (minOrder > 0 && subtotal < minOrder) {
+      throw new BadRequestException(
+        `Minimum order is ${this.naira(minOrder)}. Please add more to your cart.`,
+      );
+    }
+
     let deliveryFee = DELIVERY_BASE_FEE;
     if (req?.is_express) deliveryFee *= EXPRESS_MULTIPLIER;
-    const commission = subtotal * (GIFT_COMMISSION_PERCENT / 100);
+    const giftCommissionPct = await this.settings.getGiftCommission();
+    const commission = subtotal * (giftCommissionPct / 100);
     const total = subtotal + deliveryFee;
 
     const orderId = randomUUID();
