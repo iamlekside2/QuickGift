@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Platform } from 'react-native';
+import { View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
@@ -182,6 +183,7 @@ function TabIcon({ name, focused, color }) {
 }
 
 export default function BuyerTabs() {
+  const insets = useSafeAreaInsets();
   return (
     <Tab.Navigator
       screenOptions={({ route }) => {
@@ -199,20 +201,25 @@ export default function BuyerTabs() {
           return <TabIcon name={iconName} focused={focused} color={color} />;
         },
         tabBarActiveTintColor: '#E8632F',
-        tabBarInactiveTintColor: '#6E6A63',
+        tabBarInactiveTintColor: '#4A4742',
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: '700',
           marginTop: 2,
           letterSpacing: 0.2,
         },
+        // Reserve the device's bottom safe-area (Android nav bar / iOS home
+        // indicator) so the tabs sit above the system buttons instead of under
+        // them. edgeToEdge draws the app behind the system bar, so without this
+        // the OS buttons overlap and dim the tab row.
         tabBarStyle: {
           display: atRoot ? 'flex' : 'none',
-          height: Platform.OS === 'ios' ? 88 : 68,
-          paddingTop: 10,
-          paddingBottom: Platform.OS === 'ios' ? 28 : 8,
+          height: 60 + insets.bottom,
+          paddingTop: 8,
+          paddingBottom: insets.bottom + 8,
           backgroundColor: '#FFFFFF',
-          borderTopWidth: 0,
+          borderTopWidth: 1,
+          borderTopColor: '#EFE9DE',
           elevation: 0,
           shadowColor: '#211F1C',
           shadowOffset: { width: 0, height: -6 },

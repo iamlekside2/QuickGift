@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Platform } from 'react-native';
+import { View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '../components/common/IconCompat';
@@ -130,6 +131,7 @@ function TabIcon({ name, focused, color }) {
 }
 
 export default function ProviderTabs() {
+  const insets = useSafeAreaInsets();
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -144,19 +146,22 @@ export default function ProviderTabs() {
           return <TabIcon name={iconName} focused={focused} color={color} />;
         },
         tabBarActiveTintColor: '#E8632F',
-        tabBarInactiveTintColor: '#6E6A63',
+        tabBarInactiveTintColor: '#4A4742',
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: '700',
           marginTop: 2,
           letterSpacing: 0.2,
         },
+        // Reserve the device's bottom safe-area so the tabs clear the Android
+        // nav bar / iOS home indicator instead of sitting under them.
         tabBarStyle: {
-          height: Platform.OS === 'ios' ? 88 : 68,
-          paddingTop: 10,
-          paddingBottom: Platform.OS === 'ios' ? 28 : 8,
+          height: 60 + insets.bottom,
+          paddingTop: 8,
+          paddingBottom: insets.bottom + 8,
           backgroundColor: '#FFFFFF',
-          borderTopWidth: 0,
+          borderTopWidth: 1,
+          borderTopColor: '#EFE9DE',
           elevation: 0,
           shadowColor: '#211F1C',
           shadowOffset: { width: 0, height: -6 },
