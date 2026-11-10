@@ -1,0 +1,20 @@
+# AWS App Runner config for a SOURCE-code deploy (no Docker image needed).
+# Used when you connect App Runner directly to the GitHub repo with
+# "Source directory" = backend-node. For an image-based deploy use the Dockerfile.
+# Secrets (DATABASE_URL, PAYSTACK_*, BREVO_API_KEY, SECRET_KEY, ...) are NOT set
+# here — add them in the App Runner console (or via SSM Parameter Store). See
+# AWS_DEPLOY.md for the full list.
+version: 1.0
+runtime: nodejs18          # bump to nodejs22 if your App Runner region offers it
+build:
+  commands:
+    build:
+      - npm ci
+      - npm run build
+run:
+  command: node dist/main.js
+  network:
+    port: 8001             # the app listens on $PORT (defaults to 8001)
+  env:
+    - name: NODE_ENV
+      value: production
