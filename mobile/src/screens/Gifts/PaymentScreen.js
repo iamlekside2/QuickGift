@@ -6,6 +6,7 @@ import ScreenHeader from '../../components/common/ScreenHeader';
 import { useAuth } from '../../context/AuthContext';
 import { useWallet } from '../../context/WalletContext';
 import { ordersAPI, paymentsAPI } from '../../services/api';
+import { notifySuccess, notifyError } from '../../utils/haptics';
 
 export default function PaymentScreen({ route, navigation }) {
   const { user } = useAuth();
@@ -25,6 +26,7 @@ export default function PaymentScreen({ route, navigation }) {
   const handlePay = async () => {
     if (paying) return;
     if (insufficientWallet) {
+      notifyError();
       Alert.alert('Insufficient Balance', `Your wallet balance (₦${walletBalance.toLocaleString()}) is less than the total (₦${total.toLocaleString()}). Please fund your wallet or pay with card.`);
       return;
     }
@@ -63,6 +65,7 @@ export default function PaymentScreen({ route, navigation }) {
           return;
         } else {
           // Dev mode fallback — no Paystack key configured
+          notifySuccess();
           Alert.alert(
             'Order Successful!',
             payData.message || `The gift for ${recipient.name} has been placed.`,
@@ -81,6 +84,7 @@ export default function PaymentScreen({ route, navigation }) {
         });
 
         // Step 3b: Success for wallet
+        notifySuccess();
         Alert.alert(
           'Order Successful!',
           `The gift for ${recipient.name} has been sent and will arrive shortly.`,
@@ -91,6 +95,7 @@ export default function PaymentScreen({ route, navigation }) {
         );
       }
     } catch (err) {
+      notifyError();
       const message = err.response?.data?.detail || err.response?.data?.message || err.message || 'Something went wrong. Please try again.';
       Alert.alert('Payment Failed', message);
     } finally {

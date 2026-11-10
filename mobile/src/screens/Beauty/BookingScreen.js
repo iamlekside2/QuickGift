@@ -6,6 +6,7 @@ import { bookingsAPI, paymentsAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import Button from '../../components/common/Button';
 import ScreenHeader from '../../components/common/ScreenHeader';
+import { notifyError } from '../../utils/haptics';
 
 export default function BookingScreen({ navigation, route }) {
   const { user } = useAuth();
@@ -106,6 +107,7 @@ export default function BookingScreen({ navigation, route }) {
         bookingId: booking?.booking_number || booking?.id,
       });
     } catch (err) {
+      notifyError();
       Alert.alert('Booking Failed', err.response?.data?.detail || 'Something went wrong. Please try again.');
     } finally {
       setSubmitting(false);

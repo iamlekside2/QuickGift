@@ -4,6 +4,7 @@ import { WebView } from 'react-native-webview';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '../../components/common/IconCompat';
 import { paymentsAPI, walletAPI } from '../../services/api';
+import { notifySuccess, notifyError } from '../../utils/haptics';
 
 const CALLBACK_KEYWORDS = ['callback', 'trxref', 'reference'];
 
@@ -47,6 +48,7 @@ export default function PaystackWebView({ route, navigation }) {
       const status = res.data?.status || res.data?.data?.status || (res.data?.id ? 'success' : null);
 
       if (status === 'success') {
+        notifySuccess();
         Alert.alert('Payment Successful', 'Your payment has been confirmed.', [
           {
             text: 'OK',
@@ -57,11 +59,13 @@ export default function PaystackWebView({ route, navigation }) {
           },
         ]);
       } else {
+        notifyError();
         Alert.alert('Payment Failed', 'Your payment could not be verified. Please try again.', [
           { text: 'OK', onPress: () => navigation.goBack() },
         ]);
       }
     } catch (err) {
+      notifyError();
       const message = err.response?.data?.detail || err.message || 'Could not verify payment.';
       Alert.alert('Verification Error', message, [
         { text: 'OK', onPress: () => navigation.goBack() },

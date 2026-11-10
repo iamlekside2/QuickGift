@@ -1,13 +1,17 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, Image, TouchableOpacity, Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SerifHeadline } from '../../components/common/Typography';
 import Button from '../../components/common/Button';
+import { notifySuccess } from '../../utils/haptics';
 
 const celebration = require('../../../assets/images/celebration.png');
 
 export default function BookingConfirmedScreen({ navigation, route }) {
   const { providerName, serviceName, when, location, bookingId } = route.params || {};
+
+  // Celebrate the booking with a success haptic when this screen appears.
+  useEffect(() => { notifySuccess(); }, []);
 
   return (
     <View className="flex-1 bg-cream-warm items-center px-6" style={{ paddingTop: Platform.OS === 'ios' ? 90 : 70 }}>
