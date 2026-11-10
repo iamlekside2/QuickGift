@@ -81,6 +81,21 @@ and reference them, or paste them as plain env vars to start.
 - Watch **CloudWatch** logs for the service.
 - Once stable, delete the Render `quickgift-node-api` service.
 
+## 8. CI/CD — auto-deploy on push (optional but recommended)
+The workflow `.github/workflows/deploy-backend-aws.yml` builds the image and
+pushes it to ECR whenever `backend-node/**` changes on `main`.
+1. Create a **deploy IAM user** with ECR push + App Runner permissions
+   (`AmazonEC2ContainerRegistryPowerUser` + an inline policy allowing
+   `apprunner:StartDeployment`). Generate an access key.
+2. Add repo secrets (GitHub → Settings → Secrets and variables → Actions):
+   `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and optionally
+   `APPRUNNER_SERVICE_ARN` (to force a redeploy; omit it if App Runner's
+   automatic-deployments-from-ECR is on).
+3. The workflow's region (`eu-west-1`) and repo name (`quickgift-api`) are set
+   at the top — change them there if yours differ.
+Now every backend push builds, pushes to ECR, and rolls out — hands-off like
+Render. (For stronger security, swap the access keys for GitHub OIDC later.)
+
 ## Rollback
 Nothing is deleted on the Render side until step 7, so to roll back just point
 the clients' API URL back at the Render service. The data lives in RDS now; if
