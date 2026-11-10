@@ -1,6 +1,7 @@
 import React from 'react';
-import { TouchableOpacity, Text, View, Image } from 'react-native';
+import { Text, View, Image } from 'react-native';
 import { Ionicons } from './IconCompat';
+import Tap from './Tap';
 
 // Line-icon placeholder per category (real photography replaces these slots).
 const ICON_MAP = {
@@ -23,7 +24,7 @@ export default React.memo(function GiftCard({ item, onPress }) {
   const iconName = getIcon(item.category || item.category_name);
 
   return (
-    <TouchableOpacity
+    <Tap
       className="w-[165px] bg-white rounded-[22px] overflow-hidden"
       style={{
         shadowColor: '#211F1C',
@@ -33,7 +34,6 @@ export default React.memo(function GiftCard({ item, onPress }) {
         elevation: 4,
       }}
       onPress={onPress}
-      activeOpacity={0.85}
     >
       <View className="h-[120px] bg-cream items-center justify-center relative overflow-hidden">
         {item.image_url ? (
@@ -62,6 +62,6 @@ export default React.memo(function GiftCard({ item, onPress }) {
           </View>
         </View>
       </View>
-    </TouchableOpacity>
+    </Tap>
   );
 })

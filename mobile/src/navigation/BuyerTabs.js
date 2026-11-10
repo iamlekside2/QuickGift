@@ -91,18 +91,18 @@ function commonScreens() {
       <Stack.Screen name="Favourites" component={FavouritesScreen} />
       <Stack.Screen name="ChatList" component={ChatListScreen} />
       <Stack.Screen name="ChatScreen" component={ChatScreen} />
-      <Stack.Screen name="PaystackWebView" component={PaystackWebView} />
-      <Stack.Screen name="WriteReview" component={WriteReviewScreen} />
-      <Stack.Screen name="RaiseDispute" component={RaiseDisputeScreen} />
+      <Stack.Screen name="PaystackWebView" component={PaystackWebView} options={{ animation: 'slide_from_bottom' }} />
+      <Stack.Screen name="WriteReview" component={WriteReviewScreen} options={{ animation: 'slide_from_bottom' }} />
+      <Stack.Screen name="RaiseDispute" component={RaiseDisputeScreen} options={{ animation: 'slide_from_bottom' }} />
       <Stack.Screen name="OrderTracking" component={OrderTrackingScreen} />
-      <Stack.Screen name="LocationPicker" component={LocationPickerScreen} />
+      <Stack.Screen name="LocationPicker" component={LocationPickerScreen} options={{ animation: 'slide_from_bottom' }} />
     </>
   );
 }
 
 function HomeStack() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
       <Stack.Screen name="HomeMain" component={HomeScreen} />
       {giftFlowScreens()}
       {serviceFlowScreens()}
@@ -113,7 +113,7 @@ function HomeStack() {
 
 function GiftsStack() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="GiftsHome">
+    <Stack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right' }} initialRouteName="GiftsHome">
       {giftFlowScreens()}
       {commonScreens()}
     </Stack.Navigator>
@@ -122,7 +122,7 @@ function GiftsStack() {
 
 function ServicesStack() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="BeautyHome">
+    <Stack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right' }} initialRouteName="BeautyHome">
       {serviceFlowScreens()}
       {commonScreens()}
     </Stack.Navigator>
@@ -131,11 +131,11 @@ function ServicesStack() {
 
 function OrdersStack() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
       <Stack.Screen name="OrdersMain" component={OrdersScreen} />
       <Stack.Screen name="OrderTracking" component={OrderTrackingScreen} />
-      <Stack.Screen name="WriteReview" component={WriteReviewScreen} />
-      <Stack.Screen name="RaiseDispute" component={RaiseDisputeScreen} />
+      <Stack.Screen name="WriteReview" component={WriteReviewScreen} options={{ animation: 'slide_from_bottom' }} />
+      <Stack.Screen name="RaiseDispute" component={RaiseDisputeScreen} options={{ animation: 'slide_from_bottom' }} />
       <Stack.Screen name="ChatScreen" component={ChatScreen} />
     </Stack.Navigator>
   );
@@ -143,7 +143,7 @@ function OrdersStack() {
 
 function ProfileStack() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
       <Stack.Screen name="ProfileMain" component={ProfileScreen} />
       <Stack.Screen name="WalletScreen" component={WalletScreen} />
       <Stack.Screen name="WithdrawScreen" component={WithdrawScreen} />
@@ -159,7 +159,7 @@ function ProfileStack() {
       <Stack.Screen name="ReferFriend" component={ReferFriendScreen} />
       <Stack.Screen name="ChatList" component={ChatListScreen} />
       <Stack.Screen name="ChatScreen" component={ChatScreen} />
-      <Stack.Screen name="Feedback" component={FeedbackScreen} />
+      <Stack.Screen name="Feedback" component={FeedbackScreen} options={{ animation: 'slide_from_bottom' }} />
     </Stack.Navigator>
   );
 }

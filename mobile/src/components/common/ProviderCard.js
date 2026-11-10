@@ -1,6 +1,7 @@
 import React from 'react';
-import { TouchableOpacity, Text, View, Image } from 'react-native';
+import { Text, View, Image } from 'react-native';
 import { Ionicons } from './IconCompat';
+import Tap from './Tap';
 
 export default React.memo(function ProviderCard({ item, onPress }) {
   const name = item.business_name || item.name || 'Provider';
@@ -10,7 +11,7 @@ export default React.memo(function ProviderCard({ item, onPress }) {
   const isAvailable = item.is_available ?? item.available ?? false;
 
   return (
-    <TouchableOpacity
+    <Tap
       className="flex-row items-center bg-white rounded-2xl p-3.5 gap-3"
       style={{
         shadowColor: '#211F1C',
@@ -20,7 +21,6 @@ export default React.memo(function ProviderCard({ item, onPress }) {
         elevation: 3,
       }}
       onPress={onPress}
-      activeOpacity={0.85}
     >
       <View className="rounded-2xl bg-teal-light items-center justify-center overflow-hidden" style={{ width: 52, height: 52 }}>
         {item.avatar_url ? (
@@ -75,6 +75,6 @@ export default React.memo(function ProviderCard({ item, onPress }) {
           <Ionicons name="chevron-forward" size={16} color="#9A948A" />
         </View>
       )}
-    </TouchableOpacity>
+    </Tap>
   );
 })

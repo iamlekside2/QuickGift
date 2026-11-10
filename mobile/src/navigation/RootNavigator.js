@@ -34,7 +34,7 @@ export default function RootNavigator() {
   const needsLocation = user && !isGuest && !user?.city;
 
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
       {!user ? (
         <>
           <Stack.Screen name="Splash" component={SplashScreen} />

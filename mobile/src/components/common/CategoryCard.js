@@ -1,6 +1,7 @@
 import React from 'react';
-import { TouchableOpacity, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { Ionicons } from './IconCompat';
+import Tap from './Tap';
 
 // Tinted icon tile + label. `icon` is an Ionicons (outline) name.
 export default React.memo(function CategoryCard({ label, icon, color, onPress, size = 'md' }) {
@@ -10,10 +11,9 @@ export default React.memo(function CategoryCard({ label, icon, color, onPress, s
   const iconSize = isSm ? 20 : 24;
 
   return (
-    <TouchableOpacity
+    <Tap
       className={`items-center ${isSm ? 'w-[72px]' : 'w-[85px]'} gap-2`}
       onPress={onPress}
-      activeOpacity={0.8}
     >
       <View
         className="items-center justify-center rounded-[16px]"
@@ -31,6 +31,6 @@ export default React.memo(function CategoryCard({ label, icon, color, onPress, s
       >
         {label}
       </Text>
-    </TouchableOpacity>
+    </Tap>
   );
 })

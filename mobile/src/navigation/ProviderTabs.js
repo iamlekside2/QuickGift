@@ -64,7 +64,7 @@ const PROVIDER_SCREENS = [
 
 function DashboardStack() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
       <Stack.Screen name="DashboardMain" component={ProviderDashboard} />
       {PROVIDER_SCREENS.map((s) => (
         <Stack.Screen key={s.name} name={s.name} component={s.component} />
@@ -75,7 +75,7 @@ function DashboardStack() {
 
 function BookingsStack() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
       <Stack.Screen name="BookingsMain" component={ProviderBookings} />
       <Stack.Screen name="BookingDetail" component={BookingDetail} />
     </Stack.Navigator>
@@ -84,7 +84,7 @@ function BookingsStack() {
 
 function ProfileStack() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
       <Stack.Screen name="ProfileMain" component={ProfileScreen} />
       {PROVIDER_SCREENS.map((s) => (
         <Stack.Screen key={s.name} name={s.name} component={s.component} />
@@ -95,7 +95,7 @@ function ProfileStack() {
 
 function MessagesStack() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
       <Stack.Screen name="ChatList" component={ChatListScreen} />
       <Stack.Screen name="ChatScreen" component={ChatScreen} />
     </Stack.Navigator>
@@ -104,7 +104,7 @@ function MessagesStack() {
 
 function WalletStack() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
       <Stack.Screen name="WalletMain" component={WalletScreen} />
       <Stack.Screen name="WithdrawScreen" component={WithdrawScreen} />
       <Stack.Screen name="AddBankAccount" component={AddBankAccountScreen} />

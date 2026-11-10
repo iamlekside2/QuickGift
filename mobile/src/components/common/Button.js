@@ -1,5 +1,7 @@
 import React from 'react';
-import { TouchableOpacity, Text, ActivityIndicator } from 'react-native';
+import { Pressable, Text, ActivityIndicator } from 'react-native';
+import { COLORS } from '../../constants/theme';
+import { tapMedium } from '../../utils/haptics';
 
 export default function Button({
   title,
@@ -11,6 +13,7 @@ export default function Button({
   icon,
   style,
   textStyle,
+  haptic = true,
 }) {
   const baseClasses = 'flex-row items-center justify-center rounded-[16px]';
 
@@ -46,29 +49,40 @@ export default function Button({
   };
 
   const tintedShadow = {
-    primary: { shadowColor: '#1F4A45' },
-    terracotta: { shadowColor: '#E8632F' },
+    primary: { shadowColor: COLORS.primary },
+    terracotta: { shadowColor: COLORS.secondary },
+  };
+
+  const isSolid = variant === 'primary' || variant === 'terracotta';
+  const inactive = disabled || loading;
+
+  const handlePress = (e) => {
+    if (inactive) return;
+    if (haptic) tapMedium();
+    onPress?.(e);
   };
 
   return (
-    <TouchableOpacity
+    <Pressable
       className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${disabled ? 'opacity-50' : ''} gap-2`}
-      style={[
-        (variant === 'primary' || variant === 'terracotta') && !disabled ? {
-          ...tintedShadow[variant],
-          shadowOffset: { width: 0, height: 12 },
-          shadowOpacity: 0.26,
-          shadowRadius: 24,
-          elevation: 6,
-        } : {},
+      style={({ pressed }) => [
+        isSolid && !disabled
+          ? {
+              ...tintedShadow[variant],
+              shadowOffset: { width: 0, height: 12 },
+              shadowOpacity: 0.26,
+              shadowRadius: 24,
+              elevation: 6,
+            }
+          : {},
+        { transform: [{ scale: pressed && !inactive ? 0.97 : 1 }], opacity: pressed && !inactive ? 0.95 : 1 },
         style,
       ]}
-      onPress={onPress}
-      disabled={disabled || loading}
-      activeOpacity={0.85}
+      onPress={handlePress}
+      disabled={inactive}
     >
       {loading ? (
-        <ActivityIndicator color={variant === 'primary' || variant === 'terracotta' ? '#fff' : '#1F4A45'} />
+        <ActivityIndicator color={isSolid ? COLORS.textWhite : COLORS.primary} />
       ) : (
         <>
           {icon}
@@ -80,6 +94,6 @@ export default function Button({
           </Text>
         </>
       )}
-    </TouchableOpacity>
+    </Pressable>
   );
 }
