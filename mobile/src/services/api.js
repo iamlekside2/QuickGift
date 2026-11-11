@@ -10,9 +10,12 @@ import { getToken, clearToken } from '../utils/tokenStore';
 // NOTE: update the Render host if your service name differs from render.yaml
 // (service `quickgift-node-api` → https://quickgift-node-api.onrender.com).
 // For local testing on a PHYSICAL device, swap 127.0.0.1 for this machine's LAN IP.
-const API_BASE_URL = __DEV__
-  ? 'http://127.0.0.1:8001/api/v1'
-  : 'https://quickgift-node-api.onrender.com/api/v1';
+// EXPO_PUBLIC_API_URL overrides both, e.g. to test a development session on a
+// real phone against the live backend (the phone cannot reach 127.0.0.1).
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL
+  || (__DEV__
+    ? 'http://127.0.0.1:8001/api/v1'
+    : 'https://quickgift-node-api.onrender.com/api/v1');
 
 const api = axios.create({
   baseURL: API_BASE_URL,
