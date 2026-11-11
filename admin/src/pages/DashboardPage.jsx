@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { useSelector } from 'react-redux'
 import {
   ShoppingCart, Users, DollarSign,
   Sparkles, ArrowUpRight, ArrowDownRight, Loader2, Package,
@@ -7,6 +8,9 @@ import {
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts'
 import { useGetDashboardStatsQuery, useGetAdminOrdersQuery, useGetRevenueAnalyticsQuery, useGetExtendedAnalyticsQuery } from '../services/api'
 import { PieChart, Pie } from 'recharts'
+import { selectCurrentUser } from '../features/authSlice'
+import { hasPerm } from '../lib/permissions'
+import { QueryError } from '../components/QueryError'
 
 const STATUS_STYLES = {
   delivered: 'badge-green',
@@ -21,11 +25,15 @@ const STATUS_LABELS = {
   pending: 'Pending', cancelled: 'Cancelled',
 }
 
+// Compact naira: 950 -> ₦950, 18,500 -> ₦18.5k, 999,999 -> ₦1.0m, 2,340,000 -> ₦2.3m.
+// One decimal is kept so 18,500 is not shown as "19k", and anything that would
+// round up to "1000.0k" is shown in millions instead.
 const formatAmount = (amount) => {
-  if (!amount && amount !== 0) return '\u20A60'
-  if (amount >= 1_000_000) return `\u20A6${(amount / 1_000_000).toFixed(1)}M`
-  if (amount >= 1000) return `\u20A6${(amount / 1000).toFixed(0)}k`
-  return `\u20A6${amount.toLocaleString()}`
+  const n = Number(amount) || 0
+  const abs = Math.abs(n)
+  if (abs >= 999_950) return `\u20A6${(n / 1_000_000).toFixed(1)}m`
+  if (abs >= 1000) return `\u20A6${(n / 1000).toFixed(1)}k`
+  return `\u20A6${n.toLocaleString()}`
 }
 
 const CustomTooltip = ({ active, payload, label }) => {
@@ -47,23 +55,37 @@ const CustomTooltip = ({ active, payload, label }) => {
 }
 
 export default function DashboardPage() {
-  const { data: stats, isLoading: statsLoading } = useGetDashboardStatsQuery()
-  const { data: ordersData, isLoading: ordersLoading } = useGetAdminOrdersQuery({ per_page: 5 })
-  const { data: revenueData } = useGetRevenueAnalyticsQuery()
+  const user = useSelector(selectCurrentUser)
+  // The revenue chart needs finance.view and the recent-orders table needs
+  // orders.view. Without the permission the request is skipped and the section
+  // is hidden, rather than drawing an empty chart or a table of zeros.
+  const canViewFinance = hasPerm(user, 'finance.view')
+  const canViewOrders = hasPerm(user, 'orders.view')
+
+  const {
+    data: stats, isLoading: statsLoading, isFetching: statsFetching,
+    isError: statsError, error: statsErr, refetch: refetchStats,
+  } = useGetDashboardStatsQuery()
+  const {
+    data: ordersData, isLoading: ordersLoading, isFetching: ordersFetching,
+    isError: ordersError, error: ordersErr, refetch: refetchOrders,
+  } = useGetAdminOrdersQuery({ per_page: 5 }, { skip: !canViewOrders })
+  const { data: revenueData } = useGetRevenueAnalyticsQuery(undefined, { skip: !canViewFinance })
   const { data: extendedStats } = useGetExtendedAnalyticsQuery()
 
   const recentOrders = ordersData?.items || []
-  const REVENUE_DATA = revenueData || [
+  const REVENUE_DATA = Array.isArray(revenueData) ? revenueData : [
     { name: 'Mon', gifts: 0, beauty: 0 }, { name: 'Tue', gifts: 0, beauty: 0 },
     { name: 'Wed', gifts: 0, beauty: 0 }, { name: 'Thu', gifts: 0, beauty: 0 },
     { name: 'Fri', gifts: 0, beauty: 0 }, { name: 'Sat', gifts: 0, beauty: 0 },
     { name: 'Sun', gifts: 0, beauty: 0 },
   ]
-  const CATEGORY_DATA = [
-    { name: 'Gifts', orders: stats?.counts?.orders || 0, fill: '#35615D' },
-    { name: 'Bookings', orders: stats?.counts?.bookings || 0, fill: '#FD8950' },
-    { name: 'Providers', orders: stats?.counts?.providers || 0, fill: '#3B82F6' },
-    { name: 'Users', orders: stats?.counts?.users || 0, fill: '#8B5CF6' },
+  // Platform-wide record counts (not a per-category breakdown of orders).
+  const TOTALS_DATA = [
+    { name: 'Orders', count: stats?.counts?.orders || 0, fill: '#35615D' },
+    { name: 'Bookings', count: stats?.counts?.bookings || 0, fill: '#FD8950' },
+    { name: 'Providers', count: stats?.counts?.providers || 0, fill: '#3B82F6' },
+    { name: 'Users', count: stats?.counts?.users || 0, fill: '#8B5CF6' },
   ]
 
   const STATS = [
@@ -138,6 +160,16 @@ export default function DashboardPage() {
     )
   }
 
+  // Every card below is built from this one response, so a failed load is
+  // reported as a failure instead of a page of zeros.
+  if (statsError && !stats) {
+    return (
+      <div className="card py-16 text-center">
+        <QueryError what="the dashboard" error={statsErr} onRetry={refetchStats} retrying={statsFetching} />
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Header */}
@@ -195,6 +227,7 @@ export default function DashboardPage() {
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Revenue Chart */}
+        {canViewFinance && (
         <div className="lg:col-span-2 card p-6">
           <div className="flex items-center justify-between mb-6">
             <div>
@@ -226,36 +259,37 @@ export default function DashboardPage() {
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" vertical={false} />
               <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 12, fill: '#9ca3af' }} axisLine={false} tickLine={false} tickFormatter={(v) => `\u20A6${v / 1000}k`} />
+              <YAxis tick={{ fontSize: 12, fill: '#9ca3af' }} axisLine={false} tickLine={false} tickFormatter={formatAmount} />
               <Tooltip content={<CustomTooltip />} />
               <Area type="monotone" dataKey="gifts" stroke="#35615D" fill="url(#giftGrad)" strokeWidth={2} dot={false} activeDot={{ r: 4, fill: '#35615D', strokeWidth: 2, stroke: '#fff' }} />
               <Area type="monotone" dataKey="beauty" stroke="#FD8950" fill="url(#beautyGrad)" strokeWidth={2} dot={false} activeDot={{ r: 4, fill: '#FD8950', strokeWidth: 2, stroke: '#fff' }} />
             </AreaChart>
           </ResponsiveContainer>
         </div>
+        )}
 
-        {/* Category Chart */}
-        <div className="card p-6">
-          <h3 className="text-sm font-semibold text-gray-900">Top Categories</h3>
-          <p className="text-xs text-gray-500 mt-0.5 mb-6">Orders by category</p>
+        {/* Platform totals chart */}
+        <div className={`card p-6 ${canViewFinance ? '' : 'lg:col-span-3'}`}>
+          <h3 className="text-sm font-semibold text-gray-900">Platform Totals</h3>
+          <p className="text-xs text-gray-500 mt-0.5 mb-6">Total orders, bookings, providers and users</p>
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={CATEGORY_DATA} layout="vertical" margin={{ left: 0 }}>
-              <XAxis type="number" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
+            <BarChart data={TOTALS_DATA} layout="vertical" margin={{ left: 0 }}>
+              <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
               <YAxis type="category" dataKey="name" tick={{ fontSize: 12, fill: '#6b7280' }} axisLine={false} tickLine={false} width={60} />
               <Tooltip
                 content={({ active, payload }) => {
                   if (active && payload && payload.length) {
                     return (
                       <div className="bg-gray-900 text-white px-3 py-2 rounded-lg text-xs shadow-xl">
-                        <span className="font-semibold">{payload[0]?.payload?.name}:</span> {payload[0]?.value} orders
+                        <span className="font-semibold">{payload[0]?.payload?.name}:</span> {Number(payload[0]?.value || 0).toLocaleString()}
                       </div>
                     )
                   }
                   return null
                 }}
               />
-              <Bar dataKey="orders" radius={[0, 6, 6, 0]} barSize={22}>
-                {CATEGORY_DATA.map((entry, index) => (
+              <Bar dataKey="count" radius={[0, 6, 6, 0]} barSize={22}>
+                {TOTALS_DATA.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.fill} />
                 ))}
               </Bar>
@@ -334,6 +368,7 @@ export default function DashboardPage() {
       )}
 
       {/* Recent Orders */}
+      {canViewOrders && (
       <div className="card overflow-hidden">
         <div className="px-6 py-4 flex items-center justify-between border-b border-gray-100">
           <div>
@@ -359,6 +394,10 @@ export default function DashboardPage() {
             <tbody>
               {ordersLoading ? (
                 <tr><td colSpan={5} className="px-6 py-10 text-center text-gray-400"><Loader2 className="w-5 h-5 animate-spin mx-auto" /></td></tr>
+              ) : ordersError ? (
+                <tr><td colSpan={5} className="px-6 py-10 text-center">
+                  <QueryError what="recent orders" error={ordersErr} onRetry={refetchOrders} retrying={ordersFetching} />
+                </td></tr>
               ) : recentOrders.length === 0 ? (
                 <tr><td colSpan={5} className="px-6 py-10 text-center text-gray-400 text-sm">No orders yet</td></tr>
               ) : (
@@ -384,6 +423,7 @@ export default function DashboardPage() {
           </table>
         </div>
       </div>
+      )}
     </div>
   )
 }

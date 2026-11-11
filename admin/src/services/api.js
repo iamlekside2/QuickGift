@@ -1,7 +1,7 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 import { logout } from '../features/authSlice'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://quickgift-api.onrender.com/api/v1'
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://quickgift-node-api.onrender.com/api/v1'
 
 const baseQuery = fetchBaseQuery({
   baseUrl: API_BASE_URL,
@@ -16,7 +16,15 @@ const baseQuery = fetchBaseQuery({
 
 const baseQueryWithReauth = async (args, api, extraOptions) => {
   const result = await baseQuery(args, api, extraOptions)
-  if (result?.error?.status === 401) {
+  // A 401 means the stored session is no longer valid: drop it and go back to
+  // the sign-in screen. A wrong password on the login request itself is also a
+  // 401, and so is any request made with no session at all; neither has a
+  // session to expire, so the caller is left to show the error in place.
+  if (
+    result?.error?.status === 401 &&
+    api.endpoint !== 'login' &&
+    localStorage.getItem('admin_token')
+  ) {
     api.dispatch(logout())
     window.location.href = '/login'
   }
@@ -26,7 +34,7 @@ const baseQueryWithReauth = async (args, api, extraOptions) => {
 export const api = createApi({
   reducerPath: 'api',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['Dashboard', 'Orders', 'Products', 'Providers', 'Users', 'Bookings', 'Payments', 'Transactions', 'Payouts', 'Disputes', 'Applications', 'Waitlist', 'Team', 'TeamAudit', 'Settings'],
+  tagTypes: ['Dashboard', 'Orders', 'Products', 'Providers', 'Users', 'Bookings', 'Payments', 'Transactions', 'Payouts', 'Withdrawals', 'Disputes', 'Applications', 'Waitlist', 'Team', 'TeamAudit', 'Settings'],
   endpoints: (builder) => ({
     // ── Auth ─────────────────────────────────────────
     login: builder.mutation({
@@ -48,10 +56,11 @@ export const api = createApi({
 
     // ── Orders (Admin) ──────────────────────────────
     getAdminOrders: builder.query({
-      query: ({ status, order_type, page = 1, per_page = 20 } = {}) => {
+      query: ({ status, order_type, search, page = 1, per_page = 20 } = {}) => {
         const params = new URLSearchParams()
         if (status) params.append('status', status)
         if (order_type) params.append('order_type', order_type)
+        if (search) params.append('search', search)
         params.append('page', page)
         params.append('per_page', per_page)
         return `/admin/orders?${params.toString()}`
@@ -80,14 +89,17 @@ export const api = createApi({
     }),
 
     // ── Products ─────────────────────────────────────
-    getProducts: builder.query({
-      query: ({ category_id, sort, page = 1, per_page = 50 } = {}) => {
+    // The admin list, not the public /products: it returns every status
+    // (active / inactive / draft) so hidden products stay visible and editable.
+    getAdminProducts: builder.query({
+      query: ({ search, status, category_id, page = 1, per_page = 20 } = {}) => {
         const params = new URLSearchParams()
+        if (search) params.append('search', search)
+        if (status) params.append('status', status)
         if (category_id) params.append('category_id', category_id)
-        if (sort) params.append('sort', sort)
         params.append('page', page)
         params.append('per_page', per_page)
-        return `/products?${params.toString()}`
+        return `/admin/products?${params.toString()}`
       },
       providesTags: ['Products'],
     }),
@@ -230,9 +242,11 @@ export const api = createApi({
     // ── Analytics (Admin) ───────────────────────────
     getRevenueAnalytics: builder.query({
       query: () => '/admin/analytics/revenue',
+      providesTags: ['Dashboard'],
     }),
     getExtendedAnalytics: builder.query({
       query: () => '/admin/analytics/extended',
+      providesTags: ['Dashboard'],
     }),
 
     // ── Payments (Admin) ────────────────────────────
@@ -249,9 +263,10 @@ export const api = createApi({
 
     // ── Transactions (Admin) ────────────────────────
     getAdminTransactions: builder.query({
-      query: ({ type, page = 1, per_page = 20 } = {}) => {
+      query: ({ type, search, page = 1, per_page = 20 } = {}) => {
         const params = new URLSearchParams()
         if (type) params.append('type', type)
+        if (search) params.append('search', search)
         params.append('page', page)
         params.append('per_page', per_page)
         return `/admin/transactions?${params.toString()}`
@@ -270,20 +285,25 @@ export const api = createApi({
       },
       providesTags: ['Disputes'],
     }),
+    // `resolution` is exactly 'buyer' or 'provider'. `refund_amount` is optional;
+    // when it is left out the server refunds the full order/booking amount.
     resolveDispute: builder.mutation({
-      query: ({ id, resolution, notes }) => ({
+      query: ({ id, resolution, notes, refund_amount }) => ({
         url: `/disputes/admin/${id}/resolve`,
         method: 'PATCH',
-        body: { resolution, notes },
+        body: refund_amount === undefined
+          ? { resolution, notes }
+          : { resolution, notes, refund_amount },
       }),
-      invalidatesTags: ['Disputes', 'Dashboard'],
+      invalidatesTags: ['Disputes', 'Dashboard', 'Transactions', 'Payouts'],
     }),
 
     // ── Payouts (Admin) ─────────────────────────────
     getAdminPayouts: builder.query({
-      query: ({ status, page = 1, per_page = 20 } = {}) => {
+      query: ({ status, search, page = 1, per_page = 20 } = {}) => {
         const params = new URLSearchParams()
         if (status) params.append('status', status)
+        if (search) params.append('search', search)
         params.append('page', page)
         params.append('per_page', per_page)
         return `/admin/payouts?${params.toString()}`
@@ -299,7 +319,7 @@ export const api = createApi({
         url: `/admin/payouts/${id}/release`,
         method: 'PATCH',
       }),
-      invalidatesTags: ['Payouts', 'Dashboard', 'TeamAudit'],
+      invalidatesTags: ['Payouts', 'Transactions', 'Dashboard', 'TeamAudit'],
     }),
     cancelPayout: builder.mutation({
       query: (id) => ({
@@ -307,6 +327,33 @@ export const api = createApi({
         method: 'PATCH',
       }),
       invalidatesTags: ['Payouts', 'Dashboard', 'TeamAudit'],
+    }),
+
+    // ── Withdrawals (Admin) ─────────────────────────
+    getWithdrawals: builder.query({
+      query: ({ status, page = 1, per_page = 20 } = {}) => {
+        const params = new URLSearchParams()
+        if (status) params.append('status', status)
+        params.append('page', page)
+        params.append('per_page', per_page)
+        return `/admin/withdrawals?${params.toString()}`
+      },
+      providesTags: ['Withdrawals'],
+    }),
+    completeWithdrawal: builder.mutation({
+      query: (id) => ({
+        url: `/admin/withdrawals/${id}/complete`,
+        method: 'PATCH',
+      }),
+      invalidatesTags: ['Withdrawals', 'Transactions', 'Dashboard', 'TeamAudit'],
+    }),
+    // Failing a withdrawal refunds the amount to the user's wallet.
+    failWithdrawal: builder.mutation({
+      query: (id) => ({
+        url: `/admin/withdrawals/${id}/fail`,
+        method: 'PATCH',
+      }),
+      invalidatesTags: ['Withdrawals', 'Transactions', 'Dashboard', 'TeamAudit'],
     }),
 
     // ── Provider Applications (from the landing page) ───────────
@@ -419,7 +466,7 @@ export const {
   useGetAdminOrdersQuery,
   useUpdateOrderStatusMutation,
   useGetAdminBookingsQuery,
-  useGetProductsQuery,
+  useGetAdminProductsQuery,
   useGetCategoriesQuery,
   useCreateProductMutation,
   useUpdateProductMutation,
@@ -442,6 +489,9 @@ export const {
   useGetPayoutStatsQuery,
   useReleasePayoutMutation,
   useCancelPayoutMutation,
+  useGetWithdrawalsQuery,
+  useCompleteWithdrawalMutation,
+  useFailWithdrawalMutation,
   useGetAdminSettingsQuery,
   useUpdateAdminSettingsMutation,
   useGetRevenueAnalyticsQuery,

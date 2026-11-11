@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Loader2, UserPlus, Mail, ChevronLeft, ChevronRight, ExternalLink, Trash2 } from 'lucide-react'
+import { useSelector } from 'react-redux'
+import { Loader2, UserPlus, Mail, ExternalLink, Trash2 } from 'lucide-react'
 import {
   useGetProviderApplicationsQuery,
   useUpdateApplicationStatusMutation,
@@ -7,6 +8,13 @@ import {
   useGetWaitlistQuery,
   useDeleteWaitlistSignupMutation,
 } from '../services/api'
+import { selectCurrentUser } from '../features/authSlice'
+import { hasPerm } from '../lib/permissions'
+import { errMsg } from '../lib/errors'
+import Pagination from '../components/Pagination'
+import { ErrorRow } from '../components/QueryError'
+
+const PER_PAGE = 20
 
 const STATUS_STYLES = {
   new: 'badge-yellow',
@@ -41,68 +49,29 @@ const APP_FILTERS = [
   { value: 'rejected', label: 'Rejected' },
 ]
 
-function Pagination({ page, setPage, total, totalPages, isFetching, label }) {
-  return (
-    <div className="px-5 py-3.5 border-t border-gray-100 flex items-center justify-between">
-      <span className="text-xs text-gray-500">
-        {isFetching && <Loader2 className="w-3 h-3 animate-spin inline mr-1.5" />}
-        {total} {label}
-      </span>
-      {totalPages > 1 && (
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page <= 1}
-            className="p-1.5 rounded-lg hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-          >
-            <ChevronLeft className="w-4 h-4 text-gray-600" />
-          </button>
-          {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => i + 1).map((p) => (
-            <button
-              key={p}
-              onClick={() => setPage(p)}
-              className={`w-8 h-8 rounded-lg text-xs font-medium transition-colors ${
-                page === p ? 'bg-teal-500 text-white shadow-sm' : 'text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              {p}
-            </button>
-          ))}
-          <button
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            disabled={page >= totalPages}
-            className="p-1.5 rounded-lg hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-          >
-            <ChevronRight className="w-4 h-4 text-gray-600" />
-          </button>
-        </div>
-      )}
-    </div>
-  )
-}
-
-function ApplicationsTab() {
+function ApplicationsTab({ canManage }) {
   const [statusFilter, setStatusFilter] = useState('')
   const [page, setPage] = useState(1)
-  const { data, isLoading, isFetching } = useGetProviderApplicationsQuery({
+  const { data, isLoading, isFetching, isError, error, refetch } = useGetProviderApplicationsQuery({
     status: statusFilter || undefined,
     page,
-    per_page: 20,
+    per_page: PER_PAGE,
   })
-  const [updateStatus, { isLoading: isUpdating }] = useUpdateApplicationStatusMutation()
+  const [updateStatus] = useUpdateApplicationStatusMutation()
   const [deleteApplication] = useDeleteApplicationMutation()
   const [busyId, setBusyId] = useState(null)
 
   const items = data?.items || []
   const total = data?.total || 0
-  const totalPages = Math.ceil(total / 20)
+  const totalPages = Math.ceil(total / PER_PAGE)
+  const colSpan = canManage ? 8 : 7
 
   const handleAction = async (id, status) => {
     setBusyId(id)
     try {
       await updateStatus({ id, status }).unwrap()
     } catch (err) {
-      alert(err?.data?.message || 'Failed to update application')
+      alert(errMsg(err, 'Failed to update application'))
     } finally {
       setBusyId(null)
     }
@@ -114,7 +83,7 @@ function ApplicationsTab() {
     try {
       await deleteApplication(app.id).unwrap()
     } catch (err) {
-      alert(err?.data?.message || 'Failed to remove application')
+      alert(errMsg(err, 'Failed to remove application'))
     } finally {
       setBusyId(null)
     }
@@ -151,22 +120,24 @@ function ApplicationsTab() {
                 <th className="table-header">Contact</th>
                 <th className="table-header">Status</th>
                 <th className="table-header">Date</th>
-                <th className="table-header w-[180px]">Actions</th>
+                {canManage && <th className="table-header w-[180px]">Actions</th>}
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-16 text-center">
+                  <td colSpan={colSpan} className="px-6 py-16 text-center">
                     <div className="flex flex-col items-center gap-2">
                       <Loader2 className="w-6 h-6 text-teal-500 animate-spin" />
                       <span className="text-sm text-gray-400">Loading applications...</span>
                     </div>
                   </td>
                 </tr>
+              ) : isError ? (
+                <ErrorRow colSpan={colSpan} what="applications" error={error} onRetry={refetch} retrying={isFetching} />
               ) : items.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-16 text-center">
+                  <td colSpan={colSpan} className="px-6 py-16 text-center">
                     <div className="flex flex-col items-center gap-2">
                       <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
                         <UserPlus className="w-6 h-6 text-gray-400" />
@@ -208,32 +179,34 @@ function ApplicationsTab() {
                     <td className="table-cell text-gray-500">
                       {app.created_at ? new Date(app.created_at).toLocaleDateString() : '—'}
                     </td>
-                    <td className="table-cell">
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        {(NEXT_ACTIONS[app.status] || []).map((a) => (
+                    {canManage && (
+                      <td className="table-cell">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          {(NEXT_ACTIONS[app.status] || []).map((a) => (
+                            <button
+                              key={a.status}
+                              onClick={() => handleAction(app.id, a.status)}
+                              disabled={busyId === app.id}
+                              className={`px-2.5 py-1.5 text-xs font-medium rounded-lg transition-colors disabled:opacity-50 ${
+                                a.status === 'rejected'
+                                  ? 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                  : 'bg-teal-500 text-white hover:bg-teal-600'
+                              }`}
+                            >
+                              {a.label}
+                            </button>
+                          ))}
                           <button
-                            key={a.status}
-                            onClick={() => handleAction(app.id, a.status)}
+                            onClick={() => handleDelete(app)}
                             disabled={busyId === app.id}
-                            className={`px-2.5 py-1.5 text-xs font-medium rounded-lg transition-colors disabled:opacity-50 ${
-                              a.status === 'rejected'
-                                ? 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                : 'bg-teal-500 text-white hover:bg-teal-600'
-                            }`}
+                            title="Remove application"
+                            className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
                           >
-                            {a.label}
+                            <Trash2 className="w-4 h-4" />
                           </button>
-                        ))}
-                        <button
-                          onClick={() => handleDelete(app)}
-                          disabled={busyId === app.id}
-                          title="Remove application"
-                          className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 ))
               )}
@@ -242,25 +215,26 @@ function ApplicationsTab() {
         </div>
         <Pagination
           page={page}
-          setPage={setPage}
-          total={total}
           totalPages={totalPages}
-          isFetching={isFetching}
+          onPageChange={setPage}
+          total={total}
           label="applications"
+          isFetching={isFetching}
         />
       </div>
     </>
   )
 }
 
-function WaitlistTab() {
+function WaitlistTab({ canManage }) {
   const [page, setPage] = useState(1)
-  const { data, isLoading, isFetching } = useGetWaitlistQuery({ page, per_page: 20 })
+  const { data, isLoading, isFetching, isError, error, refetch } = useGetWaitlistQuery({ page, per_page: PER_PAGE })
   const [deleteSignup] = useDeleteWaitlistSignupMutation()
   const [busyId, setBusyId] = useState(null)
   const items = data?.items || []
   const total = data?.total || 0
-  const totalPages = Math.ceil(total / 20)
+  const totalPages = Math.ceil(total / PER_PAGE)
+  const colSpan = canManage ? 6 : 5
 
   const handleDelete = async (row) => {
     if (!window.confirm(`Remove ${row.email || row.phone} from the waitlist? This cannot be undone.`)) return
@@ -268,7 +242,7 @@ function WaitlistTab() {
     try {
       await deleteSignup(row.id).unwrap()
     } catch (err) {
-      alert(err?.data?.message || 'Failed to remove signup')
+      alert(errMsg(err, 'Failed to remove signup'))
     } finally {
       setBusyId(null)
     }
@@ -285,22 +259,24 @@ function WaitlistTab() {
               <th className="table-header">Skill</th>
               <th className="table-header">Source</th>
               <th className="table-header">Date</th>
-              <th className="table-header w-[80px]">Actions</th>
+              {canManage && <th className="table-header w-[80px]">Actions</th>}
             </tr>
           </thead>
           <tbody>
             {isLoading ? (
               <tr>
-                <td colSpan={6} className="px-6 py-16 text-center">
+                <td colSpan={colSpan} className="px-6 py-16 text-center">
                   <div className="flex flex-col items-center gap-2">
                     <Loader2 className="w-6 h-6 text-teal-500 animate-spin" />
                     <span className="text-sm text-gray-400">Loading waitlist...</span>
                   </div>
                 </td>
               </tr>
+            ) : isError ? (
+              <ErrorRow colSpan={colSpan} what="the waitlist" error={error} onRetry={refetch} retrying={isFetching} />
             ) : items.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-6 py-16 text-center">
+                <td colSpan={colSpan} className="px-6 py-16 text-center">
                   <div className="flex flex-col items-center gap-2">
                     <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
                       <Mail className="w-6 h-6 text-gray-400" />
@@ -326,16 +302,18 @@ function WaitlistTab() {
                   <td className="table-cell text-gray-500">
                     {row.created_at ? new Date(row.created_at).toLocaleDateString() : '—'}
                   </td>
-                  <td className="table-cell">
-                    <button
-                      onClick={() => handleDelete(row)}
-                      disabled={busyId === row.id}
-                      title="Remove signup"
-                      className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </td>
+                  {canManage && (
+                    <td className="table-cell">
+                      <button
+                        onClick={() => handleDelete(row)}
+                        disabled={busyId === row.id}
+                        title="Remove signup"
+                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </td>
+                  )}
                 </tr>
               ))
             )}
@@ -344,17 +322,19 @@ function WaitlistTab() {
       </div>
       <Pagination
         page={page}
-        setPage={setPage}
-        total={total}
         totalPages={totalPages}
-        isFetching={isFetching}
+        onPageChange={setPage}
+        total={total}
         label="signups"
+        isFetching={isFetching}
       />
     </div>
   )
 }
 
 export default function ApplicationsPage() {
+  const user = useSelector(selectCurrentUser)
+  const canManage = hasPerm(user, 'applications.manage')
   const [tab, setTab] = useState('applications')
 
   return (
@@ -386,7 +366,7 @@ export default function ApplicationsPage() {
         </button>
       </div>
 
-      {tab === 'applications' ? <ApplicationsTab /> : <WaitlistTab />}
+      {tab === 'applications' ? <ApplicationsTab canManage={canManage} /> : <WaitlistTab canManage={canManage} />}
     </div>
   )
 }

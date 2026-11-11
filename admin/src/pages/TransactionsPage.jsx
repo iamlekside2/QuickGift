@@ -1,33 +1,42 @@
 import { useState } from 'react'
-import { Search, Download, Loader2, ArrowUpRight, ArrowDownLeft, Wallet, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Search, Download, Loader2, ArrowUpRight, ArrowDownLeft, Wallet } from 'lucide-react'
 import { useGetAdminTransactionsQuery } from '../services/api'
+import { downloadCsv, csvDate } from '../lib/csv'
+import { useDebouncedSearch } from '../lib/useDebouncedSearch'
+import Pagination from '../components/Pagination'
+import { ErrorRow } from '../components/QueryError'
 
-const TYPE_STYLES = {
-  credit: 'badge-green',
-  debit: 'badge-red',
-}
+const PER_PAGE = 20
 
 export default function TransactionsPage() {
-  const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState('')
   const [page, setPage] = useState(1)
+  const search = useDebouncedSearch(() => setPage(1))
 
-  const { data, isLoading, isFetching } = useGetAdminTransactionsQuery({
+  const { data, isLoading, isFetching, isError, error, refetch } = useGetAdminTransactionsQuery({
     type: typeFilter || undefined,
+    search: search.query || undefined,
     page,
-    per_page: 20,
+    per_page: PER_PAGE,
   })
 
   const transactions = data?.items || []
   const total = data?.total || 0
-  const totalPages = Math.ceil(total / 20)
+  const totalPages = Math.ceil(total / PER_PAGE)
 
-  const filtered = transactions.filter(t => {
-    if (search && !t.reference?.toLowerCase().includes(search.toLowerCase()) && !t.description?.toLowerCase().includes(search.toLowerCase())) return false
-    return true
-  })
+  const formatPrice = (price) => '₦' + (price || 0).toLocaleString()
 
-  const formatPrice = (price) => '\u20A6' + (price || 0).toLocaleString()
+  const handleExport = () => {
+    if (!transactions.length) return
+    downloadCsv(
+      'quickgift-transactions',
+      ['Type', 'Reference', 'Description', 'Amount', 'Balance after', 'Status', 'Date'],
+      transactions.map((t) => [
+        t.type, t.reference, t.description,
+        Number(t.amount) || 0, Number(t.balance_after) || 0, t.status, csvDate(t.created_at),
+      ]),
+    )
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -37,9 +46,14 @@ export default function TransactionsPage() {
           <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Transactions</h1>
           <p className="text-sm text-gray-500 mt-1">All wallet transactions across the platform</p>
         </div>
-        <button className="btn-secondary">
+        <button
+          className="btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+          onClick={handleExport}
+          disabled={!transactions.length}
+          title="Downloads the rows on this page as a CSV file"
+        >
           <Download className="w-4 h-4" />
-          Export
+          Export page
         </button>
       </div>
 
@@ -49,9 +63,9 @@ export default function TransactionsPage() {
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
             type="text"
-            placeholder="Search by reference or description..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search transactions..."
+            value={search.input}
+            onChange={(e) => search.onChange(e.target.value)}
             className="input pl-10"
           />
         </div>
@@ -89,7 +103,9 @@ export default function TransactionsPage() {
                     <span className="text-sm text-gray-400">Loading transactions...</span>
                   </div>
                 </td></tr>
-              ) : filtered.length === 0 ? (
+              ) : isError ? (
+                <ErrorRow colSpan={7} what="transactions" error={error} onRetry={refetch} retrying={isFetching} />
+              ) : transactions.length === 0 ? (
                 <tr><td colSpan={7} className="px-6 py-16 text-center">
                   <div className="flex flex-col items-center gap-2">
                     <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
@@ -100,7 +116,7 @@ export default function TransactionsPage() {
                   </div>
                 </td></tr>
               ) : (
-                filtered.map((tx) => (
+                transactions.map((tx) => (
                   <tr key={tx.id} className="table-row">
                     <td className="table-cell">
                       <div className="flex items-center gap-2">
@@ -123,7 +139,7 @@ export default function TransactionsPage() {
                     <td className="table-cell">
                       <span className="font-mono text-xs text-gray-600">{tx.reference}</span>
                     </td>
-                    <td className="table-cell text-gray-700 text-sm">{tx.description || '\u2014'}</td>
+                    <td className="table-cell text-gray-700 text-sm">{tx.description || '—'}</td>
                     <td className="table-cell">
                       <span className={`font-semibold ${tx.type === 'credit' ? 'text-emerald-600' : 'text-red-500'}`}>
                         {tx.type === 'credit' ? '+' : '-'}{formatPrice(tx.amount)}
@@ -145,44 +161,14 @@ export default function TransactionsPage() {
           </table>
         </div>
 
-        {/* Pagination */}
-        <div className="px-5 py-3.5 border-t border-gray-100 flex items-center justify-between">
-          <span className="text-xs text-gray-500">
-            {isFetching && <Loader2 className="w-3 h-3 animate-spin inline mr-1.5" />}
-            {total} total transactions
-          </span>
-          {totalPages > 1 && (
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => setPage(p => Math.max(1, p - 1))}
-                disabled={page <= 1}
-                className="p-1.5 rounded-lg hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-              >
-                <ChevronLeft className="w-4 h-4 text-gray-600" />
-              </button>
-              {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => i + 1).map(p => (
-                <button
-                  key={p}
-                  onClick={() => setPage(p)}
-                  className={`w-8 h-8 rounded-lg text-xs font-medium transition-colors ${
-                    page === p
-                      ? 'bg-teal-500 text-white shadow-sm'
-                      : 'text-gray-600 hover:bg-gray-100'
-                  }`}
-                >
-                  {p}
-                </button>
-              ))}
-              <button
-                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                disabled={page >= totalPages}
-                className="p-1.5 rounded-lg hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-              >
-                <ChevronRight className="w-4 h-4 text-gray-600" />
-              </button>
-            </div>
-          )}
-        </div>
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+          total={total}
+          label="total transactions"
+          isFetching={isFetching}
+        />
       </div>
     </div>
   )

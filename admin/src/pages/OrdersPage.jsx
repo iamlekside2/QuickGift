@@ -1,6 +1,16 @@
 import { useState } from 'react'
-import { Search, Download, ChevronDown, Loader2, ShoppingCart, ChevronLeft, ChevronRight } from 'lucide-react'
+import { useSelector } from 'react-redux'
+import { Search, Download, ChevronDown, Loader2, ShoppingCart } from 'lucide-react'
 import { useGetAdminOrdersQuery, useUpdateOrderStatusMutation } from '../services/api'
+import { selectCurrentUser } from '../features/authSlice'
+import { hasPerm } from '../lib/permissions'
+import { errMsg } from '../lib/errors'
+import { downloadCsv, csvDate } from '../lib/csv'
+import { useDebouncedSearch } from '../lib/useDebouncedSearch'
+import Pagination from '../components/Pagination'
+import { ErrorRow } from '../components/QueryError'
+
+const PER_PAGE = 20
 
 const STATUS_STYLES = {
   delivered: 'badge-green',
@@ -21,37 +31,62 @@ const NEXT_STATUS = {
   in_transit: ['delivered'],
 }
 
+// Both of these are final and notify the customer, so they are confirmed first.
+const CONFIRM_BEFORE = {
+  cancelled: (order) => `Cancel order ${order.order_number}? This cannot be undone and the customer will be notified.`,
+  delivered: (order) => `Mark order ${order.order_number} as delivered? This cannot be undone and the customer will be notified.`,
+}
+
+const itemCount = (order) => order.item_count ?? order.items?.length ?? null
+
 export default function OrdersPage() {
-  const [search, setSearch] = useState('')
+  const user = useSelector(selectCurrentUser)
+  const canManage = hasPerm(user, 'orders.manage')
+
   const [statusFilter, setStatusFilter] = useState('')
   const [typeFilter, setTypeFilter] = useState('')
   const [page, setPage] = useState(1)
+  const [busyId, setBusyId] = useState(null)
+  const search = useDebouncedSearch(() => setPage(1))
 
-  const { data, isLoading, isFetching } = useGetAdminOrdersQuery({
+  const { data, isLoading, isFetching, isError, error, refetch } = useGetAdminOrdersQuery({
     status: statusFilter || undefined,
     order_type: typeFilter || undefined,
+    search: search.query || undefined,
     page,
-    per_page: 20,
+    per_page: PER_PAGE,
   })
   const [updateOrderStatus] = useUpdateOrderStatusMutation()
 
   const orders = data?.items || []
   const total = data?.total || 0
-  const totalPages = Math.ceil(total / 20)
+  const totalPages = Math.ceil(total / PER_PAGE)
 
-  const filtered = orders.filter(o => {
-    if (search && !o.order_number?.toLowerCase().includes(search.toLowerCase()) && !o.recipient_name?.toLowerCase().includes(search.toLowerCase())) return false
-    return true
-  })
+  const formatPrice = (price) => '₦' + (price || 0).toLocaleString()
 
-  const formatPrice = (price) => '\u20A6' + (price || 0).toLocaleString()
-
-  const handleStatusChange = async (orderId, newStatus) => {
+  const handleStatusChange = async (order, newStatus) => {
+    const confirmText = CONFIRM_BEFORE[newStatus]
+    if (confirmText && !window.confirm(confirmText(order))) return
+    setBusyId(order.id)
     try {
-      await updateOrderStatus({ id: orderId, status: newStatus }).unwrap()
+      await updateOrderStatus({ id: order.id, status: newStatus }).unwrap()
     } catch (err) {
-      alert(err?.data?.detail || 'Failed to update status')
+      alert(errMsg(err, 'Failed to update status'))
+    } finally {
+      setBusyId(null)
     }
+  }
+
+  const handleExport = () => {
+    if (!orders.length) return
+    downloadCsv(
+      'quickgift-orders',
+      ['Order', 'Type', 'Customer', 'Recipient', 'Recipient phone', 'Items', 'Total', 'Status', 'Date'],
+      orders.map((o) => [
+        o.order_number, o.order_type, o.customer_name, o.recipient_name, o.recipient_phone,
+        itemCount(o) ?? '', Number(o.total) || 0, o.status, csvDate(o.created_at),
+      ]),
+    )
   }
 
   return (
@@ -62,9 +97,14 @@ export default function OrdersPage() {
           <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Orders</h1>
           <p className="text-sm text-gray-500 mt-1">Manage and track all platform orders</p>
         </div>
-        <button className="btn-secondary">
+        <button
+          className="btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+          onClick={handleExport}
+          disabled={!orders.length}
+          title="Downloads the rows on this page as a CSV file"
+        >
           <Download className="w-4 h-4" />
-          Export
+          Export page
         </button>
       </div>
 
@@ -74,9 +114,9 @@ export default function OrdersPage() {
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
             type="text"
-            placeholder="Search by order ID or recipient..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search orders..."
+            value={search.input}
+            onChange={(e) => search.onChange(e.target.value)}
             className="input pl-10"
           />
         </div>
@@ -126,7 +166,9 @@ export default function OrdersPage() {
                     <span className="text-sm text-gray-400">Loading orders...</span>
                   </div>
                 </td></tr>
-              ) : filtered.length === 0 ? (
+              ) : isError ? (
+                <ErrorRow colSpan={7} what="orders" error={error} onRetry={refetch} retrying={isFetching} />
+              ) : orders.length === 0 ? (
                 <tr><td colSpan={7} className="px-6 py-16 text-center">
                   <div className="flex flex-col items-center gap-2">
                     <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
@@ -137,92 +179,76 @@ export default function OrdersPage() {
                   </div>
                 </td></tr>
               ) : (
-                filtered.map((order) => (
-                  <tr key={order.id} className="table-row">
-                    <td className="table-cell">
-                      <div className="font-mono font-medium text-gray-900 text-xs">{order.order_number}</div>
-                      <div className={`text-[11px] mt-0.5 font-medium ${order.order_type === 'gift' ? 'text-teal-600' : 'text-orange-500'}`}>
-                        {order.order_type === 'gift' ? 'Gift' : 'Beauty'}
-                      </div>
-                    </td>
-                    <td className="table-cell">
-                      <div className="font-medium text-gray-900">{order.recipient_name || order.user_name || '\u2014'}</div>
-                      <div className="text-xs text-gray-400 mt-0.5">{order.recipient_phone || ''}</div>
-                    </td>
-                    <td className="table-cell text-gray-600">
-                      {order.items?.length || order.item_count || '\u2014'} item{(order.items?.length || order.item_count || 0) !== 1 ? 's' : ''}
-                    </td>
-                    <td className="table-cell font-semibold text-gray-900">{formatPrice(order.total)}</td>
-                    <td className="table-cell">
-                      <span className={`badge ${STATUS_STYLES[order.status] || 'badge-gray'}`}>
-                        {STATUS_LABELS[order.status] || order.status}
-                      </span>
-                    </td>
-                    <td className="table-cell text-gray-500">{new Date(order.created_at).toLocaleDateString()}</td>
-                    <td className="table-cell" onClick={(e) => e.stopPropagation()}>
-                      {NEXT_STATUS[order.status] ? (
-                        <div className="relative inline-block">
-                          <select
-                            onChange={(e) => { if (e.target.value) handleStatusChange(order.id, e.target.value); e.target.value = '' }}
-                            defaultValue=""
-                            className="appearance-none pl-3 pr-7 py-1.5 text-xs font-medium bg-white border border-gray-200 rounded-lg hover:border-gray-300 cursor-pointer focus:border-teal-400 outline-none transition-colors"
-                          >
-                            <option value="" disabled>Update</option>
-                            {NEXT_STATUS[order.status].map(s => (
-                              <option key={s} value={s}>{STATUS_LABELS[s]}</option>
-                            ))}
-                          </select>
-                          <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" />
+                orders.map((order) => {
+                  const count = itemCount(order)
+                  const rowBusy = busyId === order.id
+                  // The buyer; the person the gift is going to is shown underneath.
+                  const recipientLine = [
+                    order.customer_name && order.recipient_name ? `For ${order.recipient_name}` : '',
+                    order.recipient_phone || '',
+                  ].filter(Boolean).join(' · ')
+                  return (
+                    <tr key={order.id} className="table-row">
+                      <td className="table-cell">
+                        <div className="font-mono font-medium text-gray-900 text-xs">{order.order_number}</div>
+                        <div className={`text-[11px] mt-0.5 font-medium ${order.order_type === 'gift' ? 'text-teal-600' : 'text-orange-500'}`}>
+                          {order.order_type === 'gift' ? 'Gift' : 'Beauty'}
                         </div>
-                      ) : (
-                        <span className="text-xs text-gray-300">\u2014</span>
-                      )}
-                    </td>
-                  </tr>
-                ))
+                      </td>
+                      <td className="table-cell">
+                        <div className="font-medium text-gray-900">{order.customer_name || order.recipient_name || '—'}</div>
+                        {recipientLine && <div className="text-xs text-gray-400 mt-0.5">{recipientLine}</div>}
+                      </td>
+                      <td className="table-cell text-gray-600">
+                        {count === null ? '—' : `${count} item${count === 1 ? '' : 's'}`}
+                      </td>
+                      <td className="table-cell font-semibold text-gray-900">{formatPrice(order.total)}</td>
+                      <td className="table-cell">
+                        <span className={`badge ${STATUS_STYLES[order.status] || 'badge-gray'}`}>
+                          {STATUS_LABELS[order.status] || order.status}
+                        </span>
+                      </td>
+                      <td className="table-cell text-gray-500">{new Date(order.created_at).toLocaleDateString()}</td>
+                      <td className="table-cell">
+                        {canManage && NEXT_STATUS[order.status] ? (
+                          <div className="relative inline-block">
+                            <select
+                              value=""
+                              disabled={rowBusy}
+                              onChange={(e) => { if (e.target.value) handleStatusChange(order, e.target.value) }}
+                              className="appearance-none pl-3 pr-7 py-1.5 text-xs font-medium bg-white border border-gray-200 rounded-lg hover:border-gray-300 cursor-pointer focus:border-teal-400 outline-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              <option value="" disabled>{rowBusy ? 'Saving...' : 'Update'}</option>
+                              {NEXT_STATUS[order.status].map(s => (
+                                <option key={s} value={s}>{STATUS_LABELS[s]}</option>
+                              ))}
+                            </select>
+                            {rowBusy ? (
+                              <Loader2 className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-teal-500 animate-spin pointer-events-none" />
+                            ) : (
+                              <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" />
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-xs text-gray-300">{'—'}</span>
+                        )}
+                      </td>
+                    </tr>
+                  )
+                })
               )}
             </tbody>
           </table>
         </div>
 
-        {/* Pagination */}
-        <div className="px-5 py-3.5 border-t border-gray-100 flex items-center justify-between">
-          <span className="text-xs text-gray-500">
-            {isFetching && <Loader2 className="w-3 h-3 animate-spin inline mr-1.5" />}
-            {total} total orders
-          </span>
-          {totalPages > 1 && (
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => setPage(p => Math.max(1, p - 1))}
-                disabled={page <= 1}
-                className="p-1.5 rounded-lg hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-              >
-                <ChevronLeft className="w-4 h-4 text-gray-600" />
-              </button>
-              {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => i + 1).map(p => (
-                <button
-                  key={p}
-                  onClick={() => setPage(p)}
-                  className={`w-8 h-8 rounded-lg text-xs font-medium transition-colors ${
-                    page === p
-                      ? 'bg-teal-500 text-white shadow-sm'
-                      : 'text-gray-600 hover:bg-gray-100'
-                  }`}
-                >
-                  {p}
-                </button>
-              ))}
-              <button
-                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                disabled={page >= totalPages}
-                className="p-1.5 rounded-lg hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-              >
-                <ChevronRight className="w-4 h-4 text-gray-600" />
-              </button>
-            </div>
-          )}
-        </div>
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+          total={total}
+          label="total orders"
+          isFetching={isFetching}
+        />
       </div>
     </div>
   )

@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /api/
 
-Sitemap: https://quickgift-landing.onrender.com/sitemap.xml
+Sitemap: https://www.quickgift.ng/sitemap.xml

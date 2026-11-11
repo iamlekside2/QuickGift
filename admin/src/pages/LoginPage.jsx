@@ -6,6 +6,7 @@ import logo from '../assets/logo.png'
 import { selectIsAuthenticated, logout } from '../features/authSlice'
 import { isStaff } from '../lib/permissions'
 import { useLoginMutation } from '../services/api'
+import { errMsg } from '../lib/errors'
 
 export default function LoginPage() {
   const navigate = useNavigate()
@@ -37,7 +38,7 @@ export default function LoginPage() {
       }
       navigate('/')
     } catch (err) {
-      setError(err?.data?.detail || err?.data?.message || 'Invalid email or password')
+      setError(errMsg(err, 'Invalid email or password'))
     }
   }
 

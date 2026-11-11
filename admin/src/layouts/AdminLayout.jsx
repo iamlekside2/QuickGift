@@ -3,11 +3,12 @@ import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import {
   LayoutDashboard, ShoppingCart, Package, Sparkles,
-  Users, Menu, X, LogOut, Gift, Bell, CalendarCheck,
+  Users, Menu, X, LogOut, Gift, CalendarCheck,
   Settings, Search, ChevronRight, Wallet, Banknote, AlertTriangle, UserPlus,
   ShieldCheck, ScrollText
 } from 'lucide-react'
 import { logout, selectCurrentUser } from '../features/authSlice'
+import { api, useGetMeQuery } from '../services/api'
 import { hasPerm, roleLabel } from '../lib/permissions'
 import logo from '../assets/logo.png'
 
@@ -38,11 +39,19 @@ export default function AdminLayout() {
   const dispatch = useDispatch()
   const user = useSelector(selectCurrentUser)
 
+  // Refresh the signed-in user once per load. The copy in localStorage can be
+  // stale (a role or permission changed since the last sign-in); authSlice
+  // stores the fresh one when this resolves.
+  useGetMeQuery()
+
   const navItems = NAV_ITEMS.filter((i) => !i.perm || hasPerm(user, i.perm))
   const bottomNav = BOTTOM_NAV.filter((i) => !i.perm || hasPerm(user, i.perm))
 
   const handleLogout = () => {
     dispatch(logout())
+    // Drop every cached response so the next person to sign in on this tab
+    // never sees the previous user's data.
+    dispatch(api.util.resetApiState())
     navigate('/login')
   }
 
@@ -184,12 +193,6 @@ export default function AdminLayout() {
             )}
           </div>
 
-          <div className="ml-auto flex items-center gap-2">
-            <button className="relative p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-              <Bell className="w-[18px] h-[18px]" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-orange-400 rounded-full ring-2 ring-white" />
-            </button>
-          </div>
         </header>
 
         {/* Page Content */}

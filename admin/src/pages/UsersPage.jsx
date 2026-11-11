@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Search, Download, MapPin, Loader2, Wallet, Users as UsersIcon, ChevronLeft, ChevronRight, Trash2, Pencil } from 'lucide-react'
+import { useSelector } from 'react-redux'
+import { Search, Download, MapPin, Loader2, Wallet, Users as UsersIcon, Trash2, Pencil } from 'lucide-react'
 import {
   useGetAdminUsersQuery,
   useUpdateAdminUserMutation,
@@ -7,17 +8,31 @@ import {
   useBulkDeleteAdminUsersMutation,
 } from '../services/api'
 import { FormModal, FieldGrid, TextField, SelectField, ToggleField } from '../components/FormModal'
+import Pagination from '../components/Pagination'
+import { ErrorRow } from '../components/QueryError'
+import { selectCurrentUser } from '../features/authSlice'
+import { hasPerm } from '../lib/permissions'
+import { errMsg } from '../lib/errors'
+import { downloadCsv, csvDate } from '../lib/csv'
+import { useDebouncedSearch } from '../lib/useDebouncedSearch'
+
+const PER_PAGE = 20
 
 export default function UsersPage() {
-  const [search, setSearch] = useState('')
-  const [searchQuery, setSearchQuery] = useState('')
+  const me = useSelector(selectCurrentUser)
+  const canManage = hasPerm(me, 'users.manage')
+
   const [page, setPage] = useState(1)
   const [selected, setSelected] = useState(() => new Set())
+  const search = useDebouncedSearch(() => {
+    setSelected(new Set())
+    setPage(1)
+  })
 
-  const { data, isLoading, isFetching } = useGetAdminUsersQuery({
-    search: searchQuery || undefined,
+  const { data, isLoading, isFetching, isError, error, refetch } = useGetAdminUsersQuery({
+    search: search.query || undefined,
     page,
-    per_page: 20,
+    per_page: PER_PAGE,
   })
   const [deleteUser, { isLoading: deletingOne }] = useDeleteAdminUserMutation()
   const [bulkDelete, { isLoading: deletingBulk }] = useBulkDeleteAdminUsersMutation()
@@ -40,13 +55,14 @@ export default function UsersPage() {
       await updateUser(edit).unwrap()
       setEdit(null)
     } catch (e) {
-      alert(e?.data?.message || 'Could not save changes.')
+      alert(errMsg(e, 'Could not save changes.'))
     }
   }
 
   const users = data?.items || []
   const total = data?.total || 0
-  const totalPages = Math.ceil(total / 20)
+  const totalPages = Math.ceil(total / PER_PAGE)
+  const colSpan = canManage ? 9 : 7
 
   // Only non-admin users can be selected/deleted.
   const deletable = users.filter((u) => u.role !== 'admin')
@@ -55,16 +71,6 @@ export default function UsersPage() {
   const goPage = (p) => {
     setSelected(new Set())
     setPage(p)
-  }
-
-  const handleSearch = (e) => {
-    setSearch(e.target.value)
-    clearTimeout(window._userSearchTimer)
-    window._userSearchTimer = setTimeout(() => {
-      setSearchQuery(e.target.value)
-      setSelected(new Set())
-      setPage(1)
-    }, 400)
   }
 
   const toggleOne = (id) => {
@@ -88,7 +94,7 @@ export default function UsersPage() {
       await deleteUser(user.id).unwrap()
       setSelected((prev) => { const n = new Set(prev); n.delete(user.id); return n })
     } catch (e) {
-      alert(e?.data?.message || 'Could not delete this user.')
+      alert(errMsg(e, 'Could not delete this user.'))
     }
   }
 
@@ -103,27 +109,23 @@ export default function UsersPage() {
         alert(`Deleted ${res.deleted}. Skipped ${res.skipped.length} (admins or linked records).`)
       }
     } catch (e) {
-      alert(e?.data?.message || 'Bulk delete failed.')
+      alert(errMsg(e, 'Bulk delete failed.'))
     }
   }
 
+  // Exports the rows on this page only. Names, emails and cities are typed by
+  // users, so downloadCsv neutralises anything a spreadsheet would run as a formula.
   const handleExport = () => {
     if (!users.length) return
-    const header = ['Name', 'Phone', 'Email', 'Role', 'City', 'Wallet', 'Joined']
-    const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`
-    const lines = users.map((u) => [
-      u.full_name, u.phone, u.email, u.role, u.city,
-      u.wallet_balance || 0,
-      u.created_at ? new Date(u.created_at).toISOString().slice(0, 10) : '',
-    ].map(esc).join(','))
-    const csv = [header.join(','), ...lines].join('\n')
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `quickgift-users-${new Date().toISOString().slice(0, 10)}.csv`
-    a.click()
-    URL.revokeObjectURL(url)
+    downloadCsv(
+      'quickgift-users',
+      ['Name', 'Phone', 'Email', 'Role', 'City', 'Wallet', 'Joined'],
+      users.map((u) => [
+        u.full_name, u.phone, u.email, u.role, u.city,
+        Number(u.wallet_balance) || 0,
+        csvDate(u.created_at),
+      ]),
+    )
   }
 
   const formatPrice = (price) => '₦' + (price || 0).toLocaleString()
@@ -142,9 +144,14 @@ export default function UsersPage() {
           <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Users</h1>
           <p className="text-sm text-gray-500 mt-1">Manage platform users and their accounts</p>
         </div>
-        <button className="btn-secondary" onClick={handleExport} disabled={!users.length}>
+        <button
+          className="btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+          onClick={handleExport}
+          disabled={!users.length}
+          title="Downloads the rows on this page as a CSV file"
+        >
           <Download className="w-4 h-4" />
-          Export
+          Export page
         </button>
       </div>
 
@@ -155,15 +162,15 @@ export default function UsersPage() {
           <input
             type="text"
             placeholder="Search by name, email, or phone..."
-            value={search}
-            onChange={handleSearch}
+            value={search.input}
+            onChange={(e) => search.onChange(e.target.value)}
             className="input pl-10"
           />
         </div>
       </div>
 
       {/* Bulk action bar */}
-      {selected.size > 0 && (
+      {canManage && selected.size > 0 && (
         <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-red-50 border border-red-100 animate-slide-up">
           <span className="text-sm font-medium text-red-700">
             {selected.size} selected
@@ -193,15 +200,18 @@ export default function UsersPage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50/50">
-                <th className="table-header w-10">
-                  <input
-                    type="checkbox"
-                    checked={allSelected}
-                    onChange={toggleAll}
-                    disabled={deletable.length === 0}
-                    className="w-4 h-4 rounded border-gray-300 text-teal-500 focus:ring-teal-500/30 cursor-pointer"
-                  />
-                </th>
+                {canManage && (
+                  <th className="table-header w-10">
+                    <input
+                      type="checkbox"
+                      checked={allSelected}
+                      onChange={toggleAll}
+                      disabled={deletable.length === 0}
+                      aria-label="Select all users on this page"
+                      className="w-4 h-4 rounded border-gray-300 text-teal-500 focus:ring-teal-500/30 cursor-pointer"
+                    />
+                  </th>
+                )}
                 <th className="table-header">Name</th>
                 <th className="table-header">Phone</th>
                 <th className="table-header">Email</th>
@@ -209,19 +219,21 @@ export default function UsersPage() {
                 <th className="table-header">City</th>
                 <th className="table-header">Wallet</th>
                 <th className="table-header">Joined</th>
-                <th className="table-header w-24 text-right">Actions</th>
+                {canManage && <th className="table-header w-24 text-right">Actions</th>}
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
-                <tr><td colSpan={9} className="px-6 py-16 text-center">
+                <tr><td colSpan={colSpan} className="px-6 py-16 text-center">
                   <div className="flex flex-col items-center gap-2">
                     <Loader2 className="w-6 h-6 text-teal-500 animate-spin" />
                     <span className="text-sm text-gray-400">Loading users...</span>
                   </div>
                 </td></tr>
+              ) : isError ? (
+                <ErrorRow colSpan={colSpan} what="users" error={error} onRetry={refetch} retrying={isFetching} />
               ) : users.length === 0 ? (
-                <tr><td colSpan={9} className="px-6 py-16 text-center">
+                <tr><td colSpan={colSpan} className="px-6 py-16 text-center">
                   <div className="flex flex-col items-center gap-2">
                     <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
                       <UsersIcon className="w-6 h-6 text-gray-400" />
@@ -236,16 +248,18 @@ export default function UsersPage() {
                   const checked = selected.has(user.id)
                   return (
                   <tr key={user.id} className={`table-row ${checked ? 'bg-red-50/40' : ''}`}>
-                    <td className="table-cell">
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        onChange={() => toggleOne(user.id)}
-                        disabled={isAdmin}
-                        title={isAdmin ? 'Admin accounts cannot be deleted' : ''}
-                        className="w-4 h-4 rounded border-gray-300 text-teal-500 focus:ring-teal-500/30 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
-                      />
-                    </td>
+                    {canManage && (
+                      <td className="table-cell">
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => toggleOne(user.id)}
+                          disabled={isAdmin}
+                          title={isAdmin ? 'Admin accounts cannot be deleted' : ''}
+                          className="w-4 h-4 rounded border-gray-300 text-teal-500 focus:ring-teal-500/30 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                        />
+                      </td>
+                    )}
                     <td className="table-cell">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 bg-gradient-to-br from-teal-400 to-teal-600 rounded-full flex items-center justify-center shrink-0">
@@ -278,27 +292,29 @@ export default function UsersPage() {
                       </div>
                     </td>
                     <td className="table-cell text-gray-500">{user.created_at ? new Date(user.created_at).toLocaleDateString() : '—'}</td>
-                    <td className="table-cell text-right">
-                      <div className="flex items-center justify-end gap-0.5">
-                        <button
-                          onClick={() => openEdit(user)}
-                          title="Edit user"
-                          className="p-1.5 rounded-lg text-gray-400 hover:text-teal-600 hover:bg-teal-50 transition-colors"
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </button>
-                        {!isAdmin && (
+                    {canManage && (
+                      <td className="table-cell text-right">
+                        <div className="flex items-center justify-end gap-0.5">
                           <button
-                            onClick={() => handleDeleteOne(user)}
-                            disabled={busy}
-                            title="Delete user"
-                            className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors disabled:opacity-40"
+                            onClick={() => openEdit(user)}
+                            title="Edit user"
+                            className="p-1.5 rounded-lg text-gray-400 hover:text-teal-600 hover:bg-teal-50 transition-colors"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Pencil className="w-4 h-4" />
                           </button>
-                        )}
-                      </div>
-                    </td>
+                          {!isAdmin && (
+                            <button
+                              onClick={() => handleDeleteOne(user)}
+                              disabled={busy}
+                              title="Delete user"
+                              className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors disabled:opacity-40"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    )}
                   </tr>
                   )
                 })
@@ -307,47 +323,17 @@ export default function UsersPage() {
           </table>
         </div>
 
-        {/* Pagination */}
-        <div className="px-5 py-3.5 border-t border-gray-100 flex items-center justify-between">
-          <span className="text-xs text-gray-500">
-            {isFetching && <Loader2 className="w-3 h-3 animate-spin inline mr-1.5" />}
-            {total} total users
-          </span>
-          {totalPages > 1 && (
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => goPage(Math.max(1, page - 1))}
-                disabled={page <= 1}
-                className="p-1.5 rounded-lg hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-              >
-                <ChevronLeft className="w-4 h-4 text-gray-600" />
-              </button>
-              {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => i + 1).map(p => (
-                <button
-                  key={p}
-                  onClick={() => goPage(p)}
-                  className={`w-8 h-8 rounded-lg text-xs font-medium transition-colors ${
-                    page === p
-                      ? 'bg-teal-500 text-white shadow-sm'
-                      : 'text-gray-600 hover:bg-gray-100'
-                  }`}
-                >
-                  {p}
-                </button>
-              ))}
-              <button
-                onClick={() => goPage(Math.min(totalPages, page + 1))}
-                disabled={page >= totalPages}
-                className="p-1.5 rounded-lg hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-              >
-                <ChevronRight className="w-4 h-4 text-gray-600" />
-              </button>
-            </div>
-          )}
-        </div>
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          onPageChange={goPage}
+          total={total}
+          label="total users"
+          isFetching={isFetching}
+        />
       </div>
 
-      {edit && (
+      {edit && canManage && (
         <FormModal
           title="Edit user"
           subtitle={edit.full_name || edit.phone}

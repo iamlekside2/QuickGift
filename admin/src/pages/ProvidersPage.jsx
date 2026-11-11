@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Search, Star, MapPin, Check, X, Shield, Loader2, Sparkles, UserCheck, Clock, Ban, RotateCcw, AlertTriangle, Pencil, ChevronLeft, ChevronRight } from 'lucide-react'
+import { useSelector } from 'react-redux'
+import { Search, Star, MapPin, Check, X, Shield, Loader2, Sparkles, UserCheck, Clock, Ban, RotateCcw, AlertTriangle, Pencil } from 'lucide-react'
 import {
   useGetAdminProvidersQuery,
   useApproveProviderMutation,
@@ -9,6 +10,11 @@ import {
   useUpdateAdminProviderMutation,
 } from '../services/api'
 import { FormModal, FieldGrid, TextField, TextAreaField, SelectField, ToggleField } from '../components/FormModal'
+import Pagination from '../components/Pagination'
+import { QueryError } from '../components/QueryError'
+import { selectCurrentUser } from '../features/authSlice'
+import { hasPerm } from '../lib/permissions'
+import { errMsg } from '../lib/errors'
 
 const STATUS_STYLES = {
   verified: 'badge-green',
@@ -31,6 +37,8 @@ const PLAN_STYLES = {
 }
 
 export default function ProvidersPage() {
+  const user = useSelector(selectCurrentUser)
+  const canManage = hasPerm(user, 'providers.manage')
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [page, setPage] = useState(1)
@@ -38,7 +46,9 @@ export default function ProvidersPage() {
   const [reason, setReason] = useState('')
   const PER_PAGE = 15
 
-  const { data: providers = [], isLoading } = useGetAdminProvidersQuery(statusFilter || undefined)
+  // Always fetch the unfiltered list: the stat cards count every provider, so
+  // the status filter is applied to the rows here rather than on the server.
+  const { data: providers = [], isLoading, isFetching, isError, error, refetch } = useGetAdminProvidersQuery(undefined)
   const [approveProvider, { isLoading: approving }] = useApproveProviderMutation()
   const [rejectProvider, { isLoading: rejecting }] = useRejectProviderMutation()
   const [suspendProvider, { isLoading: suspending }] = useSuspendProviderMutation()
@@ -66,12 +76,13 @@ export default function ProvidersPage() {
       await updateProvider({ ...edit, experience_years: Number(edit.experience_years) || 0 }).unwrap()
       setEdit(null)
     } catch (e) {
-      alert(e?.data?.message || 'Could not save changes.')
+      alert(errMsg(e, 'Could not save changes.'))
     }
   }
 
   const allProviders = Array.isArray(providers) ? providers : []
   const filtered = allProviders.filter(p => {
+    if (statusFilter && (p.status || 'pending') !== statusFilter) return false
     if (search && !p.business_name?.toLowerCase().includes(search.toLowerCase()) && !p.name?.toLowerCase().includes(search.toLowerCase())) return false
     return true
   })
@@ -85,13 +96,14 @@ export default function ProvidersPage() {
   const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE))
   const currentPage = Math.min(page, totalPages)
   const paged = filtered.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE)
+  const showStats = !isError || allProviders.length > 0
 
   const handleApprove = async (id, name) => {
     if (!confirm(`Approve "${name}"? They will gain full access to the platform.`)) return
     try {
       await approveProvider(id).unwrap()
     } catch (err) {
-      alert(err?.data?.detail || 'Failed to approve provider')
+      alert(errMsg(err, 'Failed to approve provider'))
     }
   }
 
@@ -100,7 +112,7 @@ export default function ProvidersPage() {
     try {
       await reactivateProvider(id).unwrap()
     } catch (err) {
-      alert(err?.data?.detail || 'Failed to reactivate provider')
+      alert(errMsg(err, 'Failed to reactivate provider'))
     }
   }
 
@@ -123,7 +135,7 @@ export default function ProvidersPage() {
       setReasonModal(null)
       setReason('')
     } catch (err) {
-      alert(err?.data?.detail || `Failed to ${reasonModal.action} provider`)
+      alert(errMsg(err, `Failed to ${reasonModal.action} provider`))
     }
   }
 
@@ -197,7 +209,7 @@ export default function ProvidersPage() {
             <Sparkles className="w-5 h-5 text-gray-600" />
           </div>
           <div>
-            <p className="text-xl font-bold text-gray-900">{allProviders.length}</p>
+            <p className="text-xl font-bold text-gray-900">{showStats ? allProviders.length : '\u2014'}</p>
             <p className="text-xs text-gray-500">Total</p>
           </div>
         </div>
@@ -206,7 +218,7 @@ export default function ProvidersPage() {
             <UserCheck className="w-5 h-5 text-emerald-600" />
           </div>
           <div>
-            <p className="text-xl font-bold text-emerald-600">{verifiedCount}</p>
+            <p className="text-xl font-bold text-emerald-600">{showStats ? verifiedCount : '\u2014'}</p>
             <p className="text-xs text-gray-500">Active</p>
           </div>
         </div>
@@ -215,7 +227,7 @@ export default function ProvidersPage() {
             <Clock className="w-5 h-5 text-amber-600" />
           </div>
           <div>
-            <p className="text-xl font-bold text-amber-600">{pendingCount}</p>
+            <p className="text-xl font-bold text-amber-600">{showStats ? pendingCount : '\u2014'}</p>
             <p className="text-xs text-gray-500">Pending</p>
           </div>
         </div>
@@ -224,8 +236,8 @@ export default function ProvidersPage() {
             <Ban className="w-5 h-5 text-red-500" />
           </div>
           <div>
-            <p className="text-xl font-bold text-red-500">{suspendedCount}</p>
-            <p className="text-xs text-gray-500">Suspended</p>
+            <p className="text-xl font-bold text-red-500">{showStats ? suspendedCount : '\u2014'}</p>
+            <p className="text-xs text-gray-500">Suspended / Rejected</p>
           </div>
         </div>
       </div>
@@ -253,6 +265,10 @@ export default function ProvidersPage() {
             <span className="text-sm text-gray-400">Loading providers...</span>
           </div>
         </div>
+      ) : isError ? (
+        <div className="card py-16 text-center">
+          <QueryError what="providers" error={error} onRetry={refetch} retrying={isFetching} />
+        </div>
       ) : filtered.length === 0 ? (
         <div className="card py-16 text-center">
           <div className="flex flex-col items-center gap-2">
@@ -260,6 +276,7 @@ export default function ProvidersPage() {
               <Sparkles className="w-6 h-6 text-gray-400" />
             </div>
             <p className="text-sm font-medium text-gray-500">No providers found</p>
+            <p className="text-xs text-gray-400">Try adjusting your search or filters</p>
           </div>
         </div>
       ) : (
@@ -274,7 +291,7 @@ export default function ProvidersPage() {
                   <th className="table-header">Rating</th>
                   <th className="table-header">Status</th>
                   <th className="table-header">Registered</th>
-                  <th className="table-header w-[180px]">Actions</th>
+                  {canManage && <th className="table-header w-[180px]">Actions</th>}
                 </tr>
               </thead>
               <tbody>
@@ -323,53 +340,39 @@ export default function ProvidersPage() {
                       <td className="table-cell text-gray-500 text-sm">
                         {provider.created_at ? new Date(provider.created_at).toLocaleDateString() : '\u2014'}
                       </td>
-                      <td className="table-cell">
-                        <div className="flex items-center gap-1">
-                          <button
-                            onClick={() => openEdit(provider)}
-                            title="Edit provider"
-                            className="p-1.5 rounded-lg text-gray-400 hover:text-teal-600 hover:bg-teal-50 transition-colors"
-                          >
-                            <Pencil className="w-4 h-4" />
-                          </button>
-                          {getActions(provider)}
-                        </div>
-                      </td>
+                      {canManage && (
+                        <td className="table-cell">
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => openEdit(provider)}
+                              title="Edit provider"
+                              className="p-1.5 rounded-lg text-gray-400 hover:text-teal-600 hover:bg-teal-50 transition-colors"
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </button>
+                            {getActions(provider)}
+                          </div>
+                        </td>
+                      )}
                     </tr>
                   )
                 })}
               </tbody>
             </table>
           </div>
-          <div className="px-5 py-3.5 border-t border-gray-100 flex items-center justify-between">
-            <span className="text-xs text-gray-500">
-              {filtered.length} {filtered.length === 1 ? 'provider' : 'providers'}
-            </span>
-            {totalPages > 1 && (
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage <= 1}
-                  className="p-1.5 rounded-lg hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                >
-                  <ChevronLeft className="w-4 h-4 text-gray-600" />
-                </button>
-                <span className="text-xs text-gray-500 px-2">{currentPage} / {totalPages}</span>
-                <button
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={currentPage >= totalPages}
-                  className="p-1.5 rounded-lg hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                >
-                  <ChevronRight className="w-4 h-4 text-gray-600" />
-                </button>
-              </div>
-            )}
-          </div>
+          <Pagination
+            page={currentPage}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            total={filtered.length}
+            label={filtered.length === 1 ? 'provider' : 'providers'}
+            isFetching={isFetching}
+          />
         </div>
       )}
 
       {/* Reason Modal */}
-      {reasonModal && (
+      {reasonModal && canManage && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl animate-scale-in">
             <div className="flex items-center gap-3 mb-4">
@@ -420,7 +423,7 @@ export default function ProvidersPage() {
       )}
 
       {/* Edit Provider Modal */}
-      {edit && (
+      {edit && canManage && (
         <FormModal
           title="Edit provider"
           subtitle={edit.business_name}

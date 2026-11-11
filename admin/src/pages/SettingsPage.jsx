@@ -3,6 +3,8 @@ import {
   Save, Globe, Percent, CheckCircle2, Shield, Loader2, Banknote, Plug, Check, X,
 } from 'lucide-react'
 import { useGetAdminSettingsQuery, useUpdateAdminSettingsMutation } from '../services/api'
+import { errMsg } from '../lib/errors'
+import { QueryError } from '../components/QueryError'
 
 const EDITABLE = [
   'platform_name', 'support_email', 'support_phone',
@@ -11,7 +13,7 @@ const EDITABLE = [
 ]
 
 export default function SettingsPage() {
-  const { data, isLoading } = useGetAdminSettingsQuery()
+  const { data, isLoading, isFetching, isError, error: loadError, refetch } = useGetAdminSettingsQuery()
   const [save, { isLoading: saving }] = useUpdateAdminSettingsMutation()
   const [form, setForm] = useState(null)
   const [saved, setSaved] = useState(false)
@@ -32,8 +34,17 @@ export default function SettingsPage() {
       setSaved(true)
       setTimeout(() => setSaved(false), 2500)
     } catch (e) {
-      setError(e?.data?.message || 'Could not save settings')
+      setError(errMsg(e, 'Could not save settings'))
     }
+  }
+
+  // Without this a failed load left the spinner turning forever.
+  if (isError && !form) {
+    return (
+      <div className="card py-16 text-center max-w-3xl">
+        <QueryError what="settings" error={loadError} onRetry={refetch} retrying={isFetching} />
+      </div>
+    )
   }
 
   if (isLoading || !form) {

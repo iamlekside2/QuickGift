@@ -1,6 +1,27 @@
 import { useState } from 'react'
-import { Search, Plus, Edit2, Trash2, Star, Loader2, X, Package, ChevronLeft, ChevronRight } from 'lucide-react'
-import { useGetProductsQuery, useGetCategoriesQuery, useCreateProductMutation, useUpdateProductMutation, useDeleteProductMutation } from '../services/api'
+import { useSelector } from 'react-redux'
+import { Search, Plus, Edit2, Trash2, Star, Loader2, X, Package } from 'lucide-react'
+import { useGetAdminProductsQuery, useGetCategoriesQuery, useCreateProductMutation, useUpdateProductMutation, useDeleteProductMutation } from '../services/api'
+import { selectCurrentUser } from '../features/authSlice'
+import { hasPerm } from '../lib/permissions'
+import { errMsg } from '../lib/errors'
+import { useDebouncedSearch } from '../lib/useDebouncedSearch'
+import Pagination from '../components/Pagination'
+import { ErrorRow } from '../components/QueryError'
+
+const PER_PAGE = 20
+
+const STATUS_STYLES = {
+  active: 'badge-green',
+  draft: 'badge-yellow',
+  inactive: 'badge-gray',
+}
+
+const STATUS_LABELS = {
+  active: 'Active',
+  draft: 'Draft',
+  inactive: 'Inactive',
+}
 
 function ProductModal({ product, categories, onClose }) {
   const [createProduct, { isLoading: creating }] = useCreateProductMutation()
@@ -36,7 +57,7 @@ function ProductModal({ product, categories, onClose }) {
       }
       onClose()
     } catch (err) {
-      setError(err?.data?.message || err?.data?.detail || 'Something went wrong')
+      setError(errMsg(err, isEdit ? 'Could not save the product' : 'Could not add the product'))
     }
   }
 
@@ -94,6 +115,7 @@ function ProductModal({ product, categories, onClose }) {
               <select value={form.status} onChange={set('status')} className="select">
                 <option value="active">Active</option>
                 <option value="draft">Draft</option>
+                <option value="inactive">Inactive</option>
               </select>
             </div>
             <label className="flex items-center gap-2 mt-5 cursor-pointer">
@@ -114,38 +136,46 @@ function ProductModal({ product, categories, onClose }) {
 }
 
 export default function ProductsPage() {
-  const [search, setSearch] = useState('')
+  const user = useSelector(selectCurrentUser)
+  const canManage = hasPerm(user, 'products.manage')
+
   const [categoryFilter, setCategoryFilter] = useState('all')
+  const [statusFilter, setStatusFilter] = useState('')
   const [page, setPage] = useState(1)
   const [modalProduct, setModalProduct] = useState(null)
   const [showModal, setShowModal] = useState(false)
+  const [busyId, setBusyId] = useState(null)
+  const search = useDebouncedSearch(() => setPage(1))
 
-  const { data: productsData, isLoading } = useGetProductsQuery({
+  // The admin list returns every status, so drafts and inactive products stay
+  // visible here (the public /products list only returns active ones).
+  const { data: productsData, isLoading, isFetching, isError, error, refetch } = useGetAdminProductsQuery({
+    search: search.query || undefined,
+    status: statusFilter || undefined,
     category_id: categoryFilter !== 'all' ? categoryFilter : undefined,
     page,
-    per_page: 20,
+    per_page: PER_PAGE,
   })
   const { data: categoriesData } = useGetCategoriesQuery()
   const [deleteProduct] = useDeleteProductMutation()
 
-  const products = productsData?.items || productsData || []
-  const total = productsData?.total || products.length
-  const totalPages = Math.ceil(total / 20)
-  const categories = categoriesData || []
+  const products = productsData?.items || []
+  const total = productsData?.total || 0
+  const totalPages = Math.ceil(total / PER_PAGE)
+  const categories = Array.isArray(categoriesData) ? categoriesData : []
+  const colSpan = canManage ? 7 : 6
 
-  const filtered = products.filter(p => {
-    if (search && !p.name?.toLowerCase().includes(search.toLowerCase())) return false
-    return true
-  })
-
-  const formatPrice = (price) => '\u20A6' + (price || 0).toLocaleString()
+  const formatPrice = (price) => '₦' + (price || 0).toLocaleString()
 
   const handleDelete = async (product) => {
-    if (!confirm(`Delete "${product.name}"?`)) return
+    if (!window.confirm(`Delete "${product.name}"? This cannot be undone.`)) return
+    setBusyId(product.id)
     try {
       await deleteProduct(product.id).unwrap()
     } catch (err) {
-      alert(err?.data?.message || err?.data?.detail || 'Failed to delete product')
+      alert(errMsg(err, 'Failed to delete product'))
+    } finally {
+      setBusyId(null)
     }
   }
 
@@ -155,18 +185,20 @@ export default function ProductsPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {showModal && <ProductModal product={modalProduct?.id ? modalProduct : null} categories={categories} onClose={closeModal} />}
+      {showModal && canManage && <ProductModal product={modalProduct?.id ? modalProduct : null} categories={categories} onClose={closeModal} />}
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Products</h1>
-          <p className="text-sm text-gray-500 mt-1">{total} products listed on the platform</p>
+          <p className="text-sm text-gray-500 mt-1">Every product on the platform, including drafts and inactive ones</p>
         </div>
-        <button onClick={openAdd} className="btn-primary">
-          <Plus className="w-4 h-4" />
-          Add Product
-        </button>
+        {canManage && (
+          <button onClick={openAdd} className="btn-primary">
+            <Plus className="w-4 h-4" />
+            Add Product
+          </button>
+        )}
       </div>
 
       {/* Filters */}
@@ -176,161 +208,159 @@ export default function ProductsPage() {
           <input
             type="text"
             placeholder="Search products..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            value={search.input}
+            onChange={(e) => search.onChange(e.target.value)}
             className="input pl-10"
           />
         </div>
-        <div className="flex gap-1.5 flex-wrap">
+        <select
+          value={statusFilter}
+          onChange={(e) => { setStatusFilter(e.target.value); setPage(1) }}
+          className="select"
+        >
+          <option value="">All Status</option>
+          <option value="active">Active</option>
+          <option value="draft">Draft</option>
+          <option value="inactive">Inactive</option>
+        </select>
+      </div>
+      <div className="flex gap-1.5 flex-wrap">
+        <button
+          onClick={() => { setCategoryFilter('all'); setPage(1) }}
+          className={`px-3.5 py-2 rounded-lg text-xs font-medium transition-all duration-150 ${
+            categoryFilter === 'all'
+              ? 'bg-teal-500 text-white shadow-sm shadow-teal-500/20'
+              : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300'
+          }`}
+        >
+          All
+        </button>
+        {categories.map((cat) => (
           <button
-            onClick={() => { setCategoryFilter('all'); setPage(1) }}
+            key={cat.id}
+            onClick={() => { setCategoryFilter(cat.id); setPage(1) }}
             className={`px-3.5 py-2 rounded-lg text-xs font-medium transition-all duration-150 ${
-              categoryFilter === 'all'
+              categoryFilter === cat.id
                 ? 'bg-teal-500 text-white shadow-sm shadow-teal-500/20'
                 : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300'
             }`}
           >
-            All
+            {cat.name}
           </button>
-          {categories.map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => { setCategoryFilter(cat.id); setPage(1) }}
-              className={`px-3.5 py-2 rounded-lg text-xs font-medium transition-all duration-150 ${
-                categoryFilter === cat.id
-                  ? 'bg-teal-500 text-white shadow-sm shadow-teal-500/20'
-                  : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300'
-              }`}
-            >
-              {cat.name}
-            </button>
-          ))}
-        </div>
+        ))}
       </div>
 
       {/* Table */}
-      {isLoading ? (
-        <div className="flex items-center justify-center h-48">
-          <div className="flex flex-col items-center gap-2">
-            <Loader2 className="w-8 h-8 text-teal-500 animate-spin" />
-            <span className="text-sm text-gray-400">Loading products...</span>
-          </div>
-        </div>
-      ) : filtered.length === 0 ? (
-        <div className="card py-16 text-center">
-          <div className="flex flex-col items-center gap-2">
-            <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
-              <Package className="w-6 h-6 text-gray-400" />
-            </div>
-            <p className="text-sm font-medium text-gray-500">No products found</p>
-            <p className="text-xs text-gray-400">Try adjusting your search or filters</p>
-          </div>
-        </div>
-      ) : (
-        <div className="card overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-100 bg-gray-50/50">
-                  <th className="table-header">Name</th>
-                  <th className="table-header">Category</th>
-                  <th className="table-header">Price</th>
-                  <th className="table-header">Rating</th>
-                  <th className="table-header">Featured</th>
-                  <th className="table-header">Status</th>
-                  <th className="table-header w-[80px]">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((product) => (
-                  <tr key={product.id} className="table-row">
-                    <td className="table-cell">
-                      <div className="font-medium text-gray-900">{product.name}</div>
-                      <div className="text-xs text-gray-400 mt-0.5">{product.vendor_name || ''}</div>
-                    </td>
-                    <td className="table-cell text-gray-600">{product.category_name || '\u2014'}</td>
-                    <td className="table-cell">
-                      <div className="font-semibold text-gray-900">{formatPrice(product.price)}</div>
-                      {product.compare_price && (
-                        <div className="text-xs text-gray-400 line-through mt-0.5">{formatPrice(product.compare_price)}</div>
+      <div className="card overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-gray-100 bg-gray-50/50">
+                <th className="table-header">Name</th>
+                <th className="table-header">Category</th>
+                <th className="table-header">Price</th>
+                <th className="table-header">Rating</th>
+                <th className="table-header">Featured</th>
+                <th className="table-header">Status</th>
+                {canManage && <th className="table-header w-[80px]">Actions</th>}
+              </tr>
+            </thead>
+            <tbody>
+              {isLoading ? (
+                <tr><td colSpan={colSpan} className="px-6 py-16 text-center">
+                  <div className="flex flex-col items-center gap-2">
+                    <Loader2 className="w-6 h-6 text-teal-500 animate-spin" />
+                    <span className="text-sm text-gray-400">Loading products...</span>
+                  </div>
+                </td></tr>
+              ) : isError ? (
+                <ErrorRow colSpan={colSpan} what="products" error={error} onRetry={refetch} retrying={isFetching} />
+              ) : products.length === 0 ? (
+                <tr><td colSpan={colSpan} className="px-6 py-16 text-center">
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                      <Package className="w-6 h-6 text-gray-400" />
+                    </div>
+                    <p className="text-sm font-medium text-gray-500">No products found</p>
+                    <p className="text-xs text-gray-400">Try adjusting your search or filters</p>
+                  </div>
+                </td></tr>
+              ) : (
+                products.map((product) => {
+                  const status = product.status || 'active'
+                  return (
+                    <tr key={product.id} className="table-row">
+                      <td className="table-cell">
+                        <div className="font-medium text-gray-900">{product.name}</div>
+                        <div className="text-xs text-gray-400 mt-0.5">{product.vendor_name || ''}</div>
+                      </td>
+                      <td className="table-cell text-gray-600">{product.category_name || '—'}</td>
+                      <td className="table-cell">
+                        <div className="font-semibold text-gray-900">{formatPrice(product.price)}</div>
+                        {product.compare_price ? (
+                          <div className="text-xs text-gray-400 line-through mt-0.5">{formatPrice(product.compare_price)}</div>
+                        ) : null}
+                      </td>
+                      <td className="table-cell">
+                        <div className="flex items-center gap-1 text-gray-600">
+                          <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                          <span className="font-medium">{product.rating || '—'}</span>
+                          <span className="text-gray-400 text-xs">({product.review_count || 0})</span>
+                        </div>
+                      </td>
+                      <td className="table-cell">
+                        {product.is_featured ? (
+                          <span className="badge badge-orange">Featured</span>
+                        ) : (
+                          <span className="text-xs text-gray-300">{'—'}</span>
+                        )}
+                      </td>
+                      <td className="table-cell">
+                        <span className={`badge ${STATUS_STYLES[status] || 'badge-gray'}`}>
+                          {STATUS_LABELS[status] || status}
+                        </span>
+                      </td>
+                      {canManage && (
+                        <td className="table-cell">
+                          <div className="flex items-center gap-0.5">
+                            <button
+                              onClick={() => openEdit(product)}
+                              title="Edit product"
+                              className="p-1.5 text-gray-400 hover:text-teal-600 rounded-lg hover:bg-teal-50 transition-colors"
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(product)}
+                              disabled={busyId === product.id}
+                              title="Delete product"
+                              className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              {busyId === product.id
+                                ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                : <Trash2 className="w-3.5 h-3.5" />}
+                            </button>
+                          </div>
+                        </td>
                       )}
-                    </td>
-                    <td className="table-cell">
-                      <div className="flex items-center gap-1 text-gray-600">
-                        <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                        <span className="font-medium">{product.rating || '\u2014'}</span>
-                        <span className="text-gray-400 text-xs">({product.review_count || 0})</span>
-                      </div>
-                    </td>
-                    <td className="table-cell">
-                      {product.is_featured ? (
-                        <span className="badge badge-orange">Featured</span>
-                      ) : (
-                        <span className="text-xs text-gray-300">\u2014</span>
-                      )}
-                    </td>
-                    <td className="table-cell">
-                      <span className={`badge ${product.status === 'active' ? 'badge-green' : product.status === 'draft' ? 'badge-yellow' : 'badge-gray'}`}>
-                        {product.status || 'active'}
-                      </span>
-                    </td>
-                    <td className="table-cell">
-                      <div className="flex items-center gap-0.5">
-                        <button
-                          onClick={() => openEdit(product)}
-                          className="p-1.5 text-gray-400 hover:text-teal-600 rounded-lg hover:bg-teal-50 transition-colors"
-                        >
-                          <Edit2 className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(product)}
-                          className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          {totalPages > 1 && (
-            <div className="px-5 py-3.5 border-t border-gray-100 flex items-center justify-between">
-              <span className="text-xs text-gray-500">{total} total products</span>
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => setPage(p => Math.max(1, p - 1))}
-                  disabled={page <= 1}
-                  className="p-1.5 rounded-lg hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                >
-                  <ChevronLeft className="w-4 h-4 text-gray-600" />
-                </button>
-                {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => i + 1).map(p => (
-                  <button
-                    key={p}
-                    onClick={() => setPage(p)}
-                    className={`w-8 h-8 rounded-lg text-xs font-medium transition-colors ${
-                      page === p
-                        ? 'bg-teal-500 text-white shadow-sm'
-                        : 'text-gray-600 hover:bg-gray-100'
-                    }`}
-                  >
-                    {p}
-                  </button>
-                ))}
-                <button
-                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                  disabled={page >= totalPages}
-                  className="p-1.5 rounded-lg hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                >
-                  <ChevronRight className="w-4 h-4 text-gray-600" />
-                </button>
-              </div>
-            </div>
-          )}
+                    </tr>
+                  )
+                })
+              )}
+            </tbody>
+          </table>
         </div>
-      )}
+
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+          total={total}
+          label="total products"
+          isFetching={isFetching}
+        />
+      </div>
     </div>
   )
 }
+

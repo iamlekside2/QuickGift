@@ -21,7 +21,9 @@ import {
   ROLE_LABELS,
 } from '../../common/permissions';
 
-const DEBUG = process.env.DEBUG === 'true';
+// Read at call time: ConfigModule loads .env after this module is imported, so a
+// module-level constant would miss a DEBUG value that only lives in .env.
+const isDebug = () => process.env.DEBUG === 'true';
 const INVALID_PHONE =
   'Invalid phone number. Please use a valid Nigerian number (e.g. +2348012345678, 08012345678).';
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -60,7 +62,7 @@ export class AuthService implements OnModuleInit {
     await this.db.query(
       `ALTER TABLE otps ADD COLUMN IF NOT EXISTS attempts INT NOT NULL DEFAULT 0`,
     );
-    if (DEBUG && isDeployed()) {
+    if (isDebug() && isDeployed()) {
       this.logger.warn(
         'DEBUG=true on a deployed API: login codes are returned in API responses, ' +
           'so anyone can sign in as any customer. Set DEBUG=false before going public.',
@@ -218,7 +220,7 @@ export class AuthService implements OnModuleInit {
     let emailSent = false;
     if (emailTarget) emailSent = await this.mail.sendOtp(emailTarget, code);
 
-    if (!smsSent && !emailSent && !DEBUG) {
+    if (!smsSent && !emailSent && !isDebug()) {
       // Never hand the code back to the caller: that would let anyone sign in
       // as any phone number. Fail instead and say what to do.
       throw new HttpException(
@@ -234,7 +236,7 @@ export class AuthService implements OnModuleInit {
     else if (smsSent) response.sent_to = 'sms';
     // DEBUG is for local development / a closed beta only: it returns the code
     // to the caller, which means anyone can sign in as any customer.
-    if (DEBUG) response.otp_dev = code;
+    if (isDebug()) response.otp_dev = code;
     return response;
   }
 

@@ -16,14 +16,12 @@ import {
   FormModal, FieldGrid, TextField, SelectField, ToggleField,
 } from '../components/FormModal'
 import { ROLE_OPTIONS, OWNER_OPTION, roleLabel, ROLE_BADGE } from '../lib/permissions'
-
-function errMsg(err, fallback) {
-  return err?.data?.message || err?.data?.detail || fallback
-}
+import { errMsg } from '../lib/errors'
+import { ErrorRow, QueryError } from '../components/QueryError'
 
 export default function TeamPage() {
   const me = useSelector(selectCurrentUser)
-  const { data, isLoading, isFetching } = useGetStaffQuery()
+  const { data, isLoading, isFetching, isError, error, refetch } = useGetStaffQuery()
   const [createStaff, { isLoading: creating }] = useCreateStaffMutation()
   const [updateStaff, { isLoading: updating }] = useUpdateStaffMutation()
   const [resetPassword, { isLoading: resetting }] = useResetStaffPasswordMutation()
@@ -161,6 +159,8 @@ export default function TeamPage() {
                     </div>
                   </td>
                 </tr>
+              ) : isError ? (
+                <ErrorRow colSpan={5} what="the team" error={error} onRetry={refetch} retrying={isFetching} />
               ) : items.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-6 py-16 text-center">
@@ -354,7 +354,7 @@ function timeAgo(iso) {
 }
 
 function ActivityTab() {
-  const { data, isLoading } = useGetStaffAuditQuery()
+  const { data, isLoading, isFetching, isError, error, refetch } = useGetStaffAuditQuery()
   const items = data?.items || []
 
   if (isLoading) {
@@ -362,6 +362,13 @@ function ActivityTab() {
       <div className="card p-16 flex flex-col items-center gap-2">
         <Loader2 className="w-6 h-6 text-teal-500 animate-spin" />
         <span className="text-sm text-gray-400">Loading activity...</span>
+      </div>
+    )
+  }
+  if (isError) {
+    return (
+      <div className="card p-16 text-center">
+        <QueryError what="team activity" error={error} onRetry={refetch} retrying={isFetching} />
       </div>
     )
   }

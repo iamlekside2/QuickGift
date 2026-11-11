@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>QuickGift: Same-Day Gifts & Artisans in Nigeria</title>
-  <meta name="description" content="Send same-day gifts and book verified artisans across Lagos & Abuja. Bakers, florists, nail techs, stylists and more: apply now to become a founding QuickGift provider.">
+  <meta name="description" content="Send same-day gifts and book verified artisans across Lagos & Abuja. Bakers, florists, nail techs, stylists and more: join the waitlist for first access when QuickGift launches.">
   <meta name="theme-color" content="#1F4A45">
   <meta name="author" content="QuickGift">
   <meta name="keywords" content="gifts Nigeria, same day delivery, gift delivery Lagos, artisans, beauty services, cakes, flowers, nail tech, hair stylist, tailor, photographer, QuickGift">
@@ -100,6 +100,9 @@
     .faq p{font-size:13.5px;color:#6E6A63;line-height:1.65;margin:10px 0 0;}
     .topbar a{color:#fff;text-decoration:underline;text-underline-offset:3px;}
     .gift-art{position:absolute;right:-6px;bottom:-6px;width:150px;height:auto;pointer-events:none;}
+    /* The role radios are visually hidden, so show keyboard focus on the pill instead. */
+    .wl-role input:focus-visible + span{outline:3px solid #F6C9A9;outline-offset:2px;}
+    .wl-done:focus{outline:none;}
 
     @media (max-width:900px){
       .hero{grid-template-columns:1fr;gap:40px;padding:24px 24px 70px;}
@@ -133,7 +136,7 @@
 
   <!-- PROVIDER ANNOUNCEMENT -->
   <div class="topbar" style="background:#1F4A45;color:#fff;text-align:center;padding:10px 20px;font-size:13px;font-weight:600;">
-    Now onboarding founding providers in Lagos &amp; Abuja with 0% commission at launch. <a href="#apply">Apply now</a>
+    Now onboarding founding providers in Lagos &amp; Abuja with 0% commission at launch. <a href="#apply">Join the waitlist</a>
   </div>
 
   <!-- NAV -->
@@ -327,7 +330,7 @@
           <div><div style="font-size:14.5px;font-weight:700;color:#211F1C;">Run it all from your phone</div><div style="font-size:13px;color:#6E6A63;margin-top:2px;line-height:1.55;">Orders, prices, delivery areas, busy days and earnings, all in one dashboard.</div></div>
         </div>
       </div>
-      <a href="#apply" style="display:inline-flex;align-items:center;gap:10px;background:#E8632F;color:#fff;padding:15px 26px;border-radius:16px;font-size:14px;font-weight:700;margin-top:34px;box-shadow:0 16px 32px rgba(232,99,47,0.24);">Apply as a founding provider
+      <a href="#apply" data-pick-role="provider" style="display:inline-flex;align-items:center;gap:10px;background:#E8632F;color:#fff;padding:15px 26px;border-radius:16px;font-size:14px;font-weight:700;margin-top:34px;box-shadow:0 16px 32px rgba(232,99,47,0.24);">Join as a founding provider
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
       </a>
     </div>
@@ -404,8 +407,8 @@
       <div class="steps">
         <div style="background:#fff;border:1px solid #EFE9DE;border-radius:24px;padding:30px;">
           <div class="serif" style="width:52px;height:52px;border-radius:16px;background:#FBE4D7;display:flex;align-items:center;justify-content:center;font-size:22px;color:#E8632F;">1</div>
-          <div style="font-size:16.5px;font-weight:800;color:#211F1C;margin-top:18px;">Apply in 2 minutes</div>
-          <div style="font-size:13.5px;color:#6E6A63;line-height:1.6;margin-top:8px;">Tell us what you do and where you work. Your Instagram page is all the portfolio we need.</div>
+          <div style="font-size:16.5px;font-weight:800;color:#211F1C;margin-top:18px;">Join in 2 minutes</div>
+          <div style="font-size:13.5px;color:#6E6A63;line-height:1.6;margin-top:8px;">Add your email and tell us what you do. We will reach out the moment onboarding opens.</div>
         </div>
         <div style="background:#fff;border:1px solid #EFE9DE;border-radius:24px;padding:30px;">
           <div class="serif" style="width:52px;height:52px;border-radius:16px;background:#E7EFEC;display:flex;align-items:center;justify-content:center;font-size:22px;color:#1F4A45;">2</div>
@@ -469,8 +472,8 @@
           <label class="fld"><span>Email</span><input type="email" name="email" required autocomplete="email" placeholder="you@email.com"></label>
           <label class="fld fld-wide"><span>Instagram or portfolio link <em>(optional)</em></span><input type="text" name="instagram" placeholder="@yourbusiness"></label>
         </div>
-        <button type="submit" style="width:100%;margin-top:22px;background:#E8632F;color:#fff;padding:17px 28px;border-radius:16px;font-size:15px;font-weight:700;border:none;cursor:pointer;box-shadow:0 16px 32px rgba(232,99,47,0.24);">Apply as a founding provider</button>
-        <p class="wl-msg" style="margin:12px 2px 0;font-size:12.5px;color:#6E6A63;text-align:center;min-height:16px;">Free to join. We'll only use your details to contact you about QuickGift.</p>
+        <button type="submit" style="width:100%;margin-top:22px;background:#E8632F;color:#fff;padding:17px 28px;border-radius:16px;font-size:15px;font-weight:700;border:none;cursor:pointer;box-shadow:0 16px 32px rgba(232,99,47,0.24);">Join as a founding provider</button>
+        <p class="wl-msg" role="status" aria-live="polite" style="margin:12px 2px 0;font-size:12.5px;color:#6E6A63;text-align:center;min-height:16px;">Free to join. We'll only use your details to contact you about QuickGift.</p>
       </form>
       -->
       <div style="background:#fff;border-radius:28px;padding:40px 34px;box-shadow:0 30px 60px rgba(33,31,28,0.10);text-align:center;">
@@ -479,7 +482,7 @@
         </div>
         <h3 class="serif" style="font-size:26px;color:#211F1C;margin:0 0 10px;">Providers join in the app</h3>
         <p style="font-size:15px;color:#6E6A63;line-height:1.6;margin:0 0 26px;">No forms to fill. You set up your shop and manage every order right inside the QuickGift app. Join the waitlist with your email and we will tell you the moment founding-provider onboarding opens.</p>
-        <a href="#waitlist" style="display:inline-flex;align-items:center;justify-content:center;gap:10px;width:100%;background:#1F4A45;color:#fff;padding:17px 28px;border-radius:16px;font-size:15px;font-weight:700;box-shadow:0 16px 32px rgba(31,74,69,0.24);box-sizing:border-box;">Join the waitlist
+        <a href="#waitlist" data-pick-role="provider" style="display:inline-flex;align-items:center;justify-content:center;gap:10px;width:100%;background:#1F4A45;color:#fff;padding:17px 28px;border-radius:16px;font-size:15px;font-weight:700;box-shadow:0 16px 32px rgba(31,74,69,0.24);box-sizing:border-box;">Join the waitlist
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></a>
         <p style="margin:16px 2px 0;font-size:12.5px;color:#9A948A;">Already onboarded? Download the QuickGift app and sign in.</p>
       </div>
@@ -529,7 +532,7 @@
 
         <form class="wl-form" data-waitlist data-success-color="#fff" style="max-width:440px;margin:0 auto;text-align:left;">
           <p style="margin:0 0 8px;font-size:12.5px;font-weight:600;color:rgba(255,255,255,0.62);text-align:center;letter-spacing:0.3px;">I'm interested as a&hellip;</p>
-          <div style="display:flex;gap:6px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:16px;padding:6px;margin-bottom:12px;">
+          <div role="radiogroup" aria-label="I am interested as a" style="display:flex;gap:6px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:16px;padding:6px;margin-bottom:12px;">
             <label class="wl-role" style="flex:1;min-width:0;">
               <input type="radio" name="role" value="customer" checked style="position:absolute;opacity:0;">
               <span style="display:block;text-align:center;padding:12px 8px;border-radius:11px;border:1px solid transparent;background:#ffffff;color:#1F4A45;font-size:13.5px;font-weight:700;cursor:pointer;transition:all .18s ease;box-shadow:0 6px 14px rgba(0,0,0,0.20);">Buyer</span>
@@ -549,7 +552,7 @@
             <button type="submit" class="wl-join-btn"
               style="background:#E8632F;color:#fff;padding:14px 26px;border-radius:12px;font-size:14.5px;font-weight:700;border:none;cursor:pointer;white-space:nowrap;">Join the waitlist</button>
           </div>
-          <p class="wl-msg" style="margin:14px 2px 0;font-size:13px;color:rgba(255,255,255,0.65);text-align:center;min-height:18px;">No spam. We'll only reach out when we launch.</p>
+          <p class="wl-msg" role="status" aria-live="polite" style="margin:14px 2px 0;font-size:13px;color:rgba(255,255,255,0.65);text-align:center;min-height:18px;">No spam. We'll only reach out when we launch.</p>
           <p style="margin:8px 2px 0;font-size:13px;color:rgba(255,255,255,0.65);text-align:center;">Providers (vendors & artisans) get first access and 0% commission at launch. We'll reach out to set you up.</p>
         </form>
       </div>
@@ -615,14 +618,21 @@
       var title = form.getAttribute('data-success-title') || 'You&rsquo;re on the list! &#127881;';
       var text = form.getAttribute('data-success-text') || 'We&rsquo;ll reach out the moment QuickGift launches.';
       var color = form.getAttribute('data-success-color') || '#211F1C';
-      form.innerHTML =
-        '<div style="text-align:center;padding:6px 0;color:' + color + ';">' +
+      // The form (and its live message) is replaced, so the confirmation gets its
+      // own status region. It is put in the page empty and filled a moment later
+      // so screen readers announce it, then focus moves to it because the submit
+      // button that had focus no longer exists.
+      form.innerHTML = '<div class="wl-done" role="status" aria-live="polite" tabindex="-1" style="text-align:center;padding:6px 0;color:' + color + ';"></div>';
+      var box = form.querySelector('.wl-done');
+      setTimeout(function () {
+        box.innerHTML =
           '<div style="width:48px;height:48px;margin:0 auto 14px;border-radius:50%;background:#3E8E63;display:flex;align-items:center;justify-content:center;">' +
-            '<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+            '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
           '</div>' +
           '<div style="font-size:17px;font-weight:800;">' + title + '</div>' +
-          '<div style="font-size:13.5px;opacity:0.75;margin-top:6px;">' + text + '</div>' +
-        '</div>';
+          '<div style="font-size:13.5px;opacity:0.75;margin-top:6px;">' + text + '</div>';
+        try { box.focus({ preventScroll: true }); } catch (err) { box.focus(); }
+      }, 50);
     }
 
     function serialize(form) {
@@ -646,7 +656,14 @@
           if (EMAIL_RE.test(c)) { data.email = c; }
           else if (/^[+(]?\d[\d\s()\-]{6,}$/.test(c)) { data.phone = c; }
         }
-        if (!isProvider && !data.email) { setMsg(form, 'Please enter a valid email address.', '#E8632F'); return; }
+        // Check the address ourselves before sending: the browser accepts things
+        // like "name@host" that the waitlist cannot use.
+        if ((!isProvider || data.email) && !EMAIL_RE.test(data.email || '')) {
+          setMsg(form, 'Please enter a valid email address.', '#E8632F');
+          var emailEl = form.querySelector('input[name="email"]');
+          if (emailEl) emailEl.focus();
+          return;
+        }
         var missing = form.querySelector('[required]:invalid');
         if (missing) { setMsg(form, 'Please fill in all the required fields.', '#E8632F'); missing.focus(); return; }
 
@@ -654,20 +671,56 @@
         var original = btn ? btn.textContent : '';
         if (btn) { btn.disabled = true; btn.style.opacity = '0.7'; btn.textContent = (isProvider ? 'Submitting' : 'Joining') + '\u2026'; }
 
-        function done() { showSuccess(form); }
-        function fail() {
+        // Whichever happens first (a response, a network error or the timeout)
+        // settles the attempt; anything arriving after that is ignored.
+        var settled = false;
+        var controller = typeof AbortController === 'function' ? new AbortController() : null;
+        var timer = setTimeout(function () {
+          if (controller) controller.abort();
+          fail('This is taking longer than usual, please try again.');
+        }, 20000);
+
+        function settle() {
+          if (settled) return false;
+          settled = true;
+          clearTimeout(timer);
+          return true;
+        }
+        function done() { if (settle()) showSuccess(form); }
+        function fail(message) {
+          if (!settle()) return;
           if (btn) { btn.disabled = false; btn.style.opacity = '1'; btn.textContent = original; }
-          setMsg(form, 'Something went wrong. Please check your connection and try again.', '#E8632F');
+          setMsg(form, message, '#E8632F');
+        }
+        // The server answers errors as JSON { message: string | string[] }.
+        function serverMessage(body) {
+          var m = body && body.message;
+          if (Array.isArray(m)) m = m.join(' ');
+          return typeof m === 'string' && m.trim() ? m.trim() : '';
         }
 
         var url = API_BASE + (isProvider ? '/provider-applications' : '/waitlist');
-        fetch(url, {
+        var options = {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
           body: JSON.stringify(data)
-        })
-          .then(function (res) { if (!res.ok) throw new Error('bad status'); done(); })
-          .catch(fail);
+        };
+        if (controller) options.signal = controller.signal;
+
+        fetch(url, options).then(
+          function (res) {
+            if (res.ok) { done(); return; }
+            // The server was reached and said no: show its reason, not a connection error.
+            res.json()
+              .catch(function () { return null; })
+              .then(function (body) {
+                fail(serverMessage(body) || 'Something went wrong on our side. Please try again in a moment.');
+              });
+          },
+          function () {
+            fail('We could not reach the server. Please check your connection and try again.');
+          }
+        );
       });
     });
   })();

@@ -1,8 +1,10 @@
 import { useState } from 'react'
-import {
-  Loader2, ScrollText, ChevronLeft, ChevronRight,
-} from 'lucide-react'
+import { Loader2, ScrollText } from 'lucide-react'
 import { useGetAuditLogQuery } from '../services/api'
+import Pagination from '../components/Pagination'
+import { ErrorRow } from '../components/QueryError'
+
+const PER_PAGE = 40
 
 const ACTION_META = {
   created: { label: 'Created', badge: 'badge-green' },
@@ -11,6 +13,7 @@ const ACTION_META = {
   deleted: { label: 'Removed', badge: 'badge-gray' },
   bulk_deleted: { label: 'Bulk removed', badge: 'badge-gray' },
   cleared: { label: 'Cleared', badge: 'badge-gray' },
+  archived: { label: 'Archived', badge: 'badge-gray' },
   released: { label: 'Released', badge: 'badge-green' },
   cancelled: { label: 'Cancelled', badge: 'badge-gray' },
   completed: { label: 'Completed', badge: 'badge-green' },
@@ -54,11 +57,11 @@ function fmtTime(iso) {
 export default function AuditLogPage() {
   const [entity, setEntity] = useState('')
   const [page, setPage] = useState(1)
-  const { data, isLoading, isFetching } = useGetAuditLogQuery({ entity: entity || undefined, page, per_page: 40 })
+  const { data, isLoading, isFetching, isError, error, refetch } = useGetAuditLogQuery({ entity: entity || undefined, page, per_page: PER_PAGE })
 
   const items = data?.items || []
   const total = data?.total || 0
-  const totalPages = Math.ceil(total / 40)
+  const totalPages = Math.ceil(total / PER_PAGE)
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -102,6 +105,8 @@ export default function AuditLogPage() {
                     </div>
                   </td>
                 </tr>
+              ) : isError ? (
+                <ErrorRow colSpan={5} what="the audit log" error={error} onRetry={refetch} retrying={isFetching} />
               ) : items.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-6 py-16 text-center">
@@ -142,31 +147,14 @@ export default function AuditLogPage() {
             </tbody>
           </table>
         </div>
-        <div className="px-5 py-3.5 border-t border-gray-100 flex items-center justify-between">
-          <span className="text-xs text-gray-500">
-            {isFetching && <Loader2 className="w-3 h-3 animate-spin inline mr-1.5" />}
-            {total} {total === 1 ? 'entry' : 'entries'}
-          </span>
-          {totalPages > 1 && (
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page <= 1}
-                className="p-1.5 rounded-lg hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-              >
-                <ChevronLeft className="w-4 h-4 text-gray-600" />
-              </button>
-              <span className="text-xs text-gray-500 px-2">{page} / {totalPages}</span>
-              <button
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page >= totalPages}
-                className="p-1.5 rounded-lg hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-              >
-                <ChevronRight className="w-4 h-4 text-gray-600" />
-              </button>
-            </div>
-          )}
-        </div>
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+          total={total}
+          label={total === 1 ? 'entry' : 'entries'}
+          isFetching={isFetching}
+        />
       </div>
     </div>
   )
