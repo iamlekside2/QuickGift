@@ -319,10 +319,11 @@ export default function OrdersScreen() {
             const when = isGift
               ? formatDate(item.created_at)
               : [formatDate(item.booking_date), item.booking_time].filter(Boolean).join(', ');
-            const cancellable = (isGift ? ORDER_CANCELLABLE : BOOKING_CANCELLABLE).includes(status);
+            // A group gift's order is paid and cancelled from the group gift, not here.
+            const cancellable = (isGift ? ORDER_CANCELLABLE : BOOKING_CANCELLABLE).includes(status) && !item.group_gift;
             const finished = status === 'delivered' || status === 'completed';
             const unpaid = item.payment_status && item.payment_status !== 'paid' && item.payment_status !== 'refunded'
-              && (status === 'pending' || status === 'accepted');
+              && (status === 'pending' || status === 'accepted') && !item.group_gift;
             const busy = busyId === item.id;
 
             return (
@@ -403,6 +404,12 @@ export default function OrdersScreen() {
                     </Text>
                   </View>
                 </View>
+
+                {item.group_gift && status === 'pending' ? (
+                  <Text className="text-[11.5px] text-ink-soft mt-3 leading-4">
+                    Group gift: friends are chipping in. Track it in Profile, under Group gifts.
+                  </Text>
+                ) : null}
 
                 {/* Finish paying for something left unpaid */}
                 {unpaid && (

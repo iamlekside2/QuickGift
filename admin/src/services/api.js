@@ -34,7 +34,7 @@ const baseQueryWithReauth = async (args, api, extraOptions) => {
 export const api = createApi({
   reducerPath: 'api',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['Dashboard', 'Orders', 'Products', 'Providers', 'Users', 'Bookings', 'Payments', 'Transactions', 'Payouts', 'Withdrawals', 'Disputes', 'Applications', 'Waitlist', 'Team', 'TeamAudit', 'Settings', 'Referrals', 'Promos'],
+  tagTypes: ['Dashboard', 'Orders', 'Products', 'Providers', 'Users', 'Bookings', 'Payments', 'Transactions', 'Payouts', 'Withdrawals', 'Disputes', 'Applications', 'Waitlist', 'Team', 'TeamAudit', 'Settings', 'Referrals', 'Promos', 'Pools'],
   endpoints: (builder) => ({
     // ── Auth ─────────────────────────────────────────
     login: builder.mutation({
@@ -489,6 +489,32 @@ export const api = createApi({
       query: ({ id, ...body }) => ({ url: `/promos/admin/${id}`, method: 'PATCH', body }),
       invalidatesTags: ['Promos'],
     }),
+
+    // ── Group gifts ─────────────────────────────────────────────
+    getPools: builder.query({
+      query: ({ status, search, page = 1, per_page = 20 } = {}) => {
+        const params = new URLSearchParams()
+        if (status) params.append('status', status)
+        if (search) params.append('search', search)
+        params.append('page', page)
+        params.append('per_page', per_page)
+        return `/pools/admin?${params.toString()}`
+      },
+      providesTags: ['Pools'],
+    }),
+    getPool: builder.query({
+      query: (id) => `/pools/admin/${id}`,
+      providesTags: ['Pools'],
+    }),
+    cancelPool: builder.mutation({
+      query: (id) => ({ url: `/pools/admin/${id}/cancel`, method: 'POST' }),
+      // Cancelling a paid pool also cancels its order and payout.
+      invalidatesTags: ['Pools', 'Orders', 'Payouts'],
+    }),
+    retryPoolRefund: builder.mutation({
+      query: (contributionId) => ({ url: `/pools/admin/contributions/${contributionId}/retry-refund`, method: 'POST' }),
+      invalidatesTags: ['Pools'],
+    }),
   }),
 })
 
@@ -539,6 +565,10 @@ export const {
   useGetPromosQuery,
   useCreatePromoMutation,
   useUpdatePromoMutation,
+  useGetPoolsQuery,
+  useGetPoolQuery,
+  useCancelPoolMutation,
+  useRetryPoolRefundMutation,
   useDeleteWaitlistSignupMutation,
   useGetStaffQuery,
   useGetStaffRolesQuery,

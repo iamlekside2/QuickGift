@@ -18,6 +18,7 @@ const BUYER_MENU = [
   { icon: 'wallet-outline', label: 'Wallet', sub: 'Balance & transactions', color: '#1F4A45', screen: 'WalletScreen', auth: 'Create an account or sign in to use your wallet.' },
   { icon: 'chatbubbles-outline', label: 'Messages', sub: 'Your chats with providers', color: '#4C7CB0', screen: 'ChatList', auth: 'Create an account or sign in to message providers.' },
   { icon: 'heart-outline', label: 'Favourites', sub: 'Gifts you saved', color: '#D24B4B', screen: 'Favourites' },
+  { icon: 'gift-outline', label: 'Group gifts', sub: 'Split a gift with friends', color: '#1F4A45', screen: 'GroupGifts' },
   { icon: 'notifications-outline', label: 'Reminders', sub: 'Birthday & event alerts', color: '#E8632F', screen: 'Reminders' },
   { icon: 'location-outline', label: 'Addresses', sub: 'Delivery addresses', color: '#4C7CB0', screen: 'Addresses' },
   { icon: 'people-outline', label: 'Refer a Friend', sub: 'Earn wallet credit when friends order', color: '#7A5FA8', screen: 'ReferFriend' },

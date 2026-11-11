@@ -253,4 +253,13 @@ const realPromosAPI = {
 };
 export const promosAPI = realPromosAPI;
 
+const realPoolsAPI = {
+  // Group gifts: the same body as an order, plus { days } the pool stays open.
+  create: (data) => api.post('/pools', data),
+  mine: () => api.get('/pools/mine'),
+  get: (id) => api.get(`/pools/${id}`),
+  cancel: (id) => api.post(`/pools/${id}/cancel`),
+};
+export const poolsAPI = realPoolsAPI;
+
 export default api;

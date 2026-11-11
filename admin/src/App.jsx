@@ -22,6 +22,7 @@ const TeamPage = lazy(() => import('./pages/TeamPage'))
 const AuditLogPage = lazy(() => import('./pages/AuditLogPage'))
 const ReferralsPage = lazy(() => import('./pages/ReferralsPage'))
 const PromosPage = lazy(() => import('./pages/PromosPage'))
+const GroupGiftsPage = lazy(() => import('./pages/GroupGiftsPage'))
 
 function ProtectedRoute({ children }) {
   const isAuthenticated = useSelector(selectIsAuthenticated)
@@ -63,6 +64,7 @@ function App() {
         <Route path="users" element={page('users.view', UsersPage)} />
         <Route path="referrals" element={page('users.view', ReferralsPage)} />
         <Route path="promos" element={page('settings.manage', PromosPage)} />
+        <Route path="group-gifts" element={page('finance.view', GroupGiftsPage)} />
         <Route path="transactions" element={page('finance.view', TransactionsPage)} />
         <Route path="payouts" element={page('finance.view', PayoutsPage)} />
         <Route path="disputes" element={page('disputes.view', DisputesPage)} />

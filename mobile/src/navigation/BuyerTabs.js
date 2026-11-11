@@ -19,6 +19,7 @@ import FavouritesScreen from '../screens/Shared/FavouritesScreen';
 import RemindersScreen from '../screens/Shared/RemindersScreen';
 import AddressesScreen from '../screens/Shared/AddressesScreen';
 import ReferFriendScreen from '../screens/Shared/ReferFriendScreen';
+import GroupGiftsScreen from '../screens/Shared/GroupGiftsScreen';
 
 import GiftsHomeScreen from '../screens/Gifts/GiftsHomeScreen';
 import GiftsListScreen from '../screens/Gifts/GiftsListScreen';
@@ -163,6 +164,7 @@ function ProfileStack() {
       <Stack.Screen name="Reminders" component={RemindersScreen} />
       <Stack.Screen name="Addresses" component={AddressesScreen} />
       <Stack.Screen name="ReferFriend" component={ReferFriendScreen} />
+      <Stack.Screen name="GroupGifts" component={GroupGiftsScreen} />
       <Stack.Screen name="ChatList" component={ChatListScreen} />
       <Stack.Screen name="ChatScreen" component={ChatScreen} />
       <Stack.Screen name="Feedback" component={FeedbackScreen} options={{ animation: 'slide_from_bottom' }} />

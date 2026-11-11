@@ -194,6 +194,7 @@ export default function OrdersPage() {
                     day ? `Deliver on ${new Date(+day[1], +day[2] - 1, +day[3]).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}` : '',
                     order.is_anonymous ? 'Anonymous gift' : '',
                     order.address_pending ? 'Waiting for recipient\'s address' : '',
+                    order.group_gift ? 'Group gift' : '',
                     Number(order.discount) > 0
                       ? `${order.promo_code || 'Promo'} -${formatPrice(Number(order.discount))}`
                       : '',

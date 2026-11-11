@@ -5,7 +5,8 @@ import {
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '../../components/common/IconCompat';
-import { ordersAPI, paymentsAPI, promosAPI } from '../../services/api';
+import { ordersAPI, paymentsAPI, promosAPI, poolsAPI } from '../../services/api';
+import { shareGroupGift } from './GroupGiftsScreen';
 import AppInput from '../../components/common/AppInput';
 import ScreenHeader from '../../components/common/ScreenHeader';
 import { useCart } from '../../context/CartContext';
@@ -40,6 +41,10 @@ export default function CartScreen({ navigation }) {
   const [anonymous, setAnonymous] = useState(false);
   // "I don't know their address": the recipient confirms it through a link.
   const [askRecipient, setAskRecipient] = useState(false);
+  // Group gift: friends chip in by card from a link instead of the buyer paying.
+  const [groupMode, setGroupMode] = useState(false);
+  const [groupDays, setGroupDays] = useState(7);
+  const [placedPool, setPlacedPool] = useState(null);
   const dayOptions = useMemo(() => upcomingDays(DELIVERY_DAYS_AHEAD), []);
 
   // Promo code. `promo` is what the server said the code is worth for a cart
@@ -121,6 +126,43 @@ export default function CartScreen({ navigation }) {
     setPendingOrder(value);
   };
 
+  // What an order (or the order behind a group gift) is made from.
+  const orderPayload = () => ({
+    order_type: 'gift',
+    items: items.map((item) => ({ product_id: item.id, quantity: item.quantity })),
+    delivery_address: askRecipient ? undefined : deliveryAddress.trim(),
+    delivery_city: askRecipient ? undefined : (user?.city || 'Lagos'),
+    address_pending: askRecipient || undefined,
+    recipient_name: recipientName.trim(),
+    recipient_phone: recipientPhone.trim() || undefined,
+    personal_message: personalMessage.trim() || undefined,
+    scheduled_date: deliveryDay || undefined,
+    is_anonymous: anonymous,
+    is_express: false,
+  });
+
+  // Group gift: nothing is charged now. The server makes the order and a link.
+  const handleStartGroupGift = async () => {
+    setSubmitting(true);
+    try {
+      const res = await poolsAPI.create({ ...orderPayload(), days: groupDays });
+      if (pendingRef.current) {
+        // An unpaid order from an earlier attempt is no longer wanted.
+        ordersAPI.cancel(pendingRef.current.order.id).catch(() => {});
+        rememberOrder(null);
+      }
+      notifySuccess();
+      setShowRecipient(false);
+      setPlacedPool(res.data);
+      clearCart();
+    } catch (err) {
+      notifyError();
+      Alert.alert('Group gift not started', apiError(err, 'We could not start the group gift. Please try again.'));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   // With "let them tell us where", only the name is needed up front.
   const canPay = !!recipientName.trim()
     && (askRecipient || (!!recipientPhone.trim() && !!deliveryAddress.trim()));
@@ -158,6 +200,10 @@ export default function CartScreen({ navigation }) {
       );
       return;
     }
+    if (groupMode) {
+      handleStartGroupGift();
+      return;
+    }
     if (paymentMethod === 'wallet' && walletBalance < total) {
       Alert.alert(
         'Not enough in your wallet',
@@ -183,20 +229,7 @@ export default function CartScreen({ navigation }) {
           ordersAPI.cancel(existing.order.id).catch(() => {});
           rememberOrder(null);
         }
-        const res = await ordersAPI.create({
-          order_type: 'gift',
-          items: items.map((item) => ({ product_id: item.id, quantity: item.quantity })),
-          delivery_address: askRecipient ? undefined : deliveryAddress.trim(),
-          delivery_city: askRecipient ? undefined : (user?.city || 'Lagos'),
-          address_pending: askRecipient || undefined,
-          recipient_name: recipientName.trim(),
-          recipient_phone: recipientPhone.trim() || undefined,
-          personal_message: personalMessage.trim() || undefined,
-          scheduled_date: deliveryDay || undefined,
-          is_anonymous: anonymous,
-          promo_code: promo?.code || undefined,
-          is_express: false,
-        });
+        const res = await ordersAPI.create({ ...orderPayload(), promo_code: promo?.code || undefined });
         order = res.data;
         rememberOrder({ order, key });
       }
@@ -273,6 +306,39 @@ export default function CartScreen({ navigation }) {
       setSubmitting(false);
     }
   };
+
+  // ── Group gift started: nothing was charged; show the link to share ──
+  if (placedPool) {
+    return (
+      <View className="flex-1 bg-cream">
+        <StatusBar style="dark" />
+        <ScreenHeader variant="stack" title="Group gift started" onBack={() => navigation.goBack()} />
+        <View className="flex-1 items-center justify-center px-8">
+          <View className="w-24 h-24 rounded-full bg-teal-light items-center justify-center mb-5">
+            <Ionicons name="people-outline" size={46} color="#1F4A45" />
+          </View>
+          <Text className="text-xl font-bold text-ink mb-2 text-center">{placedPool.title}</Text>
+          <Text className="text-sm text-ink-soft text-center leading-5">
+            Share the link with friends. They chip in by card, and we place the order as soon as {formatPrice(placedPool.target)} is reached. If it is not reached in time, everyone is refunded.
+          </Text>
+          <TouchableOpacity
+            className="bg-orange h-[52px] rounded-[16px] flex-row items-center justify-center gap-2 mt-8 self-stretch"
+            onPress={() => shareGroupGift(placedPool)}
+            activeOpacity={0.85}
+          >
+            <Ionicons name="share-social" size={18} color="#fff" />
+            <Text className="text-[15px] font-bold text-white">Share the link</Text>
+          </TouchableOpacity>
+          <Text className="text-[12.5px] text-ink-caption text-center leading-[18px] mt-4">
+            Track it any time in Profile, under Group gifts.
+          </Text>
+          <TouchableOpacity className="py-4 px-8" onPress={() => navigation.goBack()}>
+            <Text className="text-[14px] font-bold text-ink-soft">Done</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
 
   // ── Receipt: shown once payment is confirmed ──
   if (placedOrder) {
@@ -665,6 +731,48 @@ export default function CartScreen({ navigation }) {
               />
             </View>
 
+            {/* Split the cost with friends */}
+            <View className="bg-gray-50 border-2 border-gray-200 rounded-2xl px-4 py-3 mb-4">
+              <View className="flex-row items-center">
+                <Ionicons name="people-outline" size={18} color={groupMode ? '#1F4A45' : '#9A948A'} />
+                <View className="flex-1 ml-3 mr-2">
+                  <Text className="text-sm font-bold text-gray-800">Split the cost with friends</Text>
+                  <Text className="text-[11.5px] text-gray-400 mt-0.5 leading-4">
+                    You get a link. Friends chip in by card and we order when the full amount is in.
+                  </Text>
+                </View>
+                <Switch
+                  value={groupMode}
+                  onValueChange={setGroupMode}
+                  trackColor={{ false: '#EAE3D8', true: '#1F4A45' }}
+                  thumbColor="#fff"
+                />
+              </View>
+              {groupMode ? (
+                <View className="mt-3">
+                  <Text className="text-[11.5px] font-bold text-gray-500 mb-2">Keep collecting for</Text>
+                  <View className="flex-row gap-2">
+                    {[3, 7, 14].map((d) => (
+                      <TouchableOpacity
+                        key={d}
+                        className={`flex-1 py-2.5 rounded-xl border-2 items-center ${
+                          groupDays === d ? 'border-teal bg-teal-light/30' : 'border-gray-200 bg-white'
+                        }`}
+                        onPress={() => setGroupDays(d)}
+                      >
+                        <Text className={`text-[13px] font-bold ${groupDays === d ? 'text-teal' : 'text-gray-500'}`}>{d} days</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                  <Text className="text-[11.5px] text-gray-400 mt-2 leading-4">
+                    If {formatPrice(subtotal)} is not reached by then, everyone is refunded to their card.{promo ? ' Promo codes do not apply to group gifts.' : ''}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
+
+            {groupMode ? null : (
+            <>
             {/* Payment Method */}
             <Text className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 mt-2">Payment Method</Text>
             <View className="flex-row gap-3 mb-4">
@@ -690,6 +798,8 @@ export default function CartScreen({ navigation }) {
                 </View>
               </TouchableOpacity>
             </View>
+            </>
+            )}
           </ScrollView>
 
           <View className="px-5 pb-8 pt-4 border-t border-gray-100">
@@ -703,7 +813,9 @@ export default function CartScreen({ navigation }) {
               <Text className={`text-base font-bold ${
                 canPay ? 'text-white' : 'text-gray-400'
               }`}>
-                {submitting ? 'Placing Order...' : `Pay ${formatPrice(total)}`}
+                {submitting
+                  ? (groupMode ? 'Starting…' : 'Placing Order...')
+                  : groupMode ? `Start group gift · ${formatPrice(subtotal)}` : `Pay ${formatPrice(total)}`}
               </Text>
             </TouchableOpacity>
           </View>

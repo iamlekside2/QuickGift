@@ -5,7 +5,7 @@ import {
   LayoutDashboard, ShoppingCart, Package, Sparkles,
   Users, Menu, X, LogOut, Gift, CalendarCheck,
   Settings, Search, ChevronRight, Wallet, Banknote, AlertTriangle, UserPlus,
-  ShieldCheck, ScrollText, Tag
+  ShieldCheck, ScrollText, Tag, Users2
 } from 'lucide-react'
 import { logout, selectCurrentUser } from '../features/authSlice'
 import { api, useGetMeQuery } from '../services/api'
@@ -25,6 +25,7 @@ const NAV_ITEMS = [
   { path: '/promos', label: 'Promo codes', icon: Tag, perm: 'settings.manage' },
   { path: '/transactions', label: 'Transactions', icon: Wallet, perm: 'finance.view' },
   { path: '/payouts', label: 'Payouts', icon: Banknote, perm: 'finance.view' },
+  { path: '/group-gifts', label: 'Group gifts', icon: Users2, perm: 'finance.view' },
   { path: '/disputes', label: 'Disputes', icon: AlertTriangle, perm: 'disputes.view' },
   { path: '/team', label: 'Team', icon: ShieldCheck, perm: 'team.manage' },
   { path: '/audit', label: 'Audit log', icon: ScrollText, perm: 'team.manage' },
