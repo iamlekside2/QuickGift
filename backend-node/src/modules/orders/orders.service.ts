@@ -37,6 +37,7 @@ const ORDER_FIELDS = `id, order_number, user_id, order_type, status, subtotal,
   delivery_fee, total, delivery_address, delivery_city, recipient_name,
   personal_message, is_anonymous, is_express, scheduled_date, discount, promo_code,
   address_pending,
+  EXISTS (SELECT 1 FROM gift_pools gp WHERE gp.order_id = orders.id) AS group_gift,
   CASE WHEN address_pending AND claim_token IS NOT NULL
        THEN '${SITE_URL}/gift/?t=' || claim_token END AS claim_url,
   payment_status, created_at`;
@@ -277,6 +278,17 @@ export class OrdersService {
    * was not in a cancellable state.
    */
   private async cancelAndRefund(orderId: string) {
+    // A group gift's money belongs to the people who chipped in. Cancelling
+    // its order here would refund the organiser's wallet instead of them.
+    const pooled = await this.db.queryOne(
+      `SELECT 1 FROM gift_pools WHERE order_id = $1 AND status IN ('open','funding','funded')`,
+      [orderId],
+    );
+    if (pooled) {
+      throw new BadRequestException(
+        'This order belongs to a group gift. Cancel the group gift instead, so everyone who chipped in is refunded.',
+      );
+    }
     return this.db.transaction(async (client) => {
       const order = (
         await client.query(

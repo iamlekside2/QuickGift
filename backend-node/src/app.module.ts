@@ -22,6 +22,7 @@ import { ApplicationsModule } from './modules/applications/applications.module';
 import { ReferralsModule } from './modules/referrals/referrals.module';
 import { RemindersModule } from './modules/reminders/reminders.module';
 import { PromosModule } from './modules/promos/promos.module';
+import { PoolsModule } from './modules/pools/pools.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { PromosModule } from './modules/promos/promos.module';
     ReferralsModule,
     RemindersModule,
     PromosModule,
+    PoolsModule,
   ],
   controllers: [HealthController],
 })

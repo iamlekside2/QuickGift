@@ -265,6 +265,15 @@ export class PaymentsService {
       if (!order || order.user_id !== userId) throw new NotFoundException('Order not found');
       if (order.payment_status === 'paid') throw new BadRequestException('This order is already paid');
       if (order.status === 'cancelled') throw new BadRequestException('This order was cancelled');
+      const pooled = await this.db.queryOne(
+        `SELECT 1 FROM gift_pools WHERE order_id = $1 AND status IN ('open','funding')`,
+        [orderId],
+      );
+      if (pooled) {
+        throw new BadRequestException(
+          'This order is being paid for by a group gift. Share the group gift link to collect contributions.',
+        );
+      }
       // A promo code only holds its place for a short while on an unpaid
       // order; after that the discounted price can no longer be paid.
       if (Number(order.discount) > 0 && order.promo_window_closed) {
@@ -308,6 +317,118 @@ export class PaymentsService {
       ).rows[0];
       if (!claimed) return false; // someone else already confirmed it
       await this.settle(client, claimed);
+      return true;
+    });
+  }
+
+  // ---- gateway access for group gifts (PoolsService) ----
+
+  /**
+   * Starts a hosted card checkout for something that is not an order or a
+   * booking. In local development (no key) there is no page to send the
+   * payer to, so the address is null and gatewayCheck approves it.
+   */
+  async gatewayStart(opts: {
+    email: string;
+    amount: number;
+    reference: string;
+    callbackUrl: string;
+    metadata?: Record<string, any>;
+  }): Promise<{ authorization_url: string | null }> {
+    if (!this.secretKey) {
+      if (!devPaymentsAllowed()) {
+        throw new HttpException(
+          'Card payments are not available right now. Please try again later.',
+          HttpStatus.SERVICE_UNAVAILABLE,
+        );
+      }
+      return { authorization_url: null };
+    }
+    const resp = await fetch(`${PAYSTACK_BASE_URL}/transaction/initialize`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${this.secretKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: opts.email,
+        amount: Math.round(opts.amount * 100), // kobo
+        reference: opts.reference,
+        callback_url: opts.callbackUrl,
+        currency: 'NGN',
+        metadata: opts.metadata ?? {},
+      }),
+    }).catch(() => null);
+    const data: any = resp ? await resp.json().catch(() => null) : null;
+    if (!resp || resp.status !== 200 || !data?.data?.authorization_url) {
+      this.logger.error(`Paystack initialize failed for ${opts.reference}: ${data?.message ?? resp?.status ?? 'no response'}`);
+      throw new HttpException(
+        'We could not start your card payment. Please try again.',
+        HttpStatus.BAD_GATEWAY,
+      );
+    }
+    return { authorization_url: data.data.authorization_url };
+  }
+
+  /** What the gateway says about a reference. Unknown is never "paid". */
+  async gatewayCheck(
+    reference: string,
+  ): Promise<{ state: 'success' | 'failed' | 'pending' | 'unknown'; kobo: number }> {
+    if (!this.secretKey) {
+      return devPaymentsAllowed()
+        ? { state: 'success', kobo: Number.MAX_SAFE_INTEGER }
+        : { state: 'unknown', kobo: 0 };
+    }
+    const r = await this.askPaystack(reference);
+    return { state: r.state, kobo: r.kobo };
+  }
+
+  /** Sends `amount` of a card payment back to the card. True if accepted. */
+  async gatewayRefund(reference: string, amount: number): Promise<boolean> {
+    if (!(amount > 0)) return true;
+    if (!this.secretKey) return devPaymentsAllowed();
+    const resp = await fetch(`${PAYSTACK_BASE_URL}/refund`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${this.secretKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ transaction: reference, amount: Math.round(amount * 100) }),
+    }).catch(() => null);
+    const data: any = resp ? await resp.json().catch(() => null) : null;
+    const ok = !!resp && resp.status >= 200 && resp.status < 300 && data?.status === true;
+    if (!ok) {
+      this.logger.error(`Paystack refund failed for ${reference}: ${data?.message ?? resp?.status ?? 'no response'}`);
+    }
+    return ok;
+  }
+
+  /**
+   * Marks an order paid with money collected by a group gift, through the
+   * same settle step as any other payment (payouts, seller notices, delivery).
+   * Returns false, changing nothing, if the order was cancelled or was paid
+   * some other way: the caller must then refund its contributors. The order
+   * row is locked first so settle() can never take its "refund a cancelled
+   * order to the payer's wallet" branch with other people's money.
+   */
+  async settleOrderFromPool(orderId: string, reference: string): Promise<boolean> {
+    return this.db.transaction(async (client) => {
+      const order = (
+        await client.query(
+          `SELECT id, user_id, total, status, payment_status, payment_ref FROM orders WHERE id = $1 FOR UPDATE`,
+          [orderId],
+        )
+      ).rows[0];
+      if (!order || order.status === 'cancelled') return false;
+      if (order.payment_status === 'paid') return order.payment_ref === reference;
+      const amount = Number(order.total);
+      await client.query(
+        `INSERT INTO payments (id, user_id, reference, order_id, booking_id, amount, currency, status, provider, channel, created_at, updated_at)
+         VALUES ($1,$2,$3,$4,NULL,$5,'NGN','success','paystack','group_gift',NOW(),NOW())
+         ON CONFLICT (reference) DO NOTHING`,
+        [randomUUID(), order.user_id, reference, order.id, amount],
+      );
+      await this.settle(client, {
+        user_id: order.user_id,
+        reference,
+        order_id: order.id,
+        booking_id: null,
+        amount,
+      });
       return true;
     });
   }

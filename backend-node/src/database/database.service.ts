@@ -18,27 +18,42 @@ types.setTypeParser(1082, (v: string) => v);
 @Injectable()
 export class DatabaseService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(DatabaseService.name);
-  private pool!: Pool;
+  private created: Pool | null = null;
+
+  /**
+   * The connection pool, created the first time it is needed.
+   *
+   * It used to be created in onModuleInit, which only works if this service's
+   * init hook runs before every other service's. Nest orders those hooks by
+   * how modules import each other, so adding an import elsewhere could make a
+   * service's own onModuleInit (creating its tables) run first and crash the
+   * boot. Creating the pool on demand removes the ordering dependency.
+   */
+  private get pool(): Pool {
+    if (!this.created) {
+      const connStr = process.env.DATABASE_URL || '';
+      // Managed Postgres (Supabase/Neon/Render) requires SSL; local dev does not.
+      const isLocal = connStr.includes('localhost') || connStr.includes('127.0.0.1');
+      this.created = new Pool({
+        connectionString: connStr,
+        max: 10,
+        // Force every session to UTC at connection time (startup param, not a
+        // query — avoids the client.query-on-connect deprecation).
+        options: '-c timezone=UTC',
+        ssl: isLocal ? undefined : { rejectUnauthorized: false },
+      });
+    }
+    return this.created;
+  }
 
   async onModuleInit() {
-    const connStr = process.env.DATABASE_URL || '';
-    // Managed Postgres (Supabase/Neon/Render) requires SSL; local dev does not.
-    const isLocal = connStr.includes('localhost') || connStr.includes('127.0.0.1');
-    this.pool = new Pool({
-      connectionString: connStr,
-      max: 10,
-      // Force every session to UTC at connection time (startup param, not a
-      // query — avoids the client.query-on-connect deprecation).
-      options: '-c timezone=UTC',
-      ssl: isLocal ? undefined : { rejectUnauthorized: false },
-    });
     // Fail fast if the DB is unreachable at boot.
     await this.pool.query('SELECT 1');
     this.logger.log('Postgres pool ready');
   }
 
   async onModuleDestroy() {
-    await this.pool?.end();
+    await this.created?.end();
   }
 
   /** Run a parameterized query and return all rows. */
