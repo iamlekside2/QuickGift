@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Chip in for a gift | QuickGift</title>
+  <meta name="description" content="Friends are putting money together for a gift. Add your share.">
+  <!-- Private page: keep it out of search and referrers. -->
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="referrer" content="no-referrer">
+  <link rel="icon" href="../logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;}
+    body{margin:0;font-family:'Plus Jakarta Sans',sans-serif;background:#FAF3E9;color:#211F1C;-webkit-font-smoothing:antialiased;min-height:100vh;display:flex;flex-direction:column;}
+    a{color:#E8632F;text-decoration:none;}
+    header{padding:22px 24px;display:flex;justify-content:center;}
+    header a{display:flex;align-items:center;gap:10px;color:#1F4A45;font-weight:800;font-size:18px;}
+    header img{width:34px;height:34px;object-fit:contain;}
+    main{flex:1;display:flex;justify-content:center;padding:8px 20px 48px;}
+    .card{width:100%;max-width:460px;background:#fff;border-radius:28px;padding:30px 26px;box-shadow:0 18px 50px rgba(33,31,28,.08);align-self:flex-start;}
+    .badge{width:72px;height:72px;border-radius:50%;background:#FCE7DA;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:34px;}
+    .badge.ok{background:#DDEBE6;}
+    h1{font-family:'Instrument Serif',serif;font-weight:400;font-size:32px;line-height:1.12;text-align:center;margin:0 0 10px;color:#1F4A45;word-wrap:break-word;}
+    h1 em{color:#E8632F;}
+    .lead{text-align:center;font-size:14.5px;line-height:1.6;color:#6E6A63;margin:0 0 18px;}
+    .note{background:#FAF3E9;border-radius:18px;padding:14px 18px;margin:0 0 18px;}
+    .note p{margin:0;font-family:'Instrument Serif',serif;font-style:italic;font-size:18px;line-height:1.4;white-space:pre-wrap;word-wrap:break-word;}
+    .progress{margin:0 0 20px;}
+    .bar{height:12px;border-radius:100px;background:#EFE9DE;overflow:hidden;}
+    .bar i{display:block;height:100%;width:0;border-radius:100px;background:#1F4A45;transition:width .6s ease;}
+    .nums{display:flex;justify-content:space-between;align-items:baseline;margin-top:10px;font-size:13px;color:#6E6A63;}
+    .nums b{font-size:20px;color:#211F1C;font-weight:800;}
+    .meta{font-size:12.5px;color:#9A948A;margin-top:8px;}
+    .who{font-size:12.5px;color:#6E6A63;line-height:1.5;margin:0 0 20px;}
+    .chips{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;}
+    .chips button{border:1.5px solid #EAE3D8;background:#FAF3E9;color:#211F1C;border-radius:14px;padding:11px 4px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;margin:0;width:auto;}
+    .chips button.on{border-color:#1F4A45;background:#DDEBE6;color:#1F4A45;}
+    .fld{display:flex;flex-direction:column;gap:7px;margin-bottom:14px;}
+    .fld span{font-size:13px;font-weight:700;}
+    .fld input{padding:14px 16px;border-radius:14px;border:1.5px solid #EAE3D8;background:#FAF3E9;font-size:15px;color:#211F1C;font-family:inherit;width:100%;}
+    .fld input:focus{outline:none;border-color:#1F4A45;background:#fff;}
+    button.main{width:100%;border:0;border-radius:16px;background:#1F4A45;color:#fff;font:inherit;font-weight:800;font-size:15.5px;padding:16px;cursor:pointer;margin-top:6px;}
+    button.main:disabled{opacity:.6;cursor:default;}
+    button.ghost{width:100%;border-radius:16px;background:transparent;color:#1F4A45;border:1.5px solid #1F4A45;font:inherit;font-weight:800;font-size:15px;padding:14px;cursor:pointer;margin-top:10px;}
+    .err{background:#FDECEC;color:#B03A3A;border-radius:12px;padding:12px 14px;font-size:13.5px;line-height:1.5;margin-bottom:14px;}
+    .okbox{background:#DDEBE6;color:#1F4A45;border-radius:14px;padding:14px 16px;font-size:14px;line-height:1.5;margin-bottom:18px;font-weight:600;}
+    .hint{font-size:12px;color:#9A948A;text-align:center;line-height:1.5;margin:14px 0 0;}
+    .spin{width:34px;height:34px;border-radius:50%;border:3px solid #EAE3D8;border-top-color:#1F4A45;animation:sp .8s linear infinite;margin:30px auto;}
+    @keyframes sp{to{transform:rotate(360deg)}}
+    [hidden]{display:none !important;}
+    footer{text-align:center;font-size:12.5px;color:#9A948A;padding:0 20px 28px;}
+  </style>
+</head>
+<body>
+  <header>
+    <a href="/"><img src="../logo.png" alt=""><span>QuickGift</span></a>
+  </header>
+
+  <main>
+    <div class="card" aria-live="polite">
+      <section id="s-loading">
+        <div class="spin" role="status" aria-label="Loading"></div>
+        <p class="lead" id="l-text" hidden>Confirming your payment...</p>
+      </section>
+
+      <!-- The pool: progress, and the form while it is open -->
+      <section id="s-pool" hidden>
+        <div class="badge" id="p-badge" aria-hidden="true">🎁</div>
+        <h1 id="p-title"></h1>
+        <p class="lead" id="p-lead"></p>
+        <div class="okbox" id="p-thanks" role="status" hidden></div>
+        <div class="note" id="p-note" hidden><p id="p-message"></p></div>
+
+        <div class="progress">
+          <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" id="p-bar"><i id="p-fill"></i></div>
+          <div class="nums"><span><b id="p-raised"></b> raised</span><span id="p-target"></span></div>
+          <div class="meta" id="p-meta"></div>
+        </div>
+        <p class="who" id="p-who" hidden></p>
+
+        <form id="form" novalidate hidden>
+          <div class="err" id="f-err" role="alert" hidden></div>
+          <div class="fld" style="margin-bottom:8px"><span>How much would you like to add?</span></div>
+          <div class="chips" id="f-chips"></div>
+          <label class="fld">
+            <span class="sr" style="position:absolute;left:-9999px">Amount in naira</span>
+            <input id="f-amount" type="text" inputmode="numeric" autocomplete="off" placeholder="Or type an amount in naira">
+          </label>
+          <label class="fld">
+            <span>Your name</span>
+            <input id="f-name" type="text" maxlength="80" autocomplete="name" placeholder="So they know who chipped in" required>
+          </label>
+          <label class="fld">
+            <span>Email</span>
+            <input id="f-email" type="email" maxlength="160" autocomplete="email" placeholder="For your receipt" required>
+          </label>
+          <button type="submit" class="main" id="f-submit">Chip in</button>
+          <p class="hint">You pay securely by card. If the gift is not fully funded in time, your money is returned to your card.</p>
+        </form>
+
+        <button class="ghost" id="p-again" type="button" hidden>Check my payment again</button>
+      </section>
+
+      <section id="s-problem" hidden>
+        <div class="badge" aria-hidden="true">🎀</div>
+        <h1 id="x-title"></h1>
+        <p class="lead" id="x-lead"></p>
+        <button class="ghost" id="x-retry" type="button" hidden>Try again</button>
+      </section>
+    </div>
+  </main>
+
+  <footer>Powered by <a href="/">QuickGift</a>. Send gifts and book trusted services across Nigeria.</footer>
+
+  <script>
+  (function () {
+    var LOCAL = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+    var API_BASE = LOCAL ? 'http://localhost:8001/api/v1' : 'https://quickgift-node-api.onrender.com/api/v1';
+    var qs = new URLSearchParams(location.search);
+    var code = (qs.get('c') || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    var reference = qs.get('reference') || qs.get('trxref') || '';
+    var $ = function (id) { return document.getElementById(id); };
+    var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    var pool = null;
+
+    function naira(n) { return '₦' + Math.round(Number(n) || 0).toLocaleString('en-NG'); }
+    function show(name) {
+      ['loading', 'pool', 'problem'].forEach(function (s) { $('s-' + s).hidden = s !== name; });
+    }
+    function problem(title, lead, canRetry) {
+      // Titles here hold no user data, so the <em> accent is safe as HTML.
+      $('x-title').innerHTML = title;
+      $('x-lead').textContent = lead;
+      $('x-retry').hidden = !canRetry;
+      show('problem');
+    }
+    // Nigeria is UTC+1 all year: show the closing day on the Lagos calendar.
+    function closingDay(iso) {
+      var d = new Date(iso);
+      if (isNaN(d.getTime())) return '';
+      var l = new Date(d.getTime() + 3600000);
+      return l.getUTCDate() + ' ' + MONTHS[l.getUTCMonth()];
+    }
+
+    function api(method, path, body) {
+      return fetch(API_BASE + '/pools/public/' + encodeURIComponent(code) + path, {
+        method: method,
+        headers: body ? { 'Content-Type': 'application/json' } : {},
+        body: body ? JSON.stringify(body) : undefined,
+      }).then(function (res) {
+        return res.json().catch(function () { return {}; }).then(function (data) {
+          return { status: res.status, data: data };
+        });
+      });
+    }
+    function message(r, fallback) {
+      var m = r && r.data && r.data.message;
+      return (Array.isArray(m) ? m.join(' ') : m) || fallback;
+    }
+
+    function setAmount(v) {
+      $('f-amount').value = v ? String(v) : '';
+      Array.prototype.forEach.call($('f-chips').children, function (b) {
+        b.classList.toggle('on', Number(b.dataset.v) === Number(v));
+      });
+    }
+
+    function render(p, thanks) {
+      pool = p;
+      var open = p.status === 'open';
+      var funded = p.status === 'funded' || p.status === 'funding';
+      var pct = p.target > 0 ? Math.min(100, Math.round((p.raised / p.target) * 100)) : 0;
+
+      $('p-badge').textContent = funded ? '🎉' : '🎁';
+      $('p-badge').className = 'badge' + (funded ? ' ok' : '');
+      // Everything that came from a person is written with textContent only.
+      $('p-title').textContent = p.title || 'A group gift';
+      var by = p.organiser_name ? p.organiser_name + ' is' : 'Friends are';
+      $('p-lead').textContent = funded
+        ? 'This gift is fully paid for. Thank you to everyone who chipped in.'
+        : open
+          ? by + ' putting money together for this gift. Add whatever you can.'
+          : 'This group gift has closed. Anyone who chipped in has been refunded to their card.';
+
+      if (thanks) { $('p-thanks').textContent = thanks; $('p-thanks').hidden = false; }
+      else { $('p-thanks').hidden = true; }
+
+      if (p.message) { $('p-message').textContent = p.message; $('p-note').hidden = false; }
+      else { $('p-note').hidden = true; }
+
+      $('p-fill').style.width = pct + '%';
+      $('p-bar').setAttribute('aria-valuenow', String(pct));
+      $('p-raised').textContent = naira(p.raised);
+      $('p-target').textContent = 'of ' + naira(p.target);
+      var day = closingDay(p.deadline);
+      $('p-meta').textContent = open
+        ? naira(p.remaining) + ' to go' + (day ? '. Closes on ' + day + '.' : '.')
+        : funded ? 'Target reached.' : '';
+
+      var names = p.contributors || [];
+      if (names.length) {
+        // Short names end in an initial and a full stop ("Bola F."), so add none.
+        $('p-who').textContent = 'Chipped in so far: ' + names.join(', ');
+        $('p-who').hidden = false;
+      } else { $('p-who').hidden = true; }
+
+      $('form').hidden = !open;
+      if (open) {
+        var chips = $('f-chips');
+        chips.textContent = '';
+        var picks = [1000, 2000, 5000].filter(function (v) { return v < p.remaining && v >= p.min_contribution; });
+        picks.push(p.remaining);
+        picks.forEach(function (v, i) {
+          var b = document.createElement('button');
+          b.type = 'button';
+          b.dataset.v = String(v);
+          b.textContent = i === picks.length - 1 ? 'The rest' : naira(v);
+          b.addEventListener('click', function () { setAmount(v); });
+          chips.appendChild(b);
+        });
+        chips.style.gridTemplateColumns = 'repeat(' + picks.length + ',1fr)';
+      }
+      show('pool');
+    }
+
+    function load(thanks) {
+      show('loading');
+      if (code.length !== 8) {
+        problem('This link is not <em>valid</em>', 'Please open the full link you were sent, or ask the organiser to share it again.', false);
+        return;
+      }
+      api('GET', '').then(function (r) {
+        if (r.status === 200) return render(r.data, thanks);
+        if (r.status === 404) {
+          return problem('This link is not <em>valid</em>', 'Please open the full link you were sent, or ask the organiser to share it again.', false);
+        }
+        problem('We could not open this <em>gift</em>',
+          r.status === 429 ? 'Too many attempts. Please wait a few minutes and try again.'
+            : 'Something went wrong on our side. Please try again in a moment.', true);
+      }).catch(function () {
+        problem('We could not open this <em>gift</em>', 'Please check your internet connection and try again.', true);
+      });
+    }
+
+    // Back from the card page (or a retry): ask the server whether it went through.
+    function confirmPayment(ref) {
+      $('l-text').hidden = false;
+      show('loading');
+      api('POST', '/verify', { reference: ref }).then(function (r) {
+        $('l-text').hidden = true;
+        // Drop the payment reference from the address so a refresh does not repeat this.
+        try { history.replaceState(null, '', location.pathname + '?c=' + code); } catch (e) {}
+        if (r.status !== 200) { load(''); return; }
+        var d = r.data;
+        if (d.status === 'success') {
+          render(d.pool, d.refunded
+            ? 'Thank you. This gift had already closed or reached its target, so your payment is being returned to your card.'
+            : 'Thank you! Your contribution has been added.');
+          $('p-again').hidden = true;
+        } else if (d.status === 'pending') {
+          render(d.pool, 'We have not received confirmation of your payment yet. This can take a minute.');
+          $('p-again').hidden = false;
+          $('p-again').onclick = function () { confirmPayment(ref); };
+        } else {
+          render(d.pool, '');
+          $('f-err').textContent = 'Your payment did not go through and you have not been charged. Please try again.';
+          $('f-err').hidden = false;
+        }
+      }).catch(function () {
+        $('l-text').hidden = true;
+        problem('We could not confirm your <em>payment</em>', 'Please check your internet connection and try again.', true);
+        $('x-retry').onclick = function () { confirmPayment(ref); };
+      });
+    }
+
+    $('x-retry').onclick = function () { load(''); };
+
+    $('f-amount').addEventListener('input', function () {
+      var v = this.value.replace(/[^0-9]/g, '');
+      this.value = v;
+      Array.prototype.forEach.call($('f-chips').children, function (b) {
+        b.classList.toggle('on', Number(b.dataset.v) === Number(v));
+      });
+    });
+
+    $('form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var err = $('f-err'), btn = $('f-submit');
+      var amount = Number($('f-amount').value);
+      var name = $('f-name').value.trim();
+      var email = $('f-email').value.trim();
+      err.hidden = true;
+      function fail(text, field) { err.textContent = text; err.hidden = false; if (field) $(field).focus(); }
+      if (!amount) return fail('Please choose or type an amount.', 'f-amount');
+      if (pool && amount < pool.min_contribution) return fail('The smallest contribution is ' + naira(pool.min_contribution) + '.', 'f-amount');
+      if (pool && amount > pool.remaining) return fail('Only ' + naira(pool.remaining) + ' is left to raise. Please enter that or less.', 'f-amount');
+      if (name.length < 2) return fail('Please enter your name.', 'f-name');
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return fail('Please enter a valid email address. Your receipt goes there.', 'f-email');
+
+      btn.disabled = true;
+      btn.textContent = 'Starting payment...';
+      api('POST', '/contribute', { name: name, email: email, amount: amount }).then(function (r) {
+        if (r.status !== 200) {
+          fail(message(r, 'We could not start your payment. Please try again.'));
+          if (r.status === 400) load('');
+          return;
+        }
+        if (r.data.authorization_url) {
+          location.href = r.data.authorization_url;   // card page; it sends the payer back here
+          return;
+        }
+        confirmPayment(r.data.reference);              // local development: no card page
+      }).catch(function () {
+        fail('Please check your internet connection and try again.');
+      }).then(function () {
+        btn.disabled = false;
+        btn.textContent = 'Chip in';
+      });
+    });
+
+    if (reference && code.length === 8) confirmPayment(reference);
+    else load('');
+  })();
+  </script>
+</body>
+</html>
