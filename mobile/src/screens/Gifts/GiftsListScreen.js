@@ -4,14 +4,14 @@ import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '../../components/common/IconCompat';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { productsAPI } from '../../services/api';
-import { LoadingState, EmptyState } from '../../components/common/ScreenStates';
+import { LoadingState, EmptyState, ErrorState } from '../../components/common/ScreenStates';
 import ScreenHeader from '../../components/common/ScreenHeader';
 import { iconFor } from '../../utils/categoryIcons';
 
 const RECENT_SEARCHES_KEY = '@quickgift_recent_searches';
 
 export default function GiftsListScreen({ navigation, route }) {
-  const { category, title, search: showSearch } = route.params || {};
+  const { category, occasion, title, search: showSearch } = route.params || {};
   const [sortBy, setSortBy] = useState('popular');
   const [searchQuery, setSearchQuery] = useState('');
   const [gifts, setGifts] = useState([]);
@@ -20,6 +20,7 @@ export default function GiftsListScreen({ navigation, route }) {
   const [searchFocused, setSearchFocused] = useState(false);
   const [priceFilter, setPriceFilter] = useState(null); // null, 'under10k', '10k-30k', '30k+'
   const [ratingFilter, setRatingFilter] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
 
   // Load recent searches on mount
   useEffect(() => {
@@ -54,6 +55,9 @@ export default function GiftsListScreen({ navigation, route }) {
     try {
       const params = { sort: sortBy, per_page: 50 };
       if (category) params.category_id = category;
+      // An occasion tile (Birthday, Wedding...) filters by that occasion. The
+      // server accepts the occasion's id or its name.
+      if (occasion) params.occasion = occasion;
       if (searchQuery.trim()) {
         params.search = searchQuery.trim();
         saveRecentSearch(searchQuery.trim());
@@ -66,9 +70,12 @@ export default function GiftsListScreen({ navigation, route }) {
       if (ratingFilter) params.min_rating = 4;
 
       const res = await productsAPI.list(params);
-      setGifts(res.data.items || []);
+      setGifts(res.data?.items || []);
+      setLoadFailed(false);
     } catch (err) {
       console.log('Error loading gifts:', err);
+      setGifts([]);
+      setLoadFailed(true);
     } finally {
       setLoading(false);
     }
@@ -250,7 +257,11 @@ export default function GiftsListScreen({ navigation, route }) {
           showsVerticalScrollIndicator={false}
           renderItem={renderGift}
           ListEmptyComponent={
-            <EmptyState icon="gift-outline" title="No gifts found" subtitle="We couldn't find any gifts matching your criteria. Try a different filter or category." />
+            loadFailed ? (
+              <ErrorState message="We could not load gifts. Check your connection and try again." onRetry={loadGifts} />
+            ) : (
+              <EmptyState icon="gift-outline" title="No gifts found" subtitle="We couldn't find any gifts matching your criteria. Try a different filter or category." />
+            )
           }
         />
       )}

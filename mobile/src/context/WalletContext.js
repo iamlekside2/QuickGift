@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { AppState } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { walletAPI } from '../services/api';
+import { getToken } from '../utils/tokenStore';
+import { useAuth } from './AuthContext';
 
 const STORAGE_KEY = '@wallet_balance';
 const WalletContext = createContext(null);
@@ -11,21 +13,34 @@ export function WalletProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [lastFetched, setLastFetched] = useState(null);
   const appState = useRef(AppState.currentState);
+  const { token, loading: authLoading } = useAuth();
 
-  // Load cached balance on mount, then fetch fresh
+  // Show the cached balance straight away while the session is restored.
   useEffect(() => {
     (async () => {
       try {
         const cached = await AsyncStorage.getItem(STORAGE_KEY);
         if (cached !== null) {
-          setBalance(parseFloat(cached));
+          const n = parseFloat(cached);
+          if (Number.isFinite(n)) setBalance(n);
           setLoading(false);
         }
       } catch {}
-      // Fetch fresh in background
-      await refreshBalance();
     })();
   }, []);
+
+  // Follow the session: fetch the balance as soon as someone signs in, and
+  // wipe it (state + cache) the moment they sign out, so the next account on
+  // this device never sees the previous one's money.
+  useEffect(() => {
+    if (authLoading) return;
+    if (token) {
+      refreshBalance();
+    } else {
+      resetBalance();
+      setLoading(false);
+    }
+  }, [token, authLoading]);
 
   // Re-fetch when app comes to foreground
   useEffect(() => {
@@ -40,14 +55,16 @@ export function WalletProvider({ children }) {
 
   const refreshBalance = useCallback(async () => {
     try {
-      const token = await AsyncStorage.getItem('token');
-      if (!token) {
+      const sessionToken = await getToken();
+      if (!sessionToken) {
         setLoading(false);
         return;
       }
       setLoading(true);
       const res = await walletAPI.getBalance();
-      const bal = res.data?.balance ?? 0;
+      const bal = Number(res.data?.balance ?? 0) || 0;
+      // The session may have ended while this was in flight.
+      if (!(await getToken())) return;
       setBalance(bal);
       setLastFetched(Date.now());
       await AsyncStorage.setItem(STORAGE_KEY, String(bal));
@@ -76,11 +93,23 @@ export function WalletProvider({ children }) {
     });
   }, []);
 
+  // Set the balance to a figure the server just told us (for example the
+  // `new_balance` returned by a wallet payment or a verified top-up).
+  const setServerBalance = useCallback((value) => {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return;
+    setBalance(n);
+    setLastFetched(Date.now());
+    AsyncStorage.setItem(STORAGE_KEY, String(n)).catch(() => {});
+  }, []);
+
   // Reset on logout
   const resetBalance = useCallback(async () => {
     setBalance(0);
     setLastFetched(null);
-    await AsyncStorage.removeItem(STORAGE_KEY);
+    try {
+      await AsyncStorage.removeItem(STORAGE_KEY);
+    } catch {}
   }, []);
 
   return (
@@ -92,6 +121,7 @@ export function WalletProvider({ children }) {
         refreshBalance,
         debit,
         credit,
+        setServerBalance,
         resetBalance,
       }}
     >

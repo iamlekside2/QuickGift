@@ -9,6 +9,20 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../../context/AuthContext';
 import { chatsAPI } from '../../services/api';
 
+// Fold a fresh server list into what is on screen without losing the
+// messages that only exist locally (still sending, or failed to send).
+const mergeMessages = (current, incoming) => {
+  const server = Array.isArray(incoming) ? incoming : [];
+  const serverIds = new Set(server.map((m) => m.id));
+  const localOnly = current.filter(
+    (m) => !serverIds.has(m.id) && (m.status === 'sending' || m.status === 'failed'),
+  );
+  if (!localOnly.length) return server;
+  return [...server, ...localOnly].sort(
+    (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+  );
+};
+
 export default function ChatScreen({ navigation, route }) {
   const { conversationId, otherName, otherAvatar, providerId, buyerId } = route.params || {};
   const { user } = useAuth();
@@ -19,20 +33,23 @@ export default function ChatScreen({ navigation, route }) {
   const flatListRef = useRef(null);
 
   // Determine current user's role in this conversation
+  // (the server decides it the same way: the buyer is whoever opened the thread)
   const isProvider = user?.role === 'provider';
-  const myRole = isProvider ? 'provider' : 'buyer';
+  const myRole = buyerId
+    ? (user?.id === buyerId ? 'buyer' : 'provider')
+    : (isProvider ? 'provider' : 'buyer');
 
   useEffect(() => {
     loadMessages();
   }, []);
 
-  // Poll for new messages every 5 seconds while screen is focused
+  // Poll for new messages every 10 seconds while screen is focused
   useFocusEffect(
     useCallback(() => {
       const interval = setInterval(async () => {
         try {
           const res = await chatsAPI.getMessages(conversationId);
-          setMessages(res.data || []);
+          setMessages((prev) => mergeMessages(prev, res.data));
         } catch (err) {
           // Silently ignore polling errors
         }
@@ -44,7 +61,7 @@ export default function ChatScreen({ navigation, route }) {
   const loadMessages = async () => {
     try {
       const res = await chatsAPI.getMessages(conversationId);
-      setMessages(res.data || []);
+      setMessages((prev) => mergeMessages(prev, res.data));
     } catch (err) {
       console.log('Error loading messages:', err);
     } finally {
@@ -52,11 +69,9 @@ export default function ChatScreen({ navigation, route }) {
     }
   };
 
-  const handleSend = async () => {
-    if (!text.trim() || sending) return;
-
-    const messageText = text.trim();
-    setText('');
+  // Sends `messageText`. `retryOf` is the failed local message being resent.
+  const sendText = async (messageText, retryOf) => {
+    if (!messageText || sending) return;
     setSending(true);
 
     // Optimistic update
@@ -67,13 +82,17 @@ export default function ChatScreen({ navigation, route }) {
       created_at: new Date().toISOString(),
       status: 'sending',
     };
-    setMessages((prev) => [...prev, tempMsg]);
+    setMessages((prev) => [...prev.filter((m) => m.id !== retryOf), tempMsg]);
 
     try {
-      const res = await chatsAPI.sendMessage(conversationId, messageText, myRole);
-      setMessages((prev) =>
-        prev.map((m) => (m.id === tempMsg.id ? { ...res.data, status: 'sent' } : m))
-      );
+      const res = await chatsAPI.sendMessage(conversationId, messageText);
+      setMessages((prev) => {
+        // A poll may already have delivered the saved message.
+        const already = prev.some((m) => m.id === res.data?.id);
+        return already
+          ? prev.filter((m) => m.id !== tempMsg.id)
+          : prev.map((m) => (m.id === tempMsg.id ? { ...res.data, status: 'sent' } : m));
+      });
     } catch (err) {
       setMessages((prev) =>
         prev.map((m) => (m.id === tempMsg.id ? { ...m, status: 'failed' } : m))
@@ -81,6 +100,13 @@ export default function ChatScreen({ navigation, route }) {
     } finally {
       setSending(false);
     }
+  };
+
+  const handleSend = () => {
+    const messageText = text.trim();
+    if (!messageText || sending) return;
+    setText('');
+    sendText(messageText);
   };
 
   const formatTime = (dateStr) => {
@@ -158,6 +184,11 @@ export default function ChatScreen({ navigation, route }) {
             </View>
           </View>
         </View>
+        {isMe && item.status === 'failed' && (
+          <TouchableOpacity className="items-end px-4 mb-2 -mt-1" onPress={() => sendText(item.text, item.id)}>
+            <Text className="text-[11px] font-bold text-red-500">Not sent. Tap to try again</Text>
+          </TouchableOpacity>
+        )}
       </View>
     );
   };
@@ -187,10 +218,6 @@ export default function ChatScreen({ navigation, route }) {
             <Text className="text-base font-bold text-white" numberOfLines={1}>
               {otherName || 'Chat'}
             </Text>
-            <View className="flex-row items-center gap-1 mt-0.5">
-              <View className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-              <Text className="text-[11px] text-white/60">Online</Text>
-            </View>
           </View>
 
           <TouchableOpacity
@@ -263,7 +290,7 @@ export default function ChatScreen({ navigation, route }) {
               value={text}
               onChangeText={setText}
               multiline
-              maxLength={1000}
+              maxLength={2000}
               style={{ paddingTop: Platform.OS === 'ios' ? 2 : 0, paddingBottom: Platform.OS === 'ios' ? 2 : 0 }}
             />
           </View>

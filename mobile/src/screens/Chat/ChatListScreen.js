@@ -14,6 +14,16 @@ export default function ChatListScreen({ navigation }) {
   const [searchQuery, setSearchQuery] = useState('');
 
   const isProvider = user?.role === 'provider';
+  // For a buyer this screen is pushed from Profile, so it needs a way back.
+  // (For a provider it is the root of the Messages tab.)
+  const pushed = (navigation.getState?.()?.index ?? 0) > 0;
+
+  // The other person in a thread: the provider's business name when I am the
+  // buyer, the buyer's name when I am the provider.
+  const nameOf = (c) => {
+    const iAmBuyer = c.buyer_id ? c.buyer_id === user?.id : !isProvider;
+    return iAmBuyer ? (c.provider_name || 'Provider') : (c.buyer_name || 'Customer');
+  };
 
   useFocusEffect(
     useCallback(() => {
@@ -34,13 +44,14 @@ export default function ChatListScreen({ navigation }) {
 
   const filteredConversations = searchQuery.trim()
     ? conversations.filter((c) => {
-        const name = isProvider ? c.buyer_name : c.provider_name;
-        return name?.toLowerCase().includes(searchQuery.toLowerCase());
+        return nameOf(c).toLowerCase().includes(searchQuery.trim().toLowerCase());
       })
     : conversations;
 
   const formatTime = (dateStr) => {
+    if (!dateStr) return '';
     const date = new Date(dateStr);
+    if (Number.isNaN(date.getTime())) return '';
     const now = new Date();
     const diff = now - date;
     const mins = Math.floor(diff / 60000);
@@ -55,8 +66,8 @@ export default function ChatListScreen({ navigation }) {
   };
 
   const renderConversation = ({ item }) => {
-    const otherName = isProvider ? item.buyer_name : item.provider_name;
-    const otherInitial = otherName?.charAt(0)?.toUpperCase() || '?';
+    const otherName = nameOf(item);
+    const otherInitial = otherName.charAt(0).toUpperCase() || '?';
     const hasUnread = item.unread_count > 0;
 
     return (
@@ -88,7 +99,7 @@ export default function ChatListScreen({ navigation }) {
               {otherName}
             </Text>
             <Text className={`text-xs ${hasUnread ? 'text-teal font-bold' : 'text-gray-400'}`}>
-              {formatTime(item.last_message_at)}
+              {formatTime(item.last_message_at || item.created_at)}
             </Text>
           </View>
           <View className="flex-row items-center justify-between mt-1">
@@ -96,7 +107,7 @@ export default function ChatListScreen({ navigation }) {
               className={`text-sm flex-1 mr-3 ${hasUnread ? 'text-gray-600 font-medium' : 'text-gray-400'}`}
               numberOfLines={1}
             >
-              {item.last_message}
+              {item.last_message || 'No messages yet'}
             </Text>
             {hasUnread && (
               <View className="bg-teal rounded-full min-w-[22px] h-[22px] items-center justify-center px-1.5">
@@ -133,7 +144,17 @@ export default function ChatListScreen({ navigation }) {
         style={{ paddingTop: Platform.OS === 'ios' ? 60 : 40 }}
       >
         <View className="flex-row items-center justify-between">
-          <Text className="text-xl font-extrabold text-white tracking-tight">Messages</Text>
+          <View className="flex-row items-center gap-3">
+            {pushed && (
+              <TouchableOpacity
+                className="w-10 h-10 rounded-2xl bg-white/15 items-center justify-center"
+                onPress={() => navigation.goBack()}
+              >
+                <Ionicons name="arrow-back" size={20} color="#fff" />
+              </TouchableOpacity>
+            )}
+            <Text className="text-xl font-extrabold text-white tracking-tight">Messages</Text>
+          </View>
           <View className="flex-row gap-2">
             <TouchableOpacity
               className="w-10 h-10 rounded-2xl bg-white/15 items-center justify-center"

@@ -5,8 +5,9 @@ import { Ionicons } from '../../components/common/IconCompat';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../../context/AuthContext';
 import { useLocation } from '../../context/LocationContext';
-import { bookingsAPI, providersAPI, uploadAPI } from '../../services/api';
-import * as ImagePicker from 'expo-image-picker';
+import { bookingsAPI, providersAPI, productsAPI, uploadAPI } from '../../services/api';
+import { pickImageFromLibrary } from '../../utils/pickImage';
+import { apiError } from '../../utils/errors';
 
 export default function ProviderDashboard({ navigation }) {
   const { user, updateProfile, updateUser } = useAuth();
@@ -17,6 +18,7 @@ export default function ProviderDashboard({ navigation }) {
   const [providerData, setProviderData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [setupDismissed, setSetupDismissed] = useState(false);
+  const [productCount, setProductCount] = useState(0);
 
   // Must be after providerData state declaration
   const businessName = providerData?.business_name || null;
@@ -31,10 +33,12 @@ export default function ProviderDashboard({ navigation }) {
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const [bookingsRes, providerRes] = await Promise.all([
+      const [bookingsRes, providerRes, productsRes] = await Promise.all([
         bookingsAPI.list().catch(() => ({ data: [] })),
         providersAPI.me().catch(() => ({ data: null })),
+        productsAPI.mine().catch(() => ({ data: [] })),
       ]);
+      setProductCount(Array.isArray(productsRes.data) ? productsRes.data.length : 0);
       const all = bookingsRes.data?.bookings || bookingsRes.data || [];
       setBookings(Array.isArray(all) ? all : []);
 
@@ -134,30 +138,22 @@ export default function ProviderDashboard({ navigation }) {
 
   const handleUploadAvatar = async () => {
     try {
-      const permResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (!permResult.granted) {
+      const picked = await pickImageFromLibrary();
+      if (!picked) return;
+      if (picked.denied) {
         Alert.alert('Permission Needed', 'Please allow access to your photos.');
         return;
       }
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-      });
-      if (result.canceled) return;
 
       setAvatarLoading(true);
-      const uri = result.assets[0].uri;
-      const uploadRes = await uploadAPI.image(uri);
+      const uploadRes = await uploadAPI.image(picked.uri);
       const avatarUrl = uploadRes.data?.url || uploadRes.data?.secure_url;
-      if (avatarUrl) {
-        await updateProfile({ avatar_url: avatarUrl });
-        updateUser({ avatar_url: avatarUrl });
-        Alert.alert('Photo Updated', 'Your profile photo has been uploaded!');
-      }
+      if (!avatarUrl) throw new Error('NO_URL');
+      await updateProfile({ avatar_url: avatarUrl });
+      updateUser({ avatar_url: avatarUrl });
+      Alert.alert('Photo Updated', 'Your profile photo has been uploaded!');
     } catch (e) {
-      Alert.alert('Upload Failed', 'Could not upload your photo. Please try again.');
+      Alert.alert('Upload Failed', apiError(e, 'Could not upload your photo. Please try again.'));
     } finally {
       setAvatarLoading(false);
     }
@@ -170,7 +166,7 @@ export default function ProviderDashboard({ navigation }) {
       label: 'Add your first product',
       description: 'List what you sell — cakes, flowers, hampers, etc.',
       icon: 'cube-outline',
-      done: false, // TODO: check product count when product API is ready
+      done: productCount > 0,
       action: () => navigation.navigate('ProductForm', { mode: 'add' }),
     } : {
       id: 'services',

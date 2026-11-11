@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '../../components/common/IconCompat';
 import AppInput from '../../components/common/AppInput';
 import { reviewsAPI } from '../../services/api';
+import { apiError } from '../../utils/errors';
 
 export default function WriteReviewScreen({ navigation, route }) {
   const { targetType = 'product', targetId, targetName = '', orderId, bookingId } = route.params || {};
@@ -32,7 +33,7 @@ export default function WriteReviewScreen({ navigation, route }) {
         { text: 'OK', onPress: () => navigation.goBack() },
       ]);
     } catch (err) {
-      const msg = err.response?.data?.detail || 'Could not submit review. Please try again.';
+      const msg = apiError(err, 'Could not submit review. Please try again.');
       Alert.alert('Error', msg);
     } finally {
       setSubmitting(false);

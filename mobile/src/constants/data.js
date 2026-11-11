@@ -22,6 +22,11 @@ export const GIFT_CATEGORIES = [
   { id: 'personalized', label: 'Personalized', icon: 'color-wand-outline', color: '#3E8E63', image: null },
 ];
 
+// `id` doubles as the search keyword: the Services tiles send it as
+// `GET /providers?service_type=<id>`, which the server matches against a
+// provider's service type case-insensitively and partially, so "hair" finds
+// "Hair Styling" and "nails" finds "Nails". Keep each id a plain word that
+// appears in the service types providers can pick (see CompleteSetupScreen).
 export const BEAUTY_CATEGORIES = [
   { id: 'nails', label: 'Nails', icon: 'hand-left-outline', color: '#E8632F', image: null },
   { id: 'hair', label: 'Hair Styling', icon: 'cut-outline', color: '#1F4A45', image: null },

@@ -4,15 +4,25 @@ import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '../../components/common/IconCompat';
 import { useFocusEffect } from '@react-navigation/native';
 import { notificationsAPI } from '../../services/api';
+import { apiError } from '../../utils/errors';
 
 const ICON_MAP = {
   booking: { name: 'calendar', bg: 'bg-teal-light', color: '#1F4A45' },
   payment: { name: 'wallet', bg: 'bg-green-50', color: '#3E8E63' },
   confirmed: { name: 'checkmark-circle', bg: 'bg-blue-50', color: '#4C7CB0' },
   review: { name: 'star', bg: 'bg-orange-light', color: '#E8632F' },
-  system: { name: 'information-circle', bg: 'bg-purple-50', color: '#7A5FA8' },
+  system: { name: 'notifications-outline', bg: 'bg-purple-50', color: '#7A5FA8' },
 };
 
+const formatWhen = (value) => {
+  if (!value) return '';
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return String(value);
+  return d.toLocaleDateString('en-NG', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+};
+
+// The notifications list. Used by providers and, as "Notifications" in the
+// buyer Home stack, by buyers too: the server writes notifications for both.
 export default function ProviderNotifications({ navigation }) {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -39,12 +49,22 @@ export default function ProviderNotifications({ navigation }) {
     }, [fetchNotifications])
   );
 
+  const handleOpen = async (notif) => {
+    if (!notif.unread || !notif.id) return;
+    setNotifications((prev) => prev.map((n) => (n.id === notif.id ? { ...n, unread: false, is_read: true } : n)));
+    try {
+      await notificationsAPI.markRead(notif.id);
+    } catch (err) {
+      // Leave it shown as read here; it is retried the next time it is opened.
+    }
+  };
+
   const handleMarkAllRead = async () => {
     try {
       await notificationsAPI.markAllRead();
       setNotifications((prev) => prev.map((n) => ({ ...n, unread: false, is_read: true })));
     } catch (err) {
-      Alert.alert('Error', 'Failed to mark notifications as read');
+      Alert.alert('Not updated', apiError(err, 'We could not mark your notifications as read. Please try again.'));
     }
   };
 
@@ -66,7 +86,7 @@ export default function ProviderNotifications({ navigation }) {
             </TouchableOpacity>
             <Text className="text-[22px] font-bold text-gray-800" style={{ letterSpacing: 0.3 }}>Notifications</Text>
           </View>
-          {notifications.length > 0 && (
+          {notifications.some((n) => n.unread) && (
             <TouchableOpacity
               onPress={handleMarkAllRead}
             >
@@ -85,7 +105,7 @@ export default function ProviderNotifications({ navigation }) {
           <View className="items-center mt-16">
             <Ionicons name="notifications-off-outline" size={48} color="#9A948A" />
             <Text className="text-base font-bold text-gray-800 mt-3">No notifications yet</Text>
-            <Text className="text-sm text-gray-400 mt-1">You'll be notified about bookings and updates</Text>
+            <Text className="text-sm text-gray-400 mt-1 text-center">Updates about your orders, bookings and payments appear here</Text>
           </View>
         ) : (
           notifications.map((notif) => {
@@ -93,6 +113,8 @@ export default function ProviderNotifications({ navigation }) {
             return (
               <TouchableOpacity
                 key={notif.id || notif._id}
+                activeOpacity={notif.unread ? 0.7 : 1}
+                onPress={() => handleOpen(notif)}
                 className="flex-row p-4 rounded-2xl mb-3 bg-white"
                 style={{
                   shadowColor: '#211F1C',
@@ -109,13 +131,13 @@ export default function ProviderNotifications({ navigation }) {
                 </View>
                 <View className="flex-1 ml-3">
                   <View className="flex-row items-center justify-between">
-                    <Text className="text-sm font-bold text-gray-800">
+                    <Text className="flex-1 text-sm font-bold text-gray-800">
                       {notif.title}
                     </Text>
                     {notif.unread && <View className="w-2 h-2 rounded-full bg-orange" />}
                   </View>
                   <Text className="text-xs text-gray-400 mt-1 leading-4">{notif.desc || notif.description || ''}</Text>
-                  <Text className="text-[10px] text-gray-400 mt-1.5">{notif.time || notif.created_at || ''}</Text>
+                  <Text className="text-[10px] text-gray-400 mt-1.5">{formatWhen(notif.created_at)}</Text>
                 </View>
               </TouchableOpacity>
             );

@@ -1,20 +1,25 @@
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Platform, Linking } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Platform, Linking, Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '../../components/common/IconCompat';
 
+const SUPPORT_EMAIL = 'admin@quickgift.ng';
+
+// Only ways of reaching us that really work.
 const SUPPORT_OPTIONS = [
-  { icon: 'call-outline', label: 'Call us', sub: '+234 810 123 4567', color: '#1F4A45', action: 'tel:+2348101234567' },
-  { icon: 'mail-outline', label: 'Email us', sub: 'support@quickgift.co', color: '#4C7CB0', action: 'mailto:support@quickgift.co' },
-  { icon: 'logo-whatsapp', label: 'WhatsApp', sub: 'Chat with our support team', color: '#25D366', action: 'https://wa.me/2348101234567' },
+  { icon: 'mail-outline', label: 'Email us', sub: SUPPORT_EMAIL, color: '#4C7CB0', action: `mailto:${SUPPORT_EMAIL}` },
+  { icon: 'chatbox-ellipses-outline', label: 'Send feedback', sub: 'Report an issue or share an idea', color: '#E8632F', screen: 'Feedback' },
 ];
 
+// Answers describe what the app does today.
 const FAQS = [
-  { q: 'How do I track my order?', a: 'Go to Orders tab and tap on any order to see real-time tracking status.' },
-  { q: 'How long does delivery take?', a: 'Same-day delivery is available for most items within Lagos. Other cities take 1-2 business days.' },
-  { q: 'Can I cancel a booking?', a: 'Yes, you can cancel up to 2 hours before the scheduled time for a full refund.' },
-  { q: 'How do I withdraw my earnings?', a: 'Go to Wallet > Withdraw and enter your bank details. Withdrawals are processed within 24 hours.' },
-  { q: 'How do I become a verified provider?', a: 'Complete your business profile, add services, and submit your ID for verification.' },
+  { q: 'How do I track my order?', a: 'Open the Orders tab and tap an order to see its status, the items in it and the delivery address.' },
+  { q: 'Can I cancel an order or a booking?', a: 'Yes. Open the Orders tab and tap Cancel. An order can be cancelled while it is pending or confirmed, and a booking while it is pending, accepted or confirmed.' },
+  { q: 'How do refunds work?', a: 'When a paid order or booking is cancelled, the amount you paid is refunded to your QuickGift wallet. You can use your wallet balance to pay for your next order.' },
+  { q: 'How do I pay?', a: 'You can pay by card at checkout, or from your wallet if it has enough money in it. You can add money to your wallet from the Wallet screen.' },
+  { q: 'How do I withdraw my earnings?', a: 'Open Wallet, choose Withdraw, pick your bank account and enter the amount. Withdrawals are processed by our team, usually within 1-2 working days.' },
+  { q: 'How do I become a verified provider?', a: 'Complete your business profile and add your services. Our team reviews every new provider, and you are notified once your account is approved.' },
+  { q: 'How do I delete my account?', a: 'Open Settings and choose Delete Account. Withdraw any wallet balance first, and wait for orders or bookings in progress to finish.' },
 ];
 
 export default function HelpSupportScreen({ navigation }) {
@@ -58,7 +63,15 @@ export default function HelpSupportScreen({ navigation }) {
                 shadowRadius: 8,
                 elevation: 2,
               }}
-              onPress={() => opt.action && Linking.openURL(opt.action)}
+              onPress={() => {
+                if (opt.screen) {
+                  navigation.navigate(opt.screen);
+                } else if (opt.action) {
+                  Linking.openURL(opt.action).catch(() => {
+                    Alert.alert('Email us', `Write to us at ${SUPPORT_EMAIL} and we will get back to you.`);
+                  });
+                }
+              }}
             >
               <View
                 className="w-10 h-10 rounded-2xl items-center justify-center"

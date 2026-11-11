@@ -1,35 +1,96 @@
-import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Platform, Linking } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, Platform, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '../../components/common/IconCompat';
+import { ordersAPI } from '../../services/api';
 
+// The order statuses the server uses: pending → confirmed → in_transit →
+// delivered (or cancelled). Only real order data is shown on this screen.
 const STEPS = [
-  { key: 'confirmed', label: 'Order confirmed', sub: 'We received your order' },
-  { key: 'preparing', label: 'Being prepared', sub: 'The vendor is getting it ready' },
-  { key: 'in_transit', label: 'Out for delivery', sub: 'Your rider is on the way' },
+  { key: 'pending', label: 'Order placed', sub: 'We have received your order' },
+  { key: 'confirmed', label: 'Order confirmed', sub: 'The vendor is getting it ready' },
+  { key: 'in_transit', label: 'Out for delivery', sub: 'Your order is on its way' },
   { key: 'delivered', label: 'Delivered', sub: 'Enjoy your gift!' },
 ];
 
+const HEADLINE = {
+  pending: 'Order placed',
+  confirmed: 'Order confirmed',
+  in_transit: 'Out for delivery',
+  delivered: 'Delivered',
+  completed: 'Delivered',
+  cancelled: 'Order cancelled',
+};
+
 function statusIndex(status) {
   if (status === 'confirmed') return 1;
-  if (status === 'preparing') return 1;
   if (status === 'in_transit') return 2;
   if (status === 'delivered' || status === 'completed') return 3;
   return 0;
 }
 
+const naira = (n) => '₦' + (Number(n) || 0).toLocaleString();
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' });
+};
+
+const cardShadow = { shadowColor: '#211F1C', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.06, shadowRadius: 20, elevation: 3 };
+
 export default function OrderTrackingScreen({ navigation, route }) {
-  const { order } = route.params || {};
-  const status = order?.status || 'confirmed';
+  const initial = route.params?.order || null;
+  const [order, setOrder] = useState(initial);
+  const [loadingItems, setLoadingItems] = useState(!!initial?.id);
+
+  // The list only carries the order header; fetch the full order for its
+  // items and its latest status.
+  useEffect(() => {
+    let alive = true;
+    if (!initial?.id) return undefined;
+    ordersAPI.get(initial.id)
+      .then((res) => {
+        if (alive && res.data?.id) setOrder((prev) => ({ ...(prev || {}), ...res.data }));
+      })
+      .catch(() => {
+        // Keep what the list gave us.
+      })
+      .finally(() => {
+        if (alive) setLoadingItems(false);
+      });
+    return () => { alive = false; };
+  }, [initial?.id]);
+
+  const status = order?.status || 'pending';
+  const cancelled = status === 'cancelled';
+  const delivered = status === 'delivered' || status === 'completed';
   const activeIdx = statusIndex(status);
-  const orderNumber = order?.order_number || order?.id || '—';
-  const rider = order?.rider || null;
+  const orderNumber = order?.order_number || '';
+  const items = Array.isArray(order?.items) ? order.items : [];
+  const paymentLabel =
+    order?.payment_status === 'paid' ? 'Paid'
+      : order?.payment_status === 'refunded' ? 'Refunded to your wallet'
+        : order?.payment_status ? 'Awaiting payment' : '';
+
+  const backToOrders = () => {
+    const names = navigation.getState?.()?.routeNames || [];
+    if (names.includes('OrdersMain')) {
+      // Already inside the Orders tab: go back to the list.
+      navigation.popTo('OrdersMain');
+    } else {
+      // Opened from another tab: leave this screen and switch to Orders.
+      if (navigation.canGoBack()) navigation.goBack();
+      navigation.getParent()?.navigate('Orders');
+    }
+  };
 
   return (
     <View className="flex-1 bg-cream">
       <StatusBar style="light" />
 
-      {/* Teal header with check circle */}
+      {/* Teal header with the order's real status */}
       <View
         className="bg-teal px-5 items-center"
         style={{ paddingTop: Platform.OS === 'ios' ? 56 : 40, paddingBottom: 34, borderBottomLeftRadius: 28, borderBottomRightRadius: 28 }}
@@ -43,103 +104,149 @@ export default function OrderTrackingScreen({ navigation, route }) {
           </TouchableOpacity>
         </View>
         <View className="w-16 h-16 rounded-full bg-white/15 items-center justify-center mt-2 mb-3">
-          <Ionicons name="checkmark-circle" size={40} color="#fff" />
+          <Ionicons
+            name={cancelled ? 'close-circle-outline' : delivered ? 'checkmark-circle' : status === 'in_transit' ? 'bicycle-outline' : 'receipt-outline'}
+            size={38}
+            color="#fff"
+          />
         </View>
-        <Text className="text-[22px] font-extrabold text-white">Order placed!</Text>
-        <Text className="text-[13px] text-white/70 mt-1">Order #{orderNumber}</Text>
-        <View className="flex-row items-center gap-1.5 mt-3 bg-white/15 px-3 py-1.5 rounded-full">
-          <Ionicons name="time-outline" size={14} color="#fff" />
-          <Text className="text-[12px] text-white font-bold">Estimated 2–4 PM today</Text>
-        </View>
+        <Text className="text-[22px] font-extrabold text-white">{HEADLINE[status] || 'Your order'}</Text>
+        {orderNumber ? <Text className="text-[13px] text-white/70 mt-1">Order {orderNumber}</Text> : null}
+        {paymentLabel ? (
+          <View className="flex-row items-center gap-1.5 mt-3 bg-white/15 px-3 py-1.5 rounded-full">
+            <Ionicons name="card-outline" size={14} color="#fff" />
+            <Text className="text-[12px] text-white font-bold">{paymentLabel}</Text>
+          </View>
+        ) : null}
       </View>
 
       <ScrollView className="flex-1 px-5 pt-6" showsVerticalScrollIndicator={false}>
-        {/* Rating prompt — shown once the order is delivered */}
-        {(status === 'delivered' || status === 'completed') && (
-          <TouchableOpacity
-            onPress={() => navigation.navigate('WriteReview', {
-              targetType: 'product',
-              targetId: order?.product_id || order?.id,
-              targetName: order?.product_name || order?.name || 'your order',
-              orderId: order?.id,
-            })}
-            activeOpacity={0.9}
-            className="bg-white rounded-[20px] p-4 mb-4 flex-row items-center"
-            style={{ shadowColor: '#211F1C', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.06, shadowRadius: 20, elevation: 3 }}
-          >
-            <View className="w-12 h-12 rounded-full items-center justify-center" style={{ backgroundColor: 'rgba(232,99,47,0.12)' }}>
-              <Ionicons name="star" size={22} color="#E8632F" />
-            </View>
-            <View className="flex-1 ml-3">
-              <Text className="text-[14px] font-bold text-ink">How was your order?</Text>
-              <Text className="text-[12px] text-ink-caption mt-0.5">Tap to rate — it helps others shop with confidence</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color="#B5AFA2" />
-          </TouchableOpacity>
-        )}
-
-        {/* Vertical status timeline */}
-        <View
-          className="bg-white rounded-[20px] p-5"
-          style={{ shadowColor: '#211F1C', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.06, shadowRadius: 20, elevation: 3 }}
-        >
-          {STEPS.map((step, i) => {
-            const done = i < activeIdx;
-            const active = i === activeIdx;
-            const pending = i > activeIdx;
-            const dotColor = done ? '#1F4A45' : active ? '#E8632F' : '#EAE3D8';
-            return (
-              <View key={step.key} className="flex-row">
-                {/* Rail */}
-                <View className="items-center mr-3.5" style={{ width: 28 }}>
-                  <View
-                    className="w-7 h-7 rounded-full items-center justify-center"
-                    style={{ backgroundColor: pending ? '#F0ECE3' : dotColor }}
-                  >
-                    {done ? (
-                      <Ionicons name="checkmark" size={15} color="#fff" />
-                    ) : active ? (
-                      <View className="w-2.5 h-2.5 rounded-full bg-white" />
-                    ) : (
-                      <View className="w-2 h-2 rounded-full bg-ink-placeholder" />
-                    )}
-                  </View>
-                  {i < STEPS.length - 1 && (
-                    <View style={{ width: 2, flex: 1, minHeight: 34, backgroundColor: done ? '#1F4A45' : '#EAE3D8', marginVertical: 2 }} />
-                  )}
-                </View>
-                {/* Label */}
-                <View className="flex-1 pb-6">
-                  <Text className={`text-[14px] font-bold ${pending ? 'text-ink-caption' : 'text-ink'}`}>
-                    {step.label}
-                  </Text>
-                  <Text className="text-[12px] text-ink-caption mt-0.5">{step.sub}</Text>
-                </View>
-              </View>
-            );
-          })}
-        </View>
-
-        {/* Rider card */}
-        <View
-          className="bg-white rounded-[20px] p-4 mt-4 flex-row items-center"
-          style={{ shadowColor: '#211F1C', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.06, shadowRadius: 20, elevation: 3 }}
-        >
-          <View className="w-12 h-12 rounded-full bg-teal-light items-center justify-center">
-            <Ionicons name="person" size={22} color="#1F4A45" />
-          </View>
-          <View className="flex-1 ml-3">
-            <Text className="text-[14px] font-bold text-ink">{rider?.name || 'Your rider'}</Text>
-            <Text className="text-[12px] text-ink-caption mt-0.5">
-              {rider?.vehicle || 'Dispatch rider'} · {rider?.plate || 'LAG-234-QG'}
+        {cancelled ? (
+          <View className="bg-white rounded-[20px] p-5" style={cardShadow}>
+            <Text className="text-[14px] font-bold text-ink">This order was cancelled</Text>
+            <Text className="text-[12px] text-ink-caption mt-1 leading-[18px]">
+              {order?.payment_status === 'refunded'
+                ? 'The amount you paid has been refunded to your wallet.'
+                : 'Nothing further will happen with this order.'}
             </Text>
           </View>
-          <TouchableOpacity
-            className="w-11 h-11 rounded-full bg-teal items-center justify-center"
-            onPress={() => rider?.phone && Linking.openURL(`tel:${rider.phone}`)}
-          >
-            <Ionicons name="call" size={20} color="#fff" />
-          </TouchableOpacity>
+        ) : (
+          /* Vertical status timeline */
+          <View className="bg-white rounded-[20px] p-5" style={cardShadow}>
+            {STEPS.map((step, i) => {
+              const done = i < activeIdx || delivered;
+              const active = i === activeIdx && !delivered;
+              const pending = i > activeIdx;
+              const dotColor = done ? '#1F4A45' : active ? '#E8632F' : '#EAE3D8';
+              return (
+                <View key={step.key} className="flex-row">
+                  {/* Rail */}
+                  <View className="items-center mr-3.5" style={{ width: 28 }}>
+                    <View
+                      className="w-7 h-7 rounded-full items-center justify-center"
+                      style={{ backgroundColor: pending ? '#F0ECE3' : dotColor }}
+                    >
+                      {done ? (
+                        <Ionicons name="checkmark" size={15} color="#fff" />
+                      ) : active ? (
+                        <View className="w-2.5 h-2.5 rounded-full bg-white" />
+                      ) : (
+                        <View className="w-2 h-2 rounded-full bg-ink-placeholder" />
+                      )}
+                    </View>
+                    {i < STEPS.length - 1 && (
+                      <View style={{ width: 2, flex: 1, minHeight: 34, backgroundColor: i < activeIdx ? '#1F4A45' : '#EAE3D8', marginVertical: 2 }} />
+                    )}
+                  </View>
+                  {/* Label */}
+                  <View className="flex-1 pb-6">
+                    <Text className={`text-[14px] font-bold ${pending ? 'text-ink-caption' : 'text-ink'}`}>
+                      {step.label}
+                    </Text>
+                    <Text className="text-[12px] text-ink-caption mt-0.5">{step.sub}</Text>
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+        )}
+
+        {/* Items */}
+        <View className="bg-white rounded-[20px] p-5 mt-4" style={cardShadow}>
+          <Text className="text-[14px] font-bold text-ink mb-3">Items</Text>
+          {loadingItems && items.length === 0 ? (
+            <ActivityIndicator color="#1F4A45" />
+          ) : items.length === 0 ? (
+            <Text className="text-[12px] text-ink-caption">The items in this order could not be loaded.</Text>
+          ) : (
+            items.map((line) => (
+              <View key={line.id || line.product_id} className="py-2.5 border-b border-gray-50">
+                <View className="flex-row items-start justify-between gap-3">
+                  <View className="flex-1">
+                    <Text className="text-[13.5px] font-semibold text-ink">{line.product_name || 'Gift'}</Text>
+                    <Text className="text-[12px] text-ink-caption mt-0.5">
+                      Qty {line.quantity}{line.vendor_name ? ` · ${line.vendor_name}` : ''}
+                    </Text>
+                  </View>
+                  <Text className="text-[13.5px] font-bold text-ink">{naira(line.total_price)}</Text>
+                </View>
+                {/* Rate the product itself once the order has arrived */}
+                {delivered && line.product_id ? (
+                  <TouchableOpacity
+                    className="mt-2 bg-teal/10 py-1.5 px-3 rounded-xl self-start flex-row items-center gap-1"
+                    onPress={() => navigation.navigate('WriteReview', {
+                      targetType: 'product',
+                      targetId: line.product_id,
+                      targetName: line.product_name || 'your gift',
+                      orderId: order?.id,
+                    })}
+                  >
+                    <Ionicons name="star-outline" size={13} color="#1F4A45" />
+                    <Text className="text-[11.5px] font-bold text-teal">Rate this item</Text>
+                  </TouchableOpacity>
+                ) : null}
+              </View>
+            ))
+          )}
+          <View className="flex-row justify-between mt-3">
+            <Text className="text-[13px] text-ink-soft">Delivery</Text>
+            <Text className="text-[13px] font-bold text-ink">
+              {Number(order?.delivery_fee) > 0 ? naira(order.delivery_fee) : 'Free'}
+            </Text>
+          </View>
+          <View className="flex-row justify-between mt-2">
+            <Text className="text-[15px] font-bold text-ink">Total</Text>
+            <Text className="text-[16px] font-extrabold text-teal">{naira(order?.total)}</Text>
+          </View>
+        </View>
+
+        {/* Delivery details */}
+        <View className="bg-white rounded-[20px] p-5 mt-4" style={cardShadow}>
+          <Text className="text-[14px] font-bold text-ink mb-3">Delivery</Text>
+          {order?.recipient_name ? (
+            <View className="flex-row items-start gap-2.5 mb-2.5">
+              <Ionicons name="person-outline" size={16} color="#6E6A63" />
+              <Text className="flex-1 text-[13px] text-ink">{order.recipient_name}</Text>
+            </View>
+          ) : null}
+          <View className="flex-row items-start gap-2.5 mb-2.5">
+            <Ionicons name="location-outline" size={16} color="#6E6A63" />
+            <Text className="flex-1 text-[13px] text-ink leading-[19px]">
+              {[order?.delivery_address, order?.delivery_city].filter(Boolean).join(', ') || 'No address on this order'}
+            </Text>
+          </View>
+          {order?.personal_message ? (
+            <View className="flex-row items-start gap-2.5 mb-2.5">
+              <Ionicons name="chatbubble-outline" size={16} color="#6E6A63" />
+              <Text className="flex-1 text-[13px] text-ink-soft leading-[19px]">{order.personal_message}</Text>
+            </View>
+          ) : null}
+          {formatDate(order?.created_at) ? (
+            <View className="flex-row items-start gap-2.5">
+              <Ionicons name="calendar-outline" size={16} color="#6E6A63" />
+              <Text className="flex-1 text-[13px] text-ink-soft">Placed on {formatDate(order.created_at)}</Text>
+            </View>
+          ) : null}
         </View>
 
         <View className="h-8" />
@@ -149,7 +256,7 @@ export default function OrderTrackingScreen({ navigation, route }) {
       <View className="px-5 pb-8 pt-3">
         <TouchableOpacity
           className="h-[52px] rounded-[16px] border-[1.5px] border-teal items-center justify-center"
-          onPress={() => navigation.navigate('Orders')}
+          onPress={backToOrders}
           activeOpacity={0.85}
         >
           <Text className="text-[15px] font-bold text-teal">View in My Orders</Text>

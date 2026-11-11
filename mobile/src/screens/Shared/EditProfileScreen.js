@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Platform, Alert, ActivityIndicator, Image } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '../../components/common/IconCompat';
-import * as ImagePicker from 'expo-image-picker';
+import { pickImageFromLibrary } from '../../utils/pickImage';
 import { useAuth } from '../../context/AuthContext';
 import { uploadAPI } from '../../services/api';
 import AppInput from '../../components/common/AppInput';
+import { apiError } from '../../utils/errors';
 
 export default function EditProfileScreen({ navigation }) {
   const { user, updateProfile } = useAuth();
@@ -20,22 +21,14 @@ export default function EditProfileScreen({ navigation }) {
 
   const handlePickImage = async () => {
     try {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== 'granted') {
+      const picked = await pickImageFromLibrary();
+      if (!picked) return;
+      if (picked.denied) {
         Alert.alert('Permission Required', 'Please allow access to your photo library to change your profile photo.');
         return;
       }
 
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-      });
-
-      if (result.canceled) return;
-
-      const uri = result.assets[0].uri;
+      const uri = picked.uri;
       setUploading(true);
 
       const response = await uploadAPI.image(uri);
@@ -45,7 +38,7 @@ export default function EditProfileScreen({ navigation }) {
       setAvatarUrl(url);
       Alert.alert('Success', 'Profile photo updated!');
     } catch (err) {
-      const message = err?.response?.data?.detail || err.message || 'Failed to upload photo.';
+      const message = apiError(err, 'Failed to upload photo.');
       Alert.alert('Upload Failed', message);
     } finally {
       setUploading(false);
@@ -60,16 +53,17 @@ export default function EditProfileScreen({ navigation }) {
     try {
       setSaving(true);
       await updateProfile({
+        // The phone number is the sign-in identity and cannot be changed
+        // here, so it is not sent. An empty email is left as it is.
         full_name: fullName.trim(),
-        phone: phone.trim(),
-        email: email.trim(),
+        email: email.trim() ? email.trim().toLowerCase() : undefined,
         city: city.trim(),
       });
       Alert.alert('Profile Updated', 'Your profile has been saved successfully.', [
         { text: 'OK', onPress: () => navigation.goBack() },
       ]);
     } catch (err) {
-      const message = err?.response?.data?.detail || err.message || 'Something went wrong.';
+      const message = apiError(err, 'Something went wrong.');
       Alert.alert('Update Failed', message);
     } finally {
       setSaving(false);
@@ -158,7 +152,11 @@ export default function EditProfileScreen({ navigation }) {
             onChangeText={setPhone}
             placeholder="+234..."
             type="phone"
+            disabled
           />
+          <Text className="text-[12px] text-gray-400 -mt-2 mb-3">
+            You sign in with this number, so it cannot be changed here.
+          </Text>
 
           <AppInput
             label="Email"

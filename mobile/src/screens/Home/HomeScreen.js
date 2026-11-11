@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, FlatList, TouchableOpacity, ActivityIndicator, Platform, Image, Alert, RefreshControl } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, ScrollView, FlatList, TouchableOpacity, Platform, Image, RefreshControl } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '../../components/common/IconCompat';
 import { BEAUTY_CATEGORIES } from '../../constants/data';
-import { productsAPI, providersAPI } from '../../services/api';
+import { useFocusEffect } from '@react-navigation/native';
+import { productsAPI, providersAPI, notificationsAPI } from '../../services/api';
+import { useRequireAuth } from '../../utils/requireAuth';
 import { useAuth } from '../../context/AuthContext';
 import SectionHeader from '../../components/common/SectionHeader';
 import CategoryCard from '../../components/common/CategoryCard';
@@ -16,6 +18,8 @@ const logoSmall = require('../../../assets/images/logo-small.png');
 
 export default function HomeScreen({ navigation }) {
   const { user } = useAuth();
+  const { signedIn, requireAuth } = useRequireAuth();
+  const [unread, setUnread] = useState(0);
   const [occasions, setOccasions] = useState([]);
   const [categories, setCategories] = useState([]);
   const [featuredGifts, setFeaturedGifts] = useState([]);
@@ -26,6 +30,24 @@ export default function HomeScreen({ navigation }) {
   useEffect(() => {
     loadData();
   }, []);
+
+  // Unread notifications, for the dot on the bell. Refreshed whenever Home
+  // comes back into view (for example after reading them).
+  useFocusEffect(
+    useCallback(() => {
+      if (!signedIn) {
+        setUnread(0);
+        return undefined;
+      }
+      let alive = true;
+      notificationsAPI.list({ per_page: 50 })
+        .then((res) => {
+          if (alive) setUnread((res.data || []).filter((n) => !n.is_read).length);
+        })
+        .catch(() => {});
+      return () => { alive = false; };
+    }, [signedIn]),
+  );
 
   const loadData = async () => {
     setLoading(true);
@@ -89,9 +111,19 @@ export default function HomeScreen({ navigation }) {
               </TouchableOpacity>
               <TouchableOpacity
                 className="w-10 h-10 rounded-2xl bg-white/15 items-center justify-center"
-                onPress={() => Alert.alert('Notifications', 'No new notifications')}
+                onPress={() => {
+                  if (requireAuth('Create an account or sign in to see your notifications.')) {
+                    navigation.navigate('Notifications');
+                  }
+                }}
               >
                 <Ionicons name="notifications-outline" size={20} color="#fff" />
+                {unread > 0 && (
+                  <View
+                    className="absolute rounded-full bg-orange"
+                    style={{ width: 9, height: 9, top: 8, right: 9, borderWidth: 1.5, borderColor: '#1F4A45' }}
+                  />
+                )}
               </TouchableOpacity>
             </View>
           </View>
@@ -260,7 +292,7 @@ export default function HomeScreen({ navigation }) {
                     label={item.label}
                     icon={iconFor(item)}
                     color={item.color}
-                    onPress={() => navigation.navigate('ProvidersList', { category: item.id })}
+                    onPress={() => navigation.navigate('ProvidersList', { category: item.id, title: item.label })}
                   />
                 )}
               />

@@ -8,6 +8,7 @@ import { useAuth } from '../../context/AuthContext';
 import AppInput from '../../components/common/AppInput';
 import Button from '../../components/common/Button';
 import { SerifHeadline } from '../../components/common/Typography';
+import { apiError, apiStatus } from '../../utils/errors';
 
 const logoSmall = require('../../../assets/images/logo-small.png');
 
@@ -38,10 +39,20 @@ export default function LoginScreen({ navigation }) {
       navigation.navigate('OTP', {
         phone: fullPhone,
         otpDev: data?.otp_dev,
+        sentTo: data?.sent_to,
         isRegistration: false,
       });
     } catch (err) {
-      Alert.alert('Error', err.response?.data?.detail || 'Failed to send OTP. Please try again.');
+      const message = apiError(err, 'We could not send your code. Please try again.');
+      if (apiStatus(err) === 503) {
+        // No channel could deliver the code. The server says what to do.
+        Alert.alert('Code not sent', message, [
+          { text: 'Create an account', onPress: () => navigation.navigate('Signup') },
+          { text: 'OK', style: 'cancel' },
+        ]);
+      } else {
+        Alert.alert('Could not send code', message);
+      }
     } finally {
       setLoading(false);
     }

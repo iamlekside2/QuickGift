@@ -39,6 +39,7 @@ import RaiseDisputeScreen from '../screens/Shared/RaiseDisputeScreen';
 import ChatListScreen from '../screens/Chat/ChatListScreen';
 import ChatScreen from '../screens/Chat/ChatScreen';
 import PaystackWebView from '../screens/Shared/PaystackWebView';
+import NotificationsScreen from '../screens/Provider/ProviderNotifications';
 import PrivacyPolicyScreen from '../screens/Shared/PrivacyPolicyScreen';
 import TermsScreen from '../screens/Shared/TermsScreen';
 import WithdrawScreen from '../screens/Wallet/WithdrawScreen';
@@ -104,6 +105,9 @@ function HomeStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
       <Stack.Screen name="HomeMain" component={HomeScreen} />
+      {/* The bell on Home. Same list the providers use: the server writes
+          notifications for buyers too. */}
+      <Stack.Screen name="Notifications" component={NotificationsScreen} />
       {giftFlowScreens()}
       {serviceFlowScreens()}
       {commonScreens()}

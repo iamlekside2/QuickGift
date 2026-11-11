@@ -1,30 +1,9 @@
 // ══════════════════════════════════════════════════════
-// API Toggle — ALL real backend now
+// QuickGift API client (NestJS backend)
 // ══════════════════════════════════════════════════════
-const USE_MOCK_AUTH = false;
-const USE_MOCK_PRODUCTS = false;
-const USE_MOCK_PROVIDERS = false;
-const USE_MOCK_ORDERS = false;
-const USE_MOCK_BOOKINGS = false;
-const USE_MOCK_PAYMENTS = false;
-const USE_MOCK_REVIEWS = false;
-const USE_MOCK_CHATS = false;
-
-// ─── Mock API (dummy data) ───────────────────────────
-import {
-  authAPI as mockAuthAPI,
-  productsAPI as mockProductsAPI,
-  providersAPI as mockProvidersAPI,
-  ordersAPI as mockOrdersAPI,
-  bookingsAPI as mockBookingsAPI,
-  paymentsAPI as mockPaymentsAPI,
-  reviewsAPI as mockReviewsAPI,
-  chatsAPI as mockChatsAPI,
-} from './mockApi';
-
-// ─── Real API (Render backend) ───────────────────────
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getToken, clearToken } from '../utils/tokenStore';
 
 // Auto-switch: the local backend while running `expo start` (__DEV__ === true),
 // the Render deployment in any release build (preview APK / production).
@@ -42,7 +21,7 @@ const api = axios.create({
 });
 
 api.interceptors.request.use(async (config) => {
-  const token = await AsyncStorage.getItem('token');
+  const token = await getToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -53,13 +32,31 @@ api.interceptors.request.use(async (config) => {
 let _onUnauthorized = null;
 export const setOnUnauthorized = (callback) => { _onUnauthorized = callback; };
 
+const sentAuthHeader = (config) => {
+  const h = config?.headers;
+  if (!h) return null;
+  const value = typeof h.get === 'function' ? h.get('Authorization') : h.Authorization;
+  return value ? String(value) : null;
+};
+
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
+    // A 401 only means "your session ended" when a session token was actually
+    // sent. A guest (no token) hitting a signed-in-only endpoint must NOT be
+    // thrown out of the app; the screen shows a sign-in prompt instead.
     if (error.response?.status === 401) {
-      AsyncStorage.removeItem('token');
-      AsyncStorage.removeItem('user');
-      if (_onUnauthorized) _onUnauthorized();
+      const sent = sentAuthHeader(error.config);
+      if (sent) {
+        const current = await getToken();
+        // Ignore a late 401 from a request made with an older token (for
+        // example one that was in flight while the user signed in again).
+        if (current && sent === `Bearer ${current}`) {
+          await clearToken();
+          AsyncStorage.removeItem('user').catch(() => {});
+          if (_onUnauthorized) _onUnauthorized();
+        }
+      }
     }
     return Promise.reject(error);
   }
@@ -79,6 +76,7 @@ const realAuthAPI = {
   }),
   login: (phone, password) => api.post('/auth/login', { phone, password }),
   getProfile: () => api.get('/auth/me'),
+  deleteAccount: () => api.delete('/auth/me'),
   updateProfile: (data) => api.patch('/auth/me', data),
   registerPushToken: (token) => api.post('/auth/push-token', { token }),
 };
@@ -88,6 +86,11 @@ const realProductsAPI = {
   get: (id) => api.get(`/products/${id}`),
   categories: () => api.get('/products/categories'),
   occasions: () => api.get('/products/occasions'),
+  // A seller's own listings
+  mine: () => api.get('/products/my-products'),
+  createMine: (data) => api.post('/products/my-products', data),
+  updateMine: (id, data) => api.patch(`/products/my-products/${id}`, data),
+  deleteMine: (id) => api.delete(`/products/my-products/${id}`),
 };
 
 const realProvidersAPI = {
@@ -99,10 +102,12 @@ const realProvidersAPI = {
   register: (data) => api.post('/providers', data),
   addService: (providerId, data) => api.post(`/providers/${providerId}/services`, data),
   addMyService: (data) => api.post('/providers/me/services', data),
+  updateMyService: (serviceId, data) => api.patch(`/providers/me/services/${serviceId}`, data),
+  deleteMyService: (serviceId) => api.delete(`/providers/me/services/${serviceId}`),
+  // Public: a provider's working hours, used to build booking time slots
+  availability: (id) => api.get(`/providers/${id}/availability`),
   getAvailability: () => api.get('/providers/me/availability'),
   saveAvailability: (data) => api.put('/providers/me/availability', data),
-  myProducts: () => api.get('/products/my-products'),
-  addMyProduct: (data) => api.post('/products/my-products', data),
 };
 
 const realOrdersAPI = {
@@ -118,6 +123,7 @@ const realBookingsAPI = {
   create: (data) => api.post('/bookings', data),
   list: (params = {}) => api.get('/bookings', { params }),
   get: (id) => api.get(`/bookings/${id}`),
+  cancel: (id) => api.post(`/bookings/${id}/cancel`),
   updateStatus: (id, status) => api.patch(`/bookings/${id}/status`, { status }),
 };
 
@@ -140,9 +146,12 @@ const realNotificationsAPI = {
 const realChatsAPI = {
   listConversations: () => api.get('/chats'),
   getMessages: (conversationId) => api.get(`/chats/${conversationId}/messages`),
-  sendMessage: (conversationId, text, senderRole) => api.post(`/chats/${conversationId}/messages`, { text, sender_role: senderRole }),
-  createConversation: (providerId, providerName, initialMessage) =>
-    api.post('/chats', { provider_id: providerId, provider_name: providerName, initial_message: initialMessage }),
+  // The server works out who is speaking from the session, so no role is sent.
+  sendMessage: (conversationId, text) => api.post(`/chats/${conversationId}/messages`, { text }),
+  // provider_id may be the provider PROFILE id or their user id. The server
+  // finds the existing thread for this buyer/provider pair or creates one.
+  createConversation: (providerId, initialMessage) =>
+    api.post('/chats', initialMessage ? { provider_id: providerId, initial_message: initialMessage } : { provider_id: providerId }),
 };
 
 const realUploadAPI = {
@@ -159,7 +168,7 @@ const realWalletAPI = {
   getBalance: () => api.get('/wallet/balance'),
   getTransactions: (params = {}) => api.get('/wallet/transactions', { params }),
   fund: (amount, reference) => api.post('/wallet/fund', { amount, reference }),
-  fundInitialize: (amount) => api.post(`/wallet/fund/initialize?amount=${amount}`),
+  fundInitialize: (amount) => api.post('/wallet/fund/initialize', null, { params: { amount } }),
   fundVerify: (reference) => api.post(`/wallet/fund/verify/${reference}`),
   transfer: (recipientPhone, amount) => api.post('/wallet/transfer', { recipient_phone: recipientPhone, amount }),
   // Bank accounts
@@ -180,15 +189,15 @@ const realDeliveryAPI = {
   cancel: (orderId) => api.post(`/delivery/cancel/${orderId}`),
 };
 
-// ─── Export based on per-service toggles ─────────────
-export const authAPI = USE_MOCK_AUTH ? mockAuthAPI : realAuthAPI;
-export const productsAPI = USE_MOCK_PRODUCTS ? mockProductsAPI : realProductsAPI;
-export const providersAPI = USE_MOCK_PROVIDERS ? mockProvidersAPI : realProvidersAPI;
-export const ordersAPI = USE_MOCK_ORDERS ? mockOrdersAPI : realOrdersAPI;
-export const bookingsAPI = USE_MOCK_BOOKINGS ? mockBookingsAPI : realBookingsAPI;
-export const paymentsAPI = USE_MOCK_PAYMENTS ? mockPaymentsAPI : realPaymentsAPI;
-export const reviewsAPI = USE_MOCK_REVIEWS ? mockReviewsAPI : realReviewsAPI;
-export const chatsAPI = USE_MOCK_CHATS ? mockChatsAPI : realChatsAPI;
+// ─── Exports ─────────────────────────────────────────
+export const authAPI = realAuthAPI;
+export const productsAPI = realProductsAPI;
+export const providersAPI = realProvidersAPI;
+export const ordersAPI = realOrdersAPI;
+export const bookingsAPI = realBookingsAPI;
+export const paymentsAPI = realPaymentsAPI;
+export const reviewsAPI = realReviewsAPI;
+export const chatsAPI = realChatsAPI;
 export const notificationsAPI = realNotificationsAPI;
 export const walletAPI = realWalletAPI;
 export const uploadAPI = realUploadAPI;

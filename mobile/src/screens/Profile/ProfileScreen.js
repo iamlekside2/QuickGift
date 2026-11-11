@@ -6,17 +6,23 @@ import { useAuth } from '../../context/AuthContext';
 import { useWallet } from '../../context/WalletContext';
 import { ordersAPI, bookingsAPI, providersAPI } from '../../services/api';
 import { SERIF_FAMILY } from '../../components/common/Typography';
+import Constants from 'expo-constants';
+import { useRequireAuth } from '../../utils/requireAuth';
+
+// The real app version (app.json → expo.version), never a hard-coded string.
+const APP_VERSION = Constants.expoConfig?.version || null;
 
 const logoSmall = require('../../../assets/images/logo-small.png');
 
 const BUYER_MENU = [
-  { icon: 'wallet-outline', label: 'Wallet', sub: 'Balance & transactions', color: '#1F4A45', screen: 'WalletScreen' },
-  { icon: 'heart-outline', label: 'Favourites', sub: 'Saved gifts & providers', color: '#D24B4B', screen: 'Favourites' },
+  { icon: 'wallet-outline', label: 'Wallet', sub: 'Balance & transactions', color: '#1F4A45', screen: 'WalletScreen', auth: 'Create an account or sign in to use your wallet.' },
+  { icon: 'chatbubbles-outline', label: 'Messages', sub: 'Your chats with providers', color: '#4C7CB0', screen: 'ChatList', auth: 'Create an account or sign in to message providers.' },
+  { icon: 'heart-outline', label: 'Favourites', sub: 'Gifts you saved', color: '#D24B4B', screen: 'Favourites' },
   { icon: 'notifications-outline', label: 'Reminders', sub: 'Birthday & event alerts', color: '#E8632F', screen: 'Reminders' },
   { icon: 'location-outline', label: 'Addresses', sub: 'Delivery addresses', color: '#4C7CB0', screen: 'Addresses' },
   { icon: 'people-outline', label: 'Refer a Friend', sub: 'Earn \u20A6500 per referral', color: '#7A5FA8', screen: 'ReferFriend' },
   { icon: 'chatbox-ellipses-outline', label: 'Send Feedback', sub: 'Report an issue or share an idea', color: '#E8632F', screen: 'Feedback' },
-  { icon: 'help-circle-outline', label: 'Help & Support', sub: 'FAQs and chat support', color: '#3E8E63', screen: 'HelpSupport' },
+  { icon: 'help-circle-outline', label: 'Help & Support', sub: 'FAQs and how to reach us', color: '#3E8E63', screen: 'HelpSupport' },
   { icon: 'settings-outline', label: 'Settings', sub: 'Account preferences', color: '#6E6A63', screen: 'Settings' },
 ];
 
@@ -28,12 +34,13 @@ const PROVIDER_MENU = [
   { icon: 'cube-outline', label: 'My Products', sub: 'Manage gift products', color: '#7A5FA8', screen: 'ProviderProducts' },
   { icon: 'star-outline', label: 'Reviews', sub: 'Client feedback & ratings', color: '#B8862E', screen: 'ProviderReviews' },
   { icon: 'chatbox-ellipses-outline', label: 'Send Feedback', sub: 'Report an issue or share an idea', color: '#E8632F', screen: 'Feedback' },
-  { icon: 'help-circle-outline', label: 'Help & Support', sub: 'FAQs and chat support', color: '#6E6A63', screen: 'HelpSupport' },
+  { icon: 'help-circle-outline', label: 'Help & Support', sub: 'FAQs and how to reach us', color: '#6E6A63', screen: 'HelpSupport' },
   { icon: 'settings-outline', label: 'Settings', sub: 'Account preferences', color: '#6E6A63', screen: 'Settings' },
 ];
 
 export default function ProfileScreen({ navigation }) {
   const { user, isGuest, isAuthenticated, logout } = useAuth();
+  const { requireAuth } = useRequireAuth();
   const [stats, setStats] = useState({ orders: 0, gifts: 0, bookings: 0 });
   const [providerStatus, setProviderStatus] = useState(null);
   const [providerProfile, setProviderProfile] = useState(null);
@@ -81,6 +88,9 @@ export default function ProfileScreen({ navigation }) {
   };
 
   const handleMenuPress = (item) => {
+    // Signed-in-only screens: ask a guest to sign in instead of opening a
+    // screen that cannot load anything for them.
+    if (item.auth && !requireAuth(item.auth)) return;
     if (item.screen) navigation.navigate(item.screen);
   };
 
@@ -191,7 +201,7 @@ export default function ProfileScreen({ navigation }) {
         {isGuest && (
           <TouchableOpacity
             className="flex-row items-center gap-3 mx-5 mb-4 p-4 bg-teal-light rounded-2xl"
-            onPress={handleLogout}
+            onPress={() => logout()}
           >
             <Ionicons name="log-in-outline" size={22} color="#1F4A45" />
             <View className="flex-1">
@@ -290,7 +300,9 @@ export default function ProfileScreen({ navigation }) {
           </Text>
         </TouchableOpacity>
 
-        <Text className="text-center text-[10px] text-gray-300 mb-2">QuickGift v2.0.0</Text>
+        <Text className="text-center text-[10px] text-gray-300 mb-2">
+          QuickGift{APP_VERSION ? ` v${APP_VERSION}` : ''}
+        </Text>
         <View className="h-[100px]" />
       </ScrollView>
     </View>

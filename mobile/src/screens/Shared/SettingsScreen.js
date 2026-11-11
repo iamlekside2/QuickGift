@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Platform, Switch, Alert, Linking } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Platform, Switch, Alert, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '../../components/common/IconCompat';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../context/AuthContext';
+import { apiError } from '../../utils/errors';
+import { notifyError } from '../../utils/haptics';
 
 const NOTIF_STORAGE_KEY = '@quickgift_notification_prefs';
 
 export default function SettingsScreen({ navigation }) {
-  const { logout } = useAuth();
+  const { deleteAccount, isAuthenticated, isGuest } = useAuth();
+  const [deleting, setDeleting] = useState(false);
   const [pushNotifs, setPushNotifs] = useState(true);
   const [emailNotifs, setEmailNotifs] = useState(true);
   const [smsNotifs, setSmsNotifs] = useState(false);
@@ -46,7 +49,27 @@ export default function SettingsScreen({ navigation }) {
     savePrefs();
   }, [pushNotifs, emailNotifs, smsNotifs]);
 
+  // Really deletes the account on the server. On success the session ends
+  // (which returns the app to the sign-in screens); if the server refuses, for
+  // example because the wallet still holds money, its reason is shown.
+  const confirmDelete = async () => {
+    if (deleting) return;
+    setDeleting(true);
+    try {
+      await deleteAccount();
+      // Signed out: this screen is unmounted by the navigator.
+    } catch (err) {
+      setDeleting(false);
+      notifyError();
+      Alert.alert(
+        'Account not deleted',
+        apiError(err, 'We could not delete your account right now. Please try again.'),
+      );
+    }
+  };
+
   const handleDeleteAccount = () => {
+    if (deleting) return;
     Alert.alert(
       'Delete Account',
       'Are you sure you want to permanently delete your account? This action cannot be undone and all your data will be lost.',
@@ -55,11 +78,7 @@ export default function SettingsScreen({ navigation }) {
         {
           text: 'Delete',
           style: 'destructive',
-          onPress: () => {
-            Alert.alert('Account Deletion', 'Your account deletion request has been submitted. You will be logged out.', [
-              { text: 'OK', onPress: () => logout && logout() },
-            ]);
-          },
+          onPress: confirmDelete,
         },
       ]
     );
@@ -159,18 +178,28 @@ export default function SettingsScreen({ navigation }) {
           ))}
         </View>
 
-        {/* Danger Zone */}
-        <Text className="text-base font-bold text-gray-800 mt-6 mb-4">Danger Zone</Text>
-        <TouchableOpacity
-          className="bg-red-50 rounded-2xl p-4 flex-row items-center gap-3 mb-6"
-          onPress={handleDeleteAccount}
-        >
-          <Ionicons name="trash-outline" size={20} color="#D24B4B" />
-          <View className="flex-1">
-            <Text className="text-sm font-bold text-red-500">Delete Account</Text>
-            <Text className="text-xs text-gray-500 mt-0.5">Permanently delete your account and data</Text>
-          </View>
-        </TouchableOpacity>
+        {/* Danger Zone (signed-in accounts only: a guest has nothing to delete) */}
+        {isAuthenticated && !isGuest ? (
+          <>
+            <Text className="text-base font-bold text-gray-800 mt-6 mb-4">Danger Zone</Text>
+            <TouchableOpacity
+              className="bg-red-50 rounded-2xl p-4 flex-row items-center gap-3 mb-6"
+              onPress={handleDeleteAccount}
+              disabled={deleting}
+              style={{ opacity: deleting ? 0.6 : 1 }}
+            >
+              {deleting ? (
+                <ActivityIndicator size="small" color="#D24B4B" />
+              ) : (
+                <Ionicons name="trash-outline" size={20} color="#D24B4B" />
+              )}
+              <View className="flex-1">
+                <Text className="text-sm font-bold text-red-500">{deleting ? 'Deleting your account...' : 'Delete Account'}</Text>
+                <Text className="text-xs text-gray-500 mt-0.5">Permanently delete your account and data</Text>
+              </View>
+            </TouchableOpacity>
+          </>
+        ) : null}
 
         <View className="h-[40px]" />
       </ScrollView>

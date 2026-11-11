@@ -225,7 +225,7 @@ export class AuthService implements OnModuleInit {
       // as any phone number. Fail instead and say what to do.
       throw new HttpException(
         isRegistered
-          ? 'We could not send your verification code right now. Please sign in with your password, or contact support.'
+          ? 'We could not send your verification code. Please contact support so we can add an email address to your account.'
           : 'We could not send a code to this number. Please add your email address so we can send it there.',
         HttpStatus.SERVICE_UNAVAILABLE,
       );

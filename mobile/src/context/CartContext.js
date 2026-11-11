@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, useEffect, useRef, useMemo } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from './AuthContext';
 
 const CART_STORAGE_KEY = '@quickgift_cart';
 const CartContext = createContext({});
@@ -7,6 +8,19 @@ const CartContext = createContext({});
 export const CartProvider = ({ children }) => {
   const [items, setItems] = useState([]);
   const isLoaded = useRef(false);
+  const { token } = useAuth();
+  const prevToken = useRef(null);
+
+  // When a signed-in session ends (logout, deleted account, expired session)
+  // empty the basket so the next account on this device does not inherit it.
+  // A guest who goes to sign in keeps theirs: there was no token to lose.
+  useEffect(() => {
+    if (prevToken.current && !token) {
+      setItems([]);
+      AsyncStorage.removeItem(CART_STORAGE_KEY).catch(() => {});
+    }
+    prevToken.current = token;
+  }, [token]);
 
   // Load cart from AsyncStorage on mount
   useEffect(() => {

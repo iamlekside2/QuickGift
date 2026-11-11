@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '../../components/common/IconCompat';
 import AppInput from '../../components/common/AppInput';
 import { disputesAPI } from '../../services/api';
+import { apiError } from '../../utils/errors';
 
 const REASONS = [
   { key: 'not_received', label: 'Item not received', icon: 'cube-outline' },
@@ -41,7 +42,7 @@ export default function RaiseDisputeScreen({ navigation, route }) {
         { text: 'OK', onPress: () => navigation.goBack() },
       ]);
     } catch (err) {
-      const msg = err.response?.data?.detail || 'Could not submit dispute. Please try again.';
+      const msg = apiError(err, 'Could not submit dispute. Please try again.');
       Alert.alert('Error', msg);
     } finally {
       setSubmitting(false);

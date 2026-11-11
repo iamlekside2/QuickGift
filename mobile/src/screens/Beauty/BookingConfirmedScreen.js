@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text, Image, TouchableOpacity, Platform } from 'react-native';
+import { View, Text, Image, TouchableOpacity, Platform, BackHandler } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SerifHeadline } from '../../components/common/Typography';
 import Button from '../../components/common/Button';
@@ -12,6 +12,22 @@ export default function BookingConfirmedScreen({ navigation, route }) {
 
   // Celebrate the booking with a success haptic when this screen appears.
   useEffect(() => { notifySuccess(); }, []);
+
+  // The booking flow underneath is finished: leave it behind when moving on,
+  // so Back never returns to the form for a booking that is already paid.
+  const leaveTo = (tab) => {
+    if (navigation.canGoBack()) navigation.popToTop();
+    navigation.getParent()?.navigate(tab);
+  };
+
+  useEffect(() => {
+    navigation.setOptions?.({ gestureEnabled: false });
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (navigation.canGoBack()) navigation.popToTop();
+      return true;
+    });
+    return () => sub.remove();
+  }, [navigation]);
 
   return (
     <View className="flex-1 bg-cream-warm items-center px-6" style={{ paddingTop: Platform.OS === 'ios' ? 90 : 70 }}>
@@ -37,12 +53,12 @@ export default function BookingConfirmedScreen({ navigation, route }) {
       <View className="w-full mt-auto" style={{ paddingBottom: Platform.OS === 'ios' ? 40 : 24 }}>
         <Button
           title="View My Bookings"
-          onPress={() => navigation.getParent()?.navigate('Orders') || navigation.navigate('Orders')}
+          onPress={() => leaveTo('Orders')}
           style={{ width: '100%' }}
         />
         <TouchableOpacity
           className="items-center py-4 mt-1"
-          onPress={() => navigation.getParent()?.navigate('Home') || navigation.navigate('Home')}
+          onPress={() => leaveTo('Home')}
         >
           <Text className="text-[14px] text-ink-soft font-bold">Back to Home</Text>
         </TouchableOpacity>

@@ -9,6 +9,7 @@ import { useAuth } from '../../context/AuthContext';
 import AppInput from '../../components/common/AppInput';
 import Button from '../../components/common/Button';
 import { SerifHeadline } from '../../components/common/Typography';
+import { apiError, apiStatus } from '../../utils/errors';
 
 const logoSmall = require('../../../assets/images/logo-small.png');
 
@@ -34,12 +35,19 @@ export default function SignupScreen({ navigation }) {
   };
 
   const isValidPhone = phone.replace(/[^0-9]/g, '').length >= 7;
-  const emailOk = !email.trim() || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+  // Text messages are not live yet, so the verification code can only reach a
+  // new account by email: the address is required for now.
+  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
   const isFormValid = fullName.trim().length >= 2 && isValidPhone && emailOk;
 
   const handleSignup = async () => {
     if (!isFormValid) {
-      Alert.alert('Missing Info', 'Please enter your name and a valid phone number');
+      Alert.alert(
+        'Missing Info',
+        emailOk
+          ? 'Please enter your name and a valid phone number.'
+          : 'Please enter a valid email address. We send your verification code there.',
+      );
       return;
     }
     setLoading(true);
@@ -60,7 +68,7 @@ export default function SignupScreen({ navigation }) {
         return;
       }
 
-      const cleanEmail = email.trim() || undefined;
+      const cleanEmail = email.trim().toLowerCase();
       const data = await sendOTP(fullPhone, cleanEmail);
       navigation.navigate('OTP', {
         phone: fullPhone,
@@ -72,7 +80,10 @@ export default function SignupScreen({ navigation }) {
         isRegistration: true,
       });
     } catch (err) {
-      Alert.alert('Error', err.response?.data?.detail || 'Failed to send OTP. Please try again.');
+      Alert.alert(
+        apiStatus(err) === 503 ? 'Code not sent' : 'Could not send code',
+        apiError(err, 'We could not send your code. Please try again.'),
+      );
     } finally {
       setLoading(false);
     }
@@ -145,9 +156,9 @@ export default function SignupScreen({ navigation }) {
           type="phone"
         />
 
-        {/* Email (optional) */}
+        {/* Email (required while text messages are not live) */}
         <AppInput
-          label="Email (optional)"
+          label="Email"
           placeholder="you@email.com"
           value={email}
           onChangeText={setEmail}
@@ -155,7 +166,7 @@ export default function SignupScreen({ navigation }) {
           icon="mail-outline"
         />
         <Text className="text-[12px] text-ink-soft -mt-2 mb-3">
-          Add your email to get your code and order updates by email.
+          We send your verification code to this email.
         </Text>
 
         {/* Continue */}

@@ -6,6 +6,7 @@ import {
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '../../components/common/IconCompat';
 import { walletAPI } from '../../services/api';
+import { apiError } from '../../utils/errors';
 
 // Fallback banks if API fails
 const FALLBACK_BANKS = [
@@ -88,7 +89,7 @@ export default function AddBankAccountScreen({ navigation }) {
         setResolved(true);
       }
     } catch (e) {
-      const msg = e.response?.data?.detail || 'Could not verify this account';
+      const msg = apiError(e, 'Could not verify this account');
       setResolveError(msg);
       setAccountName('');
     } finally {
@@ -119,7 +120,7 @@ export default function AddBankAccountScreen({ navigation }) {
         [{ text: 'OK', onPress: () => navigation.goBack() }]
       );
     } catch (e) {
-      Alert.alert('Error', e.response?.data?.detail || 'Failed to add bank account');
+      Alert.alert('Error', apiError(e, 'Failed to add bank account'));
     } finally {
       setSubmitting(false);
     }

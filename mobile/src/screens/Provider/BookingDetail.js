@@ -1,79 +1,122 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Platform, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Platform, Alert, ActivityIndicator, Linking } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '../../components/common/IconCompat';
 import { bookingsAPI } from '../../services/api';
+import { apiError } from '../../utils/errors';
+import { notifySuccess, notifyError } from '../../utils/haptics';
+
+const formatDate = (value) => {
+  if (!value) return 'N/A';
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return String(value);
+  return d.toLocaleDateString('en-NG', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+};
 
 export default function BookingDetail({ route, navigation }) {
   const booking = route.params?.booking || {};
   const [status, setStatus] = useState(booking.status || 'pending');
+  const [paymentStatus, setPaymentStatus] = useState(booking.payment_status || 'pending');
   const [actionLoading, setActionLoading] = useState(false);
 
   const bookingId = booking.id || booking._id;
 
-  const updateStatus = async (newStatus, successMsg) => {
+  // Resolves to true only when the server accepted the change.
+  const updateStatus = async (newStatus, successTitle, successMsg) => {
     if (!bookingId) {
-      Alert.alert('Error', 'Booking ID not found.');
-      return;
+      Alert.alert('Booking not found', 'Please go back and open this booking again.');
+      return false;
     }
     try {
       setActionLoading(true);
       await bookingsAPI.updateStatus(bookingId, newStatus);
       setStatus(newStatus);
-      Alert.alert('Success', successMsg);
+      if ((newStatus === 'declined' || newStatus === 'cancelled') && paymentStatus === 'paid') {
+        setPaymentStatus('refunded');
+      }
+      notifySuccess();
+      Alert.alert(successTitle, successMsg);
+      return true;
     } catch (e) {
-      console.log('Error updating booking status:', e);
-      Alert.alert('Error', 'Failed to update booking status. Please try again.');
+      // The server explains why, for example when the booking is not paid
+      // for yet: show its reason.
+      notifyError();
+      Alert.alert('Booking not updated', apiError(e, 'We could not update this booking. Please try again.'));
+      return false;
     } finally {
       setActionLoading(false);
     }
   };
 
   const handleAccept = () => {
-    updateStatus('confirmed', 'Booking accepted. The client has been notified.');
+    updateStatus('confirmed', 'Booking accepted', 'The client has been notified.');
   };
 
+  // A pending request is declined; one already accepted is cancelled.
   const handleDecline = () => {
-    Alert.alert('Decline Booking', 'Are you sure you want to decline?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Decline',
-        style: 'destructive',
-        onPress: async () => {
-          await updateStatus('cancelled', 'Booking declined.');
-          navigation.goBack();
+    const pending = status === 'pending';
+    Alert.alert(
+      pending ? 'Decline Booking' : 'Cancel Booking',
+      paymentStatus === 'paid'
+        ? `Are you sure? The client will be refunded to their wallet.`
+        : 'Are you sure?',
+      [
+        { text: 'No', style: 'cancel' },
+        {
+          text: pending ? 'Decline' : 'Cancel Booking',
+          style: 'destructive',
+          onPress: async () => {
+            const ok = await updateStatus(
+              pending ? 'declined' : 'cancelled',
+              pending ? 'Booking declined' : 'Booking cancelled',
+              'The client has been notified.',
+            );
+            if (ok) navigation.goBack();
+          },
         },
-      },
-    ]);
+      ],
+    );
   };
 
   const handleStart = () => {
-    updateStatus('in_progress', 'Service started.');
+    updateStatus('in_progress', 'Service started', 'Mark it complete when you are done.');
   };
 
   const handleComplete = () => {
-    updateStatus('completed', 'Great work! The client can now leave a review.');
+    updateStatus('completed', 'Service completed', 'Great work! The client can now leave a review.');
   };
 
   const statusColors = {
     pending: { bg: 'bg-orange-light', text: 'text-orange', label: 'Pending' },
+    accepted: { bg: 'bg-blue-50', text: 'text-blue-600', label: 'Accepted' },
     confirmed: { bg: 'bg-blue-50', text: 'text-blue-600', label: 'Confirmed' },
     in_progress: { bg: 'bg-purple-50', text: 'text-purple-600', label: 'In Progress' },
     completed: { bg: 'bg-green-50', text: 'text-green-600', label: 'Completed' },
+    declined: { bg: 'bg-red-50', text: 'text-red-500', label: 'Declined' },
     cancelled: { bg: 'bg-red-50', text: 'text-red-500', label: 'Cancelled' },
   };
 
-  const s = statusColors[status] || statusColors.pending;
+  const s = statusColors[status] || { bg: 'bg-gray-100', text: 'text-gray-600', label: String(status) };
 
-  const clientName = booking.client_name || booking.client || 'N/A';
-  const clientPhone = booking.client_phone || booking.phone || 'Not provided';
-  const serviceName = booking.service_name || booking.service || 'N/A';
-  const bookingDate = booking.date || booking.booking_date || 'N/A';
-  const bookingTime = booking.time || booking.booking_time || 'N/A';
-  const duration = booking.duration || 'N/A';
-  const price = booking.price || booking.amount;
-  const address = booking.address || booking.location || 'Not provided';
-  const notes = booking.notes || booking.client_notes;
+  const clientName = booking.client_name || 'Client';
+  const clientPhone = booking.client_phone || '';
+  const serviceName = booking.service_name || 'N/A';
+  const bookingDate = formatDate(booking.booking_date);
+  const bookingTime = booking.booking_time || 'N/A';
+  const duration = booking.duration_minutes ? `${booking.duration_minutes} min` : 'N/A';
+  const price = booking.price;
+  const address = booking.address || 'Not provided';
+  const notes = booking.notes;
+  const serviceTypeLabel =
+    booking.service_type === 'home' ? 'Home service'
+      : booking.service_type === 'salon' ? 'Salon visit'
+        : booking.service_type || 'Location';
+  const paymentLabel =
+    paymentStatus === 'paid' ? 'Paid'
+      : paymentStatus === 'refunded' ? 'Refunded'
+        : 'Awaiting payment';
+  const paymentColor = paymentStatus === 'paid' ? '#3E8E63' : paymentStatus === 'refunded' ? '#6E6A63' : '#B8862E';
+  const ended = ['completed', 'cancelled', 'declined'].includes(status);
 
   return (
     <View className="flex-1 bg-gray-50">
@@ -96,9 +139,24 @@ export default function BookingDetail({ route, navigation }) {
 
       <ScrollView className="flex-1 px-5 pt-4" showsVerticalScrollIndicator={false}>
         {/* Status Badge */}
-        <View className={`self-start px-4 py-1.5 rounded-full mb-5 ${s.bg}`}>
-          <Text className={`text-sm font-bold ${s.text}`}>{s.label}</Text>
+        <View className="flex-row items-center gap-2 mb-5">
+          <View className={`px-4 py-1.5 rounded-full ${s.bg}`}>
+            <Text className={`text-sm font-bold ${s.text}`}>{s.label}</Text>
+          </View>
+          <View className="px-4 py-1.5 rounded-full bg-white">
+            <Text className="text-sm font-bold" style={{ color: paymentColor }}>{paymentLabel}</Text>
+          </View>
         </View>
+
+        {/* Why nothing can start yet */}
+        {!ended && paymentStatus !== 'paid' && paymentStatus !== 'refunded' ? (
+          <View className="bg-amber-50 rounded-2xl p-4 mb-4 flex-row gap-3">
+            <Ionicons name="alert-circle-outline" size={18} color="#B8862E" />
+            <Text className="flex-1 text-xs leading-[18px]" style={{ color: '#7A5A1E' }}>
+              The client has not paid for this booking yet. You can confirm and start it once they pay.
+            </Text>
+          </View>
+        ) : null}
 
         {/* Client Info */}
         <View
@@ -107,15 +165,18 @@ export default function BookingDetail({ route, navigation }) {
         >
           <View className="w-14 h-14 rounded-full bg-teal-light items-center justify-center">
             <Text className="text-teal font-bold text-xl">
-              {clientName.charAt(0)}
+              {clientName.charAt(0).toUpperCase()}
             </Text>
           </View>
           <View className="flex-1 ml-4">
             <Text className="text-base font-bold text-gray-800">{clientName}</Text>
-            <Text className="text-sm text-gray-400 mt-0.5">{clientPhone}</Text>
+            <Text className="text-sm text-gray-400 mt-0.5">{clientPhone || 'No phone number'}</Text>
           </View>
-          {clientPhone !== 'Not provided' && (
-            <TouchableOpacity className="w-10 h-10 rounded-full bg-teal-light items-center justify-center">
+          {!!clientPhone && (
+            <TouchableOpacity
+              className="w-10 h-10 rounded-full bg-teal-light items-center justify-center"
+              onPress={() => Linking.openURL(`tel:${clientPhone}`).catch(() => {})}
+            >
               <Ionicons name="call-outline" size={18} color="#1F4A45" />
             </TouchableOpacity>
           )}
@@ -161,7 +222,7 @@ export default function BookingDetail({ route, navigation }) {
             <Ionicons name="location-outline" size={18} color="#1F4A45" />
           </View>
           <View className="flex-1">
-            <Text className="text-sm font-bold text-gray-800">{booking.service_type || 'Location'}</Text>
+            <Text className="text-sm font-bold text-gray-800">{serviceTypeLabel}</Text>
             <Text className="text-xs text-gray-400 mt-0.5">{address}</Text>
           </View>
         </View>
@@ -206,7 +267,7 @@ export default function BookingDetail({ route, navigation }) {
       </ScrollView>
 
       {/* Action Buttons */}
-      {status !== 'completed' && status !== 'cancelled' && (
+      {!ended && (
         <View
           className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-5 pb-8 pt-4"
           style={{ shadowColor: '#211F1C', shadowOffset: { width: 0, height: -2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 4 }}
@@ -233,7 +294,7 @@ export default function BookingDetail({ route, navigation }) {
                   </TouchableOpacity>
                 </View>
               )}
-              {status === 'confirmed' && (
+              {(status === 'confirmed' || status === 'accepted') && (
                 <View className="flex-row gap-3">
                   <TouchableOpacity
                     className="flex-1 bg-gray-100 py-4 rounded-2xl items-center"

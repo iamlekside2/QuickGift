@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Platform, Alert, Modal, Image } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '../../components/common/IconCompat';
@@ -9,11 +9,15 @@ import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { useWallet } from '../../context/WalletContext';
 import { iconFor } from '../../utils/categoryIcons';
+import { apiError } from '../../utils/errors';
+import { useRequireAuth } from '../../utils/requireAuth';
+import { notifySuccess, notifyError } from '../../utils/haptics';
 
 export default function CartScreen({ navigation }) {
   const { items, removeItem, updateQuantity, clearCart, subtotal, itemCount } = useCart();
-  const { user, isAuthenticated, isGuest, logout } = useAuth();
-  const { balance: walletBalance, debit: walletDebit, refreshBalance } = useWallet();
+  const { user } = useAuth();
+  const { signedIn, requireAuth } = useRequireAuth();
+  const { balance: walletBalance, setServerBalance, refreshBalance } = useWallet();
   const [submitting, setSubmitting] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('card');
 
@@ -24,95 +28,203 @@ export default function CartScreen({ navigation }) {
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const [personalMessage, setPersonalMessage] = useState('');
 
-  const formatPrice = (price) => '₦' + (price || 0).toLocaleString();
-  const deliveryFee = 0; // Backend DELIVERY_BASE_FEE=0 — delivery currently free
-  const total = subtotal + deliveryFee;
+  // The order is created BEFORE payment. Keep it, with a fingerprint of what
+  // it was created from, so a retry pays for the same order instead of
+  // creating a second one.
+  const [pendingOrder, setPendingOrder] = useState(null);   // { order, key }
+  const pendingRef = useRef(null);
+  // Set once payment is confirmed: switches this screen to the receipt view.
+  const [placedOrder, setPlacedOrder] = useState(null);
+
+  const formatPrice = (price) => '₦' + (Number(price) || 0).toLocaleString();
+
+  const orderKey = () => JSON.stringify({
+    items: items.map((i) => [i.id, i.quantity]),
+    name: recipientName.trim(),
+    phone: recipientPhone.trim(),
+    address: deliveryAddress.trim(),
+    note: personalMessage.trim(),
+  });
+
+  // Once an order exists for exactly this cart, show the server's figures.
+  const serverOrder = pendingOrder && pendingOrder.key === orderKey() ? pendingOrder.order : null;
+  const shownSubtotal = serverOrder ? Number(serverOrder.subtotal) : subtotal;
+  const shownDelivery = serverOrder ? Number(serverOrder.delivery_fee) || 0 : 0;
+  const total = serverOrder ? Number(serverOrder.total) : subtotal;
+
+  const rememberOrder = (value) => {
+    pendingRef.current = value;
+    setPendingOrder(value);
+  };
 
   const handleCheckout = () => {
-    if (isGuest || !isAuthenticated) {
-      Alert.alert(
-        'Sign in to check out',
-        'Create an account or sign in to place your order and track delivery. Your cart will be waiting.',
-        [
-          { text: 'Not now', style: 'cancel' },
-          { text: 'Sign in', onPress: () => logout() },
-        ],
-      );
+    // Cart is a modal on top of the app: close it before leaving guest mode,
+    // otherwise it is left behind as a dead-end screen.
+    if (!requireAuth(
+      'Create an account or sign in to place your order and track delivery. Your cart will be waiting.',
+      { beforeSignIn: () => navigation.canGoBack() && navigation.goBack() },
+    )) {
       return;
     }
     if (items.length === 0) return;
     setShowRecipient(true);
   };
 
+  // Payment is confirmed: only now is the cart emptied.
+  const finishPaid = (order, paidWith) => {
+    notifySuccess();
+    rememberOrder(null);
+    setPlacedOrder({ ...order, paidWith });
+    clearCart();
+    refreshBalance();
+  };
+
   const handlePlaceOrder = async () => {
+    if (submitting) return;
     if (!recipientName.trim() || !recipientPhone.trim() || !deliveryAddress.trim()) {
       Alert.alert('Missing Info', 'Please fill in recipient name, phone, and delivery address.');
+      return;
+    }
+    if (paymentMethod === 'wallet' && walletBalance < total) {
+      Alert.alert(
+        'Not enough in your wallet',
+        `Your wallet balance (${formatPrice(walletBalance)}) does not cover ${formatPrice(total)}. Add money to your wallet or pay by card.`,
+      );
       return;
     }
 
     setSubmitting(true);
     setShowRecipient(false);
+    let order = null;
     try {
-      const orderData = {
-        order_type: 'gift',
-        items: items.map((item) => ({ product_id: item.id, quantity: item.quantity })),
-        delivery_address: deliveryAddress.trim(),
-        delivery_city: user?.city || 'Lagos',
-        recipient_name: recipientName.trim(),
-        recipient_phone: recipientPhone.trim(),
-        personal_message: personalMessage.trim() || undefined,
-        is_express: false,
-      };
-      const res = await ordersAPI.create(orderData);
-      const order = res.data;
+      const key = orderKey();
+      const existing = pendingRef.current;
 
-      // Initialize payment with method
-      const payRes = await paymentsAPI.initialize({
-        order_id: order.id,
-        amount: order.total,
-        email: user?.email || `${user?.phone}@quickgift.ng`,
-        method: paymentMethod,
-      });
-      const payData = payRes.data;
+      if (existing && existing.key === key) {
+        // Retry: pay for the order we already created.
+        order = existing.order;
+      } else {
+        if (existing) {
+          // The cart or recipient changed since the unpaid order was made, so
+          // it no longer matches. Withdraw it rather than leave it hanging.
+          ordersAPI.cancel(existing.order.id).catch(() => {});
+          rememberOrder(null);
+        }
+        const res = await ordersAPI.create({
+          order_type: 'gift',
+          items: items.map((item) => ({ product_id: item.id, quantity: item.quantity })),
+          delivery_address: deliveryAddress.trim(),
+          delivery_city: user?.city || 'Lagos',
+          recipient_name: recipientName.trim(),
+          recipient_phone: recipientPhone.trim(),
+          personal_message: personalMessage.trim() || undefined,
+          is_express: false,
+        });
+        order = res.data;
+        rememberOrder({ order, key });
+      }
 
-      if (payData.status === 'success' && paymentMethod === 'wallet') {
-        // Wallet payment succeeded — update local balance
-        walletDebit(order.total);
-        refreshBalance();
-        clearCart();
-        Alert.alert(
-          'Order Placed!',
-          `Order ${order.order_number} paid from wallet.\nTotal: ${formatPrice(order.total)}`,
-          [{ text: 'Done', onPress: () => navigation.goBack() }]
-        );
+      // The server charges the real order total; it takes no amount from us.
+      const payRes = await paymentsAPI.initialize({ order_id: order.id, method: paymentMethod });
+      const payData = payRes.data || {};
+
+      if (paymentMethod === 'wallet') {
+        if (payData.status !== 'success') {
+          throw new Error('WALLET_NOT_CONFIRMED');
+        }
+        if (payData.new_balance !== undefined) setServerBalance(payData.new_balance);
+        finishPaid({ ...order, total: payData.amount ?? order.total }, 'wallet');
         return;
       }
 
       if (payData.authorization_url) {
-        // Don't clear cart yet — only clear after payment verified
+        // The cart stays as it is until the payment is verified in the WebView.
+        const paidOrder = order;
         navigation.navigate('PaystackWebView', {
           authorization_url: payData.authorization_url,
           reference: payData.reference,
-          successScreen: 'HomeMain',
+          onSuccess: () => finishPaid(paidOrder, 'card'),
         });
-        // Clear cart after navigating (payment will be verified in WebView)
-        clearCart();
         return;
       }
 
-      // Dev mode fallback
-      clearCart();
+      // No checkout address. Only a local development server does this (it
+      // has no payment gateway); verify auto-approves there. Anywhere else it
+      // is an error, never a placed order.
+      if (__DEV__ && payData.reference) {
+        const verifyRes = await paymentsAPI.verify(payData.reference);
+        if (verifyRes.data?.status === 'success') {
+          finishPaid(order, 'card');
+          return;
+        }
+      }
+      notifyError();
       Alert.alert(
-        'Order Placed!',
-        `Order ${order.order_number} created for ${recipientName}.\nTotal: ${formatPrice(order.total)}`,
-        [{ text: 'Done', onPress: () => navigation.goBack() }]
+        'Payment not started',
+        'We could not start your card payment. Your order is saved. Please try again.',
       );
     } catch (err) {
-      Alert.alert('Order Failed', err.response?.data?.detail || 'Something went wrong.');
+      const message = apiError(err, 'Something went wrong. Please try again.');
+      if (order && /already paid/i.test(message)) {
+        // An earlier attempt went through after all.
+        finishPaid(order, paymentMethod);
+        return;
+      }
+      notifyError();
+      if (err?.message === 'WALLET_NOT_CONFIRMED') {
+        Alert.alert('Payment not completed', 'Your wallet payment was not confirmed. Please try again.');
+      } else if (/insufficient/i.test(message)) {
+        Alert.alert(
+          'Not enough in your wallet',
+          'Your wallet balance does not cover this order. Add money to your wallet or pay by card. Your order is saved.',
+        );
+        refreshBalance();
+      } else {
+        Alert.alert(order ? 'Payment Failed' : 'Order Failed', message);
+      }
     } finally {
       setSubmitting(false);
     }
   };
+
+  // ── Receipt: shown once payment is confirmed ──
+  if (placedOrder) {
+    const goToOrders = () => {
+      const names = navigation.getState?.()?.routeNames || [];
+      if (names.includes('MainApp') && user?.role !== 'provider') {
+        navigation.popTo('MainApp', { screen: 'Orders' });
+      } else {
+        navigation.goBack();
+      }
+    };
+    return (
+      <View className="flex-1 bg-cream">
+        <StatusBar style="dark" />
+        <ScreenHeader variant="stack" title="Order placed" onBack={() => navigation.goBack()} />
+        <View className="flex-1 items-center justify-center px-8">
+          <View className="w-24 h-24 rounded-full bg-teal-light items-center justify-center mb-5">
+            <Ionicons name="checkmark-circle" size={52} color="#1F4A45" />
+          </View>
+          <Text className="text-xl font-bold text-ink mb-2 text-center">Thank you! Your order is placed</Text>
+          <Text className="text-sm text-ink-soft text-center leading-5">
+            {placedOrder.order_number ? `Order ${placedOrder.order_number}` : 'Your order'}
+            {placedOrder.recipient_name ? ` for ${placedOrder.recipient_name}` : ''} is paid
+            {placedOrder.paidWith === 'wallet' ? ' from your wallet' : ''}.
+          </Text>
+          <Text className="text-[22px] font-extrabold text-teal mt-4">{formatPrice(placedOrder.total)}</Text>
+          <TouchableOpacity
+            className="bg-teal px-8 h-[52px] rounded-[16px] items-center justify-center mt-8 self-stretch"
+            onPress={goToOrders}
+          >
+            <Text className="text-[15px] font-bold text-white">View my orders</Text>
+          </TouchableOpacity>
+          <TouchableOpacity className="py-4 px-8" onPress={() => navigation.goBack()}>
+            <Text className="text-[14px] font-bold text-ink-soft">Continue shopping</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
 
   if (items.length === 0) {
     return (
@@ -213,11 +325,13 @@ export default function CartScreen({ navigation }) {
           <View className="gap-3">
             <View className="flex-row justify-between">
               <Text className="text-[13.5px] text-ink-soft">Subtotal ({itemCount} items)</Text>
-              <Text className="text-[13.5px] font-bold text-ink">{formatPrice(subtotal)}</Text>
+              <Text className="text-[13.5px] font-bold text-ink">{formatPrice(shownSubtotal)}</Text>
             </View>
             <View className="flex-row justify-between">
               <Text className="text-[13.5px] text-ink-soft">Delivery</Text>
-              <Text className="text-[13.5px] font-bold text-success">Free</Text>
+              <Text className="text-[13.5px] font-bold text-success">
+                {shownDelivery > 0 ? formatPrice(shownDelivery) : 'Free'}
+              </Text>
             </View>
             <View className="h-px bg-line-divider" />
             <View className="flex-row justify-between">
@@ -243,9 +357,11 @@ export default function CartScreen({ navigation }) {
           <Text className="text-[15px] font-bold text-white">
             {submitting
               ? 'Placing Order…'
-              : isGuest || !isAuthenticated
+              : !signedIn
                 ? 'Sign in to check out'
-                : `Checkout · ${formatPrice(total)}`}
+                : serverOrder
+                  ? `Complete payment · ${formatPrice(total)}`
+                  : `Checkout · ${formatPrice(total)}`}
           </Text>
         </TouchableOpacity>
       </View>

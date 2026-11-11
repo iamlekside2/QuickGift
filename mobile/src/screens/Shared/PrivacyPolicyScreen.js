@@ -47,7 +47,7 @@ export default function PrivacyPolicyScreen({ navigation }) {
 
         <Text className="text-base font-bold text-gray-800 mb-2">5. Your Rights</Text>
         <Text className="text-sm text-gray-600 leading-5 mb-4">
-          You can: access your personal data, update your profile information, delete your account, and opt out of marketing communications. Contact support@quickgift.ng for any privacy-related requests.
+          You can: access your personal data, update your profile information, delete your account, and opt out of marketing communications. Contact admin@quickgift.ng for any privacy-related requests.
         </Text>
 
         <Text className="text-base font-bold text-gray-800 mb-2">6. Location Data</Text>
@@ -57,7 +57,7 @@ export default function PrivacyPolicyScreen({ navigation }) {
 
         <Text className="text-base font-bold text-gray-800 mb-2">7. Contact Us</Text>
         <Text className="text-sm text-gray-600 leading-5 mb-8">
-          If you have questions about this privacy policy, contact us at support@quickgift.ng or call +234 810 123 4567.
+          If you have questions about this privacy policy, contact us at admin@quickgift.ng.
         </Text>
 
         <View className="h-10" />

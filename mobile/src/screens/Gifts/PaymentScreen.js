@@ -1,103 +1,126 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Platform, Alert, ActivityIndicator } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '../../components/common/IconCompat';
 import ScreenHeader from '../../components/common/ScreenHeader';
-import { useAuth } from '../../context/AuthContext';
 import { useWallet } from '../../context/WalletContext';
 import { ordersAPI, paymentsAPI } from '../../services/api';
 import { notifySuccess, notifyError } from '../../utils/haptics';
+import { apiError } from '../../utils/errors';
+import { useRequireAuth } from '../../utils/requireAuth';
 
 export default function PaymentScreen({ route, navigation }) {
-  const { user } = useAuth();
-  const { balance: walletBalance, debit, refreshBalance } = useWallet();
+  const { requireAuth } = useRequireAuth();
+  const { balance: walletBalance, setServerBalance, refreshBalance } = useWallet();
   const gift = route.params?.gift || {};
   const recipient = route.params?.recipient || {};
 
   const [selectedMethod, setSelectedMethod] = useState('wallet');
   const [paying, setPaying] = useState(false);
+  // The order is created before payment; keep it so a retry pays for the same
+  // order instead of creating a duplicate.
+  const orderRef = useRef(null);
+  const [serverTotal, setServerTotal] = useState(null);
 
-  const price = gift.price || 0;
-  const deliveryFee = 0; // Delivery fee calculated via Kwik at dispatch
-  const total = price + deliveryFee;
+  const price = Number(gift.price) || 0;
+  const deliveryFee = 0; // Delivery is currently free; the server sets the real fee
+  const total = serverTotal ?? price + deliveryFee;
 
   const insufficientWallet = selectedMethod === 'wallet' && walletBalance < total;
 
+  // Payment is confirmed.
+  const orderDone = (order) => {
+    orderRef.current = null;
+    notifySuccess();
+    refreshBalance();
+    const names = navigation.getState?.()?.routeNames || [];
+    Alert.alert(
+      'Order Successful!',
+      `Your gift for ${recipient.name || 'your recipient'} is paid${order?.order_number ? ` (order ${order.order_number})` : ''}. You can follow it under Orders.`,
+      [
+        {
+          text: 'Send Another Gift',
+          onPress: () => (names.includes('GiftsHome') ? navigation.popTo('GiftsHome') : navigation.popToTop()),
+        },
+        { text: 'Back to Home', onPress: () => navigation.popToTop() },
+      ],
+      { cancelable: false },
+    );
+  };
+
   const handlePay = async () => {
     if (paying) return;
+    if (!requireAuth('Create an account or sign in to send this gift.')) return;
     if (insufficientWallet) {
       notifyError();
       Alert.alert('Insufficient Balance', `Your wallet balance (₦${walletBalance.toLocaleString()}) is less than the total (₦${total.toLocaleString()}). Please fund your wallet or pay with card.`);
       return;
     }
     setPaying(true);
+    let order = orderRef.current;
     try {
-      // Step 1: Create the order
-      const orderRes = await ordersAPI.create({
-        items: [{ product_id: gift.id, quantity: 1 }],
-        delivery_address: recipient.address,
-        delivery_city: recipient.city || 'Lagos',
-        delivery_lat: recipient.lat,
-        delivery_lng: recipient.lng,
-        recipient_name: recipient.name,
-        recipient_phone: recipient.phone,
-        personal_message: recipient.note || undefined,
-      });
-      const order = orderRes.data;
-
-      if (selectedMethod === 'card') {
-        // Step 2a: Initialize Paystack payment for card
-        const payRes = await paymentsAPI.initialize({
-          order_id: order.id,
-          amount: total,
-          email: user?.email || user?.phone + '@quickgift.ng',
+      // Step 1: Create the order (once)
+      if (!order) {
+        const orderRes = await ordersAPI.create({
+          items: [{ product_id: gift.id, quantity: 1 }],
+          delivery_address: recipient.address,
+          delivery_city: recipient.city || 'Lagos',
+          delivery_lat: recipient.lat,
+          delivery_lng: recipient.lng,
+          recipient_name: recipient.name,
+          recipient_phone: recipient.phone,
+          personal_message: recipient.note || undefined,
         });
-        const payData = payRes.data;
-
-        if (payData.authorization_url) {
-          // Step 3a: Navigate to Paystack WebView
-          setPaying(false);
-          navigation.navigate('PaystackWebView', {
-            authorization_url: payData.authorization_url,
-            reference: payData.reference,
-            successScreen: 'GiftsHome',
-          });
-          return;
-        } else {
-          // Dev mode fallback — no Paystack key configured
-          notifySuccess();
-          Alert.alert(
-            'Order Successful!',
-            payData.message || `The gift for ${recipient.name} has been placed.`,
-            [
-              { text: 'Send Another Gift', onPress: () => navigation.navigate('GiftsHome') },
-              { text: 'Back to Home', onPress: () => navigation.popToTop() },
-            ]
-          );
-        }
-      } else {
-        // Step 2b: Wallet payment — initialize directly
-        await paymentsAPI.initialize({
-          order_id: order.id,
-          amount: total,
-          email: user?.email || user?.phone + '@quickgift.ng',
-        });
-
-        // Step 3b: Success for wallet
-        notifySuccess();
-        Alert.alert(
-          'Order Successful!',
-          `The gift for ${recipient.name} has been sent and will arrive shortly.`,
-          [
-            { text: 'Send Another Gift', onPress: () => navigation.navigate('GiftsHome') },
-            { text: 'Back to Home', onPress: () => navigation.popToTop() },
-          ]
-        );
+        order = orderRes.data;
+        orderRef.current = order;
+        if (order?.total !== undefined) setServerTotal(Number(order.total));
       }
-    } catch (err) {
+
+      // Step 2: Pay. The server charges the real order total.
+      const payRes = await paymentsAPI.initialize({ order_id: order.id, method: selectedMethod });
+      const payData = payRes.data || {};
+
+      if (selectedMethod === 'wallet') {
+        if (payData.status !== 'success') {
+          notifyError();
+          Alert.alert('Payment not completed', 'Your wallet payment was not confirmed. Please try again.');
+          return;
+        }
+        if (payData.new_balance !== undefined) setServerBalance(payData.new_balance);
+        orderDone(order);
+        return;
+      }
+
+      if (payData.authorization_url) {
+        const paidOrder = order;
+        setPaying(false);
+        navigation.navigate('PaystackWebView', {
+          authorization_url: payData.authorization_url,
+          reference: payData.reference,
+          onSuccess: () => orderDone(paidOrder),
+        });
+        return;
+      }
+
+      // No checkout address: only a local development server does this, and
+      // verify auto-approves there. Anywhere else it is an error.
+      if (__DEV__ && payData.reference) {
+        const verifyRes = await paymentsAPI.verify(payData.reference);
+        if (verifyRes.data?.status === 'success') {
+          orderDone(order);
+          return;
+        }
+      }
       notifyError();
-      const message = err.response?.data?.detail || err.response?.data?.message || err.message || 'Something went wrong. Please try again.';
-      Alert.alert('Payment Failed', message);
+      Alert.alert('Payment not started', 'We could not start your card payment. Your order is saved. Please try again.');
+    } catch (err) {
+      const message = apiError(err, 'Something went wrong. Please try again.');
+      if (order && /already paid/i.test(message)) {
+        orderDone(order);
+        return;
+      }
+      notifyError();
+      Alert.alert(order ? 'Payment Failed' : 'Order Failed', message);
     } finally {
       setPaying(false);
     }

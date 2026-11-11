@@ -1,78 +1,102 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Platform, Alert, Switch, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Platform, Alert, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '../../components/common/IconCompat';
-import { useAuth } from '../../context/AuthContext';
 import { providersAPI } from '../../services/api';
 import AppInput from '../../components/common/AppInput';
+import { apiError } from '../../utils/errors';
+import { notifySuccess, notifyError } from '../../utils/haptics';
 
 const DURATIONS = ['30 min', '1 hr', '1.5 hrs', '2 hrs', '3 hrs'];
-const CATEGORIES = [
-  'Nails', 'Hair', 'Makeup', 'Barber', 'Waxing', 'Massage',
-  'Skincare', 'Lashes', 'Tattoo', 'Piercing', 'Spa', 'Fitness',
-  'Photography', 'Catering', 'Cleaning', 'Tailoring', 'Other',
-];
+const DURATION_MINUTES = {
+  '30 min': 30, '1 hr': 60, '1.5 hrs': 90, '2 hrs': 120, '3 hrs': 180,
+};
 
+// The label for a stored duration (the nearest option when it is not exact).
+const labelForMinutes = (minutes) => {
+  const m = Number(minutes);
+  if (!Number.isFinite(m) || m <= 0) return '1 hr';
+  return DURATIONS.reduce((best, label) =>
+    Math.abs(DURATION_MINUTES[label] - m) < Math.abs(DURATION_MINUTES[best] - m) ? label : best,
+  '1 hr');
+};
+
+// Add or edit one of the provider's own services (/providers/me/services).
 export default function ServiceForm({ route, navigation }) {
-  const { user } = useAuth();
-  const mode = route.params?.mode || 'add';
   const existing = route.params?.service || {};
+  const mode = route.params?.mode === 'edit' && existing.id ? 'edit' : 'add';
 
   const [name, setName] = useState(existing.name || '');
   const [description, setDescription] = useState(existing.description || '');
-  const [duration, setDuration] = useState(existing.duration || '1 hr');
-  const [price, setPrice] = useState(existing.price?.toString() || '');
-  const [category, setCategory] = useState(existing.category || 'Nails');
-  const [active, setActive] = useState(existing.active !== false);
+  const [duration, setDuration] = useState(labelForMinutes(existing.duration_minutes));
+  const [price, setPrice] = useState(existing.price != null ? String(existing.price) : '');
   const [saving, setSaving] = useState(false);
-
-  const durationToMinutes = {
-    '30 min': 30, '1 hr': 60, '1.5 hrs': 90, '2 hrs': 120, '3 hrs': 180,
-  };
+  const [deleting, setDeleting] = useState(false);
 
   const handleSave = async () => {
-    if (!name || !price) {
-      Alert.alert('Missing Fields', 'Please fill in service name and price.');
+    if (saving || deleting) return;
+    const cleanName = name.trim();
+    const amount = Number(String(price).replace(/,/g, ''));
+    if (!cleanName) {
+      Alert.alert('Missing Fields', 'Please enter the service name.');
+      return;
+    }
+    if (!Number.isFinite(amount) || amount <= 0) {
+      Alert.alert('Missing Fields', 'Please enter a price greater than zero.');
       return;
     }
     try {
       setSaving(true);
       const serviceData = {
-        name: name.trim(),
+        name: cleanName,
         description: description.trim(),
-        duration_minutes: durationToMinutes[duration] || 60,
-        price: parseFloat(price),
+        duration_minutes: DURATION_MINUTES[duration] || 60,
+        price: amount,
       };
-      if (mode === 'edit' && existing.id) {
-        // TODO: Add update service endpoint when available
-        await providersAPI.addMyService(serviceData);
+      if (mode === 'edit') {
+        // Update the existing service (never create a second copy).
+        await providersAPI.updateMyService(existing.id, serviceData);
       } else {
         await providersAPI.addMyService(serviceData);
       }
+      notifySuccess();
       Alert.alert(
         mode === 'add' ? 'Service Added' : 'Service Saved',
-        `"${name}" has been ${mode === 'add' ? 'added to' : 'saved in'} your services.`,
+        `"${cleanName}" has been ${mode === 'add' ? 'added to' : 'saved in'} your services.`,
         [{ text: 'OK', onPress: () => navigation.goBack() }]
       );
     } catch (err) {
-      const message = err?.response?.data?.detail || err.message || 'Something went wrong.';
-      Alert.alert('Save Failed', message);
+      notifyError();
+      Alert.alert('Save Failed', apiError(err, 'We could not save this service. Please try again.'));
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = () => {
+    if (saving || deleting) return;
     Alert.alert('Delete Service', `Are you sure you want to delete "${name}"?`, [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Delete',
         style: 'destructive',
         onPress: async () => {
-          // TODO: Call delete API when available
-          Alert.alert('Deleted', 'Service removed.', [
-            { text: 'OK', onPress: () => navigation.goBack() },
-          ]);
+          setDeleting(true);
+          try {
+            const res = await providersAPI.deleteMyService(existing.id);
+            Alert.alert(
+              res.data?.archived ? 'Service Removed' : 'Service Deleted',
+              res.data?.archived
+                ? 'This service has bookings, so it was taken off your profile but kept in your booking history.'
+                : `"${name}" has been deleted.`,
+              [{ text: 'OK', onPress: () => navigation.goBack() }],
+            );
+          } catch (err) {
+            notifyError();
+            Alert.alert('Delete Failed', apiError(err, 'We could not delete this service. Please try again.'));
+          } finally {
+            setDeleting(false);
+          }
         },
       },
     ]);
@@ -146,7 +170,7 @@ export default function ServiceForm({ route, navigation }) {
           />
         </View>
 
-        {/* Duration & Category Card */}
+        {/* Duration Card */}
         <View
           className="bg-white rounded-2xl p-5 mb-6"
           style={{
@@ -159,7 +183,7 @@ export default function ServiceForm({ route, navigation }) {
         >
           {/* Duration */}
           <Text className="text-[13px] font-bold text-gray-700 mb-2">Duration</Text>
-          <View className="flex-row flex-wrap gap-2 mb-4">
+          <View className="flex-row flex-wrap gap-2">
             {DURATIONS.map((d) => (
               <TouchableOpacity
                 key={d}
@@ -182,53 +206,6 @@ export default function ServiceForm({ route, navigation }) {
             ))}
           </View>
 
-          {/* Category */}
-          <Text className="text-[13px] font-bold text-gray-700 mb-2">Category</Text>
-          <View className="flex-row flex-wrap gap-2">
-            {CATEGORIES.map((cat) => (
-              <TouchableOpacity
-                key={cat}
-                className={`px-4 py-2 rounded-xl ${
-                  category === cat ? 'bg-teal' : 'bg-white border border-gray-100'
-                }`}
-                style={category === cat ? {
-                  shadowColor: '#1F4A45',
-                  shadowOffset: { width: 0, height: 2 },
-                  shadowOpacity: 0.2,
-                  shadowRadius: 4,
-                  elevation: 3,
-                } : undefined}
-                onPress={() => setCategory(cat)}
-              >
-                <Text className={`text-sm font-medium ${
-                  category === cat ? 'text-white' : 'text-gray-600'
-                }`}>{cat}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        {/* Active Toggle */}
-        <View
-          className="flex-row items-center justify-between bg-white rounded-2xl p-4 mb-6"
-          style={{
-            shadowColor: '#211F1C',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.04,
-            shadowRadius: 8,
-            elevation: 2,
-          }}
-        >
-          <View>
-            <Text className="text-sm font-semibold text-gray-800">Active</Text>
-            <Text className="text-xs text-gray-500 mt-0.5">Clients can see and book this service</Text>
-          </View>
-          <Switch
-            value={active}
-            onValueChange={setActive}
-            trackColor={{ false: '#EAE3D8', true: '#1F4A45' }}
-            thumbColor="#fff"
-          />
         </View>
 
         {/* Save Button */}
@@ -242,7 +219,7 @@ export default function ServiceForm({ route, navigation }) {
             elevation: 4,
           }}
           onPress={handleSave}
-          disabled={saving}
+          disabled={saving || deleting}
         >
           {saving ? (
             <ActivityIndicator size="small" color="#fff" />
@@ -258,8 +235,13 @@ export default function ServiceForm({ route, navigation }) {
           <TouchableOpacity
             className="bg-red-50 py-4 rounded-2xl items-center mb-6"
             onPress={handleDelete}
+            disabled={saving || deleting}
           >
-            <Text className="text-base font-bold text-red-500">Delete Service</Text>
+            {deleting ? (
+              <ActivityIndicator size="small" color="#D24B4B" />
+            ) : (
+              <Text className="text-base font-bold text-red-500">Delete Service</Text>
+            )}
           </TouchableOpacity>
         )}
 

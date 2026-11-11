@@ -31,7 +31,7 @@ export default function ProviderServices({ navigation }) {
     }, [fetchServices])
   );
 
-  const activeServices = services.filter((s) => s.active !== false);
+  const activeServices = services.filter((s) => s.is_active !== false);
 
   return (
     <View className="flex-1 bg-gray-50">
@@ -91,17 +91,17 @@ export default function ProviderServices({ navigation }) {
                 <View className="flex-1">
                   <View className="flex-row items-center gap-2">
                     <Text className="text-sm font-bold text-gray-800">{service.name}</Text>
-                    {service.active === false && (
+                    {service.is_active === false && (
                       <View className="bg-gray-200 px-2.5 py-0.5 rounded-full">
                         <Text className="text-[10px] text-gray-400 font-bold">Inactive</Text>
                       </View>
                     )}
                   </View>
                   <View className="flex-row items-center gap-3 mt-1.5">
-                    {service.duration ? (
+                    {service.duration_minutes ? (
                       <View className="flex-row items-center gap-1">
                         <Ionicons name="time-outline" size={12} color="#9A948A" />
-                        <Text className="text-xs text-gray-400">{service.duration}</Text>
+                        <Text className="text-xs text-gray-400">{service.duration_minutes} min</Text>
                       </View>
                     ) : null}
                     {service.price != null && (

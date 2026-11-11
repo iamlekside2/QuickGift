@@ -8,6 +8,7 @@ import { Ionicons } from '../../components/common/IconCompat';
 import { useAuth } from '../../context/AuthContext';
 import { providersAPI } from '../../services/api';
 import AppInput from '../../components/common/AppInput';
+import { apiError } from '../../utils/errors';
 
 const logoSmall = require('../../../assets/images/logo-small.png');
 
@@ -66,7 +67,7 @@ export default function CompleteSetupScreen() {
       // Mark profile as complete in local user state
       updateUser({ profile_complete: true });
     } catch (err) {
-      Alert.alert('Error', err.response?.data?.detail || 'Failed to save. Please try again.');
+      Alert.alert('Error', apiError(err, 'Failed to save. Please try again.'));
     } finally {
       setLoading(false);
     }

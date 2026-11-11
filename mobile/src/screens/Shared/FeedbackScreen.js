@@ -5,6 +5,7 @@ import { Ionicons } from '../../components/common/IconCompat';
 import AppInput from '../../components/common/AppInput';
 import { feedbackAPI } from '../../services/api';
 import appConfig from '../../../app.json';
+import { apiError } from '../../utils/errors';
 
 const APP_VERSION = appConfig?.expo?.version || null;
 
@@ -43,7 +44,7 @@ export default function FeedbackScreen({ navigation }) {
         [{ text: 'Done', onPress: () => navigation.goBack() }]
       );
     } catch (err) {
-      const msg = err.response?.data?.detail || 'Could not send your feedback. Please try again.';
+      const msg = apiError(err, 'Could not send your feedback. Please try again.');
       Alert.alert('Error', msg);
     } finally {
       setSubmitting(false);

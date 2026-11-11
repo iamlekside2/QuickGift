@@ -9,6 +9,7 @@ import { walletAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { useWallet } from '../../context/WalletContext';
 import AppInput from '../../components/common/AppInput';
+import { apiError } from '../../utils/errors';
 
 const QUICK_AMOUNTS = [5000, 10000, 20000, 50000];
 
@@ -71,11 +72,11 @@ export default function WithdrawScreen({ navigation }) {
               debit(numAmount);
               Alert.alert(
                 'Withdrawal Requested',
-                `₦${numAmount.toLocaleString()} is being sent to your ${selectedAccount.bank_name} account. This may take a few minutes.`,
+                `Your request to withdraw ₦${numAmount.toLocaleString()} to your ${selectedAccount.bank_name} account has been received. Withdrawals are processed by our team, usually within 1-2 working days.`,
                 [{ text: 'OK', onPress: () => navigation.goBack() }]
               );
             } catch (e) {
-              Alert.alert('Error', e.response?.data?.detail || 'Withdrawal failed. Please try again.');
+              Alert.alert('Withdrawal not sent', apiError(e, 'We could not submit your withdrawal. Please try again.'));
             } finally {
               setSubmitting(false);
             }

@@ -7,10 +7,14 @@ import { useAuth } from '../../context/AuthContext';
 import { useWallet } from '../../context/WalletContext';
 import { walletAPI } from '../../services/api';
 import AppInput from '../../components/common/AppInput';
+import { apiError } from '../../utils/errors';
+import { useRequireAuth } from '../../utils/requireAuth';
+import { notifySuccess } from '../../utils/haptics';
 
 export default function WalletScreen({ navigation }) {
   const { user } = useAuth();
-  const { balance, refreshBalance, credit, debit } = useWallet();
+  const { balance, refreshBalance, setServerBalance, debit } = useWallet();
+  const { signedIn, requireAuth } = useRequireAuth();
   const isProvider = user?.role === 'provider';
 
   const [transactions, setTransactions] = useState([]);
@@ -27,6 +31,11 @@ export default function WalletScreen({ navigation }) {
   const lastFetchRef = useRef(0);
 
   const fetchData = useCallback(async () => {
+    if (!signedIn) {
+      setLoading(false);
+      setRefreshing(false);
+      return;
+    }
     try {
       await refreshBalance();
       const txRes = await walletAPI.getTransactions({ page: 1, per_page: 20 });
@@ -37,7 +46,19 @@ export default function WalletScreen({ navigation }) {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [refreshBalance]);
+  }, [refreshBalance, signedIn]);
+
+  // A verified top-up: take the balance the server reports, then reload the
+  // transaction list so the new credit shows.
+  const onFunded = useCallback((result, amount) => {
+    if (result?.new_balance !== undefined) setServerBalance(result.new_balance);
+    notifySuccess();
+    fetchData().then(() => {
+      lastFetchRef.current = Date.now();
+    });
+    const added = Number(result?.amount ?? amount) || 0;
+    Alert.alert('Wallet funded', `₦${added.toLocaleString()} has been added to your wallet.`);
+  }, [fetchData, setServerBalance]);
 
   useFocusEffect(
     useCallback(() => {
@@ -71,31 +92,31 @@ export default function WalletScreen({ navigation }) {
         setShowFundModal(false);
         setFundAmount('');
         setProcessing(false);
-        // Navigate to Paystack WebView
+        // Pay in the WebView. It comes back to this screen when it closes;
+        // onSuccess only runs once the top-up has been verified.
         navigation.navigate('PaystackWebView', {
           authorization_url: data.authorization_url,
           reference: data.reference,
-          successScreen: 'WalletMain',
           verifyType: 'wallet_fund',
-          onSuccess: async () => {
-            credit(amount);
-            refreshBalance();
-          },
+          onSuccess: (result) => onFunded(result, amount),
         });
         return;
       }
 
-      // Dev mode — no Paystack key, auto-verify
-      if (data.reference) {
-        await walletAPI.fundVerify(data.reference);
-        credit(amount);
-        refreshBalance();
+      // No checkout address: only a local development server does this, and
+      // verify auto-approves there. Anywhere else it is an error.
+      if (__DEV__ && data.reference) {
+        const verifyRes = await walletAPI.fundVerify(data.reference);
+        if (verifyRes.data?.status === 'success') {
+          setShowFundModal(false);
+          setFundAmount('');
+          onFunded(verifyRes.data, amount);
+          return;
+        }
       }
-      Alert.alert('Success', `₦${amount.toLocaleString()} added to your wallet`);
-      setShowFundModal(false);
-      setFundAmount('');
+      Alert.alert('Could not add money', 'We could not start your payment. Please try again.');
     } catch (e) {
-      Alert.alert('Error', e.response?.data?.detail || 'Failed to fund wallet');
+      Alert.alert('Could not add money', apiError(e, 'We could not start your payment. Please try again.'));
     } finally {
       setProcessing(false);
     }
@@ -121,7 +142,7 @@ export default function WalletScreen({ navigation }) {
       setTransferAmount('');
       refreshBalance();
     } catch (e) {
-      Alert.alert('Error', e.response?.data?.detail || 'Transfer failed');
+      Alert.alert('Transfer failed', apiError(e, 'We could not send that transfer. Please try again.'));
     } finally {
       setProcessing(false);
     }
@@ -131,6 +152,36 @@ export default function WalletScreen({ navigation }) {
     const d = new Date(dateStr);
     return d.toLocaleDateString('en-NG', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
   };
+
+  // Guests have no wallet: say so instead of showing an empty one.
+  if (!signedIn) {
+    return (
+      <View className="flex-1 bg-gray-50">
+        <StatusBar style="dark" />
+        <View className="bg-white px-5 pb-5" style={{ paddingTop: Platform.OS === 'ios' ? 60 : 40 }}>
+          <Text className="text-2xl font-extrabold text-gray-800">Wallet</Text>
+        </View>
+        <View className="flex-1 items-center justify-center px-8">
+          <Ionicons name="wallet-outline" size={48} color="#B5AFA2" />
+          <Text className="text-lg font-bold text-gray-800 mt-4 text-center">Please sign in to continue</Text>
+          <Text className="text-sm text-gray-500 mt-2 text-center">
+            Your wallet holds refunds and money you add for faster checkout.
+          </Text>
+          <TouchableOpacity
+            className="mt-6 bg-teal h-[52px] px-10 rounded-2xl items-center justify-center"
+            onPress={() => requireAuth('Create an account or sign in to use your wallet.')}
+          >
+            <Text className="text-white font-bold text-[15px]">Sign in</Text>
+          </TouchableOpacity>
+          {navigation.canGoBack() ? (
+            <TouchableOpacity className="mt-2 py-3 px-8" onPress={() => navigation.goBack()}>
+              <Text className="text-gray-500 font-bold text-sm">Go back</Text>
+            </TouchableOpacity>
+          ) : null}
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1 bg-gray-50">

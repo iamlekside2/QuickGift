@@ -57,7 +57,7 @@ export default function TermsScreen({ navigation }) {
 
         <Text className="text-base font-bold text-gray-800 mb-2">7. Contact</Text>
         <Text className="text-sm text-gray-600 leading-5 mb-8">
-          For questions about these terms, contact support@quickgift.ng.
+          For questions about these terms, contact admin@quickgift.ng.
         </Text>
 
         <View className="h-10" />

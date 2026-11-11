@@ -1,17 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Platform, Image } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Platform, Image, Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '../../components/common/IconCompat';
 import { providersAPI, reviewsAPI, chatsAPI } from '../../services/api';
 import Button from '../../components/common/Button';
 import { iconFor } from '../../utils/categoryIcons';
 import { SERIF_FAMILY } from '../../components/common/Typography';
+import { apiError } from '../../utils/errors';
+import { useRequireAuth } from '../../utils/requireAuth';
 
 export default function ProviderProfileScreen({ navigation, route }) {
   const { provider } = route.params || {};
   const [services, setServices] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [openingChat, setOpeningChat] = useState(false);
+  const { requireAuth } = useRequireAuth();
 
   const formatPrice = (price) => '₦' + (price || 0).toLocaleString();
   const name = provider?.business_name || provider?.name || 'Provider';
@@ -38,18 +42,25 @@ export default function ProviderProfileScreen({ navigation, route }) {
   };
 
   const openChat = async () => {
+    if (openingChat) return;
+    if (!requireAuth('Create an account or sign in to message this provider.')) return;
+    setOpeningChat(true);
     try {
-      const res = await chatsAPI.createConversation(provider?.id, name);
+      // The server returns the existing thread with this provider, or starts
+      // one. Either the provider's profile id or user id is accepted.
+      const res = await chatsAPI.createConversation(provider?.id);
       const conv = res.data;
       navigation.navigate('ChatScreen', {
         conversationId: conv.id,
-        otherName: name,
-        otherAvatar: name.charAt(0).toUpperCase(),
+        otherName: conv.provider_name || name,
+        otherAvatar: (conv.provider_name || name).charAt(0).toUpperCase(),
         providerId: provider?.id,
         buyerId: conv.buyer_id,
       });
     } catch (err) {
-      console.log('Error opening chat:', err);
+      Alert.alert('Could not open chat', apiError(err, 'Please try again in a moment.'));
+    } finally {
+      setOpeningChat(false);
     }
   };
 
@@ -91,7 +102,7 @@ export default function ProviderProfileScreen({ navigation, route }) {
 
           {/* Badge chips */}
           <View className="flex-row gap-2 mt-4 flex-wrap">
-            {provider?.is_verified && (
+            {(provider?.is_verified || provider?.status === 'verified') && (
               <View className="flex-row items-center gap-1 bg-teal-light px-3 py-1.5 rounded-full">
                 <Ionicons name="shield-checkmark" size={13} color="#1F4A45" />
                 <Text className="text-[12px] font-bold text-teal">Verified</Text>
@@ -163,11 +174,13 @@ export default function ProviderProfileScreen({ navigation, route }) {
         <TouchableOpacity
           className="w-[52px] h-[52px] rounded-[16px] border-[1.5px] border-teal items-center justify-center"
           onPress={openChat}
+          disabled={openingChat}
         >
           <Ionicons name="chatbubble-outline" size={22} color="#1F4A45" />
         </TouchableOpacity>
         <Button
           title="Book Appointment"
+          disabled={loading}
           onPress={() => navigation.navigate('Booking', { provider, services })}
           style={{ flex: 1 }}
         />

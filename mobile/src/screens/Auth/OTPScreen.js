@@ -5,12 +5,15 @@ import { Ionicons } from '../../components/common/IconCompat';
 import Button from '../../components/common/Button';
 import { SerifHeadline } from '../../components/common/Typography';
 import { useAuth } from '../../context/AuthContext';
+import { apiError } from '../../utils/errors';
 
 export default function OTPScreen({ navigation, route }) {
   const { phone, email, sentTo, otpDev, fullName, role, isRegistration } = route.params || {};
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [timer, setTimer] = useState(60);
   const [loading, setLoading] = useState(false);
+  const [devCode, setDevCode] = useState(otpDev ? String(otpDev) : null);
+  const [channel, setChannel] = useState(sentTo);
   const inputs = useRef([]);
   const { verifyOTP, register, sendOTP } = useAuth();
 
@@ -67,8 +70,9 @@ export default function OTPScreen({ navigation, route }) {
       }
       // Navigation is handled automatically by RootNavigator when user state updates
     } catch (err) {
-      const detail = err.response?.data?.detail || 'Invalid OTP. Please try again.';
-      const isAlreadyRegistered = detail.includes('already registered');
+      const detail = apiError(err, 'That code did not work. Please try again.');
+      // "This phone number is already registered. Please log in instead."
+      const isAlreadyRegistered = /already registered/i.test(detail) && /phone/i.test(detail);
       Alert.alert(
         isAlreadyRegistered ? 'Account Exists' : 'Error',
         detail,
@@ -85,17 +89,28 @@ export default function OTPScreen({ navigation, route }) {
 
   const handleResend = async () => {
     try {
-      await sendOTP(phone, email);
+      const data = await sendOTP(phone, email);
       setTimer(60);
-      setOtp(['', '', '', '', '', '']);
-      Alert.alert('OTP Sent', email ? `A new code has been sent to ${email}` : 'A new code has been sent to your phone');
+      // The code only comes back from a server running in debug mode.
+      const devCode = data?.otp_dev ? String(data.otp_dev) : null;
+      setDevCode(devCode);
+      setOtp(devCode ? devCode.split('').slice(0, 6) : ['', '', '', '', '', '']);
+      if (data?.sent_to) setChannel(data.sent_to);
+      Alert.alert(
+        'Code sent',
+        data?.sent_to === 'email'
+          ? `A new code has been sent to ${email || 'the email address on your account'}.`
+          : 'A new code has been sent to your phone.',
+      );
     } catch (err) {
-      Alert.alert('Error', 'Failed to resend OTP');
+      Alert.alert('Code not sent', apiError(err, 'We could not send a new code. Please try again.'));
     }
   };
 
   // Where the code was delivered (email is free; falls back to phone)
-  const destination = sentTo === 'email' && email ? email : (phone || '+234 ****');
+  const destination = channel === 'email'
+    ? (email || 'the email address on your account')
+    : (phone || '+234 ****');
 
   return (
     <View
@@ -119,7 +134,7 @@ export default function OTPScreen({ navigation, route }) {
         >
           <Ionicons name="shield-checkmark-outline" size={36} color="#1F4A45" />
         </View>
-        <SerifHeadline text="Verify your phone" emphasis="phone" size={28} />
+        <SerifHeadline text="Enter your code" emphasis="code" size={28} />
         <Text className="text-[13.5px] text-ink-soft text-center leading-5 mt-2">
           Enter the 6-digit code sent to{'\n'}
           <Text className="font-bold text-ink">{destination}</Text>
@@ -127,9 +142,9 @@ export default function OTPScreen({ navigation, route }) {
       </View>
 
       {/* Dev OTP banner */}
-      {otpDev && (
+      {devCode && (
         <View className="bg-orange-light rounded-2xl p-3.5 mb-5 items-center">
-          <Text className="text-xs text-orange font-bold">Dev OTP: {otpDev}</Text>
+          <Text className="text-xs text-orange font-bold">Dev OTP: {devCode}</Text>
         </View>
       )}
 

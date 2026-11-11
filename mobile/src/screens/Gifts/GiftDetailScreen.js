@@ -2,8 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Alert, Platform, Image, TextInput } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '../../components/common/IconCompat';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import Button from '../../components/common/Button';
+import { isFavourite, toggleFavourite } from '../../utils/favourites';
 import { useCart } from '../../context/CartContext';
 import { iconFor } from '../../utils/categoryIcons';
 
@@ -38,18 +38,19 @@ export default function GiftDetailScreen({ navigation, route }) {
 
   useEffect(() => {
     if (!gift?.id) return;
-    AsyncStorage.getItem('@favorites').then((raw) => {
-      const favs = raw ? JSON.parse(raw) : [];
-      setIsFavorite(favs.includes(gift.id));
-    });
+    let alive = true;
+    isFavourite(gift.id).then((saved) => {
+      if (alive) setIsFavorite(saved);
+    }).catch(() => {});
+    return () => { alive = false; };
   }, [gift?.id]);
 
+  // Saved through utils/favourites so the Favourites screen lists the same gifts.
   const toggleFavorite = async () => {
-    const raw = await AsyncStorage.getItem('@favorites');
-    let favs = raw ? JSON.parse(raw) : [];
-    favs = favs.includes(gift.id) ? favs.filter((id) => id !== gift.id) : [...favs, gift.id];
-    await AsyncStorage.setItem('@favorites', JSON.stringify(favs));
-    setIsFavorite(!isFavorite);
+    if (!gift?.id) return;
+    try {
+      setIsFavorite(await toggleFavourite(gift));
+    } catch {}
   };
 
   const formatPrice = (p) => '₦' + (p || 0).toLocaleString();
