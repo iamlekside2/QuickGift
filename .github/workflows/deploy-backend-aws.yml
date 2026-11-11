@@ -12,12 +12,11 @@ name: deploy-backend-aws
 # For stronger security you can swap the access keys for GitHub OIDC later
 # (aws-actions/configure-aws-credentials with role-to-assume + id-token: write).
 
+# Disabled for automatic runs — the project stays on Render. This only runs if
+# you start it by hand (Actions tab -> this workflow -> Run workflow), and still
+# needs the AWS secrets set. Re-enable auto-deploy by restoring the `push:`
+# trigger below.
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'backend-node/**'
-      - '.github/workflows/deploy-backend-aws.yml'
   workflow_dispatch: {}
 
 env:
