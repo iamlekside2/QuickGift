@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Someone sent you a gift | QuickGift</title>
+  <meta name="description" content="Tell us where to deliver your gift.">
+  <!-- Private page: the link is personal, so keep it out of search and referrers. -->
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="referrer" content="no-referrer">
+  <link rel="icon" href="../logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;}
+    body{margin:0;font-family:'Plus Jakarta Sans',sans-serif;background:#FAF3E9;color:#211F1C;-webkit-font-smoothing:antialiased;min-height:100vh;display:flex;flex-direction:column;}
+    a{color:#E8632F;text-decoration:none;}
+    .serif{font-family:'Instrument Serif',serif;}
+    header{padding:22px 24px;display:flex;justify-content:center;}
+    header a{display:flex;align-items:center;gap:10px;color:#1F4A45;font-weight:800;font-size:18px;}
+    header img{width:34px;height:34px;object-fit:contain;}
+    main{flex:1;display:flex;justify-content:center;padding:8px 20px 48px;}
+    .card{width:100%;max-width:460px;background:#fff;border-radius:28px;padding:32px 26px;box-shadow:0 18px 50px rgba(33,31,28,.08);align-self:flex-start;}
+    .badge{width:72px;height:72px;border-radius:50%;background:#FCE7DA;display:flex;align-items:center;justify-content:center;margin:0 auto 18px;font-size:34px;}
+    .badge.ok{background:#DDEBE6;}
+    h1{font-family:'Instrument Serif',serif;font-weight:400;font-size:34px;line-height:1.1;text-align:center;margin:0 0 10px;color:#1F4A45;}
+    h1 em{color:#E8632F;}
+    .lead{text-align:center;font-size:14.5px;line-height:1.6;color:#6E6A63;margin:0 0 20px;}
+    .note{background:#FAF3E9;border-radius:18px;padding:16px 18px;margin:0 0 22px;}
+    .note small{display:block;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#9A948A;margin-bottom:6px;}
+    .note p{margin:0;font-family:'Instrument Serif',serif;font-style:italic;font-size:19px;line-height:1.4;color:#211F1C;white-space:pre-wrap;word-wrap:break-word;}
+    .fld{display:flex;flex-direction:column;gap:7px;margin-bottom:14px;}
+    .fld span{font-size:13px;font-weight:700;}
+    .fld em{font-style:normal;font-weight:500;color:#9A948A;}
+    .fld input,.fld textarea{padding:14px 16px;border-radius:14px;border:1.5px solid #EAE3D8;background:#FAF3E9;font-size:15px;color:#211F1C;font-family:inherit;width:100%;}
+    .fld textarea{min-height:92px;resize:vertical;}
+    .fld input:focus,.fld textarea:focus{outline:none;border-color:#1F4A45;background:#fff;}
+    button{width:100%;border:0;border-radius:16px;background:#1F4A45;color:#fff;font:inherit;font-weight:800;font-size:15.5px;padding:16px;cursor:pointer;margin-top:6px;}
+    button:disabled{opacity:.6;cursor:default;}
+    button.ghost{background:transparent;color:#1F4A45;border:1.5px solid #1F4A45;}
+    .err{background:#FDECEC;color:#B03A3A;border-radius:12px;padding:12px 14px;font-size:13.5px;line-height:1.5;margin-bottom:14px;}
+    .hint{font-size:12px;color:#9A948A;text-align:center;line-height:1.5;margin:14px 0 0;}
+    .spin{width:34px;height:34px;border-radius:50%;border:3px solid #EAE3D8;border-top-color:#1F4A45;animation:sp .8s linear infinite;margin:30px auto;}
+    @keyframes sp{to{transform:rotate(360deg)}}
+    [hidden]{display:none !important;}
+    footer{text-align:center;font-size:12.5px;color:#9A948A;padding:0 20px 28px;}
+  </style>
+</head>
+<body>
+  <header>
+    <a href="/"><img src="../logo.png" alt=""><span>QuickGift</span></a>
+  </header>
+
+  <main>
+    <div class="card" aria-live="polite">
+      <!-- Loading -->
+      <section id="s-loading">
+        <div class="spin" role="status" aria-label="Loading"></div>
+      </section>
+
+      <!-- Waiting for the address -->
+      <section id="s-waiting" hidden>
+        <div class="badge" aria-hidden="true">🎁</div>
+        <h1 id="w-title">You have a <em>gift</em>!</h1>
+        <p class="lead" id="w-lead"></p>
+        <div class="note" id="w-note" hidden>
+          <small id="w-note-from">A note for you</small>
+          <p id="w-message"></p>
+        </div>
+        <form id="form" novalidate>
+          <div class="err" id="f-err" role="alert" hidden></div>
+          <label class="fld">
+            <span>Delivery address</span>
+            <textarea id="f-address" maxlength="300" autocomplete="street-address" placeholder="House number, street and area" required></textarea>
+          </label>
+          <label class="fld">
+            <span>City <em>(optional)</em></span>
+            <input id="f-city" type="text" maxlength="60" autocomplete="address-level2" placeholder="e.g. Lagos">
+          </label>
+          <label class="fld">
+            <span>Phone number</span>
+            <input id="f-phone" type="tel" inputmode="tel" maxlength="20" autocomplete="tel" placeholder="e.g. 0801 234 5678" required>
+          </label>
+          <button type="submit" id="f-submit">Confirm delivery address</button>
+          <p class="hint">We only use these details to deliver this gift. The rider will call the number you give.</p>
+        </form>
+      </section>
+
+      <!-- Confirmed -->
+      <section id="s-confirmed" hidden>
+        <div class="badge ok" aria-hidden="true">✓</div>
+        <h1>Address <em>confirmed</em></h1>
+        <p class="lead" id="c-lead">Thank you. Your gift is being prepared and will be on its way to you.</p>
+        <div class="note" id="c-note" hidden>
+          <small id="c-note-from">A note for you</small>
+          <p id="c-message"></p>
+        </div>
+        <p class="hint">You can close this page. The rider will call you before delivery.</p>
+      </section>
+
+      <!-- Not available / bad link / could not load -->
+      <section id="s-problem" hidden>
+        <div class="badge" aria-hidden="true">🎀</div>
+        <h1 id="p-title">This gift link is not <em>available</em></h1>
+        <p class="lead" id="p-lead"></p>
+        <button class="ghost" id="p-retry" type="button" hidden>Try again</button>
+      </section>
+    </div>
+  </main>
+
+  <footer>Sent with <a href="/">QuickGift</a>. Send gifts and book trusted services across Nigeria.</footer>
+
+  <script>
+  (function () {
+    var LOCAL = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+    var API_BASE = LOCAL ? 'http://localhost:8001/api/v1' : 'https://quickgift-node-api.onrender.com/api/v1';
+    var token = new URLSearchParams(location.search).get('t') || '';
+    var $ = function (id) { return document.getElementById(id); };
+    var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+    function show(name) {
+      ['loading', 'waiting', 'confirmed', 'problem'].forEach(function (s) {
+        $('s-' + s).hidden = s !== name;
+      });
+    }
+
+    function problem(title, lead, canRetry) {
+      // The title holds no user data, so the <em> accent is safe to set as HTML.
+      $('p-title').innerHTML = title;
+      $('p-lead').textContent = lead;
+      $('p-retry').hidden = !canRetry;
+      show('problem');
+    }
+
+    // Everything that came from a person is written with textContent only.
+    function fillNote(prefix, gift) {
+      if (!gift.message) { $(prefix + '-note').hidden = true; return; }
+      $(prefix + '-note-from').textContent = gift.sender_name ? 'A note from ' + gift.sender_name : 'A note for you';
+      $(prefix + '-message').textContent = gift.message;
+      $(prefix + '-note').hidden = false;
+    }
+
+    function dayText(day) {
+      var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(day || '');
+      return m ? Number(m[3]) + ' ' + MONTHS[Number(m[2]) - 1] : '';
+    }
+
+    function render(gift) {
+      if (gift.state === 'confirmed') {
+        fillNote('c', gift);
+        show('confirmed');
+        return;
+      }
+      if (gift.state !== 'waiting') {
+        problem('This gift link is not <em>available</em>',
+          'The gift may have been cancelled, or it is not ready yet. Please check with the person who sent you the link.', false);
+        return;
+      }
+      var who = gift.recipient_name ? gift.recipient_name.split(/\s+/)[0] : '';
+      $('w-title').innerHTML = 'You have a <em>gift</em>!';
+      var from = gift.sender_name ? gift.sender_name + ' has sent you a gift' : 'Someone has sent you a gift';
+      var when = dayText(gift.scheduled_date);
+      $('w-lead').textContent = (who ? 'Hi ' + who + '. ' : '') + from +
+        (when ? ', planned for ' + when : '') + '. Tell us where to deliver it and we will take care of the rest.';
+      fillNote('w', gift);
+      show('waiting');
+    }
+
+    function request(method, body) {
+      return fetch(API_BASE + '/gifts/claim/' + encodeURIComponent(token), {
+        method: method,
+        headers: body ? { 'Content-Type': 'application/json' } : {},
+        body: body ? JSON.stringify(body) : undefined,
+      }).then(function (res) {
+        return res.json().catch(function () { return {}; }).then(function (data) {
+          return { status: res.status, data: data };
+        });
+      });
+    }
+
+    function load() {
+      show('loading');
+      if (token.length < 20) {
+        problem('This gift link is not <em>valid</em>',
+          'Please open the full link you were sent, or ask the sender to share it again.', false);
+        return;
+      }
+      request('GET').then(function (r) {
+        if (r.status === 200) return render(r.data);
+        if (r.status === 404) {
+          return problem('This gift link is not <em>valid</em>',
+            'Please open the full link you were sent, or ask the sender to share it again.', false);
+        }
+        problem('We could not open your <em>gift</em>',
+          r.status === 429 ? 'Too many attempts. Please wait a few minutes and try again.'
+            : 'Something went wrong on our side. Please try again in a moment.', true);
+      }).catch(function () {
+        problem('We could not open your <em>gift</em>', 'Please check your internet connection and try again.', true);
+      });
+    }
+
+    $('p-retry').addEventListener('click', load);
+
+    $('form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var err = $('f-err'), btn = $('f-submit');
+      var address = $('f-address').value.trim();
+      var phone = $('f-phone').value.trim();
+      err.hidden = true;
+      if (address.length < 8) {
+        err.textContent = 'Please enter the full delivery address, with the street and area.';
+        err.hidden = false; $('f-address').focus(); return;
+      }
+      if (!phone) {
+        err.textContent = 'Please enter a phone number the rider can call.';
+        err.hidden = false; $('f-phone').focus(); return;
+      }
+      btn.disabled = true;
+      btn.textContent = 'Confirming...';
+      request('POST', { address: address, city: $('f-city').value.trim(), phone: phone }).then(function (r) {
+        if (r.status === 200) { load(); return; }
+        var msg = r.data && r.data.message;
+        err.textContent = (Array.isArray(msg) ? msg.join(' ') : msg) || 'We could not save your address. Please try again.';
+        err.hidden = false;
+      }).catch(function () {
+        err.textContent = 'Please check your internet connection and try again.';
+        err.hidden = false;
+      }).then(function () {
+        btn.disabled = false;
+        btn.textContent = 'Confirm delivery address';
+      });
+    });
+
+    load();
+  })();
+  </script>
+</body>
+</html>

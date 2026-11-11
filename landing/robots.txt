@@ -1,5 +1,6 @@
 User-agent: *
 Allow: /
 Disallow: /api/
+Disallow: /gift/
 
 Sitemap: https://www.quickgift.ng/sitemap.xml
