@@ -15,6 +15,19 @@ set -euo pipefail
 : "${SOURCE_DATABASE_URL:?Set SOURCE_DATABASE_URL (the current/Neon connection string)}"
 : "${TARGET_DATABASE_URL:?Set TARGET_DATABASE_URL (the new RDS connection string)}"
 
+# pg_restore cannot create the target database, so make sure it exists first by
+# connecting to the server's default 'postgres' database and creating it if
+# missing. This makes the script work whether or not you set an initial DB name.
+TARGET_DB="$(basename "${TARGET_DATABASE_URL%%\?*}")"
+ADMIN_URL="${TARGET_DATABASE_URL/\/$TARGET_DB/\/postgres}"
+echo "==> Ensuring target database '$TARGET_DB' exists..."
+if ! psql "$ADMIN_URL" -tAc "SELECT 1 FROM pg_database WHERE datname='$TARGET_DB'" | grep -q 1; then
+  psql "$ADMIN_URL" -c "CREATE DATABASE \"$TARGET_DB\""
+  echo "    created '$TARGET_DB'"
+else
+  echo "    '$TARGET_DB' already exists"
+fi
+
 DUMP="quickgift_$(date +%Y%m%d_%H%M%S).dump"
 
 echo "==> Dumping from source..."
