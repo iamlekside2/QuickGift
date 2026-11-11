@@ -200,6 +200,14 @@ export default function ProviderOrdersScreen({ navigation }) {
                 </View>
 
                 {/* What the seller needs to prepare the gift */}
+                {order.address_pending ? (
+                  <View className="flex-row items-center gap-2 mb-1.5">
+                    <Ionicons name="location-outline" size={14} color="#E8632F" />
+                    <Text className="flex-1 text-[12.5px] font-bold text-orange">
+                      Waiting for the recipient's address. Do not send out yet.
+                    </Text>
+                  </View>
+                ) : null}
                 {order.scheduled_date ? (
                   <View className="flex-row items-center gap-2 mb-1.5">
                     <Ionicons name="time-outline" size={14} color="#E8632F" />

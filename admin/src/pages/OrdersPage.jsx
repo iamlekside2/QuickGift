@@ -193,6 +193,7 @@ export default function OrdersPage() {
                   const giftNotes = [
                     day ? `Deliver on ${new Date(+day[1], +day[2] - 1, +day[3]).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}` : '',
                     order.is_anonymous ? 'Anonymous gift' : '',
+                    order.address_pending ? 'Waiting for recipient\'s address' : '',
                     Number(order.discount) > 0
                       ? `${order.promo_code || 'Promo'} -${formatPrice(Number(order.discount))}`
                       : '',

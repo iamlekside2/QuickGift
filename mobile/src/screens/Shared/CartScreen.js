@@ -16,6 +16,7 @@ import { apiError } from '../../utils/errors';
 import { useRequireAuth } from '../../utils/requireAuth';
 import { notifySuccess, notifyError, tapLight } from '../../utils/haptics';
 import { upcomingDays, formatDay } from '../../utils/dates';
+import { shareGiftLink } from '../../utils/giftLink';
 
 // How far ahead a delivery day can be picked here (the server allows 90).
 const DELIVERY_DAYS_AHEAD = 30;
@@ -37,6 +38,8 @@ export default function CartScreen({ navigation }) {
   // '' = as soon as possible, otherwise the chosen day as YYYY-MM-DD.
   const [deliveryDay, setDeliveryDay] = useState('');
   const [anonymous, setAnonymous] = useState(false);
+  // "I don't know their address": the recipient confirms it through a link.
+  const [askRecipient, setAskRecipient] = useState(false);
   const dayOptions = useMemo(() => upcomingDays(DELIVERY_DAYS_AHEAD), []);
 
   // Promo code. `promo` is what the server said the code is worth for a cart
@@ -73,6 +76,7 @@ export default function CartScreen({ navigation }) {
     note: personalMessage.trim(),
     day: deliveryDay,
     anonymous,
+    ask: askRecipient,
     promo: promo?.code || '',
   });
 
@@ -117,6 +121,10 @@ export default function CartScreen({ navigation }) {
     setPendingOrder(value);
   };
 
+  // With "let them tell us where", only the name is needed up front.
+  const canPay = !!recipientName.trim()
+    && (askRecipient || (!!recipientPhone.trim() && !!deliveryAddress.trim()));
+
   const handleCheckout = () => {
     // Cart is a modal on top of the app: close it before leaving guest mode,
     // otherwise it is left behind as a dead-end screen.
@@ -141,8 +149,13 @@ export default function CartScreen({ navigation }) {
 
   const handlePlaceOrder = async () => {
     if (submitting) return;
-    if (!recipientName.trim() || !recipientPhone.trim() || !deliveryAddress.trim()) {
-      Alert.alert('Missing Info', 'Please fill in recipient name, phone, and delivery address.');
+    if (!canPay) {
+      Alert.alert(
+        'Missing Info',
+        askRecipient
+          ? "Please enter the recipient's name."
+          : 'Please fill in recipient name, phone, and delivery address.',
+      );
       return;
     }
     if (paymentMethod === 'wallet' && walletBalance < total) {
@@ -173,10 +186,11 @@ export default function CartScreen({ navigation }) {
         const res = await ordersAPI.create({
           order_type: 'gift',
           items: items.map((item) => ({ product_id: item.id, quantity: item.quantity })),
-          delivery_address: deliveryAddress.trim(),
-          delivery_city: user?.city || 'Lagos',
+          delivery_address: askRecipient ? undefined : deliveryAddress.trim(),
+          delivery_city: askRecipient ? undefined : (user?.city || 'Lagos'),
+          address_pending: askRecipient || undefined,
           recipient_name: recipientName.trim(),
-          recipient_phone: recipientPhone.trim(),
+          recipient_phone: recipientPhone.trim() || undefined,
           personal_message: personalMessage.trim() || undefined,
           scheduled_date: deliveryDay || undefined,
           is_anonymous: anonymous,
@@ -290,6 +304,25 @@ export default function CartScreen({ navigation }) {
             </Text>
           ) : null}
           <Text className="text-[22px] font-extrabold text-teal mt-4">{formatPrice(placedOrder.total)}</Text>
+          {placedOrder.claim_url ? (
+            <View
+              className="bg-white rounded-[20px] p-5 mt-6 self-stretch"
+              style={{ borderWidth: 1.5, borderColor: '#F6C9A9' }}
+            >
+              <Text className="text-[14.5px] font-bold text-ink mb-1.5">One more step</Text>
+              <Text className="text-[13px] text-ink-soft leading-[19px] mb-4">
+                Send this link to {placedOrder.recipient_name || 'the recipient'} so they can tell us where to deliver. We will not send the gift until they do.
+              </Text>
+              <TouchableOpacity
+                className="bg-orange h-[48px] rounded-[14px] flex-row items-center justify-center gap-2"
+                onPress={() => shareGiftLink(placedOrder)}
+                activeOpacity={0.85}
+              >
+                <Ionicons name="share-social" size={17} color="#fff" />
+                <Text className="text-[14px] font-bold text-white">Share the link</Text>
+              </TouchableOpacity>
+            </View>
+          ) : null}
           <TouchableOpacity
             className="bg-teal px-8 h-[52px] rounded-[16px] items-center justify-center mt-8 self-stretch"
             onPress={goToOrders}
@@ -541,21 +574,40 @@ export default function CartScreen({ navigation }) {
               placeholder="Enter recipient's name"
               icon="person-outline"
             />
+            {/* Don't know where they live? Let them tell us. */}
+            <View className="flex-row items-center bg-gray-50 border-2 border-gray-200 rounded-2xl px-4 py-3 mb-4">
+              <Ionicons name="location-outline" size={18} color={askRecipient ? '#1F4A45' : '#9A948A'} />
+              <View className="flex-1 ml-3 mr-2">
+                <Text className="text-sm font-bold text-gray-800">I don't know their address</Text>
+                <Text className="text-[11.5px] text-gray-400 mt-0.5 leading-4">
+                  After you pay, share a link and they tell us where to deliver.
+                </Text>
+              </View>
+              <Switch
+                value={askRecipient}
+                onValueChange={setAskRecipient}
+                trackColor={{ false: '#EAE3D8', true: '#1F4A45' }}
+                thumbColor="#fff"
+              />
+            </View>
+
             <AppInput
-              label="Phone Number"
+              label={askRecipient ? 'Phone Number (optional)' : 'Phone Number'}
               value={recipientPhone}
               onChangeText={setRecipientPhone}
               placeholder="801 234 5678"
               type="phone"
             />
-            <AppInput
-              label="Delivery Address"
-              value={deliveryAddress}
-              onChangeText={setDeliveryAddress}
-              placeholder="Full delivery address"
-              type="multiline"
-              icon="location-outline"
-            />
+            {askRecipient ? null : (
+              <AppInput
+                label="Delivery Address"
+                value={deliveryAddress}
+                onChangeText={setDeliveryAddress}
+                placeholder="Full delivery address"
+                type="multiline"
+                icon="location-outline"
+              />
+            )}
             <AppInput
               label="Personal Message (optional)"
               value={personalMessage}
@@ -643,13 +695,13 @@ export default function CartScreen({ navigation }) {
           <View className="px-5 pb-8 pt-4 border-t border-gray-100">
             <TouchableOpacity
               className={`h-14 rounded-2xl items-center justify-center ${
-                recipientName && recipientPhone && deliveryAddress ? 'bg-teal' : 'bg-gray-200'
+                canPay ? 'bg-teal' : 'bg-gray-200'
               }`}
               onPress={handlePlaceOrder}
-              disabled={!recipientName || !recipientPhone || !deliveryAddress || submitting}
+              disabled={!canPay || submitting}
             >
               <Text className={`text-base font-bold ${
-                recipientName && recipientPhone && deliveryAddress ? 'text-white' : 'text-gray-400'
+                canPay ? 'text-white' : 'text-gray-400'
               }`}>
                 {submitting ? 'Placing Order...' : `Pay ${formatPrice(total)}`}
               </Text>

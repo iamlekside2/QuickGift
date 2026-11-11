@@ -125,6 +125,8 @@ const realOrdersAPI = {
   list: (params = {}) => api.get('/orders', { params }),
   get: (id) => api.get(`/orders/${id}`),
   cancel: (id) => api.post(`/orders/${id}/cancel`),
+  // For a gift ordered without an address: the buyer supplies it themselves.
+  setAddress: (id, data) => api.post(`/orders/${id}/address`, data),
   vendorOrders: (params = {}) => api.get('/orders/my-vendor-orders', { params }),
   providerUpdateStatus: (id, status) => api.patch(`/orders/${id}/provider-status`, { status }),
 };

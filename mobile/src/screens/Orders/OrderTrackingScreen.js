@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '../../components/common/IconCompat';
 import { ordersAPI } from '../../services/api';
 import { formatDay } from '../../utils/dates';
+import AddressPendingCard from '../../components/orders/AddressPendingCard';
 
 // The order statuses the server uses: pending → confirmed → in_transit →
 // delivered (or cancelled). Only real order data is shown on this screen.
@@ -229,6 +230,14 @@ export default function OrderTrackingScreen({ navigation, route }) {
           </View>
         </View>
 
+        {/* Ordered without an address: nothing ships until one is given */}
+        {order?.address_pending && !cancelled ? (
+          <AddressPendingCard
+            order={order}
+            onDone={(patch) => setOrder((prev) => ({ ...(prev || {}), ...patch }))}
+          />
+        ) : null}
+
         {/* Delivery details */}
         <View className="bg-white rounded-[20px] p-5 mt-4" style={cardShadow}>
           <Text className="text-[14px] font-bold text-ink mb-3">Delivery</Text>
@@ -241,7 +250,7 @@ export default function OrderTrackingScreen({ navigation, route }) {
           <View className="flex-row items-start gap-2.5 mb-2.5">
             <Ionicons name="location-outline" size={16} color="#6E6A63" />
             <Text className="flex-1 text-[13px] text-ink leading-[19px]">
-              {[order?.delivery_address, order?.delivery_city].filter(Boolean).join(', ') || 'No address on this order'}
+              {[order?.delivery_address, order?.delivery_city].filter(Boolean).join(', ') || (order?.address_pending ? 'Waiting for the recipient to confirm the address' : 'No address on this order')}
             </Text>
           </View>
           {order?.scheduled_date ? (
