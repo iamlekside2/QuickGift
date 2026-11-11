@@ -1,0 +1,298 @@
+/* Styles for the landing page, carried over from the original static page. */
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  font-family: var(--font-jakarta), sans-serif;
+  background: #faf3e9;
+  color: #211f1c;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+a {
+  color: #e8632f;
+  text-decoration: none;
+}
+a:hover {
+  color: #c94f1f;
+}
+.serif {
+  font-family: var(--font-serif), serif;
+}
+.wrap {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+@keyframes qg-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive grids */
+.hero {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 60px;
+  align-items: center;
+  padding: 40px 24px 100px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  text-align: center;
+}
+.bento-top {
+  display: grid;
+  grid-template-columns: 1.7fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.bento-bottom {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+}
+.steps {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 32px;
+}
+.providers {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 70px;
+  align-items: center;
+  padding: 110px 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.reviews-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+}
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.chip {
+  background: #fff;
+  border: 1px solid #eae3d8;
+  border-radius: 100px;
+  padding: 8px 14px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #4e4a42;
+}
+.perks-head {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 40px;
+  align-items: center;
+}
+.perks {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+}
+.apply-grid {
+  display: grid;
+  grid-template-columns: 0.9fr 1.1fr;
+  gap: 64px;
+  align-items: start;
+}
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.fld {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.fld-wide {
+  grid-column: 1 / -1;
+}
+.fld span {
+  font-size: 13px;
+  font-weight: 700;
+  color: #211f1c;
+}
+.fld em {
+  font-style: normal;
+  font-weight: 500;
+  color: #9a948a;
+}
+.fld input,
+.fld select {
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1.5px solid #eae3d8;
+  background: #faf3e9;
+  font-size: 14.5px;
+  color: #211f1c;
+  font-family: inherit;
+  width: 100%;
+}
+.fld input:focus,
+.fld select:focus {
+  outline: none;
+  border-color: #1f4a45;
+  background: #fff;
+}
+.faq {
+  border-bottom: 1px solid #e2d8c5;
+  padding: 18px 0;
+}
+.faq summary {
+  cursor: pointer;
+  list-style: none;
+  font-size: 15.5px;
+  font-weight: 800;
+  color: #211f1c;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+.faq summary::-webkit-details-marker {
+  display: none;
+}
+.faq summary::after {
+  content: '+';
+  color: #e8632f;
+  font-size: 20px;
+  line-height: 1;
+}
+.faq[open] summary::after {
+  content: '\2013';
+}
+.faq p {
+  font-size: 13.5px;
+  color: #6e6a63;
+  line-height: 1.65;
+  margin: 10px 0 0;
+}
+.topbar a {
+  color: #fff;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.gift-art {
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+  width: 150px;
+  height: auto;
+  pointer-events: none;
+}
+/* The role radios are visually hidden, so show keyboard focus on the pill instead. */
+.wl-role input:focus-visible + span {
+  outline: 3px solid #f6c9a9;
+  outline-offset: 2px;
+}
+.wl-done:focus {
+  outline: none;
+}
+
+@media (max-width: 900px) {
+  .hero {
+    grid-template-columns: 1fr;
+    gap: 40px;
+    padding: 24px 24px 70px;
+  }
+  .bento-top {
+    grid-template-columns: 1fr;
+  }
+  .bento-bottom {
+    grid-template-columns: 1fr;
+  }
+  .steps {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .providers {
+    grid-template-columns: 1fr;
+    gap: 40px;
+    padding: 80px 24px;
+  }
+  .reviews-grid {
+    grid-template-columns: 1fr;
+  }
+  .stats {
+    grid-template-columns: 1fr 1fr;
+    gap: 32px 16px;
+  }
+  h1.hero-title {
+    font-size: 46px !important;
+  }
+  .nav-links a:not(.nav-cta):not(.nav-prov) {
+    display: none;
+  }
+  .dl-cta {
+    padding: 56px 26px !important;
+  }
+  .perks-head {
+    grid-template-columns: 1fr;
+  }
+  .perks-head img {
+    display: none;
+  }
+  .perks {
+    grid-template-columns: 1fr;
+  }
+  .perks-band {
+    padding: 40px 24px !important;
+  }
+  .apply-grid {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  .nav-links {
+    gap: 10px;
+  }
+  .nav-links a.nav-prov {
+    display: inline-flex !important;
+  }
+  .nav-links a.nav-prov {
+    padding: 9px 14px !important;
+    font-size: 13px !important;
+    white-space: nowrap;
+  }
+  .nav-links a.nav-cta {
+    display: none;
+  }
+  .gift-art {
+    width: 110px;
+  }
+  .wl-join {
+    flex-direction: column !important;
+  }
+  .wl-join input {
+    flex: 0 0 auto !important;
+    width: 100%;
+  }
+  .wl-join-btn {
+    width: 100% !important;
+  }
+}

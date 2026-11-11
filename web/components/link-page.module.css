@@ -1,0 +1,276 @@
+/* Shared look of the two "link" pages: /gift/ (recipient's address) and /group/ (chip in). */
+.shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+.header {
+  padding: 22px 24px;
+  display: flex;
+  justify-content: center;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #1f4a45;
+  font-weight: 800;
+  font-size: 18px;
+}
+.brand:hover {
+  color: #1f4a45;
+}
+.brand img {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+}
+.main {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  padding: 8px 20px 48px;
+}
+.card {
+  width: 100%;
+  max-width: 460px;
+  background: #fff;
+  border-radius: 28px;
+  padding: 30px 26px;
+  box-shadow: 0 18px 50px rgba(33, 31, 28, 0.08);
+  align-self: flex-start;
+}
+.badge {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: #fce7da;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+  font-size: 34px;
+}
+.badgeOk {
+  background: #ddebe6;
+}
+.title {
+  font-family: var(--font-serif), serif;
+  font-weight: 400;
+  font-size: 33px;
+  line-height: 1.12;
+  text-align: center;
+  margin: 0 0 10px;
+  color: #1f4a45;
+  overflow-wrap: break-word;
+}
+.title em {
+  color: #e8632f;
+}
+.lead {
+  text-align: center;
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: #6e6a63;
+  margin: 0 0 20px;
+}
+.note {
+  background: #faf3e9;
+  border-radius: 18px;
+  padding: 15px 18px;
+  margin: 0 0 20px;
+}
+.noteLabel {
+  display: block;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #9a948a;
+  margin-bottom: 6px;
+}
+.noteText {
+  margin: 0;
+  font-family: var(--font-serif), serif;
+  font-style: italic;
+  font-size: 19px;
+  line-height: 1.4;
+  color: #211f1c;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-bottom: 14px;
+}
+.fieldLabel {
+  font-size: 13px;
+  font-weight: 700;
+}
+.optional {
+  font-weight: 500;
+  color: #9a948a;
+}
+.input {
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1.5px solid #eae3d8;
+  background: #faf3e9;
+  font-size: 15px;
+  color: #211f1c;
+  font-family: inherit;
+  width: 100%;
+}
+.input:focus {
+  outline: none;
+  border-color: #1f4a45;
+  background: #fff;
+}
+.textarea {
+  min-height: 92px;
+  resize: vertical;
+}
+.button {
+  width: 100%;
+  border: 0;
+  border-radius: 16px;
+  background: #1f4a45;
+  color: #fff;
+  font: inherit;
+  font-weight: 800;
+  font-size: 15.5px;
+  padding: 16px;
+  cursor: pointer;
+  margin-top: 6px;
+}
+.button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.ghost {
+  width: 100%;
+  border-radius: 16px;
+  background: transparent;
+  color: #1f4a45;
+  border: 1.5px solid #1f4a45;
+  font: inherit;
+  font-weight: 800;
+  font-size: 15px;
+  padding: 14px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+.error {
+  background: #fdecec;
+  color: #b03a3a;
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  margin-bottom: 14px;
+}
+.thanks {
+  background: #ddebe6;
+  color: #1f4a45;
+  border-radius: 14px;
+  padding: 14px 16px;
+  font-size: 14px;
+  line-height: 1.5;
+  margin-bottom: 18px;
+  font-weight: 600;
+}
+.hint {
+  font-size: 12px;
+  color: #9a948a;
+  text-align: center;
+  line-height: 1.5;
+  margin: 14px 0 0;
+}
+.spinner {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 3px solid #eae3d8;
+  border-top-color: #1f4a45;
+  animation: spin 0.8s linear infinite;
+  margin: 30px auto;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.footer {
+  text-align: center;
+  font-size: 12.5px;
+  color: #9a948a;
+  padding: 0 20px 28px;
+}
+
+/* Group gift: progress and amount chips */
+.progress {
+  margin: 0 0 20px;
+}
+.bar {
+  height: 12px;
+  border-radius: 100px;
+  background: #efe9de;
+  overflow: hidden;
+}
+.barFill {
+  height: 100%;
+  border-radius: 100px;
+  background: #1f4a45;
+  transition: width 0.6s ease;
+}
+.numbers {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-top: 10px;
+  font-size: 13px;
+  color: #6e6a63;
+}
+.raised {
+  font-size: 20px;
+  color: #211f1c;
+  font-weight: 800;
+}
+.meta {
+  font-size: 12.5px;
+  color: #9a948a;
+  margin-top: 8px;
+}
+.who {
+  font-size: 12.5px;
+  color: #6e6a63;
+  line-height: 1.5;
+  margin: 0 0 20px;
+}
+.chips {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.chip {
+  border: 1.5px solid #eae3d8;
+  background: #faf3e9;
+  color: #211f1c;
+  border-radius: 14px;
+  padding: 11px 4px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.chipOn {
+  border-color: #1f4a45;
+  background: #ddebe6;
+  color: #1f4a45;
+}
+.srOnly {
+  position: absolute;
+  left: -9999px;
+}
