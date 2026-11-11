@@ -10,6 +10,7 @@ import AppInput from '../../components/common/AppInput';
 import Button from '../../components/common/Button';
 import { SerifHeadline } from '../../components/common/Typography';
 import { apiError, apiStatus } from '../../utils/errors';
+import { referralAPI } from '../../services/api';
 
 const logoSmall = require('../../../assets/images/logo-small.png');
 
@@ -23,6 +24,7 @@ export default function SignupScreen({ navigation }) {
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [referralCode, setReferralCode] = useState('');
   const [selectedRole, setSelectedRole] = useState('user');
   const [loading, setLoading] = useState(false);
   const { checkPhone, sendOTP } = useAuth();
@@ -74,6 +76,27 @@ export default function SignupScreen({ navigation }) {
         return;
       }
 
+      // A friend's code is optional. Say so now if it is wrong, rather than
+      // after the verification code has been sent. If the check itself cannot
+      // be reached, carry on: the server simply ignores a code it cannot use.
+      const friendCode = referralCode.trim();
+      if (friendCode) {
+        let valid = true;
+        try {
+          valid = (await referralAPI.check(friendCode)).data?.valid !== false;
+        } catch {
+          valid = true;
+        }
+        if (!valid) {
+          Alert.alert(
+            'Referral code not recognised',
+            'Please check the code with your friend, or clear the field to continue without one.',
+          );
+          setLoading(false);
+          return;
+        }
+      }
+
       const cleanEmail = email.trim().toLowerCase();
       const data = await sendOTP(fullPhone, cleanEmail);
       navigation.navigate('OTP', {
@@ -83,6 +106,7 @@ export default function SignupScreen({ navigation }) {
         sentTo: data?.sent_to,
         fullName: fullName.trim(),
         password,
+        referralCode: friendCode || undefined,
         role: selectedRole,
         isRegistration: true,
       });
@@ -184,6 +208,17 @@ export default function SignupScreen({ navigation }) {
           onChangeText={setPassword}
           type="password"
           error={password.length > 0 && !passwordOk ? 'Use at least 6 characters' : ''}
+        />
+
+        {/* Friend's referral code (optional) */}
+        <AppInput
+          label="Referral code (optional)"
+          placeholder="Got a code from a friend?"
+          value={referralCode}
+          onChangeText={(t) => setReferralCode(t.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
+          type="text"
+          icon="gift-outline"
+          maxLength={16}
         />
 
         {/* Continue */}

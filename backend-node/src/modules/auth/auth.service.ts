@@ -15,6 +15,7 @@ import { SecurityService, isDeployed } from '../../common/security.service';
 import { RateLimiter } from '../../common/rate-limit';
 import { SmsService } from '../../common/sms.service';
 import { MailService } from '../../common/mail.service';
+import { ReferralService } from '../../common/referral.service';
 import {
   isAdminRole,
   permissionsForRole,
@@ -56,6 +57,7 @@ export class AuthService implements OnModuleInit {
     private readonly security: SecurityService,
     private readonly sms: SmsService,
     private readonly mail: MailService,
+    private readonly referrals: ReferralService,
   ) {}
 
   async onModuleInit() {
@@ -346,6 +348,10 @@ export class AuthService implements OnModuleInit {
     const profileComplete =
       user.role === 'provider' ? await this.providerExists(user.id) : true;
 
+    // Joined with a friend's code? Link the two accounts (never blocks sign-up;
+    // the reward itself is only paid after a first delivered order).
+    const referred = await this.referrals.attach(user.id, req?.referral_code);
+
     // Welcome email, best-effort, only when the user signed up with an email.
     if (user.email) {
       void this.mail.sendWelcome(user.email, user.full_name);
@@ -354,7 +360,7 @@ export class AuthService implements OnModuleInit {
     return {
       access_token: this.token(user),
       token_type: 'bearer',
-      user: this.userPayload(user, { profile_complete: profileComplete }),
+      user: this.userPayload(user, { profile_complete: profileComplete, referred }),
     };
   }
 

@@ -10,6 +10,10 @@ export interface BusinessSettings {
   platform_name: string;
   support_email: string | null;
   support_phone: string | null;
+  referral_enabled: boolean;
+  referral_reward: number;
+  referral_min_order: number;
+  referral_max_rewards: number;
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -46,6 +50,14 @@ export class SettingsService implements OnModuleInit {
         CONSTRAINT app_settings_singleton CHECK (id = 1)
       )
     `);
+    // Refer-a-friend (see ReferralService). Added after the table shipped.
+    await this.db.query(`
+      ALTER TABLE app_settings
+        ADD COLUMN IF NOT EXISTS referral_enabled     BOOLEAN NOT NULL DEFAULT true,
+        ADD COLUMN IF NOT EXISTS referral_reward      NUMERIC NOT NULL DEFAULT 500,
+        ADD COLUMN IF NOT EXISTS referral_min_order   NUMERIC NOT NULL DEFAULT 2000,
+        ADD COLUMN IF NOT EXISTS referral_max_rewards INT     NOT NULL DEFAULT 50
+    `);
     const gift = Number(process.env.GIFT_COMMISSION_PERCENT ?? '10');
     const beauty = Number(process.env.BEAUTY_COMMISSION_PERCENT ?? '10');
     await this.db.query(
@@ -66,6 +78,10 @@ export class SettingsService implements OnModuleInit {
       platform_name: row.platform_name,
       support_email: row.support_email,
       support_phone: row.support_phone,
+      referral_enabled: row.referral_enabled !== false,
+      referral_reward: Number(row.referral_reward ?? 500),
+      referral_min_order: Number(row.referral_min_order ?? 2000),
+      referral_max_rewards: Number(row.referral_max_rewards ?? 50),
     };
   }
 
@@ -131,6 +147,29 @@ export class SettingsService implements OnModuleInit {
     }
     if (data.support_phone !== undefined) {
       push('support_phone', String(data.support_phone).trim().slice(0, 40) || null);
+    }
+
+    if (data.referral_enabled !== undefined) push('referral_enabled', !!data.referral_enabled);
+    if (data.referral_reward !== undefined) {
+      const n = Number(data.referral_reward);
+      if (!Number.isFinite(n) || n < 0 || n > 100000) {
+        throw new BadRequestException('Referral reward must be between 0 and 100,000');
+      }
+      push('referral_reward', Math.round(n * 100) / 100);
+    }
+    if (data.referral_min_order !== undefined) {
+      const n = Number(data.referral_min_order);
+      if (!Number.isFinite(n) || n < 0) {
+        throw new BadRequestException('Referral minimum order must be 0 or more');
+      }
+      push('referral_min_order', n);
+    }
+    if (data.referral_max_rewards !== undefined) {
+      const n = Math.round(Number(data.referral_max_rewards));
+      if (!Number.isFinite(n) || n < 0 || n > 100000) {
+        throw new BadRequestException('Referral limit per person must be between 0 and 100,000');
+      }
+      push('referral_max_rewards', n);
     }
 
     if (sets.length) {

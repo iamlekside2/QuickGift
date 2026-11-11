@@ -215,6 +215,12 @@ export class AdminController {
     return this.admin.listDeliveries(q);
   }
 
+  @Get('referrals')
+  @Perm('users.view')
+  referrals(@Query() q: Record<string, string>) {
+    return this.admin.listReferrals(q);
+  }
+
   @Get('settings')
   getSettings() {
     return this.settings.adminView();

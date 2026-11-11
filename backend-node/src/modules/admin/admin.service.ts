@@ -877,6 +877,31 @@ export class AdminService {
     );
   }
 
+  listReferrals(q: any) {
+    const where: string[] = [];
+    const params: any[] = [];
+    if (q.status) { params.push(q.status); where.push(`r.status = $${params.length}`); }
+    if (q.search) {
+      params.push(this.like(q.search));
+      const i = params.length;
+      where.push(`(ru.full_name ILIKE $${i} OR fu.full_name ILIKE $${i} OR r.code ILIKE $${i} OR ru.phone ILIKE $${i} OR fu.phone ILIKE $${i})`);
+    }
+    return this.listJoined(
+      {
+        select: `r.id, r.code, r.status, r.reward_amount, r.created_at, r.rewarded_at,
+                 ru.full_name AS referrer_name, ru.phone AS referrer_phone,
+                 fu.full_name AS friend_name, fu.phone AS friend_phone`,
+        from: `referrals r
+               LEFT JOIN users ru ON ru.id = r.referrer_id
+               LEFT JOIN users fu ON fu.id = r.referred_id`,
+        orderBy: `r.created_at DESC`,
+      },
+      where,
+      params,
+      q,
+    );
+  }
+
   listPayouts(q: any) {
     const where: string[] = [];
     const params: any[] = [];

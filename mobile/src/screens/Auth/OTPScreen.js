@@ -8,7 +8,7 @@ import { useAuth } from '../../context/AuthContext';
 import { apiError } from '../../utils/errors';
 
 export default function OTPScreen({ navigation, route }) {
-  const { phone, email, sentTo, otpDev, fullName, password, role, isRegistration } = route.params || {};
+  const { phone, email, sentTo, otpDev, fullName, password, referralCode, role, isRegistration } = route.params || {};
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [timer, setTimer] = useState(60);
   const [loading, setLoading] = useState(false);
@@ -62,6 +62,7 @@ export default function OTPScreen({ navigation, route }) {
           phone,
           email,
           password,
+          referral_code: referralCode,
           role: role || 'user',
           otp: code,
         });

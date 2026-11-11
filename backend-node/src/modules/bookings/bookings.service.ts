@@ -9,6 +9,7 @@ import { DatabaseService } from '../../database/database.service';
 import { NotifyService } from '../../common/notify.service';
 import { MailService } from '../../common/mail.service';
 import { SettingsService } from '../../common/settings.service';
+import { ReferralService } from '../../common/referral.service';
 import { creditWallet, ledgerRef } from '../../common/ledger';
 import { paging } from '../../common/paging';
 import { roleHasPermission } from '../../common/permissions';
@@ -46,6 +47,7 @@ export class BookingsService {
     private readonly notifier: NotifyService,
     private readonly mail: MailService,
     private readonly settings: SettingsService,
+    private readonly referrals: ReferralService,
   ) {}
 
   private bookingNumber(): string {
@@ -389,6 +391,7 @@ export class BookingsService {
         [status, id, booking.status],
       );
       if (!moved) throw new BadRequestException('This booking was just updated. Please refresh.');
+      if (status === 'completed') await this.referrals.onPurchaseFulfilled(booking.user_id);
     }
 
     const label = status

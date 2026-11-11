@@ -25,6 +25,7 @@ import SettingsScreen from '../screens/Shared/SettingsScreen';
 import ChangePasswordScreen from '../screens/Shared/ChangePasswordScreen';
 import EditProfileScreen from '../screens/Shared/EditProfileScreen';
 import FeedbackScreen from '../screens/Shared/FeedbackScreen';
+import ReferFriendScreen from '../screens/Shared/ReferFriendScreen';
 
 import ProviderOrdersScreen from '../screens/Provider/ProviderOrdersScreen';
 import PrivacyPolicyScreen from '../screens/Shared/PrivacyPolicyScreen';
@@ -62,6 +63,7 @@ const PROVIDER_SCREENS = [
   { name: 'PrivacyPolicy', component: PrivacyPolicyScreen },
   { name: 'Terms', component: TermsScreen },
   { name: 'Feedback', component: FeedbackScreen },
+  { name: 'ReferFriend', component: ReferFriendScreen },
 ];
 
 function DashboardStack() {

@@ -9,6 +9,7 @@ import { DatabaseService } from '../../database/database.service';
 import { NotifyService } from '../../common/notify.service';
 import { MailService } from '../../common/mail.service';
 import { SettingsService } from '../../common/settings.service';
+import { ReferralService } from '../../common/referral.service';
 import { creditWallet, ledgerRef } from '../../common/ledger';
 import { paging } from '../../common/paging';
 import { roleHasPermission } from '../../common/permissions';
@@ -38,6 +39,7 @@ export class OrdersService {
     private readonly notifier: NotifyService,
     private readonly mail: MailService,
     private readonly settings: SettingsService,
+    private readonly referrals: ReferralService,
   ) {}
 
   private orderNumber(): string {
@@ -409,6 +411,7 @@ export class OrdersService {
       [status, orderId, order.status],
     );
     if (!moved) throw new BadRequestException('This order was just updated. Please refresh.');
+    if (status === 'delivered') await this.referrals.onPurchaseFulfilled(order.user_id);
     return this.db.queryOne(`SELECT * FROM orders WHERE id = $1`, [orderId]);
   }
 
@@ -471,6 +474,7 @@ export class OrdersService {
       [status, orderId, order.status],
     );
     if (!moved) throw new BadRequestException('This order was just updated. Please refresh.');
+    if (status === 'delivered') await this.referrals.onPurchaseFulfilled(order.user_id);
     const label = status
       .replace(/_/g, ' ')
       .replace(/\b\w/g, (c) => c.toUpperCase());

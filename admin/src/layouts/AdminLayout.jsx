@@ -21,6 +21,7 @@ const NAV_ITEMS = [
   { path: '/providers', label: 'Providers', icon: Sparkles, perm: 'providers.view' },
   { path: '/applications', label: 'Applications', icon: UserPlus, perm: 'applications.view' },
   { path: '/users', label: 'Users', icon: Users, perm: 'users.view' },
+  { path: '/referrals', label: 'Referrals', icon: Gift, perm: 'users.view' },
   { path: '/transactions', label: 'Transactions', icon: Wallet, perm: 'finance.view' },
   { path: '/payouts', label: 'Payouts', icon: Banknote, perm: 'finance.view' },
   { path: '/disputes', label: 'Disputes', icon: AlertTriangle, perm: 'disputes.view' },

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import {
-  Save, Globe, Percent, CheckCircle2, Shield, Loader2, Banknote, Plug, Check, X,
+  Save, Globe, Percent, CheckCircle2, Shield, Loader2, Banknote, Plug, Check, X, Gift,
 } from 'lucide-react'
 import { useGetAdminSettingsQuery, useUpdateAdminSettingsMutation } from '../services/api'
 import { errMsg } from '../lib/errors'
@@ -10,6 +10,7 @@ const EDITABLE = [
   'platform_name', 'support_email', 'support_phone',
   'gift_commission', 'beauty_commission', 'min_order_amount',
   'payout_hold_hours', 'maintenance_mode',
+  'referral_enabled', 'referral_reward', 'referral_min_order', 'referral_max_rewards',
 ]
 
 export default function SettingsPage() {
@@ -123,6 +124,30 @@ export default function SettingsPage() {
           </div>
         </Section>
 
+        {/* Refer a friend */}
+        <Section icon={Gift} tint="amber" title="Refer a friend" subtitle="Wallet credit for a customer and the friend they invite">
+          <div className="flex items-center justify-between pb-5 mb-5 border-b border-gray-100">
+            <div>
+              <p className="text-sm font-medium text-gray-900">Referral rewards</p>
+              <p className="text-xs text-gray-500 mt-0.5">
+                When off, codes are not accepted at sign-up and nothing is paid out.
+              </p>
+            </div>
+            <Toggle checked={!!form.referral_enabled} onChange={(v) => set('referral_enabled', v)} />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Field label={'Reward for each person (₦)'} hint="Paid to both wallets, so each referral costs twice this">
+              <input type="number" min="0" step="50" value={form.referral_reward ?? 0} onChange={(e) => set('referral_reward', Number(e.target.value))} className="input" />
+            </Field>
+            <Field label={'Friend\'s first order must be at least (₦)'} hint="Paid only once that order is delivered">
+              <input type="number" min="0" step="100" value={form.referral_min_order ?? 0} onChange={(e) => set('referral_min_order', Number(e.target.value))} className="input" />
+            </Field>
+            <Field label="Most rewards one person can earn" hint="Stops one account farming the programme">
+              <input type="number" min="0" step="1" value={form.referral_max_rewards ?? 0} onChange={(e) => set('referral_max_rewards', Number(e.target.value))} className="input" />
+            </Field>
+          </div>
+        </Section>
+
         {/* Integrations (read-only) */}
         <Section icon={Plug} tint="purple" title="Integrations" subtitle="Managed in the Render environment (read-only here)">
           <div className="space-y-1">
@@ -165,6 +190,7 @@ const TINTS = {
   emerald: 'bg-emerald-50 text-emerald-600',
   blue: 'bg-blue-50 text-blue-600',
   purple: 'bg-purple-50 text-purple-600',
+  amber: 'bg-amber-50 text-amber-600',
   red: 'bg-red-50 text-red-600',
 }
 

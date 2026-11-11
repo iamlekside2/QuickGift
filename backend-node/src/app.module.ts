@@ -19,6 +19,7 @@ import { DeliveryModule } from './modules/delivery/delivery.module';
 import { UploadModule } from './modules/upload/upload.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { ApplicationsModule } from './modules/applications/applications.module';
+import { ReferralsModule } from './modules/referrals/referrals.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { ApplicationsModule } from './modules/applications/applications.module';
     UploadModule,
     AdminModule,
     ApplicationsModule,
+    ReferralsModule,
   ],
   controllers: [HealthController],
 })

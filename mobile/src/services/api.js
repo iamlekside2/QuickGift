@@ -77,6 +77,7 @@ const realAuthAPI = {
     email: data.email || undefined,
     password: data.password || undefined,
     city: data.city || undefined,
+    referral_code: data.referral_code || undefined,
   }),
   login: (phone, password) => api.post('/auth/login', { phone, password }),
   getProfile: () => api.get('/auth/me'),
@@ -226,5 +227,13 @@ const realFeedbackAPI = {
   submit: (data) => api.post('/feedback', data),
 };
 export const feedbackAPI = realFeedbackAPI;
+
+const realReferralAPI = {
+  // My code, the current reward and the friends who joined with it.
+  mine: () => api.get('/referrals/me'),
+  // Public: is this code usable? -> { valid, referrer_name?, reward_amount? }
+  check: (code) => api.post('/referrals/check', { code }),
+};
+export const referralAPI = realReferralAPI;
 
 export default api;

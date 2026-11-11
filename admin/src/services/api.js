@@ -34,7 +34,7 @@ const baseQueryWithReauth = async (args, api, extraOptions) => {
 export const api = createApi({
   reducerPath: 'api',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['Dashboard', 'Orders', 'Products', 'Providers', 'Users', 'Bookings', 'Payments', 'Transactions', 'Payouts', 'Withdrawals', 'Disputes', 'Applications', 'Waitlist', 'Team', 'TeamAudit', 'Settings'],
+  tagTypes: ['Dashboard', 'Orders', 'Products', 'Providers', 'Users', 'Bookings', 'Payments', 'Transactions', 'Payouts', 'Withdrawals', 'Disputes', 'Applications', 'Waitlist', 'Team', 'TeamAudit', 'Settings', 'Referrals'],
   endpoints: (builder) => ({
     // ── Auth ─────────────────────────────────────────
     login: builder.mutation({
@@ -456,6 +456,19 @@ export const api = createApi({
       }),
       invalidatesTags: ['Waitlist'],
     }),
+
+    // ── Refer a friend: who invited whom, and whether it paid out ──
+    getAdminReferrals: builder.query({
+      query: ({ status, search, page = 1, per_page = 20 } = {}) => {
+        const params = new URLSearchParams()
+        if (status) params.append('status', status)
+        if (search) params.append('search', search)
+        params.append('page', page)
+        params.append('per_page', per_page)
+        return `/admin/referrals?${params.toString()}`
+      },
+      providesTags: ['Referrals'],
+    }),
   }),
 })
 
@@ -502,6 +515,7 @@ export const {
   useUpdateApplicationStatusMutation,
   useDeleteApplicationMutation,
   useGetWaitlistQuery,
+  useGetAdminReferralsQuery,
   useDeleteWaitlistSignupMutation,
   useGetStaffQuery,
   useGetStaffRolesQuery,
