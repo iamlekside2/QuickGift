@@ -21,6 +21,7 @@ import { AdminModule } from './modules/admin/admin.module';
 import { ApplicationsModule } from './modules/applications/applications.module';
 import { ReferralsModule } from './modules/referrals/referrals.module';
 import { RemindersModule } from './modules/reminders/reminders.module';
+import { PromosModule } from './modules/promos/promos.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { RemindersModule } from './modules/reminders/reminders.module';
     ApplicationsModule,
     ReferralsModule,
     RemindersModule,
+    PromosModule,
   ],
   controllers: [HealthController],
 })

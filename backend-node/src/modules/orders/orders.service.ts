@@ -10,6 +10,7 @@ import { NotifyService } from '../../common/notify.service';
 import { MailService } from '../../common/mail.service';
 import { SettingsService } from '../../common/settings.service';
 import { ReferralService } from '../../common/referral.service';
+import { PromoService } from '../../common/promo.service';
 import { creditWallet, ledgerRef } from '../../common/ledger';
 import { paging } from '../../common/paging';
 import { roleHasPermission } from '../../common/permissions';
@@ -29,7 +30,8 @@ const EXPRESS_MULTIPLIER = 1.0;
 // OrderResponse = curated subset of the orders table.
 const ORDER_FIELDS = `id, order_number, user_id, order_type, status, subtotal,
   delivery_fee, total, delivery_address, delivery_city, recipient_name,
-  personal_message, is_anonymous, is_express, scheduled_date, payment_status, created_at`;
+  personal_message, is_anonymous, is_express, scheduled_date, discount, promo_code,
+  payment_status, created_at`;
 
 const ORDER_ITEM_FIELDS = `id, product_id, product_name, vendor_name, quantity, unit_price, total_price`;
 
@@ -46,6 +48,7 @@ export class OrdersService {
     private readonly mail: MailService,
     private readonly settings: SettingsService,
     private readonly referrals: ReferralService,
+    private readonly promos: PromoService,
   ) {}
 
   private orderNumber(): string {
@@ -159,14 +162,24 @@ export class OrdersService {
     const total = subtotal + deliveryFee;
 
     const orderId = randomUUID();
+    // A promo code takes money off what the buyer pays. Sellers are still paid
+    // on the full item price (payouts are per item), so the platform carries it.
+    let discount = 0;
+    let promoCode: string | null = null;
     await this.db.transaction(async (client) => {
+      if (req?.promo_code) {
+        // Throws (and rolls this order back) if the code cannot be used.
+        const applied = await this.promos.redeem(client, userId, req.promo_code, subtotal, orderId);
+        discount = applied.discount;
+        promoCode = applied.code;
+      }
       await client.query(
         `INSERT INTO orders
           (id, order_number, user_id, order_type, status, subtotal, delivery_fee, commission, total,
            delivery_address, delivery_city, delivery_lat, delivery_lng,
            recipient_name, recipient_phone, personal_message, is_anonymous, is_express,
-           scheduled_date, payment_status, created_at, updated_at)
-         VALUES ($1,$2,$3,'gift','pending',$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,'pending',NOW(),NOW())`,
+           scheduled_date, payment_status, created_at, updated_at, discount, promo_code)
+         VALUES ($1,$2,$3,'gift','pending',$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,'pending',NOW(),NOW(),$18,$19)`,
         [
           orderId,
           this.orderNumber(),
@@ -174,7 +187,7 @@ export class OrdersService {
           subtotal,
           deliveryFee,
           commission,
-          total,
+          total - discount,
           req?.delivery_address,
           req?.delivery_city ?? null,
           req?.delivery_lat ?? null,
@@ -185,6 +198,8 @@ export class OrdersService {
           req?.is_anonymous === true,
           req?.is_express ?? false,
           scheduledDate,
+          discount,
+          promoCode,
         ],
       );
       for (const it of itemsData) {

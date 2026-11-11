@@ -9,11 +9,12 @@ import { PermGuard } from './perm.guard';
 import { AuditService } from './audit.service';
 import { SettingsService } from './settings.service';
 import { ReferralService } from './referral.service';
+import { PromoService } from './promo.service';
 
 /** Shared, app-wide providers (security, SMS, email, notifications, guards). */
 @Global()
 @Module({
-  providers: [SecurityService, SmsService, NotifyService, MailService, AuthGuard, AdminGuard, PermGuard, AuditService, SettingsService, ReferralService],
-  exports: [SecurityService, SmsService, NotifyService, MailService, AuthGuard, AdminGuard, PermGuard, AuditService, SettingsService, ReferralService],
+  providers: [SecurityService, SmsService, NotifyService, MailService, AuthGuard, AdminGuard, PermGuard, AuditService, SettingsService, ReferralService, PromoService],
+  exports: [SecurityService, SmsService, NotifyService, MailService, AuthGuard, AdminGuard, PermGuard, AuditService, SettingsService, ReferralService, PromoService],
 })
 export class CommonModule {}

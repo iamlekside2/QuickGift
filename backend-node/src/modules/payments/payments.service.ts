@@ -11,6 +11,7 @@ import { createHmac, randomUUID, timingSafeEqual } from 'crypto';
 import { PoolClient } from 'pg';
 import { DatabaseService } from '../../database/database.service';
 import { SettingsService } from '../../common/settings.service';
+import { PROMO_PAY_MINUTES } from '../../common/promo.service';
 import {
   creditWallet,
   debitWallet,
@@ -253,12 +254,21 @@ export class PaymentsService {
 
     if (orderId) {
       const order = await this.db.queryOne<any>(
-        `SELECT id, user_id, total, status, payment_status, order_number FROM orders WHERE id = $1`,
-        [orderId],
+        `SELECT id, user_id, total, status, payment_status, order_number, discount,
+                (created_at < NOW() - make_interval(mins => $2)) AS promo_window_closed
+         FROM orders WHERE id = $1`,
+        [orderId, PROMO_PAY_MINUTES],
       );
       if (!order || order.user_id !== userId) throw new NotFoundException('Order not found');
       if (order.payment_status === 'paid') throw new BadRequestException('This order is already paid');
       if (order.status === 'cancelled') throw new BadRequestException('This order was cancelled');
+      // A promo code only holds its place for a short while on an unpaid
+      // order; after that the discounted price can no longer be paid.
+      if (Number(order.discount) > 0 && order.promo_window_closed) {
+        throw new BadRequestException(
+          'This discounted order has expired. Please check out again to use your promo code.',
+        );
+      }
       const amount = Number(order.total);
       if (!Number.isFinite(amount) || amount <= 0) {
         throw new BadRequestException('This order has nothing to pay');
