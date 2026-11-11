@@ -17,13 +17,19 @@ import { roleHasPermission } from '../../common/permissions';
 const MAX_LINE_ITEMS = 50;
 const MAX_QUANTITY = 99;
 
+// A gift can be booked for a delivery day up to this far ahead.
+const MAX_SCHEDULE_DAYS = 90;
+const MAX_MESSAGE_LENGTH = 500;
+// Nigeria is UTC+1 all year: "today" for a delivery date is the Lagos date.
+const LAGOS_OFFSET_MS = 60 * 60 * 1000;
+
 const DELIVERY_BASE_FEE = 0;
 const EXPRESS_MULTIPLIER = 1.0;
 
 // OrderResponse = curated subset of the orders table.
 const ORDER_FIELDS = `id, order_number, user_id, order_type, status, subtotal,
   delivery_fee, total, delivery_address, delivery_city, recipient_name,
-  personal_message, is_anonymous, is_express, payment_status, created_at`;
+  personal_message, is_anonymous, is_express, scheduled_date, payment_status, created_at`;
 
 const ORDER_ITEM_FIELDS = `id, product_id, product_name, vendor_name, quantity, unit_price, total_price`;
 
@@ -60,6 +66,29 @@ export class OrdersService {
     );
   }
 
+  /**
+   * The requested delivery day as YYYY-MM-DD, or null for "as soon as
+   * possible". Must be a real date, not in the past, and not too far ahead.
+   */
+  private scheduledDate(raw: unknown): string | null {
+    if (raw === undefined || raw === null || raw === '') return null;
+    const day = String(raw).slice(0, 10);
+    const at = /^\d{4}-\d{2}-\d{2}$/.test(day) ? Date.parse(day + 'T00:00:00Z') : NaN;
+    if (Number.isNaN(at) || new Date(at).toISOString().slice(0, 10) !== day) {
+      throw new BadRequestException('The delivery date is not valid');
+    }
+    const lagosNow = Date.now() + LAGOS_OFFSET_MS;
+    const today = new Date(lagosNow).toISOString().slice(0, 10);
+    const latest = new Date(lagosNow + MAX_SCHEDULE_DAYS * 86400000).toISOString().slice(0, 10);
+    if (day < today) throw new BadRequestException('The delivery date cannot be in the past');
+    if (day > latest) {
+      throw new BadRequestException(
+        `Delivery can be scheduled up to ${MAX_SCHEDULE_DAYS} days ahead`,
+      );
+    }
+    return day;
+  }
+
   async createOrder(userId: string, req: any) {
     const items: Array<{ product_id: string; quantity: number }> = Array.isArray(req?.items)
       ? req.items
@@ -71,6 +100,11 @@ export class OrdersService {
     if (!String(req?.delivery_address ?? '').trim()) {
       throw new BadRequestException('A delivery address is required');
     }
+
+    const scheduledDate = this.scheduledDate(req?.scheduled_date);
+    const personalMessage = req?.personal_message
+      ? String(req.personal_message).trim().slice(0, MAX_MESSAGE_LENGTH) || null
+      : null;
 
     const ids = items.map((i) => String(i?.product_id ?? ''));
     const products = await this.db.query<any>(
@@ -147,10 +181,10 @@ export class OrdersService {
           req?.delivery_lng ?? null,
           req?.recipient_name ?? null,
           req?.recipient_phone ?? null,
-          req?.personal_message ?? null,
-          req?.is_anonymous ?? false,
+          personalMessage,
+          req?.is_anonymous === true,
           req?.is_express ?? false,
-          req?.scheduled_date ?? null,
+          scheduledDate,
         ],
       );
       for (const it of itemsData) {
@@ -363,14 +397,18 @@ export class OrdersService {
     if (!orderIds.length) return [];
 
     const params: any[] = [orderIds];
-    let sql = `SELECT * FROM orders WHERE id = ANY($1::text[])`;
+    // The seller needs the sender's name for the gift card, unless the buyer
+    // asked to stay anonymous: then the name is never sent to the seller.
+    let sql = `SELECT o.*, CASE WHEN o.is_anonymous THEN NULL ELSE u.full_name END AS sender_name
+               FROM orders o LEFT JOIN users u ON u.id = o.user_id
+               WHERE o.id = ANY($1::text[])`;
     if (q.status) {
       params.push(q.status);
-      sql += ` AND status = $${params.length}`;
+      sql += ` AND o.status = $${params.length}`;
     }
     const { perPage, offset } = paging(q);
     params.push(perPage, offset);
-    sql += ` ORDER BY created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length}`;
+    sql += ` ORDER BY o.created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length}`;
     return this.db.query(sql, params);
   }
 
