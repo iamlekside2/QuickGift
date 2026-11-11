@@ -44,6 +44,7 @@ interface UserRow {
   wallet_balance: number;
   is_active: boolean;
   password_hash?: string | null;
+  has_password?: boolean;
 }
 
 @Injectable()
@@ -92,6 +93,8 @@ export class AuthService implements OnModuleInit {
       role: user.role,
       city: user.city,
       wallet_balance: user.wallet_balance,
+      // Lets the app offer "set a password" to accounts that only have code login.
+      has_password: user.has_password ?? !!user.password_hash,
       // Admin console RBAC: the permission list + friendly role label. Empty
       // for ordinary app users (role 'user'/'provider').
       is_staff: isStaff,
@@ -103,7 +106,8 @@ export class AuthService implements OnModuleInit {
 
   private async loadUserByPhone(phone: string): Promise<UserRow | null> {
     return this.db.queryOne<UserRow>(
-      `SELECT id, full_name, email, phone, city, role, wallet_balance, is_active
+      `SELECT id, full_name, email, phone, city, role, wallet_balance, is_active,
+              (password_hash IS NOT NULL) AS has_password
        FROM users WHERE phone = $1`,
       [phone],
     );
@@ -111,7 +115,8 @@ export class AuthService implements OnModuleInit {
 
   private async loadUserById(id: string): Promise<UserRow | null> {
     return this.db.queryOne<UserRow>(
-      `SELECT id, full_name, email, phone, city, role, wallet_balance, is_active
+      `SELECT id, full_name, email, phone, city, role, wallet_balance, is_active,
+              (password_hash IS NOT NULL) AS has_password
        FROM users WHERE id = $1`,
       [id],
     );
@@ -353,12 +358,59 @@ export class AuthService implements OnModuleInit {
     };
   }
 
+  /**
+   * The ways one Nigerian number can be written (0801…, 234801…, +234801…), so
+   * a password login works whichever form the account was created with.
+   */
+  private phoneVariants(raw: string): string[] {
+    const digits = String(raw || '').replace(/[^0-9]/g, '');
+    let national = '';
+    if (digits.startsWith('234') && digits.length >= 13) national = digits.slice(3);
+    else if (digits.startsWith('0') && digits.length >= 11) national = digits.slice(1);
+    else if (digits.length === 10) national = digits;
+    if (!national) return [String(raw || '').trim()];
+    return [String(raw).trim(), '0' + national, '234' + national, '+234' + national];
+  }
+
+  /**
+   * Sets a password on the signed-in account, or changes it. An account that
+   * already has one must supply the current password; an account without one
+   * (created with code-only login) proved who it is by signing in with a code.
+   */
+  async setPassword(userId: string, req: any) {
+    const next = String(req?.new_password ?? '');
+    if (next.length < MIN_PASSWORD_LENGTH) {
+      throw new BadRequestException(
+        `Password must be at least ${MIN_PASSWORD_LENGTH} characters`,
+      );
+    }
+    if (next.length > 200) throw new BadRequestException('Password is too long');
+    const user = await this.db.queryOne<{ password_hash: string | null }>(
+      `SELECT password_hash FROM users WHERE id = $1`,
+      [userId],
+    );
+    if (!user) throw new NotFoundException('User not found');
+    if (user.password_hash) {
+      const current = String(req?.current_password ?? '');
+      if (!current || !this.security.verifyPassword(current, user.password_hash)) {
+        throw new BadRequestException('Your current password is not correct');
+      }
+    }
+    await this.db.query(
+      `UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2`,
+      [this.security.hashPassword(next), userId],
+    );
+    return { status: 'ok', has_password: true };
+  }
+
   async login(req: any) {
     const identifier = String(req?.phone || req?.email || '').trim();
     if (!identifier) {
       throw new BadRequestException('Phone or email is required');
     }
-    const limiterKey = identifier.toLowerCase();
+    // One lockout bucket per account however the phone number is typed.
+    const variants = this.phoneVariants(identifier);
+    const limiterKey = (variants.length > 1 ? variants[variants.length - 1] : identifier).toLowerCase();
     if (loginFailures.isBlocked(limiterKey)) {
       throw new HttpException(
         'Too many failed sign-in attempts. Please wait 15 minutes and try again.',
@@ -367,8 +419,8 @@ export class AuthService implements OnModuleInit {
     }
     const user = await this.db.queryOne<UserRow>(
       `SELECT id, full_name, email, phone, city, role, wallet_balance, is_active, password_hash
-       FROM users WHERE phone = $1 OR lower(email) = lower($1)`,
-      [identifier],
+       FROM users WHERE phone = ANY($2::text[]) OR lower(email) = lower($1)`,
+      [identifier, variants],
     );
     if (
       !user ||
@@ -395,7 +447,8 @@ export class AuthService implements OnModuleInit {
   /** GET /auth/me → UserResponse shape. */
   async getMe(userId: string) {
     const user = await this.db.queryOne<{ role: string }>(
-      `SELECT id, full_name, email, phone, city, lat, lng, avatar_url, role, wallet_balance
+      `SELECT id, full_name, email, phone, city, lat, lng, avatar_url, role, wallet_balance,
+              (password_hash IS NOT NULL) AS has_password
        FROM users WHERE id = $1`,
       [userId],
     );

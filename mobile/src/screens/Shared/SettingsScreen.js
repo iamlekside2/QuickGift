@@ -10,7 +10,7 @@ import { notifyError } from '../../utils/haptics';
 const NOTIF_STORAGE_KEY = '@quickgift_notification_prefs';
 
 export default function SettingsScreen({ navigation }) {
-  const { deleteAccount, isAuthenticated, isGuest } = useAuth();
+  const { deleteAccount, isAuthenticated, isGuest, user } = useAuth();
   const [deleting, setDeleting] = useState(false);
   const [pushNotifs, setPushNotifs] = useState(true);
   const [emailNotifs, setEmailNotifs] = useState(true);
@@ -88,6 +88,15 @@ export default function SettingsScreen({ navigation }) {
   const TERMS_URL = 'https://quickgift.ng/terms';
 
   const accountItems = [
+    // Signed-in accounts only: set a password, or change the existing one.
+    ...(isAuthenticated && !isGuest
+      ? [{
+          icon: 'lock-closed-outline',
+          label: 'Password',
+          value: user?.has_password ? 'Change' : 'Not set',
+          onPress: () => navigation.navigate('ChangePassword'),
+        }]
+      : []),
     { icon: 'language-outline', label: 'Language', value: 'English' },
     { icon: 'cash-outline', label: 'Currency', value: 'NGN (\u20A6)' },
     { icon: 'shield-outline', label: 'Privacy Policy', onPress: () => navigation.navigate('PrivacyPolicy') },

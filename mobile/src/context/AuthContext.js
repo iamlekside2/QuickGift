@@ -118,6 +118,13 @@ export const AuthProvider = ({ children }) => {
     return res.data;
   };
 
+  /** Set (or change) the account password; remembers that one now exists. */
+  const setPassword = async (newPassword, currentPassword) => {
+    const res = await authAPI.setPassword(newPassword, currentPassword);
+    await updateUser({ has_password: true });
+    return res.data;
+  };
+
   const updateProfile = async (data) => {
     const res = await authAPI.updateProfile(data);
     const updatedUser = { ...(userRef.current || {}), ...(res.data || {}) };
@@ -170,6 +177,7 @@ export const AuthProvider = ({ children }) => {
         verifyOTP,
         register,
         login,
+        setPassword,
         updateProfile,
         updateUser,
         refreshUser,

@@ -82,6 +82,7 @@ import Send from 'lucide-react-native/icons/send';
 import Settings from 'lucide-react-native/icons/settings';
 import Share from 'lucide-react-native/icons/share';
 import Share2 from 'lucide-react-native/icons/share-2';
+import Lock from 'lucide-react-native/icons/lock';
 import Shield from 'lucide-react-native/icons/shield';
 import ShieldCheck from 'lucide-react-native/icons/shield-check';
 import ShoppingBag from 'lucide-react-native/icons/shopping-bag';
@@ -225,6 +226,7 @@ const MAP = {
   'settings-outline': Settings,
   'share-outline': Share,
   'shield-outline': Shield,
+  'lock-closed-outline': Lock,
   'snow-outline': Snowflake,
   'thumbs-down-outline': ThumbsDown,
   'home': House,

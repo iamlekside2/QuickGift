@@ -83,6 +83,14 @@ export class AuthController {
     return this.auth.updateMe(user.user_id, body);
   }
 
+  // Set a password (code-only accounts) or change the existing one.
+  @UseGuards(AuthGuard)
+  @Post('password')
+  @HttpCode(200)
+  setPassword(@CurrentUser() user: AuthUser, @Body() body: any) {
+    return this.auth.setPassword(user.user_id, body);
+  }
+
   // Delete my account (Play Store / App Store require this to work in-app).
   @UseGuards(AuthGuard)
   @Delete('me')

@@ -72,11 +72,17 @@ const realAuthAPI = {
     otp: data.otp,
     role: data.role || 'user',
     email: data.email || undefined,
+    password: data.password || undefined,
     city: data.city || undefined,
   }),
   login: (phone, password) => api.post('/auth/login', { phone, password }),
   getProfile: () => api.get('/auth/me'),
   deleteAccount: () => api.delete('/auth/me'),
+  // Set a password (code-only account) or change it (needs current_password).
+  setPassword: (newPassword, currentPassword) => api.post('/auth/password', {
+    new_password: newPassword,
+    current_password: currentPassword || undefined,
+  }),
   updateProfile: (data) => api.patch('/auth/me', data),
   registerPushToken: (token) => api.post('/auth/push-token', { token }),
 };

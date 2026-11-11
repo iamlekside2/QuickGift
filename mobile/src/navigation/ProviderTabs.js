@@ -22,6 +22,7 @@ import WalletScreen from '../screens/Wallet/WalletScreen';
 import ProfileScreen from '../screens/Profile/ProfileScreen';
 import HelpSupportScreen from '../screens/Shared/HelpSupportScreen';
 import SettingsScreen from '../screens/Shared/SettingsScreen';
+import ChangePasswordScreen from '../screens/Shared/ChangePasswordScreen';
 import EditProfileScreen from '../screens/Shared/EditProfileScreen';
 import FeedbackScreen from '../screens/Shared/FeedbackScreen';
 
@@ -52,6 +53,7 @@ const PROVIDER_SCREENS = [
   { name: 'WalletScreen', component: WalletScreen },
   { name: 'HelpSupport', component: HelpSupportScreen },
   { name: 'Settings', component: SettingsScreen },
+  { name: 'ChangePassword', component: ChangePasswordScreen },
   { name: 'EditProfile', component: EditProfileScreen },
   { name: 'ChatScreen', component: ChatScreen },
   { name: 'WithdrawScreen', component: WithdrawScreen },

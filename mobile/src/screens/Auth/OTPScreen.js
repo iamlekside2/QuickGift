@@ -8,7 +8,7 @@ import { useAuth } from '../../context/AuthContext';
 import { apiError } from '../../utils/errors';
 
 export default function OTPScreen({ navigation, route }) {
-  const { phone, email, sentTo, otpDev, fullName, role, isRegistration } = route.params || {};
+  const { phone, email, sentTo, otpDev, fullName, password, role, isRegistration } = route.params || {};
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [timer, setTimer] = useState(60);
   const [loading, setLoading] = useState(false);
@@ -61,12 +61,21 @@ export default function OTPScreen({ navigation, route }) {
           full_name: fullName,
           phone,
           email,
+          password,
           role: role || 'user',
           otp: code,
         });
       } else {
         // Login with OTP
-        await verifyOTP(phone, code);
+        const data = await verifyOTP(phone, code);
+        if (data?.user && data.user.has_password === false) {
+          // Signed in with a code but has no password yet: say how to add one,
+          // so they are never locked out when a code cannot be delivered.
+          Alert.alert(
+            'Set a password',
+            'Add a password so you can always sign in, even if a code cannot reach you. Go to Profile, then Settings, then Password.',
+          );
+        }
       }
       // Navigation is handled automatically by RootNavigator when user state updates
     } catch (err) {

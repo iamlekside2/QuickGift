@@ -13,6 +13,7 @@ import WalletScreen from '../screens/Wallet/WalletScreen';
 import ProfileScreen from '../screens/Profile/ProfileScreen';
 import HelpSupportScreen from '../screens/Shared/HelpSupportScreen';
 import SettingsScreen from '../screens/Shared/SettingsScreen';
+import ChangePasswordScreen from '../screens/Shared/ChangePasswordScreen';
 import EditProfileScreen from '../screens/Shared/EditProfileScreen';
 import FavouritesScreen from '../screens/Shared/FavouritesScreen';
 import RemindersScreen from '../screens/Shared/RemindersScreen';
@@ -154,6 +155,7 @@ function ProfileStack() {
       <Stack.Screen name="AddBankAccount" component={AddBankAccountScreen} />
       <Stack.Screen name="HelpSupport" component={HelpSupportScreen} />
       <Stack.Screen name="Settings" component={SettingsScreen} />
+      <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
       <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
       <Stack.Screen name="Terms" component={TermsScreen} />
       <Stack.Screen name="EditProfile" component={EditProfileScreen} />

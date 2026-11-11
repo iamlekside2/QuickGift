@@ -22,6 +22,7 @@ export default function SignupScreen({ navigation }) {
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [selectedRole, setSelectedRole] = useState('user');
   const [loading, setLoading] = useState(false);
   const { checkPhone, sendOTP } = useAuth();
@@ -38,15 +39,20 @@ export default function SignupScreen({ navigation }) {
   // Text messages are not live yet, so the verification code can only reach a
   // new account by email: the address is required for now.
   const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
-  const isFormValid = fullName.trim().length >= 2 && isValidPhone && emailOk;
+  // A password means the account can always sign in, even when a code cannot
+  // be delivered.
+  const passwordOk = password.length >= 6;
+  const isFormValid = fullName.trim().length >= 2 && isValidPhone && emailOk && passwordOk;
 
   const handleSignup = async () => {
     if (!isFormValid) {
       Alert.alert(
         'Missing Info',
-        emailOk
-          ? 'Please enter your name and a valid phone number.'
-          : 'Please enter a valid email address. We send your verification code there.',
+        !emailOk
+          ? 'Please enter a valid email address. We send your verification code there.'
+          : !passwordOk
+            ? 'Please choose a password of at least 6 characters.'
+            : 'Please enter your name and a valid phone number.',
       );
       return;
     }
@@ -76,6 +82,7 @@ export default function SignupScreen({ navigation }) {
         otpDev: data?.otp_dev,
         sentTo: data?.sent_to,
         fullName: fullName.trim(),
+        password,
         role: selectedRole,
         isRegistration: true,
       });
@@ -168,6 +175,16 @@ export default function SignupScreen({ navigation }) {
         <Text className="text-[12px] text-ink-soft -mt-2 mb-3">
           We send your verification code to this email.
         </Text>
+
+        {/* Password */}
+        <AppInput
+          label="Password"
+          placeholder="At least 6 characters"
+          value={password}
+          onChangeText={setPassword}
+          type="password"
+          error={password.length > 0 && !passwordOk ? 'Use at least 6 characters' : ''}
+        />
 
         {/* Continue */}
         <Button
