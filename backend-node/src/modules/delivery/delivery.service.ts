@@ -47,10 +47,15 @@ export class DeliveryService {
 
   async create(user: AuthUser, req: any) {
     const order = await this.db.queryOne<any>(
-      `SELECT id, user_id, payment_status, total FROM orders WHERE id = $1`,
+      `SELECT id, user_id, payment_status, total, address_pending FROM orders WHERE id = $1`,
       [req?.order_id],
     );
     if (!order) throw new NotFoundException('Order not found');
+    if (order.address_pending) {
+      throw new BadRequestException(
+        'The recipient has not confirmed the delivery address yet, so a rider cannot be booked.',
+      );
+    }
     if (order.user_id !== user.user_id && !roleHasPermission(user.role, 'orders.manage')) {
       throw new ForbiddenException('Not authorized');
     }

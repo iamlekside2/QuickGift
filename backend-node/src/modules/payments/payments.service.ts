@@ -148,6 +148,9 @@ export class PaymentsService {
   }
 
   private async createPendingDelivery(client: PoolClient, order: any) {
+    // No address yet: the delivery record is created when the recipient (or
+    // the buyer) supplies one. See GiftClaimService.
+    if (order.address_pending) return;
     const existing = (
       await client.query(`SELECT 1 FROM deliveries WHERE order_id = $1`, [
         order.id,

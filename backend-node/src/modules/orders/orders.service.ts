@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { randomUUID } from 'crypto';
+import { randomBytes, randomUUID } from 'crypto';
 import { DatabaseService } from '../../database/database.service';
 import { NotifyService } from '../../common/notify.service';
 import { MailService } from '../../common/mail.service';
@@ -24,6 +24,11 @@ const MAX_MESSAGE_LENGTH = 500;
 // Nigeria is UTC+1 all year: "today" for a delivery date is the Lagos date.
 const LAGOS_OFFSET_MS = 60 * 60 * 1000;
 
+// Where the recipient's "tell us where to deliver" page lives.
+const SITE_URL = (process.env.PUBLIC_SITE_URL || 'https://www.quickgift.ng').replace(/\/+$/, '');
+const ADDRESS_BLOCKED =
+  'The recipient has not confirmed the delivery address yet, so this order cannot be sent out.';
+
 const DELIVERY_BASE_FEE = 0;
 const EXPRESS_MULTIPLIER = 1.0;
 
@@ -31,6 +36,9 @@ const EXPRESS_MULTIPLIER = 1.0;
 const ORDER_FIELDS = `id, order_number, user_id, order_type, status, subtotal,
   delivery_fee, total, delivery_address, delivery_city, recipient_name,
   personal_message, is_anonymous, is_express, scheduled_date, discount, promo_code,
+  address_pending,
+  CASE WHEN address_pending AND claim_token IS NOT NULL
+       THEN '${SITE_URL}/gift/?t=' || claim_token END AS claim_url,
   payment_status, created_at`;
 
 const ORDER_ITEM_FIELDS = `id, product_id, product_name, vendor_name, quantity, unit_price, total_price`;
@@ -100,8 +108,15 @@ export class OrdersService {
     if (items.length > MAX_LINE_ITEMS) {
       throw new BadRequestException(`An order can have at most ${MAX_LINE_ITEMS} different items`);
     }
-    if (!String(req?.delivery_address ?? '').trim()) {
+    // "I don't know their address": the recipient confirms it later through a
+    // link (see GiftClaimService). Everything else about the order is normal.
+    const addressPending = req?.address_pending === true;
+    const deliveryAddress = String(req?.delivery_address ?? '').trim();
+    if (!addressPending && !deliveryAddress) {
       throw new BadRequestException('A delivery address is required');
+    }
+    if (addressPending && !String(req?.recipient_name ?? '').trim()) {
+      throw new BadRequestException("Please enter the recipient's name");
     }
 
     const scheduledDate = this.scheduledDate(req?.scheduled_date);
@@ -178,8 +193,9 @@ export class OrdersService {
           (id, order_number, user_id, order_type, status, subtotal, delivery_fee, commission, total,
            delivery_address, delivery_city, delivery_lat, delivery_lng,
            recipient_name, recipient_phone, personal_message, is_anonymous, is_express,
-           scheduled_date, payment_status, created_at, updated_at, discount, promo_code)
-         VALUES ($1,$2,$3,'gift','pending',$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,'pending',NOW(),NOW(),$18,$19)`,
+           scheduled_date, payment_status, created_at, updated_at, discount, promo_code,
+           address_pending, claim_token)
+         VALUES ($1,$2,$3,'gift','pending',$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,'pending',NOW(),NOW(),$18,$19,$20,$21)`,
         [
           orderId,
           this.orderNumber(),
@@ -188,7 +204,7 @@ export class OrdersService {
           deliveryFee,
           commission,
           total - discount,
-          req?.delivery_address,
+          addressPending ? null : deliveryAddress,
           req?.delivery_city ?? null,
           req?.delivery_lat ?? null,
           req?.delivery_lng ?? null,
@@ -200,6 +216,8 @@ export class OrdersService {
           scheduledDate,
           discount,
           promoCode,
+          addressPending,
+          addressPending ? randomBytes(24).toString('base64url') : null,
         ],
       );
       for (const it of itemsData) {
@@ -424,7 +442,9 @@ export class OrdersService {
     const { perPage, offset } = paging(q);
     params.push(perPage, offset);
     sql += ` ORDER BY o.created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length}`;
-    return this.db.query(sql, params);
+    const rows = await this.db.query<any>(sql, params);
+    // The claim token lets its holder set the delivery address: buyer only.
+    return rows.map(({ claim_token, ...rest }) => rest);
   }
 
   async providerUpdateStatus(orderId: string, userId: string, status: string) {
@@ -458,6 +478,7 @@ export class OrdersService {
         `Cannot transition from ${order.status} to ${status}`,
       );
     }
+    if (order.address_pending) throw new BadRequestException(ADDRESS_BLOCKED);
     const moved = await this.db.queryOne(
       `UPDATE orders SET status = $1, updated_at = NOW()
        WHERE id = $2 AND status = $3 RETURNING id`,
@@ -521,6 +542,9 @@ export class OrdersService {
       return this.reload(orderId);
     }
 
+    if (order.address_pending && ['in_transit', 'delivered'].includes(status)) {
+      throw new BadRequestException(ADDRESS_BLOCKED);
+    }
     const moved = await this.db.queryOne(
       `UPDATE orders SET status = $1, updated_at = NOW()
        WHERE id = $2 AND status = $3 RETURNING id`,
