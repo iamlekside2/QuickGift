@@ -245,4 +245,10 @@ const realRemindersAPI = {
 };
 export const remindersAPI = realRemindersAPI;
 
+const realPromosAPI = {
+  // Preview only (does not spend the code): { valid, code?, discount?, message? }
+  validate: (code, subtotal) => api.post('/promos/validate', { code, subtotal }),
+};
+export const promosAPI = realPromosAPI;
+
 export default api;

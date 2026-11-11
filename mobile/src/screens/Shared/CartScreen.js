@@ -1,8 +1,11 @@
-import React, { useState, useRef, useMemo } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Platform, Alert, Modal, Image, Switch } from 'react-native';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
+import {
+  View, Text, ScrollView, TouchableOpacity, Platform, Alert, Modal, Image, Switch,
+  TextInput, ActivityIndicator,
+} from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '../../components/common/IconCompat';
-import { ordersAPI, paymentsAPI } from '../../services/api';
+import { ordersAPI, paymentsAPI, promosAPI } from '../../services/api';
 import AppInput from '../../components/common/AppInput';
 import ScreenHeader from '../../components/common/ScreenHeader';
 import { useCart } from '../../context/CartContext';
@@ -36,6 +39,22 @@ export default function CartScreen({ navigation }) {
   const [anonymous, setAnonymous] = useState(false);
   const dayOptions = useMemo(() => upcomingDays(DELIVERY_DAYS_AHEAD), []);
 
+  // Promo code. `promo` is what the server said the code is worth for a cart
+  // of `promo.subtotal`; the real discount is worked out again by the server
+  // when the order is created.
+  const [promoInput, setPromoInput] = useState('');
+  const [promo, setPromo] = useState(null);       // { code, discount, subtotal }
+  const [promoMsg, setPromoMsg] = useState('');
+  const [promoBusy, setPromoBusy] = useState(false);
+
+  // The preview was for a different cart total: it no longer applies.
+  useEffect(() => {
+    if (promo && promo.subtotal !== subtotal) {
+      setPromo(null);
+      setPromoMsg('Your cart changed. Apply the code again.');
+    }
+  }, [subtotal, promo]);
+
   // The order is created BEFORE payment. Keep it, with a fingerprint of what
   // it was created from, so a retry pays for the same order instead of
   // creating a second one.
@@ -54,13 +73,44 @@ export default function CartScreen({ navigation }) {
     note: personalMessage.trim(),
     day: deliveryDay,
     anonymous,
+    promo: promo?.code || '',
   });
 
   // Once an order exists for exactly this cart, show the server's figures.
   const serverOrder = pendingOrder && pendingOrder.key === orderKey() ? pendingOrder.order : null;
   const shownSubtotal = serverOrder ? Number(serverOrder.subtotal) : subtotal;
   const shownDelivery = serverOrder ? Number(serverOrder.delivery_fee) || 0 : 0;
-  const total = serverOrder ? Number(serverOrder.total) : subtotal;
+  const shownDiscount = serverOrder ? Number(serverOrder.discount) || 0 : promo?.discount || 0;
+  const total = serverOrder ? Number(serverOrder.total) : Math.max(0, subtotal - shownDiscount);
+
+  const handleApplyPromo = async () => {
+    const code = promoInput.trim();
+    if (!code || promoBusy) return;
+    if (!requireAuth(
+      'Create an account or sign in to use a promo code. Your cart will be waiting.',
+      { beforeSignIn: () => navigation.canGoBack() && navigation.goBack() },
+    )) {
+      return;
+    }
+    setPromoBusy(true);
+    setPromoMsg('');
+    try {
+      const res = await promosAPI.validate(code, subtotal);
+      if (res.data?.valid) {
+        notifySuccess();
+        setPromo({ code: res.data.code, discount: Number(res.data.discount) || 0, subtotal });
+        setPromoInput('');
+      } else {
+        notifyError();
+        setPromo(null);
+        setPromoMsg(res.data?.message || 'This promo code is not valid');
+      }
+    } catch (err) {
+      setPromoMsg(apiError(err, 'We could not check that code. Please try again.'));
+    } finally {
+      setPromoBusy(false);
+    }
+  };
 
   const rememberOrder = (value) => {
     pendingRef.current = value;
@@ -130,6 +180,7 @@ export default function CartScreen({ navigation }) {
           personal_message: personalMessage.trim() || undefined,
           scheduled_date: deliveryDay || undefined,
           is_anonymous: anonymous,
+          promo_code: promo?.code || undefined,
           is_express: false,
         });
         order = res.data;
@@ -181,6 +232,16 @@ export default function CartScreen({ navigation }) {
         // An earlier attempt went through after all.
         finishPaid(order, paymentMethod);
         return;
+      }
+      if (order && /expired/i.test(message)) {
+        // A discounted order can only be paid for a short while. Forget it so
+        // the next attempt makes a fresh order (and takes the code again).
+        rememberOrder(null);
+      }
+      if (!order && promo && /promo|code/i.test(message)) {
+        // The code stopped being usable between the preview and checkout.
+        setPromo(null);
+        setPromoMsg(message);
       }
       notifyError();
       if (err?.message === 'WALLET_NOT_CONFIRMED') {
@@ -334,6 +395,72 @@ export default function CartScreen({ navigation }) {
           </View>
         ))}
 
+        {/* Promo code */}
+        <View
+          className="bg-white rounded-[20px] p-4 mt-2 mb-1"
+          style={{ shadowColor: '#211F1C', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.06, shadowRadius: 20, elevation: 3 }}
+        >
+          {promo ? (
+            <View className="flex-row items-center">
+              <View className="w-9 h-9 rounded-full bg-teal-light items-center justify-center mr-3">
+                <Ionicons name="pricetag-outline" size={17} color="#1F4A45" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-[13.5px] font-bold text-ink">{promo.code} applied</Text>
+                <Text className="text-[12px] text-success font-semibold mt-0.5">
+                  You save {formatPrice(promo.discount)}
+                </Text>
+              </View>
+              <TouchableOpacity
+                className="px-3 py-2"
+                onPress={() => { setPromo(null); setPromoMsg(''); }}
+                disabled={submitting}
+              >
+                <Text className="text-[12.5px] font-bold text-ink-soft">Remove</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <>
+              <View className="flex-row items-center gap-2.5">
+                <View className="flex-1 flex-row items-center bg-cream rounded-[14px] px-3.5 h-[46px]">
+                  <Ionicons name="pricetag-outline" size={16} color="#9A948A" />
+                  <TextInput
+                    className="flex-1 ml-2.5 text-[14px] text-ink"
+                    style={{ paddingVertical: 0 }}
+                    placeholder="Promo code"
+                    placeholderTextColor="#B5AFA2"
+                    value={promoInput}
+                    onChangeText={(t) => { setPromoInput(t.toUpperCase().replace(/[^A-Z0-9]/g, '')); setPromoMsg(''); }}
+                    autoCapitalize="characters"
+                    autoCorrect={false}
+                    maxLength={32}
+                    returnKeyType="done"
+                    onSubmitEditing={handleApplyPromo}
+                  />
+                </View>
+                <TouchableOpacity
+                  className={`h-[46px] px-5 rounded-[14px] items-center justify-center ${
+                    promoInput.trim() && !promoBusy ? 'bg-teal' : 'bg-sand'
+                  }`}
+                  onPress={handleApplyPromo}
+                  disabled={!promoInput.trim() || promoBusy}
+                >
+                  {promoBusy ? (
+                    <ActivityIndicator size="small" color="#1F4A45" />
+                  ) : (
+                    <Text className={`text-[13.5px] font-bold ${promoInput.trim() ? 'text-white' : 'text-ink-caption'}`}>
+                      Apply
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+              {promoMsg ? (
+                <Text className="text-[12px] mt-2 leading-4" style={{ color: '#D24B4B' }}>{promoMsg}</Text>
+              ) : null}
+            </>
+          )}
+        </View>
+
         <View
           className="bg-white rounded-[20px] p-5 mt-2"
           style={{ shadowColor: '#211F1C', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.06, shadowRadius: 20, elevation: 3 }}
@@ -350,6 +477,14 @@ export default function CartScreen({ navigation }) {
                 {shownDelivery > 0 ? formatPrice(shownDelivery) : 'Free'}
               </Text>
             </View>
+            {shownDiscount > 0 ? (
+              <View className="flex-row justify-between">
+                <Text className="text-[13.5px] text-ink-soft">
+                  Discount{(serverOrder?.promo_code || promo?.code) ? ` (${serverOrder?.promo_code || promo?.code})` : ''}
+                </Text>
+                <Text className="text-[13.5px] font-bold text-success">-{formatPrice(shownDiscount)}</Text>
+              </View>
+            ) : null}
             <View className="h-px bg-line-divider" />
             <View className="flex-row justify-between">
               <Text className="text-[15px] font-bold text-ink">Total</Text>

@@ -215,6 +215,14 @@ export default function OrderTrackingScreen({ navigation, route }) {
               {Number(order?.delivery_fee) > 0 ? naira(order.delivery_fee) : 'Free'}
             </Text>
           </View>
+          {Number(order?.discount) > 0 ? (
+            <View className="flex-row justify-between mt-2">
+              <Text className="text-[13px] text-ink-soft">
+                Discount{order?.promo_code ? ` (${order.promo_code})` : ''}
+              </Text>
+              <Text className="text-[13px] font-bold text-success">-{naira(order.discount)}</Text>
+            </View>
+          ) : null}
           <View className="flex-row justify-between mt-2">
             <Text className="text-[15px] font-bold text-ink">Total</Text>
             <Text className="text-[16px] font-extrabold text-teal">{naira(order?.total)}</Text>

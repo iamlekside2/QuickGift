@@ -34,7 +34,7 @@ const baseQueryWithReauth = async (args, api, extraOptions) => {
 export const api = createApi({
   reducerPath: 'api',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['Dashboard', 'Orders', 'Products', 'Providers', 'Users', 'Bookings', 'Payments', 'Transactions', 'Payouts', 'Withdrawals', 'Disputes', 'Applications', 'Waitlist', 'Team', 'TeamAudit', 'Settings', 'Referrals'],
+  tagTypes: ['Dashboard', 'Orders', 'Products', 'Providers', 'Users', 'Bookings', 'Payments', 'Transactions', 'Payouts', 'Withdrawals', 'Disputes', 'Applications', 'Waitlist', 'Team', 'TeamAudit', 'Settings', 'Referrals', 'Promos'],
   endpoints: (builder) => ({
     // ── Auth ─────────────────────────────────────────
     login: builder.mutation({
@@ -469,6 +469,26 @@ export const api = createApi({
       },
       providesTags: ['Referrals'],
     }),
+
+    // ── Promo codes ─────────────────────────────────────────────
+    getPromos: builder.query({
+      query: ({ search, page = 1, per_page = 20 } = {}) => {
+        const params = new URLSearchParams()
+        if (search) params.append('search', search)
+        params.append('page', page)
+        params.append('per_page', per_page)
+        return `/promos/admin?${params.toString()}`
+      },
+      providesTags: ['Promos'],
+    }),
+    createPromo: builder.mutation({
+      query: (body) => ({ url: '/promos/admin', method: 'POST', body }),
+      invalidatesTags: ['Promos'],
+    }),
+    updatePromo: builder.mutation({
+      query: ({ id, ...body }) => ({ url: `/promos/admin/${id}`, method: 'PATCH', body }),
+      invalidatesTags: ['Promos'],
+    }),
   }),
 })
 
@@ -516,6 +536,9 @@ export const {
   useDeleteApplicationMutation,
   useGetWaitlistQuery,
   useGetAdminReferralsQuery,
+  useGetPromosQuery,
+  useCreatePromoMutation,
+  useUpdatePromoMutation,
   useDeleteWaitlistSignupMutation,
   useGetStaffQuery,
   useGetStaffRolesQuery,
