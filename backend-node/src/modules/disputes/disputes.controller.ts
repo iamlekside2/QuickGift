@@ -61,7 +61,11 @@ export class DisputesController {
 
   @UseGuards(AuthGuard)
   @Patch(':id/respond')
-  respond(@Param('id') id: string, @Body() body: any) {
-    return this.disputes.respond(id, body);
+  respond(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthUser,
+    @Body() body: any,
+  ) {
+    return this.disputes.respond(id, user.user_id, body);
   }
 }

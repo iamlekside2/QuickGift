@@ -114,6 +114,20 @@ export class MailService {
   }
 }
 
+/**
+ * Escapes text for safe interpolation into email HTML. Names, review comments,
+ * dispute reasons and public-form fields are user-controlled; without this an
+ * attacker could inject markup or links into mail sent from our verified sender.
+ */
+function esc(value: unknown): string {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 /** One-time passcode email with a large, copyable code. */
 function otpHtml(code: string): string {
   return `<!DOCTYPE html>
@@ -126,7 +140,7 @@ function otpHtml(code: string): string {
         <tr><td style="background-color:#1F4A45;padding:20px 32px;font-family:Georgia,'Times New Roman',serif;font-size:20px;font-weight:bold;color:#ffffff;">QuickGift</td></tr>
         <tr><td align="center" style="padding:34px 32px 10px;">
           <p style="margin:0 0 6px;font-family:Helvetica,Arial,sans-serif;font-size:15px;color:#4E4A42;">Your verification code</p>
-          <p style="margin:0 0 6px;font-family:'Courier New',monospace;font-size:40px;font-weight:bold;letter-spacing:10px;color:#1F4A45;">${code}</p>
+          <p style="margin:0 0 6px;font-family:'Courier New',monospace;font-size:40px;font-weight:bold;letter-spacing:10px;color:#1F4A45;">${esc(code)}</p>
           <p style="margin:12px 0 0;font-family:Helvetica,Arial,sans-serif;font-size:13.5px;line-height:1.6;color:#9A948A;">Enter this code in the QuickGift app to continue. It expires in 10 minutes. If you did not request it, you can ignore this email.</p>
         </td></tr>
         <tr><td style="padding:20px 32px 30px;">
@@ -147,7 +161,7 @@ function userHtml(
   ctaUrl: string | null,
 ): string {
   const greeting =
-    name && name !== 'QuickGift User' ? `Hi ${name},` : 'Hi there,';
+    name && name !== 'QuickGift User' ? `Hi ${esc(name)},` : 'Hi there,';
   const cta = ctaUrl
     ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:24px 0 0;"><tr><td align="center" bgcolor="#E8632F" style="border-radius:12px;"><a href="${ctaUrl}" style="display:inline-block;padding:13px 28px;font-family:Helvetica,Arial,sans-serif;font-size:14px;font-weight:bold;color:#ffffff;text-decoration:none;border-radius:12px;">Open QuickGift</a></td></tr></table>`
     : '';
@@ -175,8 +189,8 @@ function userHtml(
         <tr>
           <td style="padding:32px 32px 28px;">
             <p style="margin:0 0 16px;font-family:Helvetica,Arial,sans-serif;font-size:15px;color:#4E4A42;">${greeting}</p>
-            <h1 style="margin:0 0 14px;font-family:Georgia,'Times New Roman',serif;font-size:24px;line-height:1.25;color:#211F1C;font-weight:normal;">${title}</h1>
-            <p style="margin:0;font-family:Helvetica,Arial,sans-serif;font-size:15.5px;line-height:1.65;color:#4E4A42;">${body}</p>
+            <h1 style="margin:0 0 14px;font-family:Georgia,'Times New Roman',serif;font-size:24px;line-height:1.25;color:#211F1C;font-weight:normal;">${esc(title)}</h1>
+            <p style="margin:0;font-family:Helvetica,Arial,sans-serif;font-size:15.5px;line-height:1.65;color:#4E4A42;">${esc(body)}</p>
             ${cta}
           </td>
         </tr>
@@ -198,7 +212,7 @@ function adminHtml(title: string, lines: string[]): string {
   const rows = lines
     .map(
       (l) =>
-        `<tr><td style="padding:7px 0;font-family:Helvetica,Arial,sans-serif;font-size:14.5px;line-height:1.5;color:#211F1C;border-bottom:1px solid #F0EADF;">${l}</td></tr>`,
+        `<tr><td style="padding:7px 0;font-family:Helvetica,Arial,sans-serif;font-size:14.5px;line-height:1.5;color:#211F1C;border-bottom:1px solid #F0EADF;">${esc(l)}</td></tr>`,
     )
     .join('');
   return `<!DOCTYPE html>
@@ -210,7 +224,7 @@ function adminHtml(title: string, lines: string[]): string {
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:18px;overflow:hidden;border:1px solid #ECE3D2;">
         <tr><td style="background:#1F4A45;padding:18px 28px;font-family:Georgia,'Times New Roman',serif;font-size:18px;font-weight:bold;color:#ffffff;">QuickGift &middot; Admin</td></tr>
         <tr><td style="padding:26px 28px 8px;">
-          <h1 style="margin:0 0 16px;font-family:Helvetica,Arial,sans-serif;font-size:19px;color:#211F1C;">${title}</h1>
+          <h1 style="margin:0 0 16px;font-family:Helvetica,Arial,sans-serif;font-size:19px;color:#211F1C;">${esc(title)}</h1>
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows}</table>
         </td></tr>
         <tr><td style="padding:16px 28px 26px;">

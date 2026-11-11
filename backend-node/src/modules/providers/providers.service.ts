@@ -3,6 +3,7 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
+  OnModuleInit,
 } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { DatabaseService } from '../../database/database.service';
@@ -46,11 +47,16 @@ export interface ProviderListQuery {
 }
 
 @Injectable()
-export class ProvidersService {
+export class ProvidersService implements OnModuleInit {
   constructor(
     private readonly db: DatabaseService,
     private readonly audit: AuditService,
   ) {}
+
+  async onModuleInit() {
+    // Working hours / blocked dates as JSON text (previously "saved" nowhere).
+    await this.db.query(`ALTER TABLE providers ADD COLUMN IF NOT EXISTS availability TEXT`);
+  }
 
   /** Record an admin status change against the provider in the audit log. */
   private async auditStatus(
@@ -102,7 +108,12 @@ export class ProvidersService {
 
     const hasCoords = q.lat != null && q.lng != null;
     if (!hasCoords && q.city) where.push(`city = ${push(q.city)}`);
-    if (q.service_type) where.push(`service_type = ${push(q.service_type)}`);
+    if (q.service_type) {
+      // Case-insensitive, partial match: the app browses by category slug
+      // ("nails", "hair") while providers store a label ("Nails", "Hair Styling").
+      const term = String(q.service_type).trim().replace(/[\%_]/g, (c) => "\\" + c);
+      where.push(`service_type ILIKE ${push("%" + term + "%")}`);
+    }
     if (q.available != null) where.push(`is_available = ${push(q.available)}`);
     if (q.search) where.push(`business_name ILIKE ${push(`%${q.search}%`)}`);
     if (q.min_rating != null) where.push(`rating >= ${push(q.min_rating)}`);
@@ -299,37 +310,125 @@ export class ProvidersService {
     return { message: 'Provider reactivated', status: 'verified' };
   }
 
-  // --- Availability (stored/parsed from bio JSON, mirrors Python MVP behavior) ---
+  // --- Availability (JSON in providers.availability) ---
+
+  private parseAvailability(raw: unknown) {
+    try {
+      const parsed = raw ? JSON.parse(String(raw)) : null;
+      if (parsed && typeof parsed === 'object') return parsed;
+    } catch {
+      /* fall through to the default */
+    }
+    return DEFAULT_AVAILABILITY;
+  }
 
   async getMyAvailability(userId: string) {
     const provider = await this.db.queryOne<any>(
-      `SELECT bio FROM providers WHERE user_id = $1`,
+      `SELECT availability FROM providers WHERE user_id = $1`,
       [userId],
     );
     if (!provider) throw new NotFoundException('Provider profile not found');
-    let parsed: any = {};
-    try {
-      if (provider.bio && provider.bio.startsWith('{')) {
-        parsed = JSON.parse(provider.bio);
-      }
-    } catch {
-      parsed = {};
-    }
-    return parsed.availability ?? DEFAULT_AVAILABILITY;
+    return this.parseAvailability(provider.availability);
+  }
+
+  /** Public: a provider's working hours, so the booking screen can offer real slots. */
+  async getAvailability(providerId: string) {
+    const provider = await this.db.queryOne<any>(
+      `SELECT availability FROM providers WHERE id = $1`,
+      [providerId],
+    );
+    if (!provider) throw new NotFoundException('Provider not found');
+    return this.parseAvailability(provider.availability);
   }
 
   async updateMyAvailability(userId: string, body: any) {
-    const provider = await this.db.queryOne(
+    const provider = await this.db.queryOne<any>(
       `SELECT id FROM providers WHERE user_id = $1`,
       [userId],
     );
     if (!provider) throw new NotFoundException('Provider profile not found');
+    const buffer = Math.round(Number(body?.buffer_minutes));
     const availability = {
-      schedule: body?.schedule ?? {},
-      buffer_minutes: body?.buffer_minutes ?? 30,
-      blocked_dates: body?.blocked_dates ?? [],
+      schedule: body?.schedule && typeof body.schedule === 'object' ? body.schedule : {},
+      buffer_minutes: Number.isFinite(buffer) && buffer >= 0 && buffer <= 480 ? buffer : 30,
+      blocked_dates: Array.isArray(body?.blocked_dates) ? body.blocked_dates.slice(0, 366) : [],
     };
+    const json = JSON.stringify(availability);
+    if (json.length > 20000) throw new BadRequestException('Availability is too large');
+    await this.db.query(
+      `UPDATE providers SET availability = $1, updated_at = NOW() WHERE id = $2`,
+      [json, provider.id],
+    );
     return { status: 'saved', availability };
+  }
+
+  // --- services: edit / remove (owner only) ---
+
+  private serviceInput(body: any, partial: boolean) {
+    const out: Record<string, any> = {};
+    if (!partial || body?.name !== undefined) {
+      const name = String(body?.name ?? '').trim().slice(0, 200);
+      if (!name) throw new BadRequestException('Service name is required');
+      out.name = name;
+    }
+    if (!partial || body?.price !== undefined) {
+      const price = Number(body?.price);
+      if (!Number.isFinite(price) || price <= 0 || price > 100_000_000) {
+        throw new BadRequestException('Price must be more than zero');
+      }
+      out.price = Math.round(price * 100) / 100;
+    }
+    if (!partial || body?.duration_minutes !== undefined) {
+      const mins = body?.duration_minutes === undefined ? 60 : Math.round(Number(body.duration_minutes));
+      if (!Number.isFinite(mins) || mins < 5 || mins > 1440) {
+        throw new BadRequestException('Duration must be between 5 minutes and 24 hours');
+      }
+      out.duration_minutes = mins;
+    }
+    if (body?.description !== undefined) {
+      out.description = String(body.description ?? '').trim().slice(0, 1000) || null;
+    }
+    return out;
+  }
+
+  private async ownService(userId: string, serviceId: string) {
+    const row = await this.db.queryOne<any>(
+      `SELECT s.id FROM services s JOIN providers p ON p.id = s.provider_id
+       WHERE s.id = $1 AND p.user_id = $2`,
+      [serviceId, userId],
+    );
+    if (!row) throw new NotFoundException('Service not found');
+    return row;
+  }
+
+  async updateMyService(userId: string, serviceId: string, body: any) {
+    await this.ownService(userId, serviceId);
+    const input = this.serviceInput(body, true);
+    const keys = Object.keys(input);
+    if (keys.length) {
+      const params = keys.map((k) => input[k]);
+      params.push(serviceId);
+      await this.db.query(
+        `UPDATE services SET ${keys.map((k, i) => `${k} = $${i + 1}`).join(', ')} WHERE id = $${params.length}`,
+        params,
+      );
+    }
+    return this.db.queryOne(`SELECT ${SERVICE_FIELDS} FROM services WHERE id = $1`, [serviceId]);
+  }
+
+  /** Removes a service; one that has bookings is hidden instead so history stays intact. */
+  async deleteMyService(userId: string, serviceId: string) {
+    await this.ownService(userId, serviceId);
+    const used = await this.db.queryOne(
+      `SELECT 1 FROM bookings WHERE service_id = $1 LIMIT 1`,
+      [serviceId],
+    );
+    if (used) {
+      await this.db.query(`UPDATE services SET is_active = false WHERE id = $1`, [serviceId]);
+      return { ok: true, archived: true };
+    }
+    await this.db.query(`DELETE FROM services WHERE id = $1`, [serviceId]);
+    return { ok: true, archived: false };
   }
 
   // --- helpers ---
@@ -370,9 +469,7 @@ export class ProvidersService {
   }
 
   private async insertService(providerId: string, body: any) {
-    if (body?.price == null || !body?.name) {
-      throw new BadRequestException('name and price are required');
-    }
+    const input = this.serviceInput(body, false);
     const id = randomUUID();
     await this.db.query(
       `INSERT INTO services (id, provider_id, name, description, price, duration_minutes, is_active, created_at)
@@ -380,10 +477,10 @@ export class ProvidersService {
       [
         id,
         providerId,
-        body.name,
-        body.description ?? null,
-        body.price,
-        body.duration_minutes ?? 60,
+        input.name,
+        input.description ?? null,
+        input.price,
+        input.duration_minutes,
       ],
     );
     return this.db.queryOne(

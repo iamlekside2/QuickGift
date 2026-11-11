@@ -8,6 +8,11 @@ import { randomUUID } from 'crypto';
 import { DatabaseService } from '../../database/database.service';
 import { NotifyService } from '../../common/notify.service';
 import { MailService } from '../../common/mail.service';
+import { creditWallet, ledgerRef, toAmount } from '../../common/ledger';
+import { paging } from '../../common/paging';
+
+const REASON_MAX = 200;
+const TEXT_MAX = 2000;
 
 @Injectable()
 export class DisputesService {
@@ -25,6 +30,10 @@ export class DisputesService {
     if (!req?.order_id && !req?.booking_id) {
       throw new BadRequestException('Must provide order_id or booking_id');
     }
+    const reason = String(req?.reason ?? '').trim().slice(0, REASON_MAX);
+    if (!reason) throw new BadRequestException('Please tell us what went wrong');
+    req.reason = reason;
+    if (req.description != null) req.description = String(req.description).slice(0, TEXT_MAX);
     let providerId: string | null = null;
 
     if (req.order_id) {
@@ -98,37 +107,80 @@ export class DisputesService {
     return this.db.queryOne(`SELECT * FROM disputes WHERE id = $1`, [id]);
   }
 
+  /** Provider ids owned by this user (a user normally has zero or one). */
+  private async providerIdsOf(userId: string): Promise<string[]> {
+    const rows = await this.db.query<{ id: string }>(
+      `SELECT id FROM providers WHERE user_id = $1`,
+      [userId],
+    );
+    return rows.map((r) => r.id);
+  }
+
+  /**
+   * True if the user is the provider side of this dispute: the provider on a
+   * booking dispute, or a vendor with at least one item in a disputed order.
+   */
+  private async isProviderParty(userId: string, dispute: any): Promise<boolean> {
+    const mine = await this.providerIdsOf(userId);
+    if (!mine.length) return false;
+    if (dispute.provider_id && mine.includes(dispute.provider_id)) return true;
+    if (dispute.order_id) {
+      const row = await this.db.queryOne(
+        `SELECT 1 FROM order_items oi JOIN products p ON p.id = oi.product_id
+         WHERE oi.order_id = $1 AND p.vendor_id = ANY($2::text[]) LIMIT 1`,
+        [dispute.order_id, mine],
+      );
+      return !!row;
+    }
+    return false;
+  }
+
+  /** Disputes the caller raised, or that concern them as the provider/vendor. */
   async listMy(userId: string, status?: string) {
-    // NOTE: faithful to the Python port — the JWT carries no provider_id, so the
-    // provider side of the OR degrades to `provider_id IS NULL`. (Known upstream quirk.)
-    const params: any[] = [userId];
-    let sql = `SELECT * FROM disputes WHERE (buyer_id = $1 OR provider_id IS NULL)`;
+    const mine = await this.providerIdsOf(userId);
+    const params: any[] = [userId, mine];
+    let sql = `SELECT d.* FROM disputes d
+      WHERE (
+        d.buyer_id = $1
+        OR d.provider_id = ANY($2::text[])
+        OR (d.order_id IS NOT NULL AND EXISTS (
+              SELECT 1 FROM order_items oi JOIN products p ON p.id = oi.product_id
+              WHERE oi.order_id = d.order_id AND p.vendor_id = ANY($2::text[])))
+      )`;
     if (status) {
       params.push(status);
-      sql += ` AND status = $${params.length}`;
+      sql += ` AND d.status = $${params.length}`;
     }
-    sql += ` ORDER BY created_at DESC`;
+    sql += ` ORDER BY d.created_at DESC`;
     return this.db.query(sql, params);
   }
 
-  async respond(disputeId: string, req: any) {
+  async respond(disputeId: string, userId: string, req: any) {
     const dispute = await this.db.queryOne<any>(
-      `SELECT id, buyer_id, status FROM disputes WHERE id = $1`,
+      `SELECT id, buyer_id, provider_id, order_id, status FROM disputes WHERE id = $1`,
       [disputeId],
     );
     if (!dispute) throw new NotFoundException('Dispute not found');
-    if (dispute.status !== 'open') {
-      throw new BadRequestException('Cannot respond to this dispute');
+    // Only the provider the dispute is against may answer it — not the buyer,
+    // and not an unrelated user.
+    if (!(await this.isProviderParty(userId, dispute))) {
+      throw new ForbiddenException('Only the provider on this dispute can respond');
     }
-    await this.db.query(
+    const response = String(req?.response ?? '').trim().slice(0, TEXT_MAX);
+    if (!response) throw new BadRequestException('Please write a response');
+
+    const updated = await this.db.queryOne(
       `UPDATE disputes SET provider_response = $1, provider_evidence_urls = $2,
-         status = 'provider_responded', updated_at = NOW() WHERE id = $3`,
+         status = 'provider_responded', updated_at = NOW()
+       WHERE id = $3 AND status = 'open' RETURNING id`,
       [
-        req?.response,
-        req?.evidence_urls ? JSON.stringify(req.evidence_urls) : null,
+        response,
+        Array.isArray(req?.evidence_urls) ? JSON.stringify(req.evidence_urls.slice(0, 10)) : null,
         disputeId,
       ],
     );
+    if (!updated) throw new BadRequestException('Cannot respond to this dispute');
+
     await this.notifier
       .notify(
         dispute.buyer_id,
@@ -152,11 +204,19 @@ export class DisputesService {
       params,
     );
     const total = totalRow ? Number(totalRow.count) : 0;
-    const page = Number(q.page ?? 1);
-    const perPage = Number(q.per_page ?? 20);
-    params.push(perPage, (page - 1) * perPage);
+    const { page, perPage, offset } = paging(q);
+    params.push(perPage, offset);
     const items = await this.db.query(
-      `SELECT * FROM disputes ${whereSql} ORDER BY created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length}`,
+      `SELECT d.*, u.full_name AS buyer_name, pr.business_name AS provider_name,
+              o.order_number, b.booking_number,
+              COALESCE(o.total, b.price) AS target_amount
+       FROM disputes d
+       LEFT JOIN users u ON u.id = d.buyer_id
+       LEFT JOIN providers pr ON pr.id = d.provider_id
+       LEFT JOIN orders o ON o.id = d.order_id
+       LEFT JOIN bookings b ON b.id = d.booking_id
+       ${whereSql.replace('status', 'd.status')}
+       ORDER BY d.created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length}`,
       params,
     );
     return { items, total, page, per_page: perPage };
@@ -188,94 +248,145 @@ export class DisputesService {
   }
 
   async adminResolve(adminUserId: string, disputeId: string, req: any) {
-    const dispute = await this.db.queryOne<any>(
-      `SELECT id, order_id, booking_id, buyer_id, provider_id, status FROM disputes WHERE id = $1`,
-      [disputeId],
-    );
-    if (!dispute) throw new NotFoundException('Dispute not found');
-    if (['resolved_buyer', 'resolved_provider', 'closed'].includes(dispute.status)) {
-      throw new BadRequestException('Dispute already resolved');
+    // Accept the canonical values and the older "favor_*" spelling; anything
+    // else is an error rather than a silent no-op.
+    const raw = String(req?.resolution ?? '').replace(/^favor_/, '');
+    if (raw !== 'buyer' && raw !== 'provider') {
+      throw new BadRequestException("resolution must be 'buyer' or 'provider'");
     }
+    const resolution: 'buyer' | 'provider' = raw;
+    const notes = req?.notes != null ? String(req.notes).slice(0, TEXT_MAX) : null;
 
-    let newStatus = dispute.status;
-    let refundAmount = 0;
+    const outcome = await this.db.transaction(async (client) => {
+      // Claim the dispute first so two staff members (or a double-click)
+      // cannot both resolve it and refund twice.
+      const dispute = (
+        await client.query(
+          `UPDATE disputes SET status = $1, resolved_by = $2, resolution_notes = $3, updated_at = NOW()
+           WHERE id = $4 AND status IN ('open','provider_responded')
+           RETURNING id, order_id, booking_id, buyer_id, provider_id`,
+          [resolution === 'buyer' ? 'resolved_buyer' : 'resolved_provider', adminUserId, notes, disputeId],
+        )
+      ).rows[0];
+      if (!dispute) return null;
 
-    await this.db.transaction(async (client) => {
-      if (req?.resolution === 'buyer') {
-        newStatus = 'resolved_buyer';
-        refundAmount = Number(req?.refund_amount) || 0;
-        if (!refundAmount) {
-          if (dispute.order_id) {
-            const order = (await client.query(`SELECT total FROM orders WHERE id = $1`, [dispute.order_id])).rows[0];
-            if (order) refundAmount = Number(order.total);
-          } else if (dispute.booking_id) {
-            const booking = (await client.query(`SELECT price FROM bookings WHERE id = $1`, [dispute.booking_id])).rows[0];
-            if (booking) refundAmount = Number(booking.price);
-          }
+      let refundAmount = 0;
+      let payoutAlreadyReleased = false;
+
+      if (resolution === 'buyer') {
+        // The most that can be refunded is what the buyer actually paid.
+        const table = dispute.order_id ? 'orders' : 'bookings';
+        const targetId = dispute.order_id ?? dispute.booking_id;
+        const target = (
+          await client.query(
+            `SELECT payment_status, payment_ref FROM ${table} WHERE id = $1 FOR UPDATE`,
+            [targetId],
+          )
+        ).rows[0];
+        let paid = 0;
+        if (target?.payment_status === 'paid' && target.payment_ref) {
+          const pay = (
+            await client.query(
+              `SELECT amount FROM payments WHERE reference = $1 AND status = 'success'`,
+              [target.payment_ref],
+            )
+          ).rows[0];
+          paid = Number(pay?.amount ?? 0);
+          // Earlier disputes on the same order/booking may already have
+          // refunded part of it; the total refunded can never exceed what was paid.
+          const col0 = dispute.order_id ? 'order_id' : 'booking_id';
+          const prior = (
+            await client.query(
+              `SELECT COALESCE(SUM(refund_amount), 0) AS s FROM disputes WHERE ${col0} = $1 AND id <> $2`,
+              [targetId, disputeId],
+            )
+          ).rows[0];
+          paid = Math.max(0, paid - Number(prior?.s ?? 0));
         }
+
+        const requested =
+          req?.refund_amount === undefined || req?.refund_amount === null || req?.refund_amount === ''
+            ? paid
+            : toAmount(req.refund_amount) ?? -1;
+        if (requested < 0) throw new BadRequestException('Refund amount is not valid');
+        if (requested > paid) {
+          throw new BadRequestException(
+            paid > 0
+              ? `Refund cannot be more than the ${this.naira(paid)} that was paid`
+              : 'Nothing was paid for this, so there is nothing to refund',
+          );
+        }
+        refundAmount = requested;
+
         if (refundAmount > 0) {
-          const buyer = (await client.query(`SELECT id, wallet_balance FROM users WHERE id = $1`, [dispute.buyer_id])).rows[0];
-          if (buyer) {
-            const newBalance = Number(buyer.wallet_balance) + refundAmount;
-            await client.query(`UPDATE users SET wallet_balance = $1 WHERE id = $2`, [newBalance, buyer.id]);
-            const ref = 'DRF-' + randomUUID().replace(/-/g, '').slice(0, 12).toUpperCase();
+          await creditWallet(client, dispute.buyer_id, refundAmount, 'Dispute refund', ledgerRef('DRF'));
+          const col = dispute.order_id ? 'order_id' : 'booking_id';
+          payoutAlreadyReleased = !!(
             await client.query(
-              `INSERT INTO transactions (id, user_id, type, amount, description, reference, balance_after, status, created_at)
-               VALUES ($1,$2,'credit',$3,'Dispute refund',$4,$5,'completed',NOW())`,
-              [randomUUID(), buyer.id, refundAmount, ref, newBalance],
+              `SELECT 1 FROM payouts WHERE ${col} = $1 AND status = 'paid' LIMIT 1`,
+              [targetId],
+            )
+          ).rows[0];
+          // Stop any payout that has not gone out yet (orders AND bookings).
+          await client.query(
+            `UPDATE payouts SET status = 'cancelled', updated_at = NOW()
+             WHERE ${col} = $1 AND status IN ('pending','held')`,
+            [targetId],
+          );
+          if (refundAmount >= paid) {
+            // Fully refunded: nothing left to refund on a later cancel.
+            await client.query(
+              `UPDATE ${table} SET payment_status = 'refunded', updated_at = NOW() WHERE id = $1`,
+              [targetId],
             );
-          }
-          if (dispute.order_id) {
             await client.query(
-              `UPDATE payouts SET status = 'cancelled', updated_at = NOW()
-               WHERE order_id = $1 AND status IN ('pending','held')`,
-              [dispute.order_id],
+              `UPDATE payments SET status = 'refunded', updated_at = NOW() WHERE reference = $1`,
+              [target.payment_ref],
             );
           }
         }
-      } else if (req?.resolution === 'provider') {
-        newStatus = 'resolved_provider';
-        refundAmount = 0;
       }
-      await client.query(
-        `UPDATE disputes SET resolved_by = $1, resolution_notes = $2, status = $3, refund_amount = $4, updated_at = NOW() WHERE id = $5`,
-        [adminUserId, req?.notes ?? null, newStatus, refundAmount, disputeId],
-      );
+
+      await client.query(`UPDATE disputes SET refund_amount = $1 WHERE id = $2`, [refundAmount, disputeId]);
+      return { dispute, refundAmount, payoutAlreadyReleased };
     });
 
+    if (!outcome) throw new BadRequestException('Dispute already resolved');
+    const { dispute, refundAmount, payoutAlreadyReleased } = outcome;
+    const newStatus = resolution === 'buyer' ? 'resolved_buyer' : 'resolved_provider';
+
     // Notifications (best-effort, after commit)
-    if (req?.resolution === 'buyer') {
-      await this.notifier
-        .notify(
-          dispute.buyer_id,
-          'Dispute Resolved',
-          `Your dispute has been resolved in your favor. ${this.naira(refundAmount)} refunded to your wallet.`,
-          'payment',
-        )
-        .catch(() => undefined);
-    } else if (req?.resolution === 'provider') {
-      await this.notifier
-        .notify(
-          dispute.buyer_id,
-          'Dispute Resolved',
-          'Your dispute has been reviewed and resolved in favor of the provider.',
-          'system',
-        )
-        .catch(() => undefined);
-    }
+    await this.notifier
+      .notify(
+        dispute.buyer_id,
+        'Dispute Resolved',
+        resolution === 'buyer'
+          ? refundAmount > 0
+            ? `Your dispute has been resolved in your favor. ${this.naira(refundAmount)} refunded to your wallet.`
+            : 'Your dispute has been resolved in your favor.'
+          : 'Your dispute has been reviewed and resolved in favor of the provider.',
+        resolution === 'buyer' && refundAmount > 0 ? 'payment' : 'system',
+      )
+      .catch(() => undefined);
     if (dispute.provider_id) {
       const prov = await this.db.queryOne<any>(
         `SELECT user_id FROM providers WHERE id = $1`,
         [dispute.provider_id],
       );
       if (prov) {
-        const outcome = req?.resolution === 'provider' ? 'in your favor' : 'in favor of the buyer';
+        const outcomeText = resolution === 'provider' ? 'in your favor' : 'in favor of the buyer';
         await this.notifier
-          .notify(prov.user_id, 'Dispute Resolved', `A dispute has been resolved ${outcome}.`, 'system')
+          .notify(prov.user_id, 'Dispute Resolved', `A dispute has been resolved ${outcomeText}.`, 'system')
           .catch(() => undefined);
       }
     }
 
-    return { status: newStatus, refund_amount: refundAmount };
+    return {
+      status: newStatus,
+      refund_amount: refundAmount,
+      // True when the seller had already been paid out before the refund, so
+      // staff know the platform covered it and may need to recover it.
+      payout_already_released: payoutAlreadyReleased,
+    };
   }
 }

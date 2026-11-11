@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { DatabaseService } from '../../database/database.service';
+import { roleHasPermission } from '../../common/permissions';
 
 interface AuthUser {
   user_id: string;
@@ -50,7 +51,7 @@ export class DeliveryService {
       [req?.order_id],
     );
     if (!order) throw new NotFoundException('Order not found');
-    if (order.user_id !== user.user_id && user.role !== 'admin') {
+    if (order.user_id !== user.user_id && !roleHasPermission(user.role, 'orders.manage')) {
       throw new ForbiddenException('Not authorized');
     }
     if (order.payment_status !== 'paid') {
@@ -139,7 +140,7 @@ export class DeliveryService {
       [orderId],
     );
     if (!delivery) throw new NotFoundException('No delivery found for this order');
-    if (delivery.user_id !== user.user_id && user.role !== 'admin') {
+    if (delivery.user_id !== user.user_id && !roleHasPermission(user.role, 'orders.manage')) {
       throw new ForbiddenException('Not authorized');
     }
     // Real-time Kwik sync happens here when configured (TODO).
@@ -163,7 +164,7 @@ export class DeliveryService {
       [orderId],
     );
     if (!delivery) throw new NotFoundException('No delivery found for this order');
-    if (delivery.user_id !== user.user_id && user.role !== 'admin') {
+    if (delivery.user_id !== user.user_id && !roleHasPermission(user.role, 'orders.manage')) {
       throw new ForbiddenException('Not authorized');
     }
     if (['delivered', 'cancelled'].includes(delivery.status)) {

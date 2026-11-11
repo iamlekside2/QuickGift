@@ -5,5 +5,7 @@ import { PaymentsService } from './payments.service';
 @Module({
   controllers: [PaymentsController],
   providers: [PaymentsService],
+  // WalletService uses it to record and settle wallet top-ups.
+  exports: [PaymentsService],
 })
 export class PaymentsModule {}

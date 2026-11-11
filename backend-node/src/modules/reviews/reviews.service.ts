@@ -7,6 +7,7 @@ import { randomUUID } from 'crypto';
 import { PoolClient } from 'pg';
 import { DatabaseService } from '../../database/database.service';
 import { NotifyService } from '../../common/notify.service';
+import { paging } from '../../common/paging';
 
 const REVIEW_FIELDS = `id, user_id, user_name, target_type, target_id, order_id, booking_id, rating, comment, created_at`;
 
@@ -43,10 +44,17 @@ export class ReviewsService {
   }
 
   async create(userId: string, req: any) {
+    // A whole number of stars, 1-5. (A missing rating is NaN, which would
+    // otherwise slip past a range check and poison the average.)
     const rating = Number(req?.rating);
-    if (rating < 1 || rating > 5) {
-      throw new BadRequestException('Rating must be between 1 and 5');
+    if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+      throw new BadRequestException('Rating must be a whole number between 1 and 5');
     }
+    if (req?.target_type !== 'product' && req?.target_type !== 'provider') {
+      throw new BadRequestException('You can only review a product or a provider');
+    }
+    if (!req?.target_id) throw new BadRequestException('Nothing to review');
+    if (req.comment != null) req.comment = String(req.comment).trim().slice(0, 1000) || null;
 
     // Self-review guard for providers
     let provider: any = null;
@@ -55,8 +63,30 @@ export class ReviewsService {
         `SELECT id, user_id FROM providers WHERE id = $1`,
         [req.target_id],
       );
-      if (provider && provider.user_id === userId) {
+      if (!provider) throw new NotFoundException('Provider not found');
+      if (provider.user_id === userId) {
         throw new BadRequestException('You cannot review yourself');
+      }
+      // Only someone who actually paid for a booking with them may review.
+      const booked = await this.db.queryOne(
+        `SELECT 1 FROM bookings
+         WHERE user_id = $1 AND provider_id = $2 AND payment_status IN ('paid','refunded') LIMIT 1`,
+        [userId, req.target_id],
+      );
+      if (!booked) {
+        throw new BadRequestException('You can review a provider after booking with them');
+      }
+    } else {
+      const exists = await this.db.queryOne(`SELECT 1 FROM products WHERE id = $1`, [req.target_id]);
+      if (!exists) throw new NotFoundException('Product not found');
+      // Only someone who actually bought the product may review it.
+      const bought = await this.db.queryOne(
+        `SELECT 1 FROM order_items oi JOIN orders o ON o.id = oi.order_id
+         WHERE o.user_id = $1 AND oi.product_id = $2 AND o.payment_status IN ('paid','refunded') LIMIT 1`,
+        [userId, req.target_id],
+      );
+      if (!bought) {
+        throw new BadRequestException('You can review a product after buying it');
       }
     }
 
@@ -125,13 +155,12 @@ export class ReviewsService {
   }
 
   async list(targetType: string, targetId: string, q: any) {
-    const page = Number(q.page ?? 1);
-    const perPage = Number(q.per_page ?? 20);
+    const { perPage, offset } = paging(q);
     return this.db.query(
       `SELECT ${REVIEW_FIELDS} FROM reviews
        WHERE target_type = $1 AND target_id = $2
        ORDER BY created_at DESC LIMIT $3 OFFSET $4`,
-      [targetType, targetId, perPage, (page - 1) * perPage],
+      [targetType, targetId, perPage, offset],
     );
   }
 

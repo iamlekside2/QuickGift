@@ -113,8 +113,8 @@ export class AdminController {
 
   @Patch('users/:id')
   @Perm('users.manage')
-  updateUser(@Param('id') id: string, @Body() body: any) {
-    return this.admin.updateUser(id, body);
+  updateUser(@Param('id') id: string, @Body() body: any, @CurrentUser() user: AuthUser) {
+    return this.admin.updateUser(id, body, user);
   }
 
   @Delete('users/:id')
@@ -127,6 +127,13 @@ export class AdminController {
   @Perm('providers.manage')
   updateProvider(@Param('id') id: string, @Body() body: any) {
     return this.admin.updateProvider(id, body);
+  }
+
+  // All products in every status (the public /products list is active-only).
+  @Get('products')
+  @Perm('products.view')
+  products(@Query() q: Record<string, string>) {
+    return this.admin.listProducts(q);
   }
 
   @Post('products/clear')

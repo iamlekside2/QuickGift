@@ -5,11 +5,13 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { randomUUID } from 'crypto';
+import { randomBytes, randomUUID, timingSafeEqual } from 'crypto';
 import { DatabaseService } from '../../database/database.service';
-import { SecurityService } from '../../common/security.service';
+import { SecurityService, isDeployed, signingSecret } from '../../common/security.service';
 import { NotifyService } from '../../common/notify.service';
 import { AuditService } from '../../common/audit.service';
+import { creditWallet, ledgerRef } from '../../common/ledger';
+import { paging } from '../../common/paging';
 import {
   ADMIN_ROLES,
   ELEVATED_ROLES,
@@ -19,7 +21,7 @@ import {
 } from '../../common/permissions';
 import { AuthUser } from '../../common/current-user.decorator';
 
-const USER_SAFE_FIELDS = `id, full_name, email, phone, avatar_url, city, address, lat, lng, role, is_active, wallet_balance, created_at, push_token, updated_at`;
+const USER_SAFE_FIELDS = `id, full_name, email, phone, avatar_url, city, address, lat, lng, role, is_active, wallet_balance, created_at, updated_at`;
 const STAFF_SAFE_FIELDS = `id, full_name, email, phone, role, is_active, created_at, updated_at`;
 const PAID_PAYOUT_STATUSES = ['held', 'released', 'paid'];
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -41,13 +43,14 @@ export class AdminService {
   }
 
   /** Generic paginated `SELECT *` list → {items, total, page, per_page}. */
-  private async list(table: string, where: string[], params: any[], page: number, perPage: number) {
+  private async list(table: string, where: string[], params: any[], q: any) {
+    const { page, perPage, offset } = paging(q);
     const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
     const total = await this.num(
       `SELECT count(*)::int AS v FROM ${table} ${whereSql}`,
       params,
     );
-    const p = [...params, perPage, (page - 1) * perPage];
+    const p = [...params, perPage, offset];
     const items = await this.db.query(
       `SELECT * FROM ${table} ${whereSql} ORDER BY created_at DESC LIMIT $${p.length - 1} OFFSET $${p.length}`,
       p,
@@ -55,21 +58,62 @@ export class AdminService {
     return { items, total, page, per_page: perPage };
   }
 
+  /**
+   * Paginated list over a joined FROM clause, so the console can show names
+   * instead of raw ids. `select`/`from`/`orderBy` are fixed strings written
+   * here (never request data); every request value is a bound parameter.
+   */
+  private async listJoined(
+    opts: { select: string; from: string; orderBy: string },
+    where: string[],
+    params: any[],
+    q: any,
+  ) {
+    const { page, perPage, offset } = paging(q);
+    const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+    const total = await this.num(
+      `SELECT count(*)::int AS v FROM ${opts.from} ${whereSql}`,
+      params,
+    );
+    const p = [...params, perPage, offset];
+    const items = await this.db.query(
+      `SELECT ${opts.select} FROM ${opts.from} ${whereSql}
+       ORDER BY ${opts.orderBy} LIMIT $${p.length - 1} OFFSET $${p.length}`,
+      p,
+    );
+    return { items, total, page, per_page: perPage };
+  }
+
+  /** `%term%` for ILIKE, with LIKE wildcards in the term escaped. */
+  private like(term: unknown): string {
+    return '%' + String(term).trim().replace(/[\\%_]/g, (c) => '\\' + c) + '%';
+  }
+
   // ---- seed (secret-gated) ----
   async seed(secret: string) {
     if (!secret) throw new ForbiddenException('Secret required');
-    if (secret !== (process.env.SECRET_KEY || 'dev-only-insecure-key')) {
+    const expected = Buffer.from(signingSecret());
+    const given = Buffer.from(String(secret));
+    if (given.length !== expected.length || !timingSafeEqual(given, expected)) {
       throw new ForbiddenException('Invalid secret');
     }
     const results: string[] = [];
     const admin = await this.db.queryOne(`SELECT 1 FROM users WHERE email = 'admin@quickgift.ng'`);
     if (!admin) {
+      // Never create a deployed owner with a well-known password: use
+      // ADMIN_INITIAL_PASSWORD if provided, else generate one and show it once.
+      const initial =
+        process.env.ADMIN_INITIAL_PASSWORD ||
+        (isDeployed() ? randomBytes(12).toString('base64url') : 'admin123');
       await this.db.query(
         `INSERT INTO users (id, full_name, phone, email, password_hash, role, city, is_active, wallet_balance, created_at, updated_at)
          VALUES ($1,'QuickGift Admin','+2348000000000','admin@quickgift.ng',$2,'owner','Lagos',true,0,NOW(),NOW())`,
-        [randomUUID(), this.security.hashPassword('admin123')],
+        [randomUUID(), this.security.hashPassword(initial)],
       );
       results.push('Owner account created');
+      if (!process.env.ADMIN_INITIAL_PASSWORD && isDeployed()) {
+        results.push(`Temporary owner password (shown once, change it now): ${initial}`);
+      }
     } else {
       results.push('Admin user: already exists');
     }
@@ -123,9 +167,24 @@ export class AdminService {
   listOrders(q: any) {
     const where: string[] = [];
     const params: any[] = [];
-    if (q.status) { params.push(q.status); where.push(`status = $${params.length}`); }
-    if (q.order_type) { params.push(q.order_type); where.push(`order_type = $${params.length}`); }
-    return this.list('orders', where, params, Number(q.page ?? 1), Number(q.per_page ?? 20));
+    if (q.status) { params.push(q.status); where.push(`o.status = $${params.length}`); }
+    if (q.order_type) { params.push(q.order_type); where.push(`o.order_type = $${params.length}`); }
+    if (q.search) {
+      params.push(this.like(q.search));
+      const i = params.length;
+      where.push(`(o.order_number ILIKE $${i} OR o.recipient_name ILIKE $${i} OR u.full_name ILIKE $${i} OR u.phone ILIKE $${i})`);
+    }
+    return this.listJoined(
+      {
+        select: `o.*, u.full_name AS customer_name, u.phone AS customer_phone,
+                 (SELECT count(*)::int FROM order_items oi WHERE oi.order_id = o.id) AS item_count`,
+        from: `orders o LEFT JOIN users u ON u.id = o.user_id`,
+        orderBy: `o.created_at DESC`,
+      },
+      where,
+      params,
+      q,
+    );
   }
 
   async listUsers(q: any) {
@@ -138,10 +197,9 @@ export class AdminService {
       where.push(`(full_name ILIKE $${i} OR email ILIKE $${i} OR phone ILIKE $${i})`);
     }
     const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
-    const page = Number(q.page ?? 1);
-    const perPage = Number(q.per_page ?? 20);
+    const { page, perPage, offset } = paging(q);
     const total = await this.num(`SELECT count(*)::int AS v FROM users ${whereSql}`, params);
-    const p = [...params, perPage, (page - 1) * perPage];
+    const p = [...params, perPage, offset];
     const items = await this.db.query(
       `SELECT ${USER_SAFE_FIELDS} FROM users ${whereSql} ORDER BY created_at DESC LIMIT $${p.length - 1} OFFSET $${p.length}`,
       p,
@@ -294,9 +352,9 @@ export class AdminService {
   }
 
   // ---- edit user ----
-  async updateUser(id: string, data: any) {
-    const u = await this.db.queryOne<{ id: string; role: string }>(
-      `SELECT id, role FROM users WHERE id = $1`,
+  async updateUser(id: string, data: any, actor?: AuthUser) {
+    const u = await this.db.queryOne<{ id: string; role: string; full_name: string; email: string | null }>(
+      `SELECT id, role, full_name, email FROM users WHERE id = $1`,
       [id],
     );
     if (!u) throw new NotFoundException('User not found');
@@ -333,6 +391,16 @@ export class AdminService {
       await this.db.query(
         `UPDATE users SET ${sets.join(', ')}, updated_at = NOW() WHERE id = $${params.length}`,
         params,
+      );
+      // Changing a customer's phone/email changes where their login code is
+      // sent, so always leave a trail of who did it.
+      const changed = allowed.filter((k) => data && data[k] !== undefined);
+      await this.writeAudit(
+        actor,
+        'updated',
+        { id, full_name: u.full_name, email: u.email },
+        `Edited user: ${changed.join(', ')}`,
+        'user',
       );
     }
     return this.db.queryOne(`SELECT ${USER_SAFE_FIELDS} FROM users WHERE id = $1`, [id]);
@@ -589,31 +657,78 @@ export class AdminService {
     return this.db.queryOne(`SELECT * FROM providers WHERE id = $1`, [id]);
   }
 
-  // ---- delete products ----
+  // ---- products ----
+  /** Every product regardless of status, for the console (the public list is active-only). */
+  listProducts(q: any) {
+    const where: string[] = [];
+    const params: any[] = [];
+    if (q.status) { params.push(q.status); where.push(`p.status = $${params.length}`); }
+    if (q.category_id) { params.push(q.category_id); where.push(`p.category_id = $${params.length}`); }
+    if (q.search) {
+      params.push(this.like(q.search));
+      const i = params.length;
+      where.push(`(p.name ILIKE $${i} OR p.vendor_name ILIKE $${i})`);
+    }
+    return this.listJoined(
+      {
+        select: `p.*, c.name AS category_name`,
+        from: `products p LEFT JOIN categories c ON c.id = p.category_id`,
+        orderBy: `p.created_at DESC`,
+      },
+      where,
+      params,
+      q,
+    );
+  }
+
+  /**
+   * Removes a product. One that has ever been ordered is archived (hidden from
+   * the store) instead of deleted: deleting it would also erase the line items
+   * of paid orders, which are the financial record.
+   */
   async deleteProduct(id: string, actor?: AuthUser) {
     const p = await this.db.queryOne<{ id: string; name: string }>(
       `SELECT id, name FROM products WHERE id = $1`,
       [id],
     );
     if (!p) throw new NotFoundException('Product not found');
-    await this.db.transaction(async (client) => {
-      await client.query(`DELETE FROM order_items WHERE product_id = $1`, [id]);
-      await client.query(`DELETE FROM products WHERE id = $1`, [id]);
-    });
+    const ordered = await this.db.queryOne(
+      `SELECT 1 FROM order_items WHERE product_id = $1 LIMIT 1`,
+      [id],
+    );
+    if (ordered) {
+      await this.db.query(
+        `UPDATE products SET status = 'inactive', updated_at = NOW() WHERE id = $1`,
+        [id],
+      );
+      await this.writeAudit(actor, 'archived', { id, full_name: p.name },
+        `Archived product "${p.name}" (it has order history, so it was hidden rather than deleted)`, 'product');
+      return { ok: true, archived: true };
+    }
+    await this.db.query(`DELETE FROM products WHERE id = $1`, [id]);
     await this.writeAudit(actor, 'deleted', { id, full_name: p.name },
       `Removed product "${p.name}"`, 'product');
-    return { ok: true };
+    return { ok: true, archived: false };
   }
 
   async clearProducts(actor?: AuthUser) {
-    const n = await this.num(`SELECT count(*)::int AS v FROM products`);
-    await this.db.transaction(async (client) => {
-      await client.query(`DELETE FROM order_items WHERE product_id IN (SELECT id FROM products)`);
-      await client.query(`DELETE FROM products`);
+    const result = await this.db.transaction(async (client) => {
+      const archived = (
+        await client.query(
+          `UPDATE products SET status = 'inactive', updated_at = NOW()
+           WHERE id IN (SELECT DISTINCT product_id FROM order_items) AND status <> 'inactive'`,
+        )
+      ).rowCount ?? 0;
+      const deleted = (
+        await client.query(
+          `DELETE FROM products WHERE id NOT IN (SELECT DISTINCT product_id FROM order_items)`,
+        )
+      ).rowCount ?? 0;
+      return { archived, deleted };
     });
     await this.writeAudit(actor, 'cleared', {},
-      `Cleared all products (${n} removed)`, 'product');
-    return { ok: true, deleted: n };
+      `Cleared products (${result.deleted} removed, ${result.archived} archived because they have order history)`, 'product');
+    return { ok: true, ...result };
   }
 
   // ---- create / edit products ----
@@ -632,6 +747,9 @@ export class AdminService {
     const id = randomUUID();
     const compare = data?.compare_price !== undefined && data?.compare_price !== '' && data?.compare_price !== null
       ? Number(data.compare_price) : null;
+    if (compare !== null && (!Number.isFinite(compare) || compare < 0)) {
+      throw new BadRequestException('Compare-at price is not valid');
+    }
     const status = ['active', 'inactive', 'draft'].includes(data?.status) ? data.status : 'active';
 
     await this.db.query(
@@ -672,7 +790,20 @@ export class AdminService {
     for (const k of allowed) {
       if (data && data[k] !== undefined) {
         let v: any = data[k];
-        if (k === 'price' || k === 'compare_price') v = v === '' || v === null ? null : Number(v);
+        if (k === 'price' || k === 'compare_price') {
+          v = v === '' || v === null ? null : Number(v);
+          if (v !== null && (!Number.isFinite(v) || v < 0)) {
+            throw new BadRequestException('Price is not valid');
+          }
+          if (k === 'price' && v === null) throw new BadRequestException('Price is required');
+        } else if (k === 'status') {
+          if (!['active', 'inactive', 'draft'].includes(v)) {
+            throw new BadRequestException('Invalid status');
+          }
+        } else if (k === 'name') {
+          v = String(v).trim();
+          if (!v) throw new BadRequestException('Product name is required');
+        }
         else if (k === 'is_featured') v = !!v;
         else if (v === '') v = null;
         params.push(v);
@@ -700,84 +831,162 @@ export class AdminService {
   listBookings(q: any) {
     const where: string[] = [];
     const params: any[] = [];
-    if (q.status) { params.push(q.status); where.push(`status = $${params.length}`); }
-    return this.list('bookings', where, params, Number(q.page ?? 1), Number(q.per_page ?? 20));
+    if (q.status) { params.push(q.status); where.push(`b.status = $${params.length}`); }
+    if (q.search) {
+      params.push(this.like(q.search));
+      const i = params.length;
+      where.push(`(b.booking_number ILIKE $${i} OR u.full_name ILIKE $${i} OR pr.business_name ILIKE $${i} OR b.service_name ILIKE $${i})`);
+    }
+    return this.listJoined(
+      {
+        select: `b.*, u.full_name AS client_name, u.phone AS client_phone, pr.business_name AS provider_name`,
+        from: `bookings b LEFT JOIN users u ON u.id = b.user_id LEFT JOIN providers pr ON pr.id = b.provider_id`,
+        orderBy: `b.created_at DESC`,
+      },
+      where,
+      params,
+      q,
+    );
   }
 
   listPayments(q: any) {
     const where: string[] = [];
     const params: any[] = [];
     if (q.status) { params.push(q.status); where.push(`status = $${params.length}`); }
-    return this.list('payments', where, params, Number(q.page ?? 1), Number(q.per_page ?? 20));
+    return this.list('payments', where, params, q);
   }
 
   listTransactions(q: any) {
     const where: string[] = [];
     const params: any[] = [];
-    if (q.type) { params.push(q.type); where.push(`type = $${params.length}`); }
-    return this.list('transactions', where, params, Number(q.page ?? 1), Number(q.per_page ?? 20));
+    if (q.type) { params.push(q.type); where.push(`t.type = $${params.length}`); }
+    if (q.search) {
+      params.push(this.like(q.search));
+      const i = params.length;
+      where.push(`(t.reference ILIKE $${i} OR t.description ILIKE $${i} OR u.full_name ILIKE $${i})`);
+    }
+    return this.listJoined(
+      {
+        select: `t.*, u.full_name AS user_name, u.phone AS user_phone`,
+        from: `transactions t LEFT JOIN users u ON u.id = t.user_id`,
+        orderBy: `t.created_at DESC`,
+      },
+      where,
+      params,
+      q,
+    );
   }
 
   listPayouts(q: any) {
     const where: string[] = [];
     const params: any[] = [];
-    if (q.status) { params.push(q.status); where.push(`status = $${params.length}`); }
-    return this.list('payouts', where, params, Number(q.page ?? 1), Number(q.per_page ?? 20));
+    if (q.status) { params.push(q.status); where.push(`po.status = $${params.length}`); }
+    if (q.search) {
+      params.push(this.like(q.search));
+      const i = params.length;
+      where.push(`(pr.business_name ILIKE $${i} OR o.order_number ILIKE $${i} OR b.booking_number ILIKE $${i})`);
+    }
+    return this.listJoined(
+      {
+        select: `po.*, pr.business_name AS provider_name, o.order_number, b.booking_number`,
+        from: `payouts po
+               LEFT JOIN providers pr ON pr.id = po.provider_id
+               LEFT JOIN orders o ON o.id = po.order_id
+               LEFT JOIN bookings b ON b.id = po.booking_id`,
+        orderBy: `po.created_at DESC`,
+      },
+      where,
+      params,
+      q,
+    );
   }
 
   listDeliveries(q: any) {
     const where: string[] = [];
     const params: any[] = [];
     if (q.status) { params.push(q.status); where.push(`status = $${params.length}`); }
-    return this.list('deliveries', where, params, Number(q.page ?? 1), Number(q.per_page ?? 20));
+    return this.list('deliveries', where, params, q);
   }
 
   // ---- payouts ----
+  /**
+   * Releases a held payout to the provider's wallet exactly once. The status
+   * flip is the first statement and is conditional, so a double-click or two
+   * staff members releasing together cannot credit the provider twice.
+   */
   async releasePayout(payoutId: string, actor?: AuthUser) {
-    const payout = await this.db.queryOne<any>(`SELECT * FROM payouts WHERE id = $1`, [payoutId]);
-    if (!payout) throw new NotFoundException('Payout not found');
-    if (payout.status !== 'held') {
-      throw new BadRequestException(`Cannot release payout in '${payout.status}' status`);
-    }
-    let providerUserId: string | null = null;
-    await this.db.transaction(async (client) => {
-      const provider = (await client.query(`SELECT id, user_id FROM providers WHERE id = $1`, [payout.provider_id])).rows[0];
-      if (provider) {
-        const user = (await client.query(`SELECT id, wallet_balance FROM users WHERE id = $1`, [provider.user_id])).rows[0];
-        if (user) {
-          providerUserId = user.id;
-          const newBalance = Number(user.wallet_balance) + Number(payout.amount);
-          await client.query(`UPDATE users SET wallet_balance = $1 WHERE id = $2`, [newBalance, user.id]);
-          const ref = 'PO-' + randomUUID().replace(/-/g, '').slice(0, 12).toUpperCase();
-          const target = payout.order_id ? 'order' : 'booking';
-          await client.query(
-            `INSERT INTO transactions (id, user_id, type, amount, description, reference, balance_after, status, created_at)
-             VALUES ($1,$2,'credit',$3,$4,$5,$6,'completed',NOW())`,
-            [randomUUID(), user.id, payout.amount, `Payout for ${target} ${payout.order_id || payout.booking_id}`, ref, newBalance],
-          );
-          await client.query(`UPDATE providers SET total_revenue = total_revenue + $1 WHERE id = $2`, [payout.amount, provider.id]);
-        }
+    const result = await this.db.transaction(async (client) => {
+      const payout = (
+        await client.query(
+          `UPDATE payouts SET status = 'paid', paid_at = NOW(), updated_at = NOW()
+           WHERE id = $1 AND status = 'held' RETURNING *`,
+          [payoutId],
+        )
+      ).rows[0];
+      if (!payout) {
+        const cur = (await client.query(`SELECT status FROM payouts WHERE id = $1`, [payoutId])).rows[0];
+        if (!cur) throw new NotFoundException('Payout not found');
+        throw new BadRequestException(`Cannot release payout in '${cur.status}' status`);
       }
-      await client.query(`UPDATE payouts SET status = 'paid', paid_at = NOW(), updated_at = NOW() WHERE id = $1`, [payoutId]);
+      if (payout.hold_until && new Date(payout.hold_until).getTime() > Date.now()) {
+        throw new BadRequestException(
+          'This payout is still in its hold period and cannot be released yet.',
+        );
+      }
+      // Never pay out for something that was refunded or cancelled.
+      const table = payout.order_id ? 'orders' : 'bookings';
+      const target = (
+        await client.query(`SELECT status, payment_status FROM ${table} WHERE id = $1`, [
+          payout.order_id ?? payout.booking_id,
+        ])
+      ).rows[0];
+      if (!target || target.payment_status !== 'paid' || ['cancelled', 'declined'].includes(target.status)) {
+        throw new BadRequestException(
+          'The order or booking behind this payout is no longer paid, so it cannot be released.',
+        );
+      }
+      const provider = (
+        await client.query(`SELECT id, user_id FROM providers WHERE id = $1`, [payout.provider_id])
+      ).rows[0];
+      if (!provider) throw new BadRequestException('The provider for this payout no longer exists');
+      const kind = payout.order_id ? 'order' : 'booking';
+      const balance = await creditWallet(
+        client,
+        provider.user_id,
+        Number(payout.amount),
+        `Payout for ${kind} ${payout.order_id || payout.booking_id}`,
+        ledgerRef('PO'),
+      );
+      if (balance === null) throw new BadRequestException('The provider account no longer exists');
+      await client.query(
+        `UPDATE providers SET total_revenue = total_revenue + $1 WHERE id = $2`,
+        [payout.amount, provider.id],
+      );
+      return { payout, providerUserId: provider.user_id as string };
     });
-    if (providerUserId) {
-      await this.notifier
-        .notify(providerUserId, 'Payment Received!', `₦${Math.round(payout.amount).toLocaleString('en-US')} has been credited to your wallet.`, 'payment')
-        .catch(() => undefined);
-    }
-    const amt = `₦${Math.round(payout.amount).toLocaleString('en-US')}`;
+
+    const amt = `₦${Math.round(Number(result.payout.amount)).toLocaleString('en-US')}`;
+    await this.notifier
+      .notify(result.providerUserId, 'Payment Received!', `${amt} has been credited to your wallet.`, 'payment')
+      .catch(() => undefined);
     await this.writeAudit(actor, 'released', { id: payoutId, full_name: amt },
       `Released ${amt} payout`, 'payout');
-    return { status: 'ok', payout_id: payoutId, amount: payout.amount };
+    return { status: 'ok', payout_id: payoutId, amount: result.payout.amount };
   }
 
   async cancelPayout(payoutId: string, actor?: AuthUser) {
-    const payout = await this.db.queryOne<any>(`SELECT status, amount FROM payouts WHERE id = $1`, [payoutId]);
-    if (!payout) throw new NotFoundException('Payout not found');
-    if (payout.status === 'paid') {
-      throw new BadRequestException('Cannot cancel an already paid payout');
+    const payout = await this.db.queryOne<any>(
+      `UPDATE payouts SET status = 'cancelled', updated_at = NOW()
+       WHERE id = $1 AND status IN ('held','pending') RETURNING amount`,
+      [payoutId],
+    );
+    if (!payout) {
+      const cur = await this.db.queryOne<any>(`SELECT status FROM payouts WHERE id = $1`, [payoutId]);
+      if (!cur) throw new NotFoundException('Payout not found');
+      throw new BadRequestException(
+        cur.status === 'paid' ? 'Cannot cancel an already paid payout' : `Payout is already ${cur.status}`,
+      );
     }
-    await this.db.query(`UPDATE payouts SET status = 'cancelled', updated_at = NOW() WHERE id = $1`, [payoutId]);
     const amt = `₦${Math.round(Number(payout.amount) || 0).toLocaleString('en-US')}`;
     await this.writeAudit(actor, 'cancelled', { id: payoutId, full_name: amt },
       `Cancelled ${amt} payout`, 'payout');
@@ -817,40 +1026,76 @@ export class AdminService {
     return rows;
   }
 
+  /** Wallet withdrawals awaiting (or done with) a bank transfer by staff. */
   listWithdrawals(q: any) {
-    const where: string[] = [`description LIKE '%Withdrawal%'`];
+    const where: string[] = [`t.type = 'debit'`, `t.reference LIKE 'WDR-%'`];
     const params: any[] = [];
-    if (q.status) { params.push(q.status); where.push(`status = $${params.length}`); }
-    return this.list('transactions', where, params, Number(q.page ?? 1), Number(q.per_page ?? 20));
+    if (q.status) { params.push(q.status); where.push(`t.status = $${params.length}`); }
+    return this.listJoined(
+      {
+        select: `t.*, u.full_name AS user_name, u.phone AS user_phone`,
+        from: `transactions t LEFT JOIN users u ON u.id = t.user_id`,
+        orderBy: `t.created_at DESC`,
+      },
+      where,
+      params,
+      q,
+    );
+  }
+
+  /** Claims a pending withdrawal row (and only a withdrawal) for a new status. */
+  private async claimWithdrawal(client: any, txId: string, status: 'completed' | 'failed') {
+    const tx = (
+      await client.query(
+        `UPDATE transactions SET status = $1
+         WHERE id = $2 AND status = 'pending' AND type = 'debit' AND reference LIKE 'WDR-%'
+         RETURNING user_id, amount, reference`,
+        [status, txId],
+      )
+    ).rows[0];
+    if (tx) return tx;
+    const cur = (
+      await client.query(
+        `SELECT status FROM transactions WHERE id = $1 AND type = 'debit' AND reference LIKE 'WDR-%'`,
+        [txId],
+      )
+    ).rows[0];
+    if (!cur) throw new NotFoundException('Withdrawal not found');
+    throw new BadRequestException(`Withdrawal is already ${cur.status}`);
   }
 
   async completeWithdrawal(txId: string, actor?: AuthUser) {
-    const tx = await this.db.queryOne<any>(`SELECT status, amount FROM transactions WHERE id = $1`, [txId]);
-    if (!tx) throw new NotFoundException('Transaction not found');
-    if (tx.status !== 'pending') throw new BadRequestException(`Transaction is already ${tx.status}`);
-    await this.db.query(`UPDATE transactions SET status = 'completed' WHERE id = $1`, [txId]);
+    const tx = await this.db.transaction((client) => this.claimWithdrawal(client, txId, 'completed'));
     const amt = `₦${Math.round(Number(tx.amount) || 0).toLocaleString('en-US')}`;
+    await this.notifier
+      .notify(tx.user_id, 'Withdrawal Sent', `Your withdrawal of ${amt} has been sent to your bank.`, 'payment')
+      .catch(() => undefined);
     await this.writeAudit(actor, 'completed', { id: txId, full_name: amt },
       `Marked ${amt} withdrawal completed`, 'withdrawal');
     return { status: 'completed', transaction_id: txId };
   }
 
   async failWithdrawal(txId: string, actor?: AuthUser) {
-    const result = await this.db.transaction(async (client) => {
-      const tx = (await client.query(`SELECT user_id, amount, status FROM transactions WHERE id = $1`, [txId])).rows[0];
-      if (!tx) throw new NotFoundException('Transaction not found');
-      if (tx.status !== 'pending') throw new BadRequestException(`Transaction is already ${tx.status}`);
-      const user = (await client.query(`SELECT id, wallet_balance FROM users WHERE id = $1`, [tx.user_id])).rows[0];
-      if (user) {
-        await client.query(`UPDATE users SET wallet_balance = wallet_balance + $1 WHERE id = $2`, [tx.amount, user.id]);
-      }
-      await client.query(`UPDATE transactions SET status = 'failed' WHERE id = $1`, [txId]);
-      return { status: 'failed', transaction_id: txId, refunded: true, amount: tx.amount };
+    // Claim first, then return the money — two concurrent "fail" clicks cannot
+    // both refund.
+    const tx = await this.db.transaction(async (client) => {
+      const claimed = await this.claimWithdrawal(client, txId, 'failed');
+      await creditWallet(
+        client,
+        claimed.user_id,
+        Number(claimed.amount),
+        'Withdrawal reversed',
+        `${claimed.reference}-RV`,
+      );
+      return claimed;
     });
-    const amt = `₦${Math.round(Number(result.amount) || 0).toLocaleString('en-US')}`;
+    const amt = `₦${Math.round(Number(tx.amount) || 0).toLocaleString('en-US')}`;
+    await this.notifier
+      .notify(tx.user_id, 'Withdrawal Failed', `Your withdrawal of ${amt} could not be completed and has been returned to your wallet.`, 'payment')
+      .catch(() => undefined);
     await this.writeAudit(actor, 'failed', { id: txId, full_name: amt },
       `Marked ${amt} withdrawal failed (refunded to wallet)`, 'withdrawal');
-    return { status: result.status, transaction_id: result.transaction_id, refunded: result.refunded };
+    return { status: 'failed', transaction_id: txId, refunded: true };
   }
 
   async extendedAnalytics() {

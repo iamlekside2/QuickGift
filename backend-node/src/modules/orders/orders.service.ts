@@ -9,6 +9,12 @@ import { DatabaseService } from '../../database/database.service';
 import { NotifyService } from '../../common/notify.service';
 import { MailService } from '../../common/mail.service';
 import { SettingsService } from '../../common/settings.service';
+import { creditWallet, ledgerRef } from '../../common/ledger';
+import { paging } from '../../common/paging';
+import { roleHasPermission } from '../../common/permissions';
+
+const MAX_LINE_ITEMS = 50;
+const MAX_QUANTITY = 99;
 
 const DELIVERY_BASE_FEE = 0;
 const EXPRESS_MULTIPLIER = 1.0;
@@ -53,11 +59,18 @@ export class OrdersService {
   }
 
   async createOrder(userId: string, req: any) {
-    const items: Array<{ product_id: string; quantity: number }> =
-      req?.items ?? [];
+    const items: Array<{ product_id: string; quantity: number }> = Array.isArray(req?.items)
+      ? req.items
+      : [];
     if (!items.length) throw new BadRequestException('items is required');
+    if (items.length > MAX_LINE_ITEMS) {
+      throw new BadRequestException(`An order can have at most ${MAX_LINE_ITEMS} different items`);
+    }
+    if (!String(req?.delivery_address ?? '').trim()) {
+      throw new BadRequestException('A delivery address is required');
+    }
 
-    const ids = items.map((i) => i.product_id);
+    const ids = items.map((i) => String(i?.product_id ?? ''));
     const products = await this.db.query<any>(
       `SELECT id, name, vendor_name, price, status FROM products WHERE id = ANY($1::text[])`,
       [ids],
@@ -74,8 +87,15 @@ export class OrdersService {
       if (product.status !== 'active') {
         throw new BadRequestException(`"${product.name}" is currently unavailable`);
       }
-      const qty = item.quantity ?? 1;
-      const itemTotal = product.price * qty;
+      // Whole units only, 1..MAX_QUANTITY. A negative or fractional quantity
+      // would otherwise discount the order (and produce negative payouts).
+      const qty = item.quantity === undefined || item.quantity === null ? 1 : Number(item.quantity);
+      if (!Number.isInteger(qty) || qty < 1 || qty > MAX_QUANTITY) {
+        throw new BadRequestException(
+          `Quantity for "${product.name}" must be a whole number between 1 and ${MAX_QUANTITY}`,
+        );
+      }
+      const itemTotal = Number(product.price) * qty;
       subtotal += itemTotal;
       itemsData.push({
         product_id: product.id,
@@ -86,6 +106,8 @@ export class OrdersService {
         total_price: itemTotal,
       });
     }
+
+    if (!(subtotal > 0)) throw new BadRequestException('Order total must be greater than zero');
 
     const minOrder = await this.settings.getMinOrderAmount();
     if (minOrder > 0 && subtotal < minOrder) {
@@ -168,9 +190,8 @@ export class OrdersService {
       params.push(q.order_type);
       where.push(`order_type = $${params.length}`);
     }
-    const page = Number(q.page ?? 1);
-    const perPage = Number(q.per_page ?? 20);
-    params.push(perPage, (page - 1) * perPage);
+    const { perPage, offset } = paging(q);
+    params.push(perPage, offset);
     return this.db.query(
       `SELECT ${ORDER_FIELDS} FROM orders WHERE ${where.join(' AND ')}
        ORDER BY created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length}`,
@@ -178,47 +199,58 @@ export class OrdersService {
     );
   }
 
-  async cancelOrder(orderId: string, user: AuthUser) {
-    const order = await this.db.queryOne<any>(
-      `SELECT * FROM orders WHERE id = $1`,
-      [orderId],
-    );
-    if (!order) throw new NotFoundException('Order not found');
-    if (order.user_id !== user.user_id && user.role !== 'admin') {
-      throw new ForbiddenException('Not authorized');
-    }
-    if (!['pending', 'confirmed'].includes(order.status)) {
-      throw new BadRequestException(
-        `Cannot cancel order in '${order.status}' status`,
-      );
-    }
+  /**
+   * Cancels an order exactly once and refunds it if it was paid.
+   *
+   * The status change is the first statement and is conditional, so two
+   * simultaneous cancels (or a cancel racing a status change) cannot both
+   * refund. The refund is what was actually paid. Returns null when the order
+   * was not in a cancellable state.
+   */
+  private async cancelAndRefund(orderId: string) {
+    return this.db.transaction(async (client) => {
+      const order = (
+        await client.query(
+          `UPDATE orders SET status = 'cancelled', updated_at = NOW()
+           WHERE id = $1 AND status IN ('pending','confirmed')
+           RETURNING *`,
+          [orderId],
+        )
+      ).rows[0];
+      if (!order) return null;
 
-    let refunded = false;
-    await this.db.transaction(async (client) => {
+      let refundAmount = 0;
       if (order.payment_status === 'paid') {
-        const buyer = await client
-          .query(`SELECT id, wallet_balance FROM users WHERE id = $1`, [order.user_id])
-          .then((r) => r.rows[0]);
-        if (buyer) {
-          const newBalance = Number(buyer.wallet_balance) + Number(order.total);
+        const released = (
           await client.query(
-            `UPDATE users SET wallet_balance = $1 WHERE id = $2`,
-            [newBalance, buyer.id],
+            `SELECT 1 FROM payouts WHERE order_id = $1 AND status = 'paid' LIMIT 1`,
+            [orderId],
+          )
+        ).rows[0];
+        if (released) {
+          // The seller has already been paid out; refunding here would leave
+          // the platform out of pocket. This needs a dispute, not a cancel.
+          throw new BadRequestException(
+            'The payout for this order has already been released. Please raise a dispute instead.',
           );
-          const ref = 'RFD-' + randomUUID().replace(/-/g, '').slice(0, 12).toUpperCase();
-          await client.query(
-            `INSERT INTO transactions (id, user_id, type, amount, description, reference, balance_after, status, created_at)
-             VALUES ($1,$2,'credit',$3,$4,$5,$6,'completed',NOW())`,
-            [
-              randomUUID(),
-              buyer.id,
-              order.total,
-              `Refund for cancelled order ${order.order_number}`,
-              ref,
-              newBalance,
-            ],
+        }
+        const paid = order.payment_ref
+          ? (
+              await client.query(
+                `SELECT amount FROM payments WHERE reference = $1 AND status = 'success'`,
+                [order.payment_ref],
+              )
+            ).rows[0]
+          : null;
+        refundAmount = Number(paid?.amount ?? order.total);
+        if (refundAmount > 0) {
+          await creditWallet(
+            client,
+            order.user_id,
+            refundAmount,
+            `Refund for cancelled order ${order.order_number}`,
+            ledgerRef('RFD'),
           );
-          refunded = true;
         }
         await client.query(
           `UPDATE payouts SET status = 'cancelled', updated_at = NOW()
@@ -232,23 +264,39 @@ export class OrdersService {
           );
         }
         await client.query(
-          `UPDATE orders SET status = 'cancelled', payment_status = 'refunded', updated_at = NOW() WHERE id = $1`,
-          [orderId],
-        );
-      } else {
-        await client.query(
-          `UPDATE orders SET status = 'cancelled', updated_at = NOW() WHERE id = $1`,
+          `UPDATE orders SET payment_status = 'refunded', updated_at = NOW() WHERE id = $1`,
           [orderId],
         );
       }
+      return { order, refunded: refundAmount > 0, refundAmount };
     });
+  }
+
+  async cancelOrder(orderId: string, user: AuthUser) {
+    const existing = await this.db.queryOne<any>(
+      `SELECT id, user_id, status FROM orders WHERE id = $1`,
+      [orderId],
+    );
+    if (!existing) throw new NotFoundException('Order not found');
+    const isStaff = roleHasPermission(user.role, 'orders.manage');
+    if (existing.user_id !== user.user_id && !isStaff) {
+      throw new ForbiddenException('Not authorized');
+    }
+
+    const result = await this.cancelAndRefund(orderId);
+    if (!result) {
+      throw new BadRequestException(
+        `Cannot cancel order in '${existing.status}' status`,
+      );
+    }
+    const { order, refunded, refundAmount } = result;
 
     // Notify buyer
     if (refunded) {
       await this.notifier.notify(
         order.user_id,
         'Order Cancelled & Refunded',
-        `Order ${order.order_number} has been cancelled. ${this.naira(order.total)} refunded to your wallet.`,
+        `Order ${order.order_number} has been cancelled. ${this.naira(refundAmount)} refunded to your wallet.`,
         'payment',
       ).catch(() => undefined);
     } else {
@@ -292,7 +340,7 @@ export class OrdersService {
       status: 'cancelled',
       order_id: orderId,
       refunded,
-      refund_amount: refunded ? order.total : 0,
+      refund_amount: refundAmount,
     };
   }
 
@@ -318,9 +366,8 @@ export class OrdersService {
       params.push(q.status);
       sql += ` AND status = $${params.length}`;
     }
-    const page = Number(q.page ?? 1);
-    const perPage = Number(q.per_page ?? 20);
-    params.push(perPage, (page - 1) * perPage);
+    const { perPage, offset } = paging(q);
+    params.push(perPage, offset);
     sql += ` ORDER BY created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length}`;
     return this.db.query(sql, params);
   }
@@ -356,10 +403,12 @@ export class OrdersService {
         `Cannot transition from ${order.status} to ${status}`,
       );
     }
-    await this.db.query(
-      `UPDATE orders SET status = $1, updated_at = NOW() WHERE id = $2`,
-      [status, orderId],
+    const moved = await this.db.queryOne(
+      `UPDATE orders SET status = $1, updated_at = NOW()
+       WHERE id = $2 AND status = $3 RETURNING id`,
+      [status, orderId, order.status],
     );
+    if (!moved) throw new BadRequestException('This order was just updated. Please refresh.');
     return this.db.queryOne(`SELECT * FROM orders WHERE id = $1`, [orderId]);
   }
 
@@ -369,7 +418,7 @@ export class OrdersService {
       [orderId],
     );
     if (!order) throw new NotFoundException('Order not found');
-    if (order.user_id !== user.user_id && user.role !== 'admin') {
+    if (order.user_id !== user.user_id && !roleHasPermission(user.role, 'orders.view')) {
       throw new ForbiddenException('Not authorized');
     }
     const items = await this.db.query(
@@ -398,10 +447,30 @@ export class OrdersService {
         `Cannot transition from ${order.status} to ${status}`,
       );
     }
-    await this.db.query(
-      `UPDATE orders SET status = $1, updated_at = NOW() WHERE id = $2`,
-      [status, orderId],
+    if (status === 'cancelled') {
+      // Go through the refunding path so a paid order is never cancelled
+      // without returning the money and stopping the payout.
+      const result = await this.cancelAndRefund(orderId);
+      if (!result) throw new BadRequestException('This order was just updated. Please refresh.');
+      await this.notifier
+        .notify(
+          order.user_id,
+          result.refunded ? 'Order Cancelled & Refunded' : 'Order Cancelled',
+          result.refunded
+            ? `Order ${order.order_number} has been cancelled. ${this.naira(result.refundAmount)} refunded to your wallet.`
+            : `Order ${order.order_number} has been cancelled.`,
+          result.refunded ? 'payment' : 'system',
+        )
+        .catch(() => undefined);
+      return this.reload(orderId);
+    }
+
+    const moved = await this.db.queryOne(
+      `UPDATE orders SET status = $1, updated_at = NOW()
+       WHERE id = $2 AND status = $3 RETURNING id`,
+      [status, orderId, order.status],
     );
+    if (!moved) throw new BadRequestException('This order was just updated. Please refresh.');
     const label = status
       .replace(/_/g, ' ')
       .replace(/\b\w/g, (c) => c.toUpperCase());
@@ -410,7 +479,7 @@ export class OrdersService {
       `Order ${label}`,
       `Your order ${order.order_number} is now ${label.toLowerCase()}`,
       'system',
-    );
+    ).catch(() => undefined);
     return this.reload(orderId);
   }
 }

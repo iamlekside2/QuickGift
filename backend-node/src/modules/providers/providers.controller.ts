@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   Param,
@@ -63,6 +64,22 @@ export class ProvidersController {
   }
 
   @UseGuards(AuthGuard)
+  @Patch('me/services/:serviceId')
+  updateMyService(
+    @Param('serviceId') serviceId: string,
+    @CurrentUser() user: AuthUser,
+    @Body() body: any,
+  ) {
+    return this.providers.updateMyService(user.user_id, serviceId, body);
+  }
+
+  @UseGuards(AuthGuard)
+  @Delete('me/services/:serviceId')
+  deleteMyService(@Param('serviceId') serviceId: string, @CurrentUser() user: AuthUser) {
+    return this.providers.deleteMyService(user.user_id, serviceId);
+  }
+
+  @UseGuards(AuthGuard)
   @Get('me/availability')
   getMyAvailability(@CurrentUser() user: AuthUser) {
     return this.providers.getMyAvailability(user.user_id);
@@ -99,6 +116,12 @@ export class ProvidersController {
   @Get(':id/services')
   listServices(@Param('id') id: string) {
     return this.providers.listServices(id);
+  }
+
+  // Public working hours, so the booking screen can offer real time slots.
+  @Get(':id/availability')
+  availability(@Param('id') id: string) {
+    return this.providers.getAvailability(id);
   }
 
   @UseGuards(AuthGuard)

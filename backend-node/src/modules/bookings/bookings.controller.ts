@@ -34,6 +34,13 @@ export class BookingsController {
     return this.bookings.getBooking(id, user);
   }
 
+  // The customer cancels their own booking (refunded to wallet if already paid).
+  @Post(':id/cancel')
+  @HttpCode(200)
+  cancel(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.bookings.cancelBooking(id, user);
+  }
+
   @Patch(':id/status')
   updateStatus(
     @Param('id') id: string,

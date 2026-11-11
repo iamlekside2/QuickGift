@@ -8,8 +8,20 @@ import {
 } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { DatabaseService } from '../../database/database.service';
+import { PaymentsService } from '../payments/payments.service';
+import {
+  creditWallet,
+  debitWallet,
+  devPaymentsAllowed,
+  ledgerRef,
+  paystackSecret,
+  toAmount,
+} from '../../common/ledger';
 
 const PAYSTACK_BASE_URL = 'https://api.paystack.co';
+const MIN_FUND = 100;
+const MAX_FUND = 5_000_000;
+const MIN_WITHDRAWAL = 500;
 const TX_FIELDS = `id, user_id, type, amount, description, reference, balance_after, status, created_at`;
 const BANK_FIELDS = `id, bank_name, bank_code, account_number, account_name, is_default, is_verified`;
 
@@ -48,17 +60,17 @@ const NIGERIAN_BANKS = [
 
 @Injectable()
 export class WalletService {
-  constructor(private readonly db: DatabaseService) {}
+  constructor(
+    private readonly db: DatabaseService,
+    private readonly payments: PaymentsService,
+  ) {}
 
   private get secretKey(): string {
-    const live = (process.env.PAYSTACK_LIVE || 'false').toLowerCase() === 'true';
-    return live
-      ? process.env.PAYSTACK_LIVE_SECRET_KEY || ''
-      : process.env.PAYSTACK_TEST_SECRET_KEY || '';
+    return paystackSecret();
   }
 
   private ref(prefix: string): string {
-    return `${prefix}-` + randomUUID().replace(/-/g, '').slice(0, 12).toUpperCase();
+    return ledgerRef(prefix);
   }
 
   async getBalance(userId: string) {
@@ -71,8 +83,8 @@ export class WalletService {
   }
 
   async listTransactions(userId: string, q: any) {
-    const page = Number(q.page ?? 1);
-    const perPage = Number(q.per_page ?? 20);
+    const page = Math.max(1, Math.floor(Number(q.page ?? 1)) || 1);
+    const perPage = Math.min(100, Math.max(1, Math.floor(Number(q.per_page ?? 20)) || 20));
     return this.db.query(
       `SELECT ${TX_FIELDS} FROM transactions WHERE user_id = $1
        ORDER BY created_at DESC LIMIT $2 OFFSET $3`,
@@ -80,112 +92,136 @@ export class WalletService {
     );
   }
 
-  async fundInitialize(userId: string, amount: number) {
-    if (!(amount > 0)) throw new BadRequestException('Amount must be greater than zero');
-    const reference = this.ref('WF');
-    if (this.secretKey) {
-      const resp = await fetch(`${PAYSTACK_BASE_URL}/transaction/initialize`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${this.secretKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: `${userId}@quickgift.ng`,
-          amount: Math.round(amount * 100),
-          reference,
-          currency: 'NGN',
-          metadata: { type: 'wallet_fund', user_id: userId },
-        }),
-      });
-      if (resp.status === 200) {
-        const data: any = await resp.json();
-        return {
-          reference,
-          amount,
-          authorization_url: data.data.authorization_url,
-          access_code: data.data.access_code,
-        };
-      }
+  async fundInitialize(userId: string, rawAmount: number) {
+    const amount = toAmount(rawAmount);
+    if (!amount) throw new BadRequestException('Amount must be greater than zero');
+    if (amount < MIN_FUND || amount > MAX_FUND) {
+      throw new BadRequestException(
+        `You can add between ₦${MIN_FUND.toLocaleString('en-US')} and ₦${MAX_FUND.toLocaleString('en-US')} at a time`,
+      );
     }
-    return { reference, amount, authorization_url: null, message: 'Dev mode' };
+    if (!this.secretKey && !devPaymentsAllowed()) {
+      throw new HttpException('Wallet funding is not available right now', HttpStatus.SERVICE_UNAVAILABLE);
+    }
+
+    // Persist the request first: only this user can later claim this reference,
+    // and only for this amount.
+    const reference = await this.payments.createWalletFund(userId, amount);
+
+    if (!this.secretKey) {
+      return { reference, amount, authorization_url: null, message: 'Dev mode' };
+    }
+
+    const user = await this.db.queryOne<{ email: string | null }>(
+      `SELECT email FROM users WHERE id = $1`,
+      [userId],
+    );
+    const email =
+      user?.email && /^[^s@+]+@[^s@]+.[^s@]+$/.test(user.email)
+        ? user.email
+        : `customer-${userId.replace(/[^a-zA-Z0-9]/g, '').slice(0, 12)}@quickgift.ng`;
+    const resp = await fetch(`${PAYSTACK_BASE_URL}/transaction/initialize`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${this.secretKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email,
+        amount: Math.round(amount * 100),
+        reference,
+        currency: 'NGN',
+        callback_url: 'https://quickgift.ng/payment/callback',
+        metadata: { type: 'wallet_fund', user_id: userId },
+      }),
+    }).catch(() => null);
+    const data: any = resp ? await resp.json().catch(() => null) : null;
+    if (!resp || resp.status !== 200 || !data?.data?.authorization_url) {
+      throw new HttpException(
+        'We could not start your payment. Please try again.',
+        HttpStatus.BAD_GATEWAY,
+      );
+    }
+    return {
+      reference,
+      amount,
+      authorization_url: data.data.authorization_url,
+      access_code: data.data.access_code,
+    };
   }
 
+  /**
+   * Confirms a top-up. The reference must be a pending funding request that
+   * belongs to the caller (so an order's card reference, or someone else's
+   * top-up, cannot be replayed here), and the gateway must report the full
+   * amount as paid.
+   */
   async fundVerify(userId: string, reference: string) {
+    const fund = await this.payments.findWalletFund(reference);
+    if (!fund || fund.user_id !== userId) {
+      throw new NotFoundException('Funding request not found');
+    }
+
+    if (fund.status !== 'success') {
+      if (this.secretKey) {
+        const result = await this.payments.walletFundState(reference);
+        if (result.state !== 'success') {
+          throw new BadRequestException('Payment not verified yet');
+        }
+        if (result.kobo < Math.round(Number(fund.amount) * 100)) {
+          throw new BadRequestException('Amount paid does not match');
+        }
+      } else if (!devPaymentsAllowed()) {
+        throw new HttpException('Wallet funding is not configured', HttpStatus.SERVICE_UNAVAILABLE);
+      }
+      await this.payments.creditWalletFund(reference);
+    }
+
+    const tx = await this.db.queryOne<any>(
+      `SELECT ${TX_FIELDS} FROM transactions WHERE reference = $1 AND user_id = $2`,
+      [reference, userId],
+    );
+    const balance = await this.getBalance(userId);
+    // `status: 'success'` is what the app checks; the ledger row keeps its own
+    // 'completed' state under `transaction`.
+    return {
+      status: 'success',
+      reference,
+      amount: Number(fund.amount),
+      new_balance: balance.balance,
+      transaction: tx ?? null,
+    };
+  }
+
+  /**
+   * Direct wallet credit with no payment behind it. Local development only —
+   * on a deployed API this would be free money, so it is refused outright.
+   */
+  async fundLegacy(userId: string, _role: string, req: any) {
+    if (!devPaymentsAllowed()) {
+      throw new ForbiddenException('Direct funding is disabled. Use /wallet/fund/initialize.');
+    }
+    const amount = toAmount(req?.amount);
+    if (!amount) throw new BadRequestException('Amount must be greater than zero');
+    const reference = String(req?.reference || this.ref('WF'));
     const dup = await this.db.queryOne(
       `SELECT 1 FROM transactions WHERE reference = $1`,
       [reference],
     );
-    if (dup) throw new BadRequestException('Already processed');
-
-    let amount = 0;
-    let verified = false;
-    if (this.secretKey) {
-      const resp = await fetch(
-        `${PAYSTACK_BASE_URL}/transaction/verify/${reference}`,
-        { headers: { Authorization: `Bearer ${this.secretKey}` } },
-      );
-      if (resp.status === 200) {
-        const data: any = (await resp.json()).data;
-        if (data.status === 'success') {
-          amount = data.amount / 100;
-          verified = true;
-        }
-      }
-    } else {
-      amount = 5000; // dev fallback
-      verified = true;
-    }
-    if (!verified) throw new BadRequestException('Payment not verified');
-
-    return this.db.transaction(async (client) => {
-      const user = (
-        await client.query(`SELECT id, wallet_balance FROM users WHERE id = $1`, [userId])
-      ).rows[0];
-      if (!user) throw new NotFoundException('User not found');
-      const newBalance = Number(user.wallet_balance) + amount;
-      await client.query(`UPDATE users SET wallet_balance = $1 WHERE id = $2`, [newBalance, userId]);
-      const txId = randomUUID();
-      await client.query(
-        `INSERT INTO transactions (id, user_id, type, amount, description, reference, balance_after, status, created_at)
-         VALUES ($1,$2,'credit',$3,'Wallet funding via Paystack',$4,$5,'completed',NOW())`,
-        [txId, userId, amount, reference, newBalance],
-      );
-      return (await client.query(`SELECT ${TX_FIELDS} FROM transactions WHERE id = $1`, [txId])).rows[0];
-    });
-  }
-
-  async fundLegacy(userId: string, role: string, req: any) {
-    if (this.secretKey && role !== 'admin') {
-      throw new ForbiddenException('Direct funding disabled. Use /fund/initialize instead.');
-    }
-    if (!(req?.amount > 0)) throw new BadRequestException('Amount must be greater than zero');
-    const dup = await this.db.queryOne(
-      `SELECT 1 FROM transactions WHERE reference = $1`,
-      [req.reference],
-    );
     if (dup) throw new BadRequestException('Duplicate reference');
 
     return this.db.transaction(async (client) => {
-      const user = (
-        await client.query(`SELECT id, wallet_balance FROM users WHERE id = $1`, [userId])
+      const balance = await creditWallet(client, userId, amount, 'Wallet funding', reference);
+      if (balance === null) throw new NotFoundException('User not found');
+      return (
+        await client.query(`SELECT ${TX_FIELDS} FROM transactions WHERE reference = $1`, [reference])
       ).rows[0];
-      if (!user) throw new NotFoundException('User not found');
-      const newBalance = Number(user.wallet_balance) + Number(req.amount);
-      await client.query(`UPDATE users SET wallet_balance = $1 WHERE id = $2`, [newBalance, userId]);
-      const txId = randomUUID();
-      await client.query(
-        `INSERT INTO transactions (id, user_id, type, amount, description, reference, balance_after, status, created_at)
-         VALUES ($1,$2,'credit',$3,'Wallet funding',$4,$5,'completed',NOW())`,
-        [txId, userId, req.amount, req.reference, newBalance],
-      );
-      return (await client.query(`SELECT ${TX_FIELDS} FROM transactions WHERE id = $1`, [txId])).rows[0];
     });
   }
 
   async transfer(userId: string, req: any) {
-    if (!(req?.amount > 0)) throw new BadRequestException('Amount must be greater than zero');
-    const amount = Number(req.amount);
+    const amount = toAmount(req?.amount);
+    if (!amount) throw new BadRequestException('Amount must be greater than zero');
 
     return this.db.transaction(async (client) => {
       const sender = (
@@ -328,37 +364,36 @@ export class WalletService {
   }
 
   async withdraw(userId: string, req: any) {
-    const amount = Number(req?.amount);
-    if (!(amount > 0)) throw new BadRequestException('Amount must be greater than zero');
-    if (amount < 500) throw new BadRequestException('Minimum withdrawal is ₦500');
+    const amount = toAmount(req?.amount);
+    if (!amount) throw new BadRequestException('Amount must be greater than zero');
+    if (amount < MIN_WITHDRAWAL) throw new BadRequestException('Minimum withdrawal is ₦500');
 
     return this.db.transaction(async (client) => {
-      const user = (
-        await client.query(`SELECT id, wallet_balance FROM users WHERE id = $1`, [userId])
-      ).rows[0];
-      if (!user) throw new NotFoundException('User not found');
-      if (Number(user.wallet_balance) < amount) {
-        throw new BadRequestException('Insufficient balance');
-      }
       const bank = (
         await client.query(
           `SELECT bank_name, account_number FROM bank_accounts WHERE id = $1 AND user_id = $2`,
-          [req.bank_account_id, userId],
+          [req?.bank_account_id, userId],
         )
       ).rows[0];
       if (!bank) throw new NotFoundException('Bank account not found');
 
-      const newBalance = Number(user.wallet_balance) - amount;
-      await client.query(`UPDATE users SET wallet_balance = $1 WHERE id = $2`, [newBalance, userId]);
-      const txId = randomUUID();
+      // Atomic "debit only if covered": two simultaneous withdrawals of the
+      // full balance can no longer both succeed.
       const last4 = String(bank.account_number).slice(-4);
-      await client.query(
-        `INSERT INTO transactions (id, user_id, type, amount, description, reference, balance_after, status, created_at)
-         VALUES ($1,$2,'debit',$3,$4,$5,$6,'pending',NOW())`,
-        [txId, userId, amount, `Withdrawal to ${bank.bank_name} ****${last4}`, this.ref('WDR'), newBalance],
+      const debit = await debitWallet(
+        client,
+        userId,
+        amount,
+        `Withdrawal to ${bank.bank_name} ****${last4}`,
+        this.ref('WDR'),
+        'pending',
       );
-      // NOTE: Paystack Transfer API to actually send the money is a TODO (same as Python).
-      return (await client.query(`SELECT ${TX_FIELDS} FROM transactions WHERE id = $1`, [txId])).rows[0];
+      if (!debit) throw new BadRequestException('Insufficient balance');
+      // The bank transfer itself is settled by staff from the admin console
+      // (Payouts → Withdrawals), which marks this row completed or failed.
+      return (
+        await client.query(`SELECT ${TX_FIELDS} FROM transactions WHERE id = $1`, [debit.txId])
+      ).rows[0];
     });
   }
 }

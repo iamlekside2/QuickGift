@@ -22,7 +22,11 @@ export class UploadController {
 
   @Post('image')
   @HttpCode(200)
-  @UseInterceptors(FileInterceptor('file'))
+  // The size limit is enforced while the upload streams in, so an oversized
+  // file is rejected instead of being buffered into memory first.
+  @UseInterceptors(
+    FileInterceptor('file', { limits: { fileSize: MAX_SIZE_BYTES, files: 1 } }),
+  )
   async uploadImage(@UploadedFile() file: Express.Multer.File) {
     if (!file || !ALLOWED_TYPES.has(file.mimetype)) {
       throw new BadRequestException(
