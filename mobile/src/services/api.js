@@ -177,7 +177,9 @@ const realWalletAPI = {
   getBalance: () => api.get('/wallet/balance'),
   getTransactions: (params = {}) => api.get('/wallet/transactions', { params }),
   fund: (amount, reference) => api.post('/wallet/fund', { amount, reference }),
-  fundInitialize: (amount) => api.post('/wallet/fund/initialize', null, { params: { amount } }),
+  // Send an empty object, never null: axios serialises null as the text "null",
+  // which the server's JSON parser rejects with a 400.
+  fundInitialize: (amount) => api.post('/wallet/fund/initialize', {}, { params: { amount } }),
   fundVerify: (reference) => api.post(`/wallet/fund/verify/${reference}`),
   transfer: (recipientPhone, amount) => api.post('/wallet/transfer', { recipient_phone: recipientPhone, amount }),
   // Bank accounts
