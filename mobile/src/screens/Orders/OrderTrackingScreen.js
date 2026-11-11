@@ -3,6 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity, Platform, ActivityIndicator }
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '../../components/common/IconCompat';
 import { ordersAPI } from '../../services/api';
+import { formatDay } from '../../utils/dates';
 
 // The order statuses the server uses: pending → confirmed → in_transit →
 // delivered (or cancelled). Only real order data is shown on this screen.
@@ -235,6 +236,20 @@ export default function OrderTrackingScreen({ navigation, route }) {
               {[order?.delivery_address, order?.delivery_city].filter(Boolean).join(', ') || 'No address on this order'}
             </Text>
           </View>
+          {order?.scheduled_date ? (
+            <View className="flex-row items-start gap-2.5 mb-2.5">
+              <Ionicons name="time-outline" size={16} color="#6E6A63" />
+              <Text className="flex-1 text-[13px] text-ink">
+                Scheduled for {formatDay(order.scheduled_date)}
+              </Text>
+            </View>
+          ) : null}
+          {order?.is_anonymous ? (
+            <View className="flex-row items-start gap-2.5 mb-2.5">
+              <Ionicons name="eye-off-outline" size={16} color="#6E6A63" />
+              <Text className="flex-1 text-[13px] text-ink">Sent anonymously: your name is not shared</Text>
+            </View>
+          ) : null}
           {order?.personal_message ? (
             <View className="flex-row items-start gap-2.5 mb-2.5">
               <Ionicons name="chatbubble-outline" size={16} color="#6E6A63" />

@@ -236,4 +236,13 @@ const realReferralAPI = {
 };
 export const referralAPI = realReferralAPI;
 
+const realRemindersAPI = {
+  // Yearly occasion reminders: { occasion, person_name, month, day, days_before, is_active }
+  list: () => api.get('/reminders'),
+  create: (data) => api.post('/reminders', data),
+  update: (id, data) => api.patch(`/reminders/${id}`, data),
+  remove: (id) => api.delete(`/reminders/${id}`),
+};
+export const remindersAPI = realRemindersAPI;
+
 export default api;

@@ -187,6 +187,13 @@ export default function OrdersPage() {
                     order.customer_name && order.recipient_name ? `For ${order.recipient_name}` : '',
                     order.recipient_phone || '',
                   ].filter(Boolean).join(' · ')
+                  // A scheduled day is a plain calendar day: read it from the
+                  // string so the browser's time zone cannot move it.
+                  const day = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(order.scheduled_date || ''))
+                  const giftNotes = [
+                    day ? `Deliver on ${new Date(+day[1], +day[2] - 1, +day[3]).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}` : '',
+                    order.is_anonymous ? 'Anonymous gift' : '',
+                  ].filter(Boolean).join(' · ')
                   return (
                     <tr key={order.id} className="table-row">
                       <td className="table-cell">
@@ -198,6 +205,7 @@ export default function OrdersPage() {
                       <td className="table-cell">
                         <div className="font-medium text-gray-900">{order.customer_name || order.recipient_name || '—'}</div>
                         {recipientLine && <div className="text-xs text-gray-400 mt-0.5">{recipientLine}</div>}
+                        {giftNotes && <div className="text-[11px] text-amber-600 font-medium mt-0.5">{giftNotes}</div>}
                       </td>
                       <td className="table-cell text-gray-600">
                         {count === null ? '—' : `${count} item${count === 1 ? '' : 's'}`}

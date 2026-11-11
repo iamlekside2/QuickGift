@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Platform, Alert, Modal, Image } from 'react-native';
+import React, { useState, useRef, useMemo } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, Platform, Alert, Modal, Image, Switch } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '../../components/common/IconCompat';
 import { ordersAPI, paymentsAPI } from '../../services/api';
@@ -11,7 +11,11 @@ import { useWallet } from '../../context/WalletContext';
 import { iconFor } from '../../utils/categoryIcons';
 import { apiError } from '../../utils/errors';
 import { useRequireAuth } from '../../utils/requireAuth';
-import { notifySuccess, notifyError } from '../../utils/haptics';
+import { notifySuccess, notifyError, tapLight } from '../../utils/haptics';
+import { upcomingDays, formatDay } from '../../utils/dates';
+
+// How far ahead a delivery day can be picked here (the server allows 90).
+const DELIVERY_DAYS_AHEAD = 30;
 
 export default function CartScreen({ navigation }) {
   const { items, removeItem, updateQuantity, clearCart, subtotal, itemCount } = useCart();
@@ -27,6 +31,10 @@ export default function CartScreen({ navigation }) {
   const [recipientPhone, setRecipientPhone] = useState('');
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const [personalMessage, setPersonalMessage] = useState('');
+  // '' = as soon as possible, otherwise the chosen day as YYYY-MM-DD.
+  const [deliveryDay, setDeliveryDay] = useState('');
+  const [anonymous, setAnonymous] = useState(false);
+  const dayOptions = useMemo(() => upcomingDays(DELIVERY_DAYS_AHEAD), []);
 
   // The order is created BEFORE payment. Keep it, with a fingerprint of what
   // it was created from, so a retry pays for the same order instead of
@@ -44,6 +52,8 @@ export default function CartScreen({ navigation }) {
     phone: recipientPhone.trim(),
     address: deliveryAddress.trim(),
     note: personalMessage.trim(),
+    day: deliveryDay,
+    anonymous,
   });
 
   // Once an order exists for exactly this cart, show the server's figures.
@@ -118,6 +128,8 @@ export default function CartScreen({ navigation }) {
           recipient_name: recipientName.trim(),
           recipient_phone: recipientPhone.trim(),
           personal_message: personalMessage.trim() || undefined,
+          scheduled_date: deliveryDay || undefined,
+          is_anonymous: anonymous,
           is_express: false,
         });
         order = res.data;
@@ -211,6 +223,11 @@ export default function CartScreen({ navigation }) {
             {placedOrder.recipient_name ? ` for ${placedOrder.recipient_name}` : ''} is paid
             {placedOrder.paidWith === 'wallet' ? ' from your wallet' : ''}.
           </Text>
+          {placedOrder.scheduled_date ? (
+            <Text className="text-sm text-ink-soft text-center leading-5 mt-1">
+              Scheduled for delivery on {formatDay(placedOrder.scheduled_date)}.
+            </Text>
+          ) : null}
           <Text className="text-[22px] font-extrabold text-teal mt-4">{formatPrice(placedOrder.total)}</Text>
           <TouchableOpacity
             className="bg-teal px-8 h-[52px] rounded-[16px] items-center justify-center mt-8 self-stretch"
@@ -412,6 +429,55 @@ export default function CartScreen({ navigation }) {
               type="multiline"
               icon="chatbubble-outline"
             />
+            {/* Delivery day */}
+            <Text className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 mt-2">Delivery Day</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ gap: 8, paddingRight: 8 }}
+              className="mb-2"
+            >
+              {[{ value: '', top: 'As soon as', bottom: 'possible' }, ...dayOptions].map((opt) => {
+                const active = deliveryDay === opt.value;
+                return (
+                  <TouchableOpacity
+                    key={opt.value || 'asap'}
+                    className={`items-center justify-center px-3.5 py-2.5 rounded-2xl border-2 ${
+                      active ? 'border-teal bg-teal-light/30' : 'border-gray-200 bg-gray-50'
+                    }`}
+                    style={{ minWidth: 76 }}
+                    onPress={() => { tapLight(); setDeliveryDay(opt.value); }}
+                    activeOpacity={0.8}
+                  >
+                    <Text className={`text-[11px] font-semibold ${active ? 'text-teal' : 'text-gray-400'}`}>{opt.top}</Text>
+                    <Text className={`text-[13px] font-bold mt-0.5 ${active ? 'text-teal' : 'text-gray-700'}`}>{opt.bottom}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+            <Text className="text-[12px] text-gray-400 mb-4">
+              {deliveryDay
+                ? `We will deliver on ${formatDay(deliveryDay)}.`
+                : 'Pick a day to have it arrive on a birthday or anniversary.'}
+            </Text>
+
+            {/* Send anonymously */}
+            <View className="flex-row items-center bg-gray-50 border-2 border-gray-200 rounded-2xl px-4 py-3 mb-4">
+              <Ionicons name="eye-off-outline" size={18} color={anonymous ? '#1F4A45' : '#9A948A'} />
+              <View className="flex-1 ml-3 mr-2">
+                <Text className="text-sm font-bold text-gray-800">Send anonymously</Text>
+                <Text className="text-[11.5px] text-gray-400 mt-0.5 leading-4">
+                  Your name is not shared with the seller or put on the gift.
+                </Text>
+              </View>
+              <Switch
+                value={anonymous}
+                onValueChange={setAnonymous}
+                trackColor={{ false: '#EAE3D8', true: '#1F4A45' }}
+                thumbColor="#fff"
+              />
+            </View>
+
             {/* Payment Method */}
             <Text className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 mt-2">Payment Method</Text>
             <View className="flex-row gap-3 mb-4">

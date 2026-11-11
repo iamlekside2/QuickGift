@@ -20,6 +20,14 @@ const STATUS_CONFIG = {
   cancelled: { label: 'Cancelled', color: '#D24B4B', bg: 'bg-red-50' },
 };
 
+// A delivery day is a plain calendar day: read it straight from the string so
+// the phone's time zone cannot move it.
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const formatDeliveryDay = (value) => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(value || ''));
+  return m ? `${Number(m[3])} ${MONTHS[Number(m[2]) - 1]} ${m[1]}` : '';
+};
+
 const formatDate = (dateStr) => {
   if (!dateStr) return 'N/A';
   const d = new Date(dateStr);
@@ -191,8 +199,36 @@ export default function ProviderOrdersScreen({ navigation }) {
                   </Text>
                 </View>
 
+                {/* What the seller needs to prepare the gift */}
+                {order.scheduled_date ? (
+                  <View className="flex-row items-center gap-2 mb-1.5">
+                    <Ionicons name="time-outline" size={14} color="#E8632F" />
+                    <Text className="text-[12.5px] font-bold text-orange">
+                      Deliver on {formatDeliveryDay(order.scheduled_date)}
+                    </Text>
+                  </View>
+                ) : null}
+                <View className="flex-row items-center gap-2 mb-1.5">
+                  <Ionicons name={order.is_anonymous ? 'eye-off-outline' : 'gift-outline'} size={14} color="#9A948A" />
+                  <Text className="flex-1 text-[12.5px] text-gray-600">
+                    {order.is_anonymous
+                      ? 'Anonymous gift: do not include the sender\'s name'
+                      : order.sender_name
+                        ? `From ${order.sender_name}`
+                        : 'Sender not given'}
+                  </Text>
+                </View>
+                {order.personal_message ? (
+                  <View className="flex-row items-start gap-2 mb-1.5">
+                    <Ionicons name="chatbubble-outline" size={14} color="#9A948A" />
+                    <Text className="flex-1 text-[12.5px] text-gray-600 leading-[18px]">
+                      Card message: {order.personal_message}
+                    </Text>
+                  </View>
+                ) : null}
+
                 {/* Date */}
-                <Text className="text-[11px] text-gray-400 mb-3">{formatDate(date)}</Text>
+                <Text className="text-[11px] text-gray-400 mb-3">Ordered {formatDate(date)}</Text>
 
                 {/* Action buttons */}
                 {status === 'confirmed' && (
