@@ -8,6 +8,7 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { randomBytes, randomInt, randomUUID } from 'crypto';
+import { PoolClient } from 'pg';
 import { DatabaseService } from '../../database/database.service';
 import { NotifyService } from '../../common/notify.service';
 import { MailService } from '../../common/mail.service';
@@ -557,12 +558,16 @@ export class PoolsService implements OnModuleInit, OnModuleDestroy {
       // in part when it overshoots, and the rest later if the pool is cancelled).
       const toSend = round2(Number(c.refund_amount) - Number(c.refund_sent));
       const ok = toSend <= 0 ? true : await this.payments.gatewayRefund(c.reference, toSend).catch(() => false);
+      // Record what was actually sent. More may have been queued while this
+      // one was at the gateway, in which case it goes round again.
       await this.db.query(
-        `UPDATE pool_contributions SET refund_state = $1::varchar,
-                refund_sent = CASE WHEN $1::varchar = 'done' THEN refund_amount ELSE refund_sent END,
-                refunded_at = CASE WHEN $1::varchar = 'done' THEN NOW() ELSE refunded_at END
+        `UPDATE pool_contributions SET
+                refund_state = CASE WHEN NOT $1::boolean THEN 'failed'
+                                    WHEN refund_sent + $3 >= refund_amount THEN 'done' ELSE 'due' END,
+                refund_sent = CASE WHEN $1::boolean THEN refund_sent + $3 ELSE refund_sent END,
+                refunded_at = CASE WHEN $1::boolean THEN NOW() ELSE refunded_at END
          WHERE id = $2`,
-        [ok ? 'done' : 'failed', c.id],
+        [ok, c.id, Math.max(0, toSend)],
       );
       if (ok && toSend > 0) {
         void this.mail
@@ -573,9 +578,62 @@ export class PoolsService implements OnModuleInit, OnModuleDestroy {
             `${naira(toSend)} is on its way back to the card you paid with. Banks usually take a few working days to show it.`,
           )
           .catch(() => undefined);
-      } else {
-        this.logger.error(`Refund failed for contribution ${c.reference} (${c.refund_amount} NGN)`);
+      } else if (!ok) {
+        this.logger.error(`Refund failed for contribution ${c.reference} (${toSend} NGN)`);
       }
+    }
+  }
+
+  /**
+   * A dispute refund on an order that a group gift paid for. The money goes
+   * back to the people who chipped in, each in proportion to what they gave,
+   * and never to the organiser's wallet. This runs inside the caller's
+   * transaction and only queues the refunds: call flushRefundsForOrder once
+   * that transaction has committed. Returns false, having done nothing, when
+   * the order was not paid by a group gift.
+   */
+  async queueRefundForOrder(client: PoolClient, orderId: string, amount: number): Promise<boolean> {
+    const pool = (
+      await client.query(`SELECT id FROM gift_pools WHERE order_id = $1 AND status = 'funded' FOR UPDATE`, [orderId])
+    ).rows[0];
+    if (!pool) return false;
+    const rows = (
+      await client.query(
+        `SELECT id, amount, refund_amount FROM pool_contributions
+         WHERE pool_id = $1 AND status = 'paid' AND refund_amount < amount
+         ORDER BY paid_at, id FOR UPDATE`,
+        [pool.id],
+      )
+    ).rows;
+    // Worked in kobo so the shares add up exactly.
+    const kept = rows.map((r) => Math.round((Number(r.amount) - Number(r.refund_amount)) * 100));
+    const total = kept.reduce((s, k) => s + k, 0);
+    if (total <= 0) return true;
+    const want = Math.min(Math.round(amount * 100), total);
+    const shares = kept.map((k) => Math.floor((want * k) / total));
+    let left = want - shares.reduce((s, k) => s + k, 0);
+    for (let i = 0; left > 0 && i < kept.length; i++) {
+      const extra = Math.min(kept[i] - shares[i], left);
+      shares[i] += extra;
+      left -= extra;
+    }
+    for (let i = 0; i < rows.length; i++) {
+      if (shares[i] <= 0) continue;
+      await client.query(
+        `UPDATE pool_contributions SET refund_amount = refund_amount + $1, refund_state = 'due' WHERE id = $2`,
+        [shares[i] / 100, rows[i].id],
+      );
+    }
+    return true;
+  }
+
+  /** Sends the refunds queued by queueRefundForOrder. Never throws. */
+  async flushRefundsForOrder(orderId: string): Promise<void> {
+    try {
+      const pool = await this.db.queryOne<{ id: string }>(`SELECT id FROM gift_pools WHERE order_id = $1`, [orderId]);
+      if (pool) await this.processRefunds(pool.id);
+    } catch (err: any) {
+      this.logger.error(`could not send dispute refunds for order ${orderId}: ${err?.message}`);
     }
   }
 

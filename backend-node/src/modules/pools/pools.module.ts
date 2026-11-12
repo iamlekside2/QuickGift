@@ -8,5 +8,7 @@ import { PaymentsModule } from '../payments/payments.module';
   imports: [OrdersModule, PaymentsModule],
   controllers: [PoolsController],
   providers: [PoolsService],
+  // DisputesService sends a dispute refund on a group gift back to its contributors.
+  exports: [PoolsService],
 })
 export class PoolsModule {}

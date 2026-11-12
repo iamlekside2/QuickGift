@@ -10,6 +10,7 @@ import { NotifyService } from '../../common/notify.service';
 import { MailService } from '../../common/mail.service';
 import { creditWallet, ledgerRef, toAmount } from '../../common/ledger';
 import { paging } from '../../common/paging';
+import { PoolsService } from '../pools/pools.service';
 
 const REASON_MAX = 200;
 const TEXT_MAX = 2000;
@@ -20,6 +21,7 @@ export class DisputesService {
     private readonly db: DatabaseService,
     private readonly notifier: NotifyService,
     private readonly mail: MailService,
+    private readonly pools: PoolsService,
   ) {}
 
   private naira(n: number): string {
@@ -272,6 +274,8 @@ export class DisputesService {
 
       let refundAmount = 0;
       let payoutAlreadyReleased = false;
+      // True when the refund went back to a group gift's contributors.
+      let toContributors = false;
 
       if (resolution === 'buyer') {
         // The most that can be refunded is what the buyer actually paid.
@@ -319,7 +323,14 @@ export class DisputesService {
         refundAmount = requested;
 
         if (refundAmount > 0) {
-          await creditWallet(client, dispute.buyer_id, refundAmount, 'Dispute refund', ledgerRef('DRF'));
+          // An order paid by a group gift is refunded to the people who chipped
+          // in (to their cards), not to the organiser's wallet.
+          toContributors = dispute.order_id
+            ? await this.pools.queueRefundForOrder(client, dispute.order_id, refundAmount)
+            : false;
+          if (!toContributors) {
+            await creditWallet(client, dispute.buyer_id, refundAmount, 'Dispute refund', ledgerRef('DRF'));
+          }
           const col = dispute.order_id ? 'order_id' : 'booking_id';
           payoutAlreadyReleased = !!(
             await client.query(
@@ -348,11 +359,12 @@ export class DisputesService {
       }
 
       await client.query(`UPDATE disputes SET refund_amount = $1 WHERE id = $2`, [refundAmount, disputeId]);
-      return { dispute, refundAmount, payoutAlreadyReleased };
+      return { dispute, refundAmount, payoutAlreadyReleased, toContributors };
     });
 
     if (!outcome) throw new BadRequestException('Dispute already resolved');
-    const { dispute, refundAmount, payoutAlreadyReleased } = outcome;
+    const { dispute, refundAmount, payoutAlreadyReleased, toContributors } = outcome;
+    if (toContributors) await this.pools.flushRefundsForOrder(dispute.order_id);
     const newStatus = resolution === 'buyer' ? 'resolved_buyer' : 'resolved_provider';
 
     // Notifications (best-effort, after commit)
@@ -362,7 +374,9 @@ export class DisputesService {
         'Dispute Resolved',
         resolution === 'buyer'
           ? refundAmount > 0
-            ? `Your dispute has been resolved in your favor. ${this.naira(refundAmount)} refunded to your wallet.`
+            ? toContributors
+              ? `Your dispute has been resolved in your favor. ${this.naira(refundAmount)} is being refunded to everyone who chipped in, to the cards they paid with.`
+              : `Your dispute has been resolved in your favor. ${this.naira(refundAmount)} refunded to your wallet.`
             : 'Your dispute has been resolved in your favor.'
           : 'Your dispute has been reviewed and resolved in favor of the provider.',
         resolution === 'buyer' && refundAmount > 0 ? 'payment' : 'system',
@@ -387,6 +401,9 @@ export class DisputesService {
       // True when the seller had already been paid out before the refund, so
       // staff know the platform covered it and may need to recover it.
       payout_already_released: payoutAlreadyReleased,
+      // True when a group gift's contributors were refunded (to their cards)
+      // rather than the buyer's wallet.
+      refunded_to_contributors: toContributors,
     };
   }
 }
